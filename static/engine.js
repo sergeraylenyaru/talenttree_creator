@@ -25,8 +25,8 @@ export function changeRank(doc, id, delta) {
   if(!validBuild(doc,next)) return false;
   doc.build=next; return true;
 }
-export function normalize(doc) {
-  if(!doc || doc.version!==1 || typeof doc.name!=='string' || !doc.name.trim() || doc.name.length>100 || !Array.isArray(doc.branches) || doc.branches.length<1 || doc.branches.length>5) throw Error('Неверный формат класса Talent Forge v1');
+export function normalize(doc,{allowLegacy=false}={}) {
+  if(!doc || doc.version!==1 || typeof doc.name!=='string' || !doc.name.trim() || doc.name.length>100 || !Array.isArray(doc.branches) || doc.branches.length<1 || doc.branches.length>(allowLegacy?5:4)) throw Error('Неверный формат класса Talent Forge v1');
   for(const key of ['budget','rowCost']) if(!Number.isInteger(doc[key])||doc[key]<0||doc[key]>100000) throw Error('Неверные правила очков');
   const ids=new Set(),branchIds=new Set();
   for(const b of doc.branches) {

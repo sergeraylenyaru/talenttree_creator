@@ -138,6 +138,14 @@ class API(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertIn('собственных иконок отключена', result['error'])
 
+    def test_four_branch_limit(self):
+        document = copy.deepcopy(DOCUMENT)
+        document['branches'] = [{'id': str(i), 'name': 'Branch', 'rows': 5, 'talents': []} for i in range(4)]
+        server.validate(document)
+        document['branches'].append({'id': 'fifth', 'name': 'Old branch', 'rows': 5, 'talents': []})
+        with self.assertRaisesRegex(ValueError, '4 веток'):
+            server.validate(document)
+
     def test_presets_validate_on_server(self):
         files = list((server.ROOT / 'static' / 'presets').glob('*.json'))
         self.assertEqual(len(files), 29)

@@ -3,7 +3,7 @@ import {icons,iconURL} from './icons.js';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let doc=blank(), projectId=null, user=null, mode='play', modalSave=null, modalDelete=null, dirty=false;
-try { const draft=JSON.parse(localStorage.getItem('talentforge-draft')); if(draft) doc=normalize(draft); } catch {}
+try { const draft=JSON.parse(localStorage.getItem('talentforge-draft')); if(draft) doc=normalize(draft,{allowLegacy:true}); } catch {}
 function toast(message) { $('#toast').textContent=message;$('#toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').hidden=true,4200); }
 function changed() { remember();dirty=true;$('#saveState').textContent='Есть несохранённые изменения';try{localStorage.setItem('talentforge-draft',JSON.stringify(doc));}catch{toast('Браузер не сохранил черновик. Экспортируй класс в JSON.');} }
 async function api(path, data, method) {
@@ -16,12 +16,13 @@ function image(id,extra='') { return `<img src="${esc(iconURL(id))||'missing-ico
 document.addEventListener('error',e=>{if(e.target.tagName==='IMG'){e.target.style.visibility='hidden';e.target.alt='Иконка недоступна';}},true);
 function render() {
  renderCharacter();updateHistoryButtons();if(!activeShare)$('#shareStats').hidden=true;
+ $('#trees').style.setProperty('--tree-count',Math.min(4,doc.branches.length));
  $('#className').value=doc.name;$('#budget').value=doc.budget;$('#rowCost').value=doc.rowCost;
  $('#points').textContent=`${total(doc)} / ${doc.budget}`;
  for(const id of ['className','budget','rowCost']) $('#'+id).disabled=mode!=='edit';
  $('#editMode').classList.toggle('selected',mode==='edit');$('#playMode').classList.toggle('selected',mode==='play');
- $('#addBranch').hidden=mode!=='edit';$('#addBranch').disabled=doc.branches.length>=5;$('#addAbility').hidden=mode!=='edit';
- $('#hint').textContent=mode==='edit'?'Нажми на пустую ячейку, чтобы создать талант.':'Левая кнопка: +1 очко · Правая кнопка: −1 · Shift + клик: −1';
+ $('#addBranch').hidden=mode!=='edit';$('#addBranch').disabled=doc.branches.length>=4;$('#addAbility').hidden=mode!=='edit';
+ $('#hint').textContent=doc.branches.length>4?'В старом классе пять веток. Удали лишнюю перед сохранением; данные пока сохранены.':mode==='edit'?'Нажми на пустую ячейку, чтобы создать талант.':'Левая кнопка: +1 очко · Правая кнопка: −1 · Shift + клик: −1';
  $('#trees').innerHTML=doc.branches.map(b=>`<article class="tree" data-branch="${esc(b.id)}"><div class="tree-header"><input aria-label="Название ветки" value="${esc(b.name)}" maxlength="80" ${mode!=='edit'?'disabled':''}><span>${b.talents.reduce((s,t)=>s+(doc.build[t.id]||0),0)} очк.</span>${mode==='edit'?'<button data-action="delete-branch" aria-label="Удалить ветку">×</button>':''}</div><div class="talent-grid">${Array.from({length:b.rows*4},(_,i)=>{
  const row=Math.floor(i/4),col=i%4,t=b.talents.find(t=>t.row===row&&t.col===col);
  if(!t) return `<button class="slot ${mode==='play'?'empty-slot':''}" data-row="${row}" data-col="${col}" aria-label="Создать талант: ряд ${row+1}, столбец ${col+1}" ${mode!=='edit'?'disabled':''}>${mode==='edit'?'+':'·'}</button>`;
@@ -43,7 +44,7 @@ function drawDependencies(){
    if(!path)return '';
    const cells=[...grid.querySelectorAll('.slot')];
    const points=path.map(([r,c])=>{const el=cells[r*4+c];return [el.offsetLeft+el.offsetWidth/2,el.offsetTop+el.offsetHeight/2];});
-   const trim=(a,z)=>{const dx=z[0]-a[0],dy=z[1]-a[1],len=Math.hypot(dx,dy);return [a[0]+dx/len*26,a[1]+dy/len*26];};
+   const trim=(a,z)=>{const dx=z[0]-a[0],dy=z[1]-a[1],len=Math.hypot(dx,dy);return [a[0]+dx/len*(child.offsetWidth/2+2),a[1]+dy/len*(child.offsetHeight/2+2)];};
    points[0]=trim(points[0],points[1]);points[points.length-1]=trim(points.at(-1),points.at(-2));
    return `<polyline points="${points.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#a28a54" stroke-width="2" marker-end="url(#arrow-${b.id})"/>`;
   }).join('');
@@ -123,7 +124,7 @@ function treeClick(e){
 }
 $('#trees').onclick=treeClick;$('#trees').oncontextmenu=e=>{if(mode==='play'&&e.target.closest('[data-talent]')){e.preventDefault();treeClick(e);}};
 $('#abilities').onclick=e=>{const el=e.target.closest('[data-ability]');if(el)editAbility(doc.abilities.find(a=>a.id===el.dataset.ability));};
-$('#addBranch').onclick=()=>{if(doc.branches.length<5){const next=branch(`Ветка ${doc.branches.length+1}`);next.rows=Math.max(...doc.branches.map(b=>b.rows));doc.branches.push(next);changed();render();}};
+$('#addBranch').onclick=()=>{if(doc.branches.length<4){const next=branch(`Ветка ${doc.branches.length+1}`);next.rows=Math.max(...doc.branches.map(b=>b.rows));doc.branches.push(next);changed();render();}};
 $('#addAbility').onclick=()=>editAbility();
 $('#editMode').onclick=()=>{mode='edit';render();};$('#playMode').onclick=()=>{mode='play';render();};
 $('#reset').onclick=()=>{doc.build={};changed();render();};
@@ -179,7 +180,7 @@ $('#projects').onclick=async()=>{
  $('#modalBody').onclick=async e=>{const btn=e.target.closest('button');if(!btn)return;try{
   if(btn.dataset.remove){if(!confirm('Удалить сохранённый класс?'))return;await api('/projects/'+btn.dataset.remove,{},'DELETE');if(projectId===btn.dataset.remove)projectId=null;btn.closest('.library-item').remove();return;}
   const pid=btn.dataset.open||btn.dataset.copy;if(!pid)return;if(dirty&&!confirm('Заменить текущий черновик выбранным классом?'))return;
-  const result=await api('/projects/'+pid);doc=normalize(result.document);activeShare=null;allocationSent=false;projectId=btn.dataset.copy?null:pid;if(btn.dataset.copy)doc.name+=' — копия';changed();render();$('#modal').close();
+  const result=await api('/projects/'+pid);doc=normalize(result.document,{allowLegacy:true});activeShare=null;allocationSent=false;projectId=btn.dataset.copy?null:pid;if(btn.dataset.copy)doc.name+=' — копия';changed();render();$('#modal').close();
  }catch(err){toast(err.message);}};
  }catch(err){toast(err.message);}
 };
@@ -267,7 +268,7 @@ function snapshot(){return JSON.stringify({document:doc,projectId,share:activeSh
 function remember(){const next=snapshot();if(historyCurrent&&next!==historyCurrent){undoStates.push(historyCurrent);if(undoStates.length>100)undoStates.shift();redoStates.length=0;}historyCurrent=next;updateHistoryButtons();}
 function resetHistory(){undoStates.length=0;redoStates.length=0;historyCurrent=snapshot();updateHistoryButtons();}
 function updateHistoryButtons(){$('#undo').disabled=!undoStates.length;$('#redo').disabled=!redoStates.length;}
-function restoreHistory(redo=false){const from=redo?redoStates:undoStates,to=redo?undoStates:redoStates;if(!from.length)return;to.push(snapshot());const state=JSON.parse(from.pop());doc=normalize(state.document);projectId=state.projectId;activeShare=state.share;historyCurrent=snapshot();dirty=true;try{localStorage.setItem('talentforge-draft',JSON.stringify(doc));}catch{}render();$('#saveState').textContent='Есть несохранённые изменения';refreshShareStats();}
+function restoreHistory(redo=false){const from=redo?redoStates:undoStates,to=redo?undoStates:redoStates;if(!from.length)return;to.push(snapshot());const state=JSON.parse(from.pop());doc=normalize(state.document,{allowLegacy:true});projectId=state.projectId;activeShare=state.share;historyCurrent=snapshot();dirty=true;try{localStorage.setItem('talentforge-draft',JSON.stringify(doc));}catch{}render();$('#saveState').textContent='Есть несохранённые изменения';refreshShareStats();}
 $('#undo').onclick=()=>restoreHistory();$('#redo').onclick=()=>restoreHistory(true);
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&!e.target.closest('input,textarea,select')&&['z','y'].includes(e.key.toLowerCase())){e.preventDefault();restoreHistory(e.key.toLowerCase()==='y'||e.shiftKey);}});
 document.addEventListener('click',e=>{if(!user&&e.target.closest('#new,#editMode,#export,#import,#characterSettings,#addBranch,#addAbility')){e.preventDefault();e.stopImmediatePropagation();auth();}},true);
@@ -279,5 +280,5 @@ render();api('/me').then(result=>{user=result.user;if(user&&!activeShare)mode='e
 const sharedToken=new URLSearchParams(location.search).get('share');
 if(sharedToken) api('/shared/'+encodeURIComponent(sharedToken)).then(result=>{
  if(dirty&&!confirm('Открыть класс по ссылке и заменить черновик?'))return;
- doc=normalize(result.document);projectId=null;activeShare=sharedToken;showShareStats(result.stats);mode='play';resetHistory();render();$('#saveState').textContent='Копия класса по ссылке';toast('Открыта копия класса. Изменения не затрагивают оригинал.');
+ doc=normalize(result.document,{allowLegacy:true});projectId=null;activeShare=sharedToken;showShareStats(result.stats);mode='play';resetHistory();render();$('#saveState').textContent='Копия класса по ссылке';toast('Открыта копия класса. Изменения не затрагивают оригинал.');
 }).catch(err=>toast(err.message));

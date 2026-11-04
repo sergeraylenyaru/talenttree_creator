@@ -57,8 +57,8 @@ def validate(document):
     if not isinstance(document.get('name'), str) or not 1 <= len(document['name'].strip()) <= 100:
         raise ValueError('Название: от 1 до 100 символов')
     branches = document.get('branches')
-    if not isinstance(branches, list) or not 1 <= len(branches) <= 5:
-        raise ValueError('Допустимо от 1 до 5 веток')
+    if not isinstance(branches, list) or not 1 <= len(branches) <= 4:
+        raise ValueError('Допустимо от 1 до 4 веток')
     ids = set()
     branch_ids = set()
     for branch in branches:
