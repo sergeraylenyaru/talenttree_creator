@@ -1,0 +1,52 @@
+[
+  {
+    "id": "deathknight",
+    "name": "Рыцарь смерти",
+    "talents": 88
+  },
+  {
+    "id": "druid",
+    "name": "Друид",
+    "talents": 85
+  },
+  {
+    "id": "hunter",
+    "name": "Охотник",
+    "talents": 81
+  },
+  {
+    "id": "mage",
+    "name": "Маг",
+    "talents": 86
+  },
+  {
+    "id": "paladin",
+    "name": "Паладин",
+    "talents": 78
+  },
+  {
+    "id": "priest",
+    "name": "Жрец",
+    "talents": 82
+  },
+  {
+    "id": "rogue",
+    "name": "Разбойник",
+    "talents": 83
+  },
+  {
+    "id": "shaman",
+    "name": "Шаман",
+    "talents": 80
+  },
+  {
+    "id": "warlock",
+    "name": "Чернокнижник",
+    "talents": 81
+  },
+  {
+    "id": "warrior",
+    "name": "Воин",
+    "talents": 85
+  }
+]

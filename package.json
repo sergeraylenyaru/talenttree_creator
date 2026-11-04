@@ -1,0 +1,6 @@
+{
+  "name": "talent-forge",
+  "private": true,
+  "type": "module",
+  "scripts": {"test": "node --test tests/engine.test.js", "start": "python3 server.py"}
+}

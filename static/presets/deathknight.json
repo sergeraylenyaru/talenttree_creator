@@ -1,0 +1,1237 @@
+{
+  "version": 1,
+  "name": "Рыцарь смерти · 3.3.5a",
+  "budget": 71,
+  "rowCost": 5,
+  "branches": [
+    {
+      "id": "deathknight-branch-0",
+      "name": "Blood",
+      "rows": 11,
+      "talents": [
+        {
+          "id": "deathknight-0",
+          "name": "Butchery",
+          "maxRank": 2,
+          "col": 0,
+          "row": 0,
+          "descriptions": [
+            "Whenever you kill an enemy that grants experience or honor, you generate up to 10 runic power. In addition, you generate 1 runic power per 5 sec. while in combat.",
+            "Whenever you kill an enemy that grants experience or honor, you generate up to 20 runic power. In addition, you generate 2 runic power per 5 sec. while in combat."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/butchery.jpg"
+        },
+        {
+          "id": "deathknight-1",
+          "name": "Subversion",
+          "maxRank": 3,
+          "col": 1,
+          "row": 0,
+          "descriptions": [
+            "Increases the critical strike chance of Blood Strike, Scourge Strike, Heart Strike and Obliterate by 3%, and reduces threat generated while in Blood or Unholy Presence by 8%.",
+            "Increases the critical strike chance of Blood Strike, Scourge Strike, Heart Strike and Obliterate by 6%, and reduces threat generated while in Blood or Unholy Presence by 16%.",
+            "Increases the critical strike chance of Blood Strike, Scourge Strike, Heart Strike and Obliterate by 9%, and reduces threat generated while in Blood or Unholy Presence by 25%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/subversion.jpg"
+        },
+        {
+          "id": "deathknight-2",
+          "name": "Blade Barrier",
+          "maxRank": 5,
+          "col": 2,
+          "row": 0,
+          "descriptions": [
+            "Whenever your Blood Runes are on cooldown, you gain the Blade Barrier effect, which decreases damage taken by 1% for the next 10 sec.",
+            "Whenever your Blood Runes are on cooldown, you gain the Blade Barrier effect, which decreases damage taken by 2% for the next 10 sec.",
+            "Whenever your Blood Runes are on cooldown, you gain the Blade Barrier effect, which decreases damage taken by 3% for the next 10 sec.",
+            "Whenever your Blood Runes are on cooldown, you gain the Blade Barrier effect, which decreases damage taken by 4% for the next 10 sec.",
+            "Whenever your Blood Runes are on cooldown, you gain the Blade Barrier effect, which decreases damage taken by 5% for the next 10 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/bladebarrier.jpg"
+        },
+        {
+          "id": "deathknight-3",
+          "name": "Bladed Armor",
+          "maxRank": 5,
+          "col": 0,
+          "row": 1,
+          "descriptions": [
+            "Increases your attack power by 1 for every 180 armor value you have.",
+            "Increases your attack power by 2 for every 180 armor value you have.",
+            "Increases your attack power by 3 for every 180 armor value you have.",
+            "Increases your attack power by 4 for every 180 armor value you have.",
+            "Increases your attack power by 5 for every 180 armor value you have."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/bladedarmor.jpg"
+        },
+        {
+          "id": "deathknight-4",
+          "name": "Scent of Blood",
+          "maxRank": 3,
+          "col": 1,
+          "row": 1,
+          "descriptions": [
+            "You have a 15% chance after being struck by a ranged or melee hit to gain the Scent of Blood effect, causing your next melee hit to generate 5 runic power. This effect cannot occur more often than once every 20 sec.",
+            "You have a 15% chance after being struck by a ranged or melee hit to gain the Scent of Blood effect, causing your next 2 melee hits to generate 5 runic power. This effect cannot occur more often than once every 20 sec.",
+            "You have a 15% chance after being struck by a ranged or melee hit to gain the Scent of Blood effect, causing your next 3 melee hits to generate 5 runic power. This effect cannot occur more often than once every 20 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/scentofblood.jpg"
+        },
+        {
+          "id": "deathknight-5",
+          "name": "Two-Handed Weapon Specialization",
+          "maxRank": 2,
+          "col": 2,
+          "row": 1,
+          "descriptions": [
+            "Increases the damage you deal with two-handed melee weapons by 2%.",
+            "Increases the damage you deal with two-handed melee weapons by 4%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/two-handedweaponspecialization.jpg"
+        },
+        {
+          "id": "deathknight-6",
+          "name": "Rune Tap",
+          "maxRank": 1,
+          "col": 0,
+          "row": 2,
+          "descriptions": [
+            "1 Blood\n \nInstant 1 min cooldown \nConverts 1 Blood Rune into 10% of your maximum health."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/runetap.jpg"
+        },
+        {
+          "id": "deathknight-7",
+          "name": "Dark Conviction",
+          "maxRank": 5,
+          "col": 1,
+          "row": 2,
+          "descriptions": [
+            "Increases your chance to critically hit with weapons, spells and abilities by 1%.",
+            "Increases your chance to critically hit with weapons, spells and abilities by 2%.",
+            "Increases your chance to critically hit with weapons, spells and abilities by 3%.",
+            "Increases your chance to critically hit with weapons, spells and abilities by 4%.",
+            "Increases your chance to critically hit with weapons, spells and abilities by 5%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/darkconviction.jpg"
+        },
+        {
+          "id": "deathknight-8",
+          "name": "Death Rune Mastery",
+          "maxRank": 3,
+          "col": 2,
+          "row": 2,
+          "descriptions": [
+            "Whenever you hit with Death Strike or Obliterate there is a 33% chance that the Frost and Unholy Runes will become Death Runes when they activate. Death Runes count as a Blood, Frost or Unholy Rune.",
+            "Whenever you hit with Death Strike or Obliterate there is a 66% chance that the Frost and Unholy Runes will become Death Runes when they activate. Death Runes count as a Blood, Frost or Unholy Rune.",
+            "Whenever you hit with Death Strike or Obliterate there is a 100% chance that the Frost and Unholy Runes will become Death Runes when they activate. Death Runes count as a Blood, Frost or Unholy Rune."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/deathrunemastery.jpg"
+        },
+        {
+          "id": "deathknight-9",
+          "name": "Improved Rune Tap",
+          "maxRank": 3,
+          "col": 0,
+          "row": 3,
+          "descriptions": [
+            "Increases the health provided by Rune Tap by 33% and lowers its cooldown by 10 sec.",
+            "Increases the health provided by Rune Tap by 66% and lowers its cooldown by 20 sec.",
+            "Increases the health provided by Rune Tap by 100% and lowers its cooldown by 30 sec."
+          ],
+          "requires": "deathknight-6",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/improvedrunetap.jpg"
+        },
+        {
+          "id": "deathknight-10",
+          "name": "Spell Deflection",
+          "maxRank": 3,
+          "col": 2,
+          "row": 3,
+          "descriptions": [
+            "You have a chance equal to your Parry chance of taking 15% less damage from a direct damage spell.",
+            "You have a chance equal to your Parry chance of taking 30% less damage from a direct damage spell.",
+            "You have a chance equal to your Parry chance of taking 45% less damage from a direct damage spell."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/spelldeflection.jpg"
+        },
+        {
+          "id": "deathknight-11",
+          "name": "Vendetta",
+          "maxRank": 3,
+          "col": 3,
+          "row": 3,
+          "descriptions": [
+            "Heals you for up to 2% of your total maximum health whenever you kill a target that yields experience or honor.",
+            "Heals you for up to 4% of your total maximum health whenever you kill a target that yields experience or honor.",
+            "Heals you for up to 6% of your total maximum health whenever you kill a target that yields experience or honor."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/vendetta.jpg"
+        },
+        {
+          "id": "deathknight-12",
+          "name": "Bloody Strikes",
+          "maxRank": 3,
+          "col": 0,
+          "row": 4,
+          "descriptions": [
+            "Increases the damage of Blood Strike by 5% and Heart Strike by 15%, and increases the damage of Blood Boil by 10%.",
+            "Increases the damage of Blood Strike by 10% and Heart Strike by 30%, and increases the damage of Blood Boil by 20%.",
+            "Increases the damage of Blood Strike by 15% and Heart Strike by 45%, and increases the damage of Blood Boil by 30%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/bloodystrikes.jpg"
+        },
+        {
+          "id": "deathknight-13",
+          "name": "Veteran of the Third War",
+          "maxRank": 3,
+          "col": 2,
+          "row": 4,
+          "descriptions": [
+            "Increases your total Strength by 2%, your Stamina by 1%, and your expertise by 2.",
+            "Increases your total Strength by 4%, your Stamina by 2%, and your expertise by 4.",
+            "Increases your total Strength by 6%, your Stamina by 3%, and your expertise by 6."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/veteranofthethirdwar.jpg"
+        },
+        {
+          "id": "deathknight-14",
+          "name": "Mark of Blood",
+          "maxRank": 1,
+          "col": 3,
+          "row": 4,
+          "descriptions": [
+            "1 Blood 30 yd range \nInstant 3 min cooldown \n Place a Mark of Blood on an enemy. Whenever the marked enemy deals damage to a target, that target is healed for 4% of its maximum health. Lasts for 20 sec or up to 20 hits."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/markofblood.jpg"
+        },
+        {
+          "id": "deathknight-15",
+          "name": "Bloody Vengeance",
+          "maxRank": 3,
+          "col": 1,
+          "row": 5,
+          "descriptions": [
+            "Gives you a 1% bonus to physical damage you deal for 30 sec after dealing a critical strike from a weapon swing, spell, or ability. This effect stacks up to 3 times.",
+            "Gives you a 2% bonus to physical damage you deal for 30 sec after dealing a critical strike from a weapon swing, spell, or ability. This effect stacks up to 3 times.",
+            "Gives you a 3% bonus to physical damage you deal for 30 sec after dealing a critical strike from a weapon swing, spell, or ability. This effect stacks up to 3 times."
+          ],
+          "requires": "deathknight-7",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/bloodyvengeance.jpg"
+        },
+        {
+          "id": "deathknight-16",
+          "name": "Abomination's Might",
+          "maxRank": 2,
+          "col": 2,
+          "row": 5,
+          "descriptions": [
+            "Increases the attack power by 5% of party and raid members within 100 yards. Also increases your total Strength by 1%.",
+            "Increases the attack power by 10% of party and raid members within 100 yards. Also increases your total Strength by 2%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/abomination'smight.jpg"
+        },
+        {
+          "id": "deathknight-17",
+          "name": "Bloodworms",
+          "maxRank": 3,
+          "col": 0,
+          "row": 6,
+          "descriptions": [
+            "Your weapon hits have a 3% chance to cause the target to spawn 2-4 Bloodworms. Bloodworms attack your enemies, healing you as they do damage for 20 sec or until killed.",
+            "Your weapon hits have a 6% chance to cause the target to spawn 2-4 Bloodworms. Bloodworms attack your enemies, healing you as they do damage for 20 sec or until killed.",
+            "Your weapon hits have a 9% chance to cause the target to spawn 2-4 Bloodworms. Bloodworms attack your enemies, healing you as they do damage for 20 sec or until killed."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/bloodworms.jpg"
+        },
+        {
+          "id": "deathknight-18",
+          "name": "Hysteria",
+          "maxRank": 1,
+          "col": 1,
+          "row": 6,
+          "descriptions": [
+            "30 yd range \nInstant 3 min cooldown \n Induces a friendly unit into a killing frenzy for 30 sec. The target is Enraged, which increases their physical damage by 20%, but causes them to lose health equal to 1% of their maximum health every second."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/hysteria.jpg"
+        },
+        {
+          "id": "deathknight-19",
+          "name": "Improved Blood Presence",
+          "maxRank": 2,
+          "col": 2,
+          "row": 6,
+          "descriptions": [
+            "While in Frost Presence or Unholy Presence, you retain 2% healing from Blood Presence, and healing done to you is increased by 5% in Blood Presence.",
+            "While in Frost Presence or Unholy Presence, you retain 4% healing from Blood Presence, and healing done to you is increased by 10% in Blood Presence."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/improvedbloodpresence.jpg"
+        },
+        {
+          "id": "deathknight-20",
+          "name": "Improved Death Strike",
+          "maxRank": 2,
+          "col": 0,
+          "row": 7,
+          "descriptions": [
+            "Increases the damage of your Death Strike by 15%, increases its critical strike chance by 3%, and increases the healing granted by 25%.",
+            "Increases the damage of your Death Strike by 30%, increases its critical strike chance by 6%, and increases the healing granted by 50%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/improveddeathstrike.jpg"
+        },
+        {
+          "id": "deathknight-21",
+          "name": "Sudden Doom",
+          "maxRank": 3,
+          "col": 1,
+          "row": 7,
+          "descriptions": [
+            "Your Blood Strikes and Heart Strikes have a 5% chance to launch a free Death Coil at your target.",
+            "Your Blood Strikes and Heart Strikes have a 10% chance to launch a free Death Coil at your target.",
+            "Your Blood Strikes and Heart Strikes have a 15% chance to launch a free Death Coil at your target."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/suddendoom.jpg"
+        },
+        {
+          "id": "deathknight-22",
+          "name": "Vampiric Blood",
+          "maxRank": 1,
+          "col": 2,
+          "row": 7,
+          "descriptions": [
+            "1 Blood \nInstant 1 min cooldown \nTemporarily grants the Death Knight 15% of maximum health and increases the amount of health generated through spells and effects by 35% for 10 sec. After the effect expires, the health is lost."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/vampiricblood.jpg"
+        },
+        {
+          "id": "deathknight-23",
+          "name": "Will of the Necropolis",
+          "maxRank": 3,
+          "col": 0,
+          "row": 8,
+          "descriptions": [
+            "Damage that would take you below 35% health or taken while you are at 35% health is reduced by 5%.",
+            "Damage that would take you below 35% health or taken while you are at 35% health is reduced by 10%.",
+            "Damage that would take you below 35% health or taken while you are at 35% health is reduced by 15%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/willofthenecropolis.jpg"
+        },
+        {
+          "id": "deathknight-24",
+          "name": "Heart Strike",
+          "maxRank": 1,
+          "col": 1,
+          "row": 8,
+          "descriptions": [
+            "1 Blood Melee range \nInstant \nRequires Melee Weapon \n Instantly strike the target and his nearest ally, causing 50% weapon damage plus 125 on the primary target, and 25% weapon damage plus 63 on the secondary target. Each target takes 10% additional damage for each of your diseases active on that target."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/heartstrike.jpg"
+        },
+        {
+          "id": "deathknight-25",
+          "name": "Might of Mograine",
+          "maxRank": 3,
+          "col": 2,
+          "row": 8,
+          "descriptions": [
+            "Increases the critical strike damage bonus of your Blood Boil, Blood Strike, Death Strike, and Heart Strike abilities by 15%.",
+            "Increases the critical strike damage bonus of your Blood Boil, Blood Strike, Death Strike, and Heart Strike abilities by 30%.",
+            "Increases the critical strike damage bonus of your Blood Boil, Blood Strike, Death Strike, and Heart Strike abilities by 45%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/mightofmograine.jpg"
+        },
+        {
+          "id": "deathknight-26",
+          "name": "Blood Gorged",
+          "maxRank": 5,
+          "col": 1,
+          "row": 9,
+          "descriptions": [
+            "When you are above 75% health, you deal 2% more damage. In addition, your attacks ignore up to 2% of your opponent's armor at all times.",
+            "When you are above 75% health, you deal 4% more damage. In addition, your attacks ignore up to 4% of your opponent's armor at all times.",
+            "When you are above 75% health, you deal 6% more damage. In addition, your attacks ignore up to 6% of your opponent's armor at all times.",
+            "When you are above 75% health, you deal 8% more damage. In addition, your attacks ignore up to 8% of your opponent's armor at all times.",
+            "When you are above 75% health, you deal 10% more damage. In addition, your attacks ignore up to 10% of your opponent's armor at all times."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/bloodgorged.jpg"
+        },
+        {
+          "id": "deathknight-27",
+          "name": "Dancing Rune Weapon",
+          "maxRank": 1,
+          "col": 1,
+          "row": 10,
+          "descriptions": [
+            "60 Runic Power 30 yd range \nInstant 1.5 min cooldown \nRequires Melee Weapon \n Summons a second rune weapon that fights on its own for 12 sec, doing the same attacks as the Death Knight but for 50% reduced damage."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/blood/dancingruneweapon.jpg"
+        }
+      ]
+    },
+    {
+      "id": "deathknight-branch-1",
+      "name": "Frost",
+      "rows": 11,
+      "talents": [
+        {
+          "id": "deathknight-28",
+          "name": "Improved Icy Touch",
+          "maxRank": 3,
+          "col": 0,
+          "row": 0,
+          "descriptions": [
+            "Your Icy Touch does an additional 5% damage and your Frost Fever reduces melee and ranged attack speed by an additional 2%.",
+            "Your Icy Touch does an additional 10% damage and your Frost Fever reduces melee and ranged attack speed by an additional 4%.",
+            "Your Icy Touch does an additional 15% damage and your Frost Fever reduces melee and ranged attack speed by an additional 6%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/improvedicytouch.jpg"
+        },
+        {
+          "id": "deathknight-29",
+          "name": "Runic Power Mastery",
+          "maxRank": 2,
+          "col": 1,
+          "row": 0,
+          "descriptions": [
+            "Increases your maximum Runic Power by 15.",
+            "Increases your maximum Runic Power by 30."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/runicpowermastery.jpg"
+        },
+        {
+          "id": "deathknight-30",
+          "name": "Toughness",
+          "maxRank": 5,
+          "col": 2,
+          "row": 0,
+          "descriptions": [
+            "Increases your armor value from items by 2% and reduces the duration of all movement slowing effects by 6%.",
+            "Increases your armor value from items by 4% and reduces the duration of all movement slowing effects by 12%.",
+            "Increases your armor value from items by 6% and reduces the duration of all movement slowing effects by 18%.",
+            "Increases your armor value from items by 8% and reduces the duration of all movement slowing effects by 24%.",
+            "Increases your armor value from items by 10% and reduces the duration of all movement slowing effects by 30%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/toughness.jpg"
+        },
+        {
+          "id": "deathknight-31",
+          "name": "Icy Reach",
+          "maxRank": 2,
+          "col": 1,
+          "row": 1,
+          "descriptions": [
+            "Increases the range of your Icy Touch, Chains of Ice and Howling Blast by 5 yards.",
+            "Increases the range of your Icy Touch, Chains of Ice and Howling Blast by 10 yards."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/icyreach.jpg"
+        },
+        {
+          "id": "deathknight-32",
+          "name": "Black Ice",
+          "maxRank": 5,
+          "col": 2,
+          "row": 1,
+          "descriptions": [
+            "Increases your Frost and Shadow damage by 2%.",
+            "Increases your Frost and Shadow damage by 4%.",
+            "Increases your Frost and Shadow damage by 6%.",
+            "Increases your Frost and Shadow damage by 8%.",
+            "Increases your Frost and Shadow damage by 10%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/blackice.jpg"
+        },
+        {
+          "id": "deathknight-33",
+          "name": "Nerves of Cold Steel",
+          "maxRank": 3,
+          "col": 3,
+          "row": 1,
+          "descriptions": [
+            "Increases your chance to hit with a one-handed melee weapon by 1% and increases the damage done by your offhand weapon by 8%.",
+            "Increases your chance to hit with a one-handed melee weapon by 2% and increases the damage done by your offhand weapon by 16%.",
+            "Increases your chance to hit with a one-handed melee weapon by 3% and increases the damage done by your offhand weapon by 25%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/nervesofcoldsteel.jpg"
+        },
+        {
+          "id": "deathknight-34",
+          "name": "Icy Talons",
+          "maxRank": 5,
+          "col": 0,
+          "row": 2,
+          "descriptions": [
+            "You leech heat from victims of your Frost Fever, so that when their melee speed is reduced, yours increases by 4% for for the next 20 sec.",
+            "You leech heat from victims of your Frost Fever, so that when their melee speed is reduced, yours increases by 8% for for the next 20 sec.",
+            "You leech heat from victims of your Frost Fever, so that when their melee speed is reduced, yours increases by 12% for for the next 20 sec.",
+            "You leech heat from victims of your Frost Fever, so that when their melee speed is reduced, yours increases by 16% for for the next 20 sec.",
+            "You leech heat from victims of your Frost Fever, so that when their melee speed is reduced, yours increases by 20% for for the next 20 sec."
+          ],
+          "requires": "deathknight-28",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/icytalons.jpg"
+        },
+        {
+          "id": "deathknight-35",
+          "name": "Lichborne",
+          "maxRank": 1,
+          "col": 1,
+          "row": 2,
+          "descriptions": [
+            "Instant\n 2 min cooldown \nDraw upon unholy energy to become undead for 10 sec. While undead, you are immune to Charm, Fear and Sleep effects."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/lichborne.jpg"
+        },
+        {
+          "id": "deathknight-36",
+          "name": "Annihilation",
+          "maxRank": 3,
+          "col": 2,
+          "row": 2,
+          "descriptions": [
+            "Increases the critical strike chance of your melee special abilities by 1%. In addition, there is a 33% chance that your Obliterate will do its damage without consuming diseases.",
+            "Increases the critical strike chance of your melee special abilities by 2%. In addition, there is a 66% chance that your Obliterate will do its damage without consuming diseases.",
+            "Increases the critical strike chance of your melee special abilities by 3%. In addition, there is a 100% chance that your Obliterate will do its damage without consuming diseases."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/annihilation.jpg"
+        },
+        {
+          "id": "deathknight-37",
+          "name": "Killing Machine",
+          "maxRank": 5,
+          "col": 1,
+          "row": 3,
+          "descriptions": [
+            "Your melee attacks have a chance to make your next Icy Touch, Howling Blast or Frost Strike a critical strike.",
+            "Your melee attacks have a chance to make your next Icy Touch, Howling Blast or Frost Strike a critical strike. Effect occurs more often than Killing Machine (Rank 1).",
+            "Your melee attacks have a chance to make your next Icy Touch, Howling Blast or Frost Strike a critical strike. Effect occurs more often than Killing Machine (Rank 2).",
+            "Your melee attacks have a chance to make your next Icy Touch, Howling Blast or Frost Strike a critical strike. Effect occurs more often than Killing Machine (Rank 3).",
+            "Your melee attacks have a chance to make your next Icy Touch, Howling Blast or Frost Strike a critical strike. Effect occurs more often than Killing Machine (Rank 4)."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/killingmachine.jpg"
+        },
+        {
+          "id": "deathknight-38",
+          "name": "Chill of the Grave",
+          "maxRank": 2,
+          "col": 2,
+          "row": 3,
+          "descriptions": [
+            "Your Chains of Ice, Howling Blast, Icy Touch and Obliterate generate 2.5 additional runic power.",
+            "Your Chains of Ice, Howling Blast, Icy Touch and Obliterate generate 5 additional runic power."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/chillofthegrave.jpg"
+        },
+        {
+          "id": "deathknight-39",
+          "name": "Endless Winter",
+          "maxRank": 2,
+          "col": 3,
+          "row": 3,
+          "descriptions": [
+            "Your Strength is increased by 2% and the cost of your Mind Freeze is reduced to 10 runic power.",
+            "Your Strength is increased by 4% and your Mind Freeze no longer costs runic power."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/endlesswinter.jpg"
+        },
+        {
+          "id": "deathknight-40",
+          "name": "Frigid Dreadplate",
+          "maxRank": 3,
+          "col": 1,
+          "row": 4,
+          "descriptions": [
+            "Reduces the chance melee attacks will hit you by 1%.",
+            "Reduces the chance melee attacks will hit you by 2%.",
+            "Reduces the chance melee attacks will hit you by 3%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/frigiddreadplate.jpg"
+        },
+        {
+          "id": "deathknight-41",
+          "name": "Glacier Rot",
+          "maxRank": 3,
+          "col": 2,
+          "row": 4,
+          "descriptions": [
+            "Diseased enemies take 7% more damage from your Icy Touch, Howling Blast and Frost Strike.",
+            "Diseased enemies take 13% more damage from your Icy Touch, Howling Blast and Frost Strike.",
+            "Diseased enemies take 20% more damage from your Icy Touch, Howling Blast and Frost Strike."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/glacierrot.jpg"
+        },
+        {
+          "id": "deathknight-42",
+          "name": "Deathchill",
+          "maxRank": 1,
+          "col": 3,
+          "row": 4,
+          "descriptions": [
+            "Instant 2 min cooldown \nWhen activated, makes your next Icy Touch, Howling Blast, Frost Strike or Obliterate a critical hit if used within 30 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/deathchill.jpg"
+        },
+        {
+          "id": "deathknight-43",
+          "name": "Improved Icy Talons",
+          "maxRank": 1,
+          "col": 0,
+          "row": 5,
+          "descriptions": [
+            "Increases the melee haste of all party and raid members within 100 yds by 20% and your haste by an additional 5%."
+          ],
+          "requires": "deathknight-34",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/improvedicytalons.jpg"
+        },
+        {
+          "id": "deathknight-44",
+          "name": "Merciless Combat",
+          "maxRank": 2,
+          "col": 1,
+          "row": 5,
+          "descriptions": [
+            "Your Icy Touch, Howling Blast, Obliterate and Frost Strike do an additional 6% damage when striking targets with less than 35% health.",
+            "Your Icy Touch, Howling Blast, Obliterate and Frost Strike do an additional 12% damage when striking targets with less than 35% health."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/mercilesscombat.jpg"
+        },
+        {
+          "id": "deathknight-45",
+          "name": "Rime",
+          "maxRank": 3,
+          "col": 2,
+          "row": 5,
+          "descriptions": [
+            "Increases the critical strike chance of your Icy Touch and Obliterate by 5% and casting Icy Touch has a 5% chance to cause your next Howling Blast to consume no runes.",
+            "Increases the critical strike chance of your Icy Touch and Obliterate by 10% and casting Icy Touch has a 10% chance to cause your next Howling Blast to consume no runes.",
+            "Increases the critical strike chance of your Icy Touch and Obliterate by 15% and casting Icy Touch has a 15% chance to cause your next Howling Blast to consume no runes."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/rime.jpg"
+        },
+        {
+          "id": "deathknight-46",
+          "name": "Chilblains",
+          "maxRank": 3,
+          "col": 0,
+          "row": 6,
+          "descriptions": [
+            "Victims of your Frost Fever disease are Chilled, reducing movement speed by 15% for 10 sec.",
+            "Victims of your Frost Fever disease are Chilled, reducing movement speed by 30% for 10 sec.",
+            "Victims of your Frost Fever disease are Chilled, reducing movement speed by 50% for 10 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/chilblains.jpg"
+        },
+        {
+          "id": "deathknight-47",
+          "name": "Hungering Cold",
+          "maxRank": 1,
+          "col": 1,
+          "row": 6,
+          "descriptions": [
+            "40 Runic Power\n \n Instant\n 1 min cooldown \nPurges the earth around the Death Knight of all heat. Enemies within 10 yards are trapped in ice, preventing them from performing any action for 10 sec and infecting them with Frost Fever. Enemies are considered Frozen, but any damage other than diseases will break the ice."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/hungeringcold.jpg"
+        },
+        {
+          "id": "deathknight-48",
+          "name": "Improved Frost Presence",
+          "maxRank": 2,
+          "col": 2,
+          "row": 6,
+          "descriptions": [
+            "While in Blood Presence or Unholy Presence, you retain 4% stamina from Frost Presence, and damage done to you is decreased by an additional 1% in Frost Presence.",
+            "While in Blood Presence or Unholy Presence, you retain 8% stamina from Frost Presence, and damage done to you is decreased by an additional 2% in Frost Presence."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/improvedfrostpresence.jpg"
+        },
+        {
+          "id": "deathknight-49",
+          "name": "Threat of Thassarian",
+          "maxRank": 3,
+          "col": 0,
+          "row": 7,
+          "descriptions": [
+            "When dual-wielding, your Death Strikes, Obliterates, Plague Strikes, Rune Strikes, Blood Strikes and Frost Strikes have a 30% chance to also deal damage with your offhand weapon.",
+            "When dual-wielding, your Death Strikes, Obliterates, Plague Strikes, Rune Strikes, Blood Strikes and Frost Strikes have a 60% chance to also deal damage with your offhand weapon.",
+            "When dual-wielding, your Death Strikes, Obliterates, Plague Strikes, Rune Strikes, Blood Strikes and Frost Strikes have a 100% chance to also deal damage with your offhand weapon."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/threatofthassarian.jpg"
+        },
+        {
+          "id": "deathknight-50",
+          "name": "Blood of the North",
+          "maxRank": 3,
+          "col": 1,
+          "row": 7,
+          "descriptions": [
+            "Increases Blood Strike and Frost Strike damage by 3%. In addition, whenever you hit with Blood Strike or Pestilence there is a 30% chance that the Blood Rune will become a Death Rune when it activates. Death Runes count as a Blood, Frost or Unholy Rune.",
+            "Increases Blood Strike and Frost Strike damage by 6%. In addition, whenever you hit with Blood Strike or Pestilence there is a 60% chance that the Blood Rune will become a Death Rune when it activates. Death Runes count as a Blood, Frost or Unholy Rune.",
+            "Increases Blood Strike and Frost Strike damage by 10%. In addition, whenever you hit with Blood Strike or Pestilence there is a 100% chance that the Blood Rune will become a Death Rune when it activates. Death Runes count as a Blood, Frost or Unholy Rune."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/bloodofthenorth.jpg"
+        },
+        {
+          "id": "deathknight-51",
+          "name": "Unbreakable Armor",
+          "maxRank": 1,
+          "col": 2,
+          "row": 7,
+          "descriptions": [
+            "1 Frost\n \nInstant\n 1 min cooldown \nReinforces your armor with a thick coat of ice, increasing your armor by 25% and increasing your Strength by 20% for 20 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/unbreakablearmor.jpg"
+        },
+        {
+          "id": "deathknight-52",
+          "name": "Acclimation",
+          "maxRank": 3,
+          "col": 0,
+          "row": 8,
+          "descriptions": [
+            "When you are hit by a spell, you have a 10% chance to boost your resistance to that type of magic for 18 sec. Stacks up to 3 times.",
+            "When you are hit by a spell, you have a 20% chance to boost your resistance to that type of magic for 18 sec. Stacks up to 3 times.",
+            "When you are hit by a spell, you have a 30% chance to boost your resistance to that type of magic for 18 sec. Stacks up to 3 times."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/acclimation.jpg"
+        },
+        {
+          "id": "deathknight-53",
+          "name": "Frost Strike",
+          "maxRank": 1,
+          "col": 1,
+          "row": 8,
+          "descriptions": [
+            "40 Runic Power\n Melee Range \nInstant \nRequires Melee Weapon\n \nInstantly strike the enemy, causing 55% weapon damage plus 48 as Frost damage."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/froststrike.jpg"
+        },
+        {
+          "id": "deathknight-54",
+          "name": "Guile of Gorefiend",
+          "maxRank": 3,
+          "col": 2,
+          "row": 8,
+          "descriptions": [
+            "Increases the critical strike damage bonus of your Blood Strike, Frost Strike, Howling Blast and Obliterate abilities by 15%, and increases the duration of your Icebound Fortitude by 2 sec.",
+            "Increases the critical strike damage bonus of your Blood Strike, Frost Strike, Howling Blast and Obliterate abilities by 30%, and increases the duration of your Icebound Fortitude by 4 sec.",
+            "Increases the critical strike damage bonus of your Blood Strike, Frost Strike, Howling Blast and Obliterate abilities by 45%, and increases the duration of your Icebound Fortitude by 6 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/guileofgorefiend.jpg"
+        },
+        {
+          "id": "deathknight-55",
+          "name": "Tundra Stalker",
+          "maxRank": 5,
+          "col": 1,
+          "row": 9,
+          "descriptions": [
+            "Your spells and abilities deal 3% more damage to targets infected with Frost Fever. Also increases your expertise by 1.",
+            "Your spells and abilities deal 6% more damage to targets infected with Frost Fever. Also increases your expertise by 2.",
+            "Your spells and abilities deal 9% more damage to targets infected with Frost Fever. Also increases your expertise by 3.",
+            "Your spells and abilities deal 12% more damage to targets infected with Frost Fever. Also increases your expertise by 4.",
+            "Your spells and abilities deal 15% more damage to targets infected with Frost Fever. Also increases your expertise by 5."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/tundrastalker.jpg"
+        },
+        {
+          "id": "deathknight-56",
+          "name": "Howling Blast",
+          "maxRank": 1,
+          "col": 1,
+          "row": 10,
+          "descriptions": [
+            "1 Unholy 1 Frost\n 20 yd range \n Instant\n 8 sec cooldown \nBlast the target with a frigid wind dealing 198 - 214 Frost damage to all enemies within 10 yards."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/frost/howlingblast.jpg"
+        }
+      ]
+    },
+    {
+      "id": "deathknight-branch-2",
+      "name": "Unholy",
+      "rows": 11,
+      "talents": [
+        {
+          "id": "deathknight-57",
+          "name": "Vicious Strikes",
+          "maxRank": 2,
+          "col": 0,
+          "row": 0,
+          "descriptions": [
+            "Increases the critical strike chance by 3% and critical strike damage bonus by 15% of your Plague Strike and Scourge Strike.",
+            "Increases the critical strike chance by 6% and critical strike damage bonus by 30% of your Plague Strike and Scourge Strike."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/viciousstrikes.jpg"
+        },
+        {
+          "id": "deathknight-58",
+          "name": "Virulence",
+          "maxRank": 3,
+          "col": 1,
+          "row": 0,
+          "descriptions": [
+            "Increases your chance to hit with your spells by 1% and reduces the chance that your damage over time diseases can be cured by 10%.",
+            "Increases your chance to hit with your spells by 2% and reduces the chance that your damage over time diseases can be cured by 20%.",
+            "Increases your chance to hit with your spells by 3% and reduces the chance that your damage over time diseases can be cured by 30%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/virulence.jpg"
+        },
+        {
+          "id": "deathknight-59",
+          "name": "Anticipation",
+          "maxRank": 5,
+          "col": 2,
+          "row": 0,
+          "descriptions": [
+            "Increases your Dodge chance by 1%.",
+            "Increases your Dodge chance by 2%.",
+            "Increases your Dodge chance by 3%.",
+            "Increases your Dodge chance by 4%.",
+            "Increases your Dodge chance by 5%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/anticipation.jpg"
+        },
+        {
+          "id": "deathknight-60",
+          "name": "Epidemic",
+          "maxRank": 2,
+          "col": 0,
+          "row": 1,
+          "descriptions": [
+            "Increases the duration of Blood Plague and Frost Fever by 3 sec.",
+            "Increases the duration of Blood Plague and Frost Fever by 6 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/epidemic.jpg"
+        },
+        {
+          "id": "deathknight-61",
+          "name": "Morbidity",
+          "maxRank": 3,
+          "col": 1,
+          "row": 1,
+          "descriptions": [
+            "Increases the damage and healing of Death Coil by 5% and reduces the cooldown on Death and Decay by 5 sec.",
+            "Increases the damage and healing of Death Coil by 10% and reduces the cooldown on Death and Decay by 10 sec.",
+            "Increases the damage and healing of Death Coil by 15% and reduces the cooldown on Death and Decay by 15 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/morbidity.jpg"
+        },
+        {
+          "id": "deathknight-62",
+          "name": "Unholy Command",
+          "maxRank": 2,
+          "col": 2,
+          "row": 1,
+          "descriptions": [
+            "Reduces the cooldown of your Death Grip ability by 5 sec.",
+            "Reduces the cooldown of your Death Grip ability by 10 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/unholycommand.jpg"
+        },
+        {
+          "id": "deathknight-63",
+          "name": "Ravenous Dead",
+          "maxRank": 3,
+          "col": 3,
+          "row": 1,
+          "descriptions": [
+            "Increases the total Strength 1% and the contribution your Ghouls get from your Strength and Stamina by 20%.",
+            "Increases the total Strength 2% and the contribution your Ghouls get from your Strength and Stamina by 40%.",
+            "Increases the total Strength 3% and the contribution your Ghouls get from your Strength and Stamina by 60%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/ravenousdead.jpg"
+        },
+        {
+          "id": "deathknight-64",
+          "name": "Outbreak",
+          "maxRank": 3,
+          "col": 0,
+          "row": 2,
+          "descriptions": [
+            "Increases the damage of Plague Strike by 10% and Scourge Strike by 7%.",
+            "Increases the damage of Plague Strike by 20% and Scourge Strike by 13%.",
+            "Increases the damage of Plague Strike by 30% and Scourge Strike by 20%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/outbreak.jpg"
+        },
+        {
+          "id": "deathknight-65",
+          "name": "Necrosis",
+          "maxRank": 5,
+          "col": 1,
+          "row": 2,
+          "descriptions": [
+            "Your auto attacks deal an additional 4% Shadow damage.",
+            "Your auto attacks deal an additional 8% Shadow damage.",
+            "Your auto attacks deal an additional 12% Shadow damage.",
+            "Your auto attacks deal an additional 16% Shadow damage.",
+            "Your auto attacks deal an additional 20% Shadow damage."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/necrosis.jpg"
+        },
+        {
+          "id": "deathknight-66",
+          "name": "Corpse Explosion",
+          "maxRank": 1,
+          "col": 2,
+          "row": 2,
+          "descriptions": [
+            "40 Runic Power\n 30 yd range \nInstant\n \nCause a corpse to explode for 166 Shadow damage to all enemies within 10 yards. Will use a nearby corpse if the target is not a corpse. Does not affect mechanical or elemental corpses."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/corpseexplosion.jpg"
+        },
+        {
+          "id": "deathknight-67",
+          "name": "On a Pale Horse",
+          "maxRank": 2,
+          "col": 1,
+          "row": 3,
+          "descriptions": [
+            "You become as hard to stop as death itself. The duration of all Stun and Fear effects used against you is reduced by 10%, and your mounted speed is increased by 10%. This does not stack with other movement speed increasing effects.",
+            "You become as hard to stop as death itself. The duration of all Stun and Fear effects used against you is reduced by 20%, and your mounted speed is increased by 20%. This does not stack with other movement speed increasing effects."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/onapalehorse.jpg"
+        },
+        {
+          "id": "deathknight-68",
+          "name": "Blood-Caked Blade",
+          "maxRank": 3,
+          "col": 2,
+          "row": 3,
+          "descriptions": [
+            "Your auto attacks have a 10% chance to cause a Blood-Caked Strike, which hits for 25% weapon damage plus 12.5% for each of your diseases on the target.",
+            "Your auto attacks have a 20% chance to cause a Blood-Caked Strike, which hits for 25% weapon damage plus 12.5% for each of your diseases on the target.",
+            "Your auto attacks have a 30% chance to cause a Blood-Caked Strike, which hits for 25% weapon damage plus 12.5% for each of your diseases on the target."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/blood-cakedblade.jpg"
+        },
+        {
+          "id": "deathknight-69",
+          "name": "Night of the Dead",
+          "maxRank": 2,
+          "col": 3,
+          "row": 3,
+          "descriptions": [
+            "Reduces the cooldown on Raise Dead by 45 sec and the cooldown on Army of the Dead by 2 min. Also reduces the damage your pet takes from creature area of effect attacks by 45%.",
+            "Reduces the cooldown on Raise Dead by 90 sec and the cooldown on Army of the Dead by 4 min. Also reduces the damage your pet takes from creature area of effect attacks by 90%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/nightofthedead.jpg"
+        },
+        {
+          "id": "deathknight-70",
+          "name": "Unholy Blight",
+          "maxRank": 1,
+          "col": 0,
+          "row": 4,
+          "descriptions": [
+            "Causes the victims of your Death Coil to be surrounded by a vile swarm of unholy insects, taking 10% of the damage done by the Death Coil over 10 sec, and preventing any diseases on the victim from being dispelled."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/unholyblight.jpg"
+        },
+        {
+          "id": "deathknight-71",
+          "name": "Impurity",
+          "maxRank": 5,
+          "col": 1,
+          "row": 4,
+          "descriptions": [
+            "The attack power bonus of your spells is increased by 4%.",
+            "The attack power bonus of your spells is increased by 8%.",
+            "The attack power bonus of your spells is increased by 12%.",
+            "The attack power bonus of your spells is increased by 16%.",
+            "The attack power bonus of your spells is increased by 20%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/impurity.jpg"
+        },
+        {
+          "id": "deathknight-72",
+          "name": "Dirge",
+          "maxRank": 2,
+          "col": 2,
+          "row": 4,
+          "descriptions": [
+            "Your Death Strike, Plague Strike and Scourge Strike generate 2.5 additional runic power.",
+            "Your Death Strike, Plague Strike and Scourge Strike generate 5 additional runic power."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/dirge.jpg"
+        },
+        {
+          "id": "deathknight-73",
+          "name": "Desecration",
+          "maxRank": 2,
+          "col": 0,
+          "row": 5,
+          "descriptions": [
+            "Your Plague Strikes and Scourge Strikes cause the Desecrated Ground effect. Targets in the area are slowed by 25% by the grasping arms of the dead while standing on the unholy ground. Lasts 20 sec.",
+            "Your Plague Strikes and Scourge Strikes cause the Desecrated Ground effect. Targets in the area are slowed by 50% by the grasping arms of the dead while standing on the unholy ground. Lasts 20 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/desecration.jpg"
+        },
+        {
+          "id": "deathknight-74",
+          "name": "Magic Suppression",
+          "maxRank": 3,
+          "col": 1,
+          "row": 5,
+          "descriptions": [
+            "You take 2% less damage from all magic. In addition, your Anti-Magic Shell absorbs an additional 8% of spell damage.",
+            "You take 4% less damage from all magic. In addition, your Anti-Magic Shell absorbs an additional 16% of spell damage.",
+            "You take 6% less damage from all magic. In addition, your Anti-Magic Shell absorbs an additional 15% of spell damage."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/magicsuppression.jpg"
+        },
+        {
+          "id": "deathknight-75",
+          "name": "Reaping",
+          "maxRank": 3,
+          "col": 2,
+          "row": 5,
+          "descriptions": [
+            "Whenever you hit with Blood Strike or Pestilence there is a 33% chance that the Blood Rune becomes a Death Rune when it activates. Death Runes count as a Blood, Frost or Unholy Rune.",
+            "Whenever you hit with Blood Strike or Pestilence there is a 66% chance that the Blood Rune becomes a Death Rune when it activates. Death Runes count as a Blood, Frost or Unholy Rune.",
+            "Whenever you hit with Blood Strike or Pestilence there is a 100% chance that the Blood Rune becomes a Death Rune when it activates. Death Runes count as a Blood, Frost or Unholy Rune."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/reaping.jpg"
+        },
+        {
+          "id": "deathknight-76",
+          "name": "Master of Ghouls",
+          "maxRank": 1,
+          "col": 3,
+          "row": 5,
+          "descriptions": [
+            "Reduces the cooldown on Raise Dead by 60 sec, and the Ghoul summoned by your Raise Dead spell is considered a pet under your control. Unlike normal Death Knight Ghouls, your pet does not have a limited duration."
+          ],
+          "requires": "deathknight-69",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/masterofghouls.jpg"
+        },
+        {
+          "id": "deathknight-77",
+          "name": "Desolation",
+          "maxRank": 5,
+          "col": 0,
+          "row": 6,
+          "descriptions": [
+            "Your Blood Strikes cause you to deal 1% additional damage with all attacks for the next 20 sec.",
+            "Your Blood Strikes cause you to deal 2% additional damage with all attacks for the next 20 sec.",
+            "Your Blood Strikes cause you to deal 3% additional damage with all attacks for the next 20 sec.",
+            "Your Blood Strikes cause you to deal 4% additional damage with all attacks for the next 20 sec.",
+            "Your Blood Strikes cause you to deal 5% additional damage with all attacks for the next 20 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/desolation.jpg"
+        },
+        {
+          "id": "deathknight-78",
+          "name": "Anti-Magic Zone",
+          "maxRank": 1,
+          "col": 1,
+          "row": 6,
+          "descriptions": [
+            "1 Unholy\n \nInstant\n 2 min cooldown \n Places a large, stationary Anti-Magic Zone that reduces spell damage done to party or raid members inside it by 75%. The Anti-Magic Zone lasts for 10 sec or until it absorbs [10000+2*AP] spell damage."
+          ],
+          "requires": "deathknight-74",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/anti-magiczone.jpg"
+        },
+        {
+          "id": "deathknight-79",
+          "name": "Improved Unholy Presence",
+          "maxRank": 2,
+          "col": 2,
+          "row": 6,
+          "descriptions": [
+            "While in Blood Presence or Frost Presence, you retain 8% increased movement speed from Unholy Presence, and your runes finish their cooldowns 5% faster in Unholy Presence.",
+            "While in Blood Presence or Frost Presence, you retain 15% increased movement speed from Unholy Presence, and your runes finish their cooldowns 10% faster in Unholy Presence."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/improvedunholypresence.jpg"
+        },
+        {
+          "id": "deathknight-80",
+          "name": "Ghoul Frenzy",
+          "maxRank": 1,
+          "col": 3,
+          "row": 6,
+          "descriptions": [
+            "Grants your pet 25% haste for 30 sec and heals it for 60% of its health over the duration."
+          ],
+          "requires": "deathknight-76",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/ghoulfrenzy.jpg"
+        },
+        {
+          "id": "deathknight-81",
+          "name": "Crypt Fever",
+          "maxRank": 3,
+          "col": 1,
+          "row": 7,
+          "descriptions": [
+            "Your diseases also cause Crypt Fever, which increases disease damage taken by the target by 10%.",
+            "Your diseases also cause Crypt Fever, which increases disease damage taken by the target by 20%.",
+            "Your diseases also cause Crypt Fever, which increases disease damage taken by the target by 30%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/cryptfever.jpg"
+        },
+        {
+          "id": "deathknight-82",
+          "name": "Bone Shield",
+          "maxRank": 1,
+          "col": 2,
+          "row": 7,
+          "descriptions": [
+            "1 Unholy\n \nInstant\n 1 min cooldown \nThe Death Knight is surrounded by 3 whirling bones. While at least 1 bone remains, he takes 20% less damage from all sources and deals 2% more damage with all attacks, spells and abilities. Each damaging attack that lands consumes 1 bone. Lasts 5 min."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/boneshield.jpg"
+        },
+        {
+          "id": "deathknight-83",
+          "name": "Wandering Plague",
+          "maxRank": 3,
+          "col": 0,
+          "row": 8,
+          "descriptions": [
+            "When your diseases damage an enemy, there is a chance equal to your melee critical strike chance that they will cause 33% additional damage to the target and all enemies within 8 yards. Ignores any target under the effect of a spell that is cancelled by taking damage.",
+            "When your diseases damage an enemy, there is a chance equal to your melee critical strike chance that they will cause 66% additional damage to the target and all enemies within 8 yards. Ignores any target under the effect of a spell that is cancelled by taking damage.",
+            "When your diseases damage an enemy, there is a chance equal to your melee critical strike chance that they will cause 100% additional damage to the target and all enemies within 8 yards. Ignores any target under the effect of a spell that is cancelled by taking damage."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/wanderingplague.jpg"
+        },
+        {
+          "id": "deathknight-84",
+          "name": "Ebon Plaguebringer",
+          "maxRank": 3,
+          "col": 1,
+          "row": 8,
+          "descriptions": [
+            "Your Crypt Fever morphs into Ebon Plague, which increases magic damage taken by 4% in addition to increasing disease damage taken. Improves your critical strike chance with weapons and spells by 1% at all times.",
+            "Your Crypt Fever morphs into Ebon Plague, which increases magic damage taken by 9% in addition to increasing disease damage taken. Improves your critical strike chance with weapons and spells by 2% at all times.",
+            "Your Crypt Fever morphs into Ebon Plague, which increases magic damage taken by 13% in addition to increasing disease damage taken. Improves your critical strike chance with weapons and spells by 3% at all times."
+          ],
+          "requires": "deathknight-81",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/ebonplaguebringer.jpg"
+        },
+        {
+          "id": "deathknight-85",
+          "name": "Scourge Strike",
+          "maxRank": 1,
+          "col": 2,
+          "row": 8,
+          "descriptions": [
+            "1 Unholy 1 Frost\n Melee range \n Instant\n \nRequires Melee Weapon\n \nAn unholy strike that deals 70% of weapon damage as Physical damage plus 238. In addition, for each of your diseases on your target, you deal an additional 12% of the Physical damage done as Shadow damage."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/scourgestrike.jpg"
+        },
+        {
+          "id": "deathknight-86",
+          "name": "Rage of Rivendare",
+          "maxRank": 5,
+          "col": 1,
+          "row": 9,
+          "descriptions": [
+            "Your spells and abilities deal 2% more damage to targets infected with Blood Plague. Also increases your expertise by 1.",
+            "Your spells and abilities deal 4% more damage to targets infected with Blood Plague. Also increases your expertise by 2.",
+            "Your spells and abilities deal 6% more damage to targets infected with Blood Plague. Also increases your expertise by 3.",
+            "Your spells and abilities deal 8% more damage to targets infected with Blood Plague. Also increases your expertise by 4.",
+            "Your spells and abilities deal 10% more damage to targets infected with Blood Plague. Also increases your expertise by 5."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/rageofrivendare.jpg"
+        },
+        {
+          "id": "deathknight-87",
+          "name": "Summon Gargoyle",
+          "maxRank": 1,
+          "col": 1,
+          "row": 10,
+          "descriptions": [
+            "60 Runic Power\n 30 yd range \n Instant\n 3 min cooldown \nA Gargoyle flies into the area and bombards the target with Nature damage modified by the Death Knight's attack power. Persists for 30 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/deathknight/images/unholy/summongargoyle.jpg"
+        }
+      ]
+    }
+  ],
+  "abilities": [],
+  "build": {},
+  "source": {
+    "version": "3.3.5a",
+    "url": "https://github.com/CraftedRO/Offline-talent-calculator-for-WotLK-3.3.5a",
+    "dataBlob": "649367fda3f022fdab0840b2755895080cc1bdf4",
+    "license": "GPL-3.0",
+    "language": "en"
+  }
+}

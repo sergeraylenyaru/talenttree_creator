@@ -1,0 +1,1145 @@
+{
+  "version": 1,
+  "name": "Чернокнижник · 3.3.5a",
+  "budget": 71,
+  "rowCost": 5,
+  "branches": [
+    {
+      "id": "warlock-branch-0",
+      "name": "Affliction",
+      "rows": 11,
+      "talents": [
+        {
+          "id": "warlock-0",
+          "name": "Improved Curse of Agony",
+          "maxRank": 2,
+          "col": 0,
+          "row": 0,
+          "descriptions": [
+            "Increases the damage done by your Curse of Agony by 5%.",
+            "Increases the damage done by your Curse of Agony by 10%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/improvedcurseofagony.jpg"
+        },
+        {
+          "id": "warlock-1",
+          "name": "Suppression",
+          "maxRank": 3,
+          "col": 1,
+          "row": 0,
+          "descriptions": [
+            "Increases your chance to hit with spells by 1%, and reduces the mana cost of your Affliction spells by 2%.",
+            "Increases your chance to hit with spells by 2%, and reduces the mana cost of your Affliction spells by 4%.",
+            "Increases your chance to hit with spells by 3%, and reduces the mana cost of your Affliction spells by 6%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/suppression.jpg"
+        },
+        {
+          "id": "warlock-2",
+          "name": "Improved Corruption",
+          "maxRank": 5,
+          "col": 2,
+          "row": 0,
+          "descriptions": [
+            "Increases the damage done by your Corruption by 2% and increases the critical strike chance of your Seed of Corruption by 1%.",
+            "Increases the damage done by your Corruption by 4% and increases the critical strike chance of your Seed of Corruption by 2%.",
+            "Increases the damage done by your Corruption by 6% and increases the critical strike chance of your Seed of Corruption by 3%.",
+            "Increases the damage done by your Corruption by 8% and increases the critical strike chance of your Seed of Corruption by 4%.",
+            "Increases the damage done by your Corruption by 10% and increases the critical strike chance of your Seed of Corruption by 5%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/improvedcorruption.jpg"
+        },
+        {
+          "id": "warlock-3",
+          "name": "Improved Curse of Weakness",
+          "maxRank": 2,
+          "col": 0,
+          "row": 1,
+          "descriptions": [
+            "Increases the amount of attack power reduced by your Curse of Weakness by 10%.",
+            "Increases the amount of attack power reduced by your Curse of Weakness by 20%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/improvedcurseofweakness.jpg"
+        },
+        {
+          "id": "warlock-4",
+          "name": "Improved Drain Soul",
+          "maxRank": 2,
+          "col": 1,
+          "row": 1,
+          "descriptions": [
+            "Returns 7% of your maximum mana if the target is killed by you while you drain its soul. In addition, your Affliction spells generate 10% less threat.",
+            "Returns 15% of your maximum mana if the target is killed by you while you drain its soul. In addition, your Affliction spells generate 20% less threat."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/improveddrainsoul.jpg"
+        },
+        {
+          "id": "warlock-5",
+          "name": "Improved Life Tap",
+          "maxRank": 2,
+          "col": 2,
+          "row": 1,
+          "descriptions": [
+            "Increases the amount of Mana awarded by your Life Tap spell by 10%.",
+            "Increases the amount of Mana awarded by your Life Tap spell by 20%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/improvedlifetap.jpg"
+        },
+        {
+          "id": "warlock-6",
+          "name": "Soul Siphon",
+          "maxRank": 2,
+          "col": 3,
+          "row": 1,
+          "descriptions": [
+            "Increases the amount drained by your Drain Life and Drain Soul spells by an additional 3% for each Affliction effect on the target, up to a maximum of 24% additional effect.",
+            "Increases the amount drained by your Drain Life and Drain Soul spells by an additional 6% for each Affliction effect on the target, up to a maximum of 18% additional effect."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/soulsiphon.jpg"
+        },
+        {
+          "id": "warlock-7",
+          "name": "Improved Fear",
+          "maxRank": 2,
+          "col": 0,
+          "row": 2,
+          "descriptions": [
+            "Causes your Fear spell to inflict a Nightmare on the target when the fear effect ends. The Nightmare effect reduces the target's movement speed by 15% for 5 sec.",
+            "Causes your Fear spell to inflict a Nightmare on the target when the fear effect ends. The Nightmare effect reduces the target's movement speed by 30% for 5 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/improvedfear.jpg"
+        },
+        {
+          "id": "warlock-8",
+          "name": "Fel Concentration",
+          "maxRank": 3,
+          "col": 1,
+          "row": 2,
+          "descriptions": [
+            "Reduces the pushback suffered from damaging attacks, while casting Drain Life, Drain Mana, Drain Soul, Unstable Affliction and Haunt by 23%.",
+            "Reduces the pushback suffered from damaging attacks, while casting Drain Life, Drain Mana, Drain Soul, Unstable Affliction and Haunt by 46%.",
+            "Reduces the pushback suffered from damaging attacks, while casting Drain Life, Drain Mana, Drain Soul, Unstable Affliction and Haunt by 70%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/felconcentration.jpg"
+        },
+        {
+          "id": "warlock-9",
+          "name": "Amplify Curse",
+          "maxRank": 1,
+          "col": 2,
+          "row": 2,
+          "descriptions": [
+            "Reduces the global cooldown of your Curses by 0.5 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/amplifycurse.jpg"
+        },
+        {
+          "id": "warlock-10",
+          "name": "Grim Reach",
+          "maxRank": 2,
+          "col": 0,
+          "row": 3,
+          "descriptions": [
+            "Increases the range of your Affliction spells by 10%.",
+            "Increases the range of your Affliction spells by 20%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/grimreach.jpg"
+        },
+        {
+          "id": "warlock-11",
+          "name": "Nightfall",
+          "maxRank": 2,
+          "col": 1,
+          "row": 3,
+          "descriptions": [
+            "Gives your Corruption and Drain Life spells a 2% chance to cause you to enter a Shadow Trance state after damaging the opponent. The Shadow Trance state reduces the casting time of your next Shadow Bolt spell by 100%.",
+            "Gives your Corruption and Drain Life spells a 4% chance to cause you to enter a Shadow Trance state after damaging the opponent. The Shadow Trance state reduces the casting time of your next Shadow Bolt spell by 100%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/nightfall.jpg"
+        },
+        {
+          "id": "warlock-12",
+          "name": "Empowered Corruption",
+          "maxRank": 3,
+          "col": 3,
+          "row": 3,
+          "descriptions": [
+            "Increases the damage of your Corruption spell by an amount equal to 12% of your spell power.",
+            "Increases the damage of your Corruption spell by an amount equal to 24% of your spell power.",
+            "Increases the damage of your Corruption spell by an amount equal to 36% of your spell power."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/empoweredcorruption.jpg"
+        },
+        {
+          "id": "warlock-13",
+          "name": "Shadow Embrace",
+          "maxRank": 5,
+          "col": 0,
+          "row": 4,
+          "descriptions": [
+            "Your Shadow Bolt and Haunt spells apply the Shadow Embrace effect, increasing all periodic damage dealt to the target by you by 1%, and reduces all periodic healing done to the target by 2%. Lasts for 12 sec. Stacks up to 3 times.",
+            "Your Shadow Bolt and Haunt spells apply the Shadow Embrace effect, increasing all periodic damage dealt to the target by you by 2%, and reduces all periodic healing done to the target by 4%. Lasts for 12 sec. Stacks up to 3 times.",
+            "Your Shadow Bolt and Haunt spells apply the Shadow Embrace effect, increasing all periodic damage dealt to the target by you by 3%, and reduces all periodic healing done to the target by 6%. Lasts for 12 sec. Stacks up to 3 times.",
+            "Your Shadow Bolt and Haunt spells apply the Shadow Embrace effect, increasing all periodic damage dealt to the target by you by 4%, and reduces all periodic healing done to the target by 8%. Lasts for 12 sec. Stacks up to 3 times.",
+            "Your Shadow Bolt and Haunt spells apply the Shadow Embrace effect, increasing all periodic damage dealt to the target by you by 5%, and reduces all periodic healing done to the target by 10%. Lasts for 12 sec. Stacks up to 3 times."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/shadowembrace.jpg"
+        },
+        {
+          "id": "warlock-14",
+          "name": "Siphon Life",
+          "maxRank": 1,
+          "col": 1,
+          "row": 4,
+          "descriptions": [
+            "Instant\nWhen you deal damage with your Corruption spell, you are instantly healed for 40% of the damage done. In addition, the damage done by your Corruption, Seed of Corruption and Unstable Affliction damage over time effects is increased by 5%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/siphonlife.jpg"
+        },
+        {
+          "id": "warlock-15",
+          "name": "Curse of Exhaustion",
+          "maxRank": 1,
+          "col": 2,
+          "row": 4,
+          "descriptions": [
+            "6% of base mana 30 yd range \nInstant cast\nReduces the target's movement speed by 30% for 12 sec. Only one Curse per Warlock can be active on any one target."
+          ],
+          "requires": "warlock-9",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/curseofexhaustion.jpg"
+        },
+        {
+          "id": "warlock-16",
+          "name": "Improved Felhunter",
+          "maxRank": 2,
+          "col": 0,
+          "row": 5,
+          "descriptions": [
+            "Your Felhunter regains 4% of its maximum mana each time it hits with its Shadow Bite ability and the cooldown on that ability is reduced by 2 sec. In addition, increases the effect of your Felhunter's Fel Intelligence by 5%.",
+            "Your Felhunter regains 8% of its maximum mana each time it hits with its Shadow Bite ability and the cooldown on that ability is reduced by 4 sec. In addition, increases the effect of your Felhunter's Fel Intelligence by 10%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/improvedfelhunter.jpg"
+        },
+        {
+          "id": "warlock-17",
+          "name": "Shadow Mastery",
+          "maxRank": 5,
+          "col": 1,
+          "row": 5,
+          "descriptions": [
+            "Increases the damage dealt or life drained by your Shadow spells by 3%.",
+            "Increases the damage dealt or life drained by your Shadow spells by 6%.",
+            "Increases the damage dealt or life drained by your Shadow spells by 9%.",
+            "Increases the damage dealt or life drained by your Shadow spells by 12%.",
+            "Increases the damage dealt or life drained by your Shadow spells by 15%."
+          ],
+          "requires": "warlock-14",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/shadowmastery.jpg"
+        },
+        {
+          "id": "warlock-18",
+          "name": "Eradication",
+          "maxRank": 3,
+          "col": 0,
+          "row": 6,
+          "descriptions": [
+            "When you deal damage with Corruption, you have 6% chance to increase your spell casting speed by 6% for 10 sec.",
+            "When you deal damage with Corruption, you have 6% chance to increase your spell casting speed by 12% for 10 sec.",
+            "When you deal damage with Corruption, you have 6% chance to increase your spell casting speed by 20% for 10 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/eradication.jpg"
+        },
+        {
+          "id": "warlock-19",
+          "name": "Contagion",
+          "maxRank": 5,
+          "col": 1,
+          "row": 6,
+          "descriptions": [
+            "Increases the damage of Curse of Agony, Corruption and Seed of Corruption by 1% and reduces the chance your helpful Affliction spells and damage over time effects will be dispelled by an additional 6%.",
+            "Increases the damage of Curse of Agony, Corruption and Seed of Corruption by 2% and reduces the chance your helpful Affliction spells and damage over time effects will be dispelled by an additional 12%.",
+            "Increases the damage of Curse of Agony, Corruption and Seed of Corruption by 3% and reduces the chance your helpful Affliction spells and damage over time effects will be dispelled by an additional 18%.",
+            "Increases the damage of Curse of Agony, Corruption and Seed of Corruption by 4% and reduces the chance your helpful Affliction spells and damage over time effects will be dispelled by an additional 24%.",
+            "Increases the damage of Curse of Agony, Corruption and Seed of Corruption by 5% and reduces the chance your helpful Affliction spells and damage over time effects will be dispelled by an additional 30%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/contagion.jpg"
+        },
+        {
+          "id": "warlock-20",
+          "name": "Dark Pact",
+          "maxRank": 1,
+          "col": 2,
+          "row": 6,
+          "descriptions": [
+            "100 yd range\nInstant\nDrains 305 of your summoned demon's Mana, returning 100% to you."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/darkpact.jpg"
+        },
+        {
+          "id": "warlock-21",
+          "name": "Improved Howl of Terror",
+          "maxRank": 2,
+          "col": 0,
+          "row": 7,
+          "descriptions": [
+            "Reduces the casting time of your Howl of Terror spell by 0.8 sec.",
+            "Reduces the casting time of your Howl of Terror spell by 1.5 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/improvedhowlofterror.jpg"
+        },
+        {
+          "id": "warlock-22",
+          "name": "Malediction",
+          "maxRank": 3,
+          "col": 2,
+          "row": 7,
+          "descriptions": [
+            "Increases your spell damage by 1%, and increases the periodic critical strike chance of your Corruption and Unstable Affliction spells by 3%.",
+            "Increases your spell damage by 2%, and increases the periodic critical strike chance of your Corruption and Unstable Affliction spells by 6%.",
+            "Increases your spell damage by 3%, and increases the periodic critical strike chance of your Corruption and Unstable Affliction spells by 9%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/malediction.jpg"
+        },
+        {
+          "id": "warlock-23",
+          "name": "Death's Embrace",
+          "maxRank": 3,
+          "col": 0,
+          "row": 8,
+          "descriptions": [
+            "Increases the amount drained by your Drain Life by 10% while your health is at or below 20% health, and increases the damage done by your Shadow spells by 4% when your target is at or below 35% health.",
+            "Increases the amount drained by your Drain Life by 20% while your health is at or below 20% health, and increases the damage done by your Shadow spells by 8% when your target is at or below 35% health.",
+            "Increases the amount drained by your Drain Life by 30% while your health is at or below 20% health, and increases the damage done by your Shadow spells by 12% when your target is at or below 35% health."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/death'sembrace.jpg"
+        },
+        {
+          "id": "warlock-24",
+          "name": "Unstable Affliction",
+          "maxRank": 1,
+          "col": 1,
+          "row": 8,
+          "descriptions": [
+            "15% of base mana 30 yd range \n1.5 sec cast\nShadow energy slowly destroys the target, causing 550 damage over 15 sec. In addition, if the Unstable Affliction is dispelled it will cause 990 damage to the dispeller and silence them for 5 sec. Only one Unstable Affliction or Immolate per Warlock can be active on any one target."
+          ],
+          "requires": "warlock-19",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/unstableaffliction.jpg"
+        },
+        {
+          "id": "warlock-25",
+          "name": "Pandemic",
+          "maxRank": 1,
+          "col": 2,
+          "row": 8,
+          "descriptions": [
+            "Grants the periodic damage from your Corruption and Unstable Affliction spells the ability to critically hit for 100% increased damage, and increases the critical strike damage bonus of your Haunt spell by 100%."
+          ],
+          "requires": "warlock-24",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/pandemic.jpg"
+        },
+        {
+          "id": "warlock-26",
+          "name": "Everlasting Affliction",
+          "maxRank": 5,
+          "col": 1,
+          "row": 9,
+          "descriptions": [
+            "Your Corruption and Unstable Affliction spells gain an additional 1% of your bonus spell damage, and your Drain Life, Drain Soul, Shadow Bolt, and Haunt spells have a 20% chance to reset the duration of your Corruption spell on the target.",
+            "Your Corruption and Unstable Affliction spells gain an additional 2% of your bonus spell damage, and your Drain Life, Drain Soul, Shadow Bolt, and Haunt spells have a 40% chance to reset the duration of your Corruption spell on the target.",
+            "Your Corruption and Unstable Affliction spells gain an additional 3% of your bonus spell damage, and your Drain Life, Drain Soul, Shadow Bolt, and Haunt spells have a 60% chance to reset the duration of your Corruption spell on the target.",
+            "Your Corruption and Unstable Affliction spells gain an additional 4% of your bonus spell damage, and your Drain Life, Drain Soul, Shadow Bolt, and Haunt spells have a 80% chance to reset the duration of your Corruption spell on the target.",
+            "Your Corruption and Unstable Affliction spells gain an additional 5% of your bonus spell damage, and your Drain Life, Drain Soul, Shadow Bolt, and Haunt spells have a 100% chance to reset the duration of your Corruption spell on the target."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/everlastingaffliction.jpg"
+        },
+        {
+          "id": "warlock-27",
+          "name": "Haunt",
+          "maxRank": 1,
+          "col": 1,
+          "row": 10,
+          "descriptions": [
+            "12% of base mana 30 yd range \n1.5 sec cast 8 sec cooldown \n You send a ghostly soul into the target, dealing 405 to 473 Shadow damage and increasing all damage done by your Shadow damage-over-time effects on the target by 20% for 12 sec. When the Haunt spell ends or is dispelled, the soul returns to you, healing you for 100% of the damage it did to the target."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/affliction/haunt.jpg"
+        }
+      ]
+    },
+    {
+      "id": "warlock-branch-1",
+      "name": "Demonology",
+      "rows": 11,
+      "talents": [
+        {
+          "id": "warlock-28",
+          "name": "Improved Healthstone",
+          "maxRank": 2,
+          "col": 0,
+          "row": 0,
+          "descriptions": [
+            "Increases the amount of Health restored by your Healthstone by 10%.",
+            "Increases the amount of Health restored by your Healthstone by 20%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/improvedhealthstone.jpg"
+        },
+        {
+          "id": "warlock-29",
+          "name": "Improved Imp",
+          "maxRank": 3,
+          "col": 1,
+          "row": 0,
+          "descriptions": [
+            "Increases the effect of your Imp's Firebolt, Fire Shield, and Blood Pact spells by 10%.",
+            "Increases the effect of your Imp's Firebolt, Fire Shield, and Blood Pact spells by 20%.",
+            "Increases the effect of your Imp's Firebolt, Fire Shield, and Blood Pact spells by 30%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/improvedimp.jpg"
+        },
+        {
+          "id": "warlock-30",
+          "name": "Demonic Embrace",
+          "maxRank": 3,
+          "col": 2,
+          "row": 0,
+          "descriptions": [
+            "Increases your total Stamina by 4%.",
+            "Increases your total Stamina by 7%.",
+            "Increases your total Stamina by 10%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/demonicembrace.jpg"
+        },
+        {
+          "id": "warlock-31",
+          "name": "Fel Synergy",
+          "maxRank": 2,
+          "col": 3,
+          "row": 0,
+          "descriptions": [
+            "You have a 50% chance to heal your pet for 15% of the amount of spell damage done by you.",
+            "You have a 100% chance to heal your pet for 15% of the amount of spell damage done by you."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/felsynergy.jpg"
+        },
+        {
+          "id": "warlock-32",
+          "name": "Improved Health Funnel",
+          "maxRank": 2,
+          "col": 0,
+          "row": 1,
+          "descriptions": [
+            "Increases the amount of Health transfered by your Health Funnel spell by 10% and reduces the health cost by 10%. In addition, your summoned Demon takes 15% less damage while under the effect of your Health Funnel.",
+            "Increases the amount of Health transfered by your Health Funnel spell by 20% and reduces the health cost by 20%. In addition, your summoned Demon takes 30% less damage while under the effect of your Health Funnel."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/improvedhealthfunnel.jpg"
+        },
+        {
+          "id": "warlock-33",
+          "name": "Demonic Brutality",
+          "maxRank": 3,
+          "col": 1,
+          "row": 1,
+          "descriptions": [
+            "Increases the effectiveness of your Voidwalker's Torment, Consume Shadows, Sacrifice and Suffering spells by 10%, and increases the attack power bonus on your Felguard's Demonic Frenzy effect by 1%.",
+            "Increases the effectiveness of your Voidwalker's Torment, Consume Shadows, Sacrifice and Suffering spells by 20%, and increases the attack power bonus on your Felguard's Demonic Frenzy effect by 2%.",
+            "Increases the effectiveness of your Voidwalker's Torment, Consume Shadows, Sacrifice and Suffering spells by 30%, and increases the attack power bonus on your Felguard's Demonic Frenzy effect by 3%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/demonicbrutality.jpg"
+        },
+        {
+          "id": "warlock-34",
+          "name": "Fel Vitality",
+          "maxRank": 3,
+          "col": 2,
+          "row": 1,
+          "descriptions": [
+            "Increases the Stamina and Intellect of your Imp, Voidwalker, Succubus, Felhunter and Felguard by 5% and increases your maximum health and mana by 1%.",
+            "Increases the Stamina and Intellect of your Imp, Voidwalker, Succubus, Felhunter and Felguard by 10% and increases your maximum health and mana by 2%.",
+            "Increases the Stamina and Intellect of your Imp, Voidwalker, Succubus, Felhunter and Felguard by 15% and increases your maximum health and mana by 3%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/felvitality.jpg"
+        },
+        {
+          "id": "warlock-35",
+          "name": "Improved Succubus",
+          "maxRank": 3,
+          "col": 0,
+          "row": 2,
+          "descriptions": [
+            "Reduces the cast time of your Succubus' Seduction by 22%, and increases the duration of your Succubus' Seduction and Lesser Invisibility spells by 10%.",
+            "Reduces the cast time of your Succubus' Seduction by 44%, and increases the duration of your Succubus' Seduction and Lesser Invisibility spells by 20%.",
+            "Reduces the cast time of your Succubus' Seduction by 66%, and increases the duration of your Succubus' Seduction and Lesser Invisibility spells by 30%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/improvedsuccubus.jpg"
+        },
+        {
+          "id": "warlock-36",
+          "name": "Soul Link",
+          "maxRank": 1,
+          "col": 1,
+          "row": 2,
+          "descriptions": [
+            "16% of base mana 100 yd range \nInstant cast\nWhen active, 20% of all damage taken by the caster is taken by your Imp, Voidwalker, Succubus, Felhunter, Felguard, or enslaved demon instead. That damage cannot be prevented. Lasts as long as the demon is active and controlled."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/soullink.jpg"
+        },
+        {
+          "id": "warlock-37",
+          "name": "Fel Domination",
+          "maxRank": 1,
+          "col": 2,
+          "row": 2,
+          "descriptions": [
+            "Instant 3 min cooldown \nYour next Imp, Voidwalker, Succubus, Felhunter or Felguard Summon spell has its casting time reduced by 5.5 sec and its Mana cost reduced by 50%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/feldomination.jpg"
+        },
+        {
+          "id": "warlock-38",
+          "name": "Demonic Aegis",
+          "maxRank": 3,
+          "col": 3,
+          "row": 2,
+          "descriptions": [
+            "Increases the effectiveness of your Demon Armor and Fel Armor spells by 10%.",
+            "Increases the effectiveness of your Demon Armor and Fel Armor spells by 20%.",
+            "Increases the effectiveness of your Demon Armor and Fel Armor spells by 30%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/demonicaegis.jpg"
+        },
+        {
+          "id": "warlock-39",
+          "name": "Unholy Power",
+          "maxRank": 5,
+          "col": 1,
+          "row": 3,
+          "descriptions": [
+            "Increases the damage done by your Voidwalker, Succubus, Felhunter and Felguard's melee attacks and your Imp's Firebolt by 4%.",
+            "Increases the damage done by your Voidwalker, Succubus, Felhunter and Felguard's melee attacks and your Imp's Firebolt by 8%.",
+            "Increases the damage done by your Voidwalker, Succubus, Felhunter and Felguard's melee attacks and your Imp's Firebolt by 12%.",
+            "Increases the damage done by your Voidwalker, Succubus, Felhunter and Felguard's melee attacks and your Imp's Firebolt by 16%.",
+            "Increases the damage done by your Voidwalker, Succubus, Felhunter and Felguard's melee attacks and your Imp's Firebolt by 20%."
+          ],
+          "requires": "warlock-36",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/unholypower.jpg"
+        },
+        {
+          "id": "warlock-40",
+          "name": "Master Summoner",
+          "maxRank": 2,
+          "col": 2,
+          "row": 3,
+          "descriptions": [
+            "Reduces the casting time of your Imp, Voidwalker, Succubus, Felhunter and Felguard Summoning spells by 2 sec and the Mana cost by 20%.",
+            "Reduces the casting time of your Imp, Voidwalker, Succubus, Felhunter and Felguard Summoning spells by 4 sec and the Mana cost by 40%."
+          ],
+          "requires": "warlock-37",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/mastersummoner.jpg"
+        },
+        {
+          "id": "warlock-41",
+          "name": "Mana Feed",
+          "maxRank": 1,
+          "col": 0,
+          "row": 4,
+          "descriptions": [
+            "Instant\nWhen you gain mana from Drain Mana or Life Tap spells, your summoned demon gains 100% of the mana you gain."
+          ],
+          "requires": "warlock-39",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/manafeed.jpg"
+        },
+        {
+          "id": "warlock-42",
+          "name": "Master Conjuror",
+          "maxRank": 2,
+          "col": 2,
+          "row": 4,
+          "descriptions": [
+            "Increases the combat ratings gained from your conjured Firestone and Spellstone by 150%.",
+            "Increases the combat ratings gained from your conjured Firestone and Spellstone by 300%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/masterconjuror.jpg"
+        },
+        {
+          "id": "warlock-43",
+          "name": "Master Demonologist",
+          "maxRank": 5,
+          "col": 1,
+          "row": 5,
+          "descriptions": [
+            "Grants both the Warlock and the summoned demon an effect as long as that demon is active.\n\nImp - Increases your fire damage by 1%, and increases the critical effect chance of your fire spells by 1%.\n\nVoidwalker - Reduces physical damage taken by 2%.\n\nSuccubus - Increases your shadow damage by 1%, and increases the critical effect chance of your shadow spells by 1%.\n\nFelhunter - Reduces all spell damage taken by 2%.\n\nFelguard - Increases all damage done by 1%, and reduces all damage taken by 1%.",
+            "Grants both the Warlock and the summoned demon an effect as long as that demon is active.\n\nImp - Increases your fire damage by 2%, and increases the critical effect chance of your fire spells by 1%.\n\nVoidwalker - Reduces physical damage taken by 4%.\n\nSuccubus - Increases your shadow damage by 2%, and increases the critical effect chance of your shadow spells by 2%.\n\nFelhunter - Reduces all spell damage taken by 4%.\n\nFelguard - Increases all damage done by 2%, and reduces all damage taken by 2%.",
+            "Grants both the Warlock and the summoned demon an effect as long as that demon is active.\n\nImp - Increases your fire damage by 3%, and increases the critical effect chance of your fire spells by 3%.\n\nVoidwalker - Reduces physical damage taken by 6%.\n\nSuccubus - Increases your shadow damage by 3%, and increases the critical effect chance of your shadow spells by 3%.\n\nFelhunter - Reduces all spell damage taken by 6%.\n\nFelguard - Increases all damage done by 3%, and reduces all damage taken by 3%.",
+            "Grants both the Warlock and the summoned demon an effect as long as that demon is active.\n\nImp - Increases your fire damage by 4%, and increases the critical effect chance of your fire spells by 4%.\n\nVoidwalker - Reduces physical damage taken by 8%.\n\nSuccubus - Increases your shadow damage by 4%, and increases the critical effect chance of your shadow spells by 4%.\n\nFelhunter - Reduces all spell damage taken by 8%.\n\nFelguard - Increases all damage done by 4%, and reduces all damage taken by 4%.",
+            "Grants both the Warlock and the summoned demon an effect as long as that demon is active.\n\nImp - Increases your fire damage by 5%, and increases the critical effect chance of your fire spells by 5%.\n\nVoidwalker - Reduces physical damage taken by 10%.\n\nSuccubus - Increases your shadow damage by 5%, and increases the critical effect chance of your shadow spells by 5%.\n\nFelhunter - Reduces all spell damage taken by 10%.\n\nFelguard - Increases all damage done by 5%, and reduces all damage taken by 5%."
+          ],
+          "requires": "warlock-39",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/masterdemonologist.jpg"
+        },
+        {
+          "id": "warlock-44",
+          "name": "Molten Core",
+          "maxRank": 3,
+          "col": 2,
+          "row": 5,
+          "descriptions": [
+            "Increases the duration of your Immolate by 3 sec, and you have a 4% chance to gain the Molten Core effect when your Corruption deals damage. The Molten Core effect empowers your next 3 Incinerate or Soul Fire spells cast within 15 sec.\n\nIncinerate - Increases damage done by 6% and reduces cast time by 10%.\n\nSoul Fire - Increases damage done by 6% and increases critical strike chance by 5%.",
+            "Increases the duration of your Immolate by 6 sec, and you have a 8% chance to gain the Molten Core effect when your Corruption deals damage. The Molten Core effect empowers your next 3 Incinerate or Soul Fire spells cast within 15 sec.\n\nIncinerate - Increases damage done by 12% and reduces cast time by 20%.\n\nSoul Fire - Increases damage done by 12% and increases critical strike chance by 10%.",
+            "Increases the duration of your Immolate by 9 sec, and you have a 12% chance to gain the Molten Core effect when your Corruption deals damage. The Molten Core effect empowers your next 3 Incinerate or Soul Fire spells cast within 15 sec.\n\nIncinerate - Increases damage done by 18% and reduces cast time by 30%.\n\nSoul Fire - Increases damage done by 18% and increases critical strike chance by 15%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/moltencore.jpg"
+        },
+        {
+          "id": "warlock-45",
+          "name": "Demonic Resilience",
+          "maxRank": 3,
+          "col": 0,
+          "row": 6,
+          "descriptions": [
+            "Reduces the chance you'll be critically hit by melee and spells by 1% and reduces all damage your summoned demon takes by 5%.",
+            "Reduces the chance you'll be critically hit by melee and spells by 2% and reduces all damage your summoned demon takes by 10%.",
+            "Reduces the chance you'll be critically hit by melee and spells by 3% and reduces all damage your summoned demon takes by 15%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/demonicresilience.jpg"
+        },
+        {
+          "id": "warlock-46",
+          "name": "Demonic Empowerment",
+          "maxRank": 1,
+          "col": 1,
+          "row": 6,
+          "descriptions": [
+            "Grants the Warlock's summoned demon Empowerment.\n\nImp - Increases the Imp's spell critical strike chance by 20% for 30 sec.\n\nVoidwalker - Increases the Voidwalker's health by 20%, and its threat generated from spells and attacks by 20% for 20 sec.\n\nSuccubus - Instantly vanishes, causing the Succubus to go into an improved Invisibility state. The vanish effect removes all stuns, snares and movement impairing effects from the Succubus.\n\nFelhunter - Dispels all magical effects from the Felhunter.\n\nFelguard - Increases the Felguard's attack speed by 20% and breaks all stun, snare and movement impairing effects and makes your Felguard immune to them for 15 sec."
+          ],
+          "requires": "warlock-43",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/demonicempowerment.jpg"
+        },
+        {
+          "id": "warlock-47",
+          "name": "Demonic Knowledge",
+          "maxRank": 3,
+          "col": 2,
+          "row": 6,
+          "descriptions": [
+            "Increases your spell damage by an amount equal to 4% of the total of your active demon's Stamina plus Intellect.",
+            "Increases your spell damage by an amount equal to 8% of the total of your active demon's Stamina plus Intellect.",
+            "Increases your spell damage by an amount equal to 12% of the total of your active demon's Stamina plus Intellect."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/demonicknowledge.jpg"
+        },
+        {
+          "id": "warlock-48",
+          "name": "Demonic Tactics",
+          "maxRank": 5,
+          "col": 1,
+          "row": 7,
+          "descriptions": [
+            "Increases melee and spell critical strike chance for you and your summoned demon by 2%.",
+            "Increases melee and spell critical strike chance for you and your summoned demon by 4%.",
+            "Increases melee and spell critical strike chance for you and your summoned demon by 6%.",
+            "Increases melee and spell critical strike chance for you and your summoned demon by 8%.",
+            "Increases melee and spell critical strike chance for you and your summoned demon by 10%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/demonictactics.jpg"
+        },
+        {
+          "id": "warlock-49",
+          "name": "Decimation",
+          "maxRank": 2,
+          "col": 2,
+          "row": 7,
+          "descriptions": [
+            "When you Shadowbolt, Incinerate or Soul Fire a target that is at or below 35% health, the cast time of Soul Fire spell is reduced by 20% for 10 sec. Soul Fires cast under the effect of Decimation cost no shard.",
+            "When you Shadowbolt, Incinerate or Soul Fire a target that is at or below 35% health, the cast time of Soul Fire spell is reduced by 40% for 10 sec. Soul Fires cast under the effect of Decimation cost no shard."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/decimation.jpg"
+        },
+        {
+          "id": "warlock-50",
+          "name": "Improved Demonic Tactics",
+          "maxRank": 3,
+          "col": 0,
+          "row": 8,
+          "descriptions": [
+            "Increases your summoned demons critical strike chance equal to 10% of your critical strike chance.",
+            "Increases your summoned demons critical strike chance equal to 20% of your critical strike chance.",
+            "Increases your summoned demons critical strike chance equal to 30% of your critical strike chance."
+          ],
+          "requires": "warlock-48",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/improveddemonictactics.jpg"
+        },
+        {
+          "id": "warlock-51",
+          "name": "Summon Felguard",
+          "maxRank": 1,
+          "col": 1,
+          "row": 8,
+          "descriptions": [
+            "80% of base Mana \n10 sec cast \nSummons a Felguard under the command of the Warlock."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/summonfelguard.jpg"
+        },
+        {
+          "id": "warlock-52",
+          "name": "Nemesis",
+          "maxRank": 3,
+          "col": 2,
+          "row": 8,
+          "descriptions": [
+            "Reduces the cooldown of your Demonic Empowerment, Metamorphosis, and Fel Domination spells by 10%.",
+            "Reduces the cooldown of your Demonic Empowerment, Metamorphosis, and Fel Domination spells by 20%.",
+            "Reduces the cooldown of your Demonic Empowerment, Metamorphosis, and Fel Domination spells by 30%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/nemesis.jpg"
+        },
+        {
+          "id": "warlock-53",
+          "name": "Demonic Pact",
+          "maxRank": 5,
+          "col": 1,
+          "row": 9,
+          "descriptions": [
+            "Increases your spell damage by 2%, and your pet's criticals apply the Demonic Pact effect to your party or raid members. Demonic Pact increases spell power by 2% of your Spell Damage for 45 sec. This effect has a 20 sec cooldown. Does not work on Enslaved demons.",
+            "Increases your spell damage by 4%, and your pet's criticals apply the Demonic Pact effect to your party or raid members. Demonic Pact increases spell power by 4% of your Spell Damage for 45 sec. This effect has a 20 sec cooldown. Does not work on Enslaved demons.",
+            "Increases your spell damage by 6%, and your pet's criticals apply the Demonic Pact effect to your party or raid members. Demonic Pact increases spell power by 6% of your Spell Damage for 45 sec. This effect has a 20 sec cooldown. Does not work on Enslaved demons.",
+            "Increases your spell damage by 8%, and your pet's criticals apply the Demonic Pact effect to your party or raid members. Demonic Pact increases spell power by 8% of your Spell Damage for 45 sec. This effect has a 20 sec cooldown. Does not work on Enslaved demons.",
+            "Increases your spell damage by 10%, and your pet's criticals apply the Demonic Pact effect to your party or raid members. Demonic Pact increases spell power by 10% of your Spell Damage for 45 sec. This effect has a 20 sec cooldown. Does not work on Enslaved demons."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/demonicpact.jpg"
+        },
+        {
+          "id": "warlock-54",
+          "name": "Metamorphosis",
+          "maxRank": 1,
+          "col": 1,
+          "row": 10,
+          "descriptions": [
+            "Instant \nYou transform into a Demon for 30 sec. This form increases your armor by 600%, damage by 20%, reduces the chance you'll be critically hit by melee attacks by 6% and reduces the duration of stun and snare effects by 50%. You gain some unique demon abilities in addition to your normal abilities. 3 minute cooldown."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/demonology/metamorphosis.jpg"
+        }
+      ]
+    },
+    {
+      "id": "warlock-branch-2",
+      "name": "Destruction",
+      "rows": 11,
+      "talents": [
+        {
+          "id": "warlock-55",
+          "name": "Improved Shadow Bolt",
+          "maxRank": 5,
+          "col": 1,
+          "row": 0,
+          "descriptions": [
+            "Increases the damage done by your Shadow Bolt spell by 2%, and your Shadow Bolt has a 20% chance to cause your target to be vulnerable to spell damage, increasing spell critical strike chance against that target by 5%. Effect lasts 30 sec.",
+            "Increases the damage done by your Shadow Bolt spell by 4%, and your Shadow Bolt has a 40% chance to cause your target to be vulnerable to spell damage, increasing spell critical strike chance against that target by 5%. Effect lasts 30 sec.",
+            "Increases the damage done by your Shadow Bolt spell by 6%, and your Shadow Bolt has a 60% chance to cause your target to be vulnerable to spell damage, increasing spell critical strike chance against that target by 5%. Effect lasts 30 sec.",
+            "Increases the damage done by your Shadow Bolt spell by 8%, and your Shadow Bolt has a 80% chance to cause your target to be vulnerable to spell damage, increasing spell critical strike chance against that target by 5%. Effect lasts 30 sec.",
+            "Increases the damage done by your Shadow Bolt spell by 10%, and your Shadow Bolt has a 100% chance to cause your target to be vulnerable to spell damage, increasing spell critical strike chance against that target by 5%. Effect lasts 30 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/improvedshadowbolt.jpg"
+        },
+        {
+          "id": "warlock-56",
+          "name": "Bane",
+          "maxRank": 5,
+          "col": 2,
+          "row": 0,
+          "descriptions": [
+            "Reduces the casting time of your Shadow Bolt, Chaos Bolt and Immolate spells by 0.1 sec and your Soul Fire spell by 0.4 sec.",
+            "Reduces the casting time of your Shadow Bolt, Chaos Bolt and Immolate spells by 0.2 sec and your Soul Fire spell by 0.8 sec.",
+            "Reduces the casting time of your Shadow Bolt, Chaos Bolt and Immolate spells by 0.3 sec and your Soul Fire spell by 1.2 sec.",
+            "Reduces the casting time of your Shadow Bolt, Chaos Bolt and Immolate spells by 0.4 sec and your Soul Fire spell by 1.6 sec.",
+            "Reduces the casting time of your Shadow Bolt, Chaos Bolt and Immolate spells by 0.5 sec and your Soul Fire spell by 2 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/bane.jpg"
+        },
+        {
+          "id": "warlock-57",
+          "name": "Aftermath",
+          "maxRank": 2,
+          "col": 0,
+          "row": 1,
+          "descriptions": [
+            "Increases the periodic damage done by your Immolate by 3%, and your Conflagrate has a 50% chance to daze the target for 5 sec.",
+            "Increases the periodic damage done by your Immolate by 6%, and your Conflagrate has a 100% chance to daze the target for 5 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/aftermath.jpg"
+        },
+        {
+          "id": "warlock-58",
+          "name": "Molten Skin",
+          "maxRank": 3,
+          "col": 1,
+          "row": 1,
+          "descriptions": [
+            "Reduces all damage taken by 2%.",
+            "Reduces all damage taken by 4%.",
+            "Reduces all damage taken by 6%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/moltenskin.jpg"
+        },
+        {
+          "id": "warlock-59",
+          "name": "Cataclysm",
+          "maxRank": 3,
+          "col": 2,
+          "row": 1,
+          "descriptions": [
+            "Reduces the Mana cost of your Destruction spells by 4%.",
+            "Reduces the Mana cost of your Destruction spells by 7%.",
+            "Reduces the Mana cost of your Destruction spells by 10%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/cataclysm.jpg"
+        },
+        {
+          "id": "warlock-60",
+          "name": "Demonic Power",
+          "maxRank": 2,
+          "col": 0,
+          "row": 2,
+          "descriptions": [
+            "Reduces the cooldown of your Succubus' Lash of Pain spell by 3 sec, and reduces the casting time of your Imp's Firebolt spell by 0.25 sec.",
+            "Reduces the cooldown of your Succubus' Lash of Pain spell by 6 sec, and reduces the casting time of your Imp's Firebolt spell by 0.5 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/demonicpower.jpg"
+        },
+        {
+          "id": "warlock-61",
+          "name": "Shadowburn",
+          "maxRank": 1,
+          "col": 1,
+          "row": 2,
+          "descriptions": [
+            "20% of base mana 20 yd range \nInstant cast 15 sec cooldown \nInstantly blasts the target for 89 to 99 Shadow damage. If the target dies within 5 secs of Shadowburn, and yields experience or honor, the caster gains a Soul Shard."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/shadowburn.jpg"
+        },
+        {
+          "id": "warlock-62",
+          "name": "Ruin",
+          "maxRank": 5,
+          "col": 2,
+          "row": 2,
+          "descriptions": [
+            "Increases the critical strike damage bonus of your Destruction spells and your Imp's Firebolt spell by 20%.",
+            "Increases the critical strike damage bonus of your Destruction spells and your Imp's Firebolt spell by 40%.",
+            "Increases the critical strike damage bonus of your Destruction spells and your Imp's Firebolt spell by 60%.",
+            "Increases the critical strike damage bonus of your Destruction spells and your Imp's Firebolt spell by 80%.",
+            "Increases the critical strike damage bonus of your Destruction spells and your Imp's Firebolt spell by 100%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/ruin.jpg"
+        },
+        {
+          "id": "warlock-63",
+          "name": "Intensity",
+          "maxRank": 2,
+          "col": 0,
+          "row": 3,
+          "descriptions": [
+            "Reduces the pushback suffered from damaging attacks while casting or channeling any Destruction spell by 35%.",
+            "Reduces the pushback suffered from damaging attacks while casting or channeling any Destruction spell by 70%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/intensity.jpg"
+        },
+        {
+          "id": "warlock-64",
+          "name": "Destructive Reach",
+          "maxRank": 2,
+          "col": 1,
+          "row": 3,
+          "descriptions": [
+            "Increases the range of your Destruction spells by 10% and reduces threat caused by Destruction spells by 10%.",
+            "Increases the range of your Destruction spells by 20% and reduces threat caused by Destruction spells by 20%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/destructivereach.jpg"
+        },
+        {
+          "id": "warlock-65",
+          "name": "Improved Searing Pain",
+          "maxRank": 3,
+          "col": 3,
+          "row": 3,
+          "descriptions": [
+            "Increases the critical strike chance of your Searing Pain spell by 4%.",
+            "Increases the critical strike chance of your Searing Pain spell by 7%.",
+            "Increases the critical strike chance of your Searing Pain spell by 10%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/improvedsearingpain.jpg"
+        },
+        {
+          "id": "warlock-66",
+          "name": "Backlash",
+          "maxRank": 3,
+          "col": 0,
+          "row": 4,
+          "descriptions": [
+            "Increases your critical strike chance with spells by an additional 1% and gives you a 8% chance when hit by a physical attack to reduce the cast time of your next Shadow Bolt or Incinerate spell by 100%. This effect lasts 8 sec and will not occur more than once every 8 seconds.",
+            "Increases your critical strike chance with spells by an additional 2% and gives you a 16% chance when hit by a physical attack to reduce the cast time of your next Shadow Bolt or Incinerate spell by 100%. This effect lasts 8 sec and will not occur more than once every 8 seconds.",
+            "Increases your critical strike chance with spells by an additional 3% and gives you a 25% chance when hit by a physical attack to reduce the cast time of your next Shadow Bolt or Incinerate spell by 100%. This effect lasts 8 sec and will not occur more than once every 8 seconds."
+          ],
+          "requires": "warlock-63",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/backlash.jpg"
+        },
+        {
+          "id": "warlock-67",
+          "name": "Improved Immolate",
+          "maxRank": 3,
+          "col": 1,
+          "row": 4,
+          "descriptions": [
+            "Increases the damage of your Immolate spell by 10%.",
+            "Increases the damage of your Immolate spell by 20%.",
+            "Increases the damage of your Immolate spell by 30%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/improvedimmolate.jpg"
+        },
+        {
+          "id": "warlock-68",
+          "name": "Devastation",
+          "maxRank": 1,
+          "col": 2,
+          "row": 4,
+          "descriptions": [
+            "Increases the critical strike chance of your Destruction spells by 5%."
+          ],
+          "requires": "warlock-62",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/devastation.jpg"
+        },
+        {
+          "id": "warlock-69",
+          "name": "Nether Protection",
+          "maxRank": 3,
+          "col": 0,
+          "row": 5,
+          "descriptions": [
+            "After being hit with a spell, you have a 10% chance to gain Nether Protection, reducing all damage by that spell school by 30% for 8 sec.",
+            "After being hit with a spell, you have a 20% chance to gain Nether Protection, reducing all damage by that spell school by 30% for 8 sec.",
+            "After being hit with a spell, you have a 30% chance to gain Nether Protection, reducing all damage by that spell school by 30% for 8 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/netherprotection.jpg"
+        },
+        {
+          "id": "warlock-70",
+          "name": "Emberstorm",
+          "maxRank": 5,
+          "col": 2,
+          "row": 5,
+          "descriptions": [
+            "Increases the damage done by your Fire spells by 3% and reduces the cast time of your Incinerate spell by 0.05 sec.",
+            "Increases the damage done by your Fire spells by 6% and reduces the cast time of your Incinerate spell by 0.10 sec.",
+            "Increases the damage done by your Fire spells by 9% and reduces the cast time of your Incinerate spell by 0.15 sec.",
+            "Increases the damage done by your Fire spells by 12% and reduces the cast time of your Incinerate spell by 0.20 sec.",
+            "Increases the damage done by your Fire spells by 15% and reduces the cast time of your Incinerate spell by 0.25 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/emberstorm.jpg"
+        },
+        {
+          "id": "warlock-71",
+          "name": "Conflagrate",
+          "maxRank": 1,
+          "col": 1,
+          "row": 6,
+          "descriptions": [
+            "16% of base mana 30 yd range \nInstant Cast 10 sec cooldown \nConsumes an Immolate or Shadowflame effect on the enemy target to instantly deal damage equal to 60% of your Immolate or Shadowflame, and causes an additional 40% damage over 6 sec."
+          ],
+          "requires": "warlock-67",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/conflagrate.jpg"
+        },
+        {
+          "id": "warlock-72",
+          "name": "Soul Leech",
+          "maxRank": 3,
+          "col": 2,
+          "row": 6,
+          "descriptions": [
+            "Gives your Shadow Bolt, Shadowburn, Chaos Bolt, Soul Fire, Incinerate, Searing Pain and Conflagrate spells a 10% chance to return health equal to 20% of the damage caused.",
+            "Gives your Shadow Bolt, Shadowburn, Chaos Bolt, Soul Fire, Incinerate, Searing Pain and Conflagrate spells a 20% chance to return health equal to 20% of the damage caused.",
+            "Gives your Shadow Bolt, Shadowburn, Chaos Bolt, Soul Fire, Incinerate, Searing Pain and Conflagrate spells a 30% chance to return health equal to 20% of the damage caused."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/soulleech.jpg"
+        },
+        {
+          "id": "warlock-73",
+          "name": "Pyroclasm",
+          "maxRank": 3,
+          "col": 3,
+          "row": 6,
+          "descriptions": [
+            "When you critically strike with Searing Pain or Conflagrate, your Fire and Shadow spell damage is increased by 2% for 10 sec.",
+            "When you critically strike with Searing Pain or Conflagrate, your Fire and Shadow spell damage is increased by 4% for 10 sec.",
+            "When you critically strike with Searing Pain or Conflagrate, your Fire and Shadow spell damage is increased by 6% for 10 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/pyroclasm.jpg"
+        },
+        {
+          "id": "warlock-74",
+          "name": "Shadow and Flame",
+          "maxRank": 5,
+          "col": 1,
+          "row": 7,
+          "descriptions": [
+            "Your Shadow Bolt, Shadowburn, Chaos Bolt and Incinerate spells gain an additional 4% of your bonus spell damage effects.",
+            "Your Shadow Bolt, Shadowburn, Chaos Bolt and Incinerate spells gain an additional 8% of your bonus spell damage effects.",
+            "Your Shadow Bolt, Shadowburn, Chaos Bolt and Incinerate spells gain an additional 12% of your bonus spell damage effects.",
+            "Your Shadow Bolt, Shadowburn, Chaos Bolt and Incinerate spells gain an additional 16% of your bonus spell damage effects.",
+            "Your Shadow Bolt, Shadowburn, Chaos Bolt and Incinerate spells gain an additional 20% of your bonus spell damage effects."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/shadowandflame.jpg"
+        },
+        {
+          "id": "warlock-75",
+          "name": "Improved Soul Leech",
+          "maxRank": 2,
+          "col": 2,
+          "row": 7,
+          "descriptions": [
+            "Your Soul Leech effect also restores mana to you and your summoned demon equal to 1% of maximum mana, and has a 50% chance to grant up to 10 party or raid members mana regeneration equal to 1% of maximum mana per 5 sec. Lasts for 15 sec.",
+            "Your Soul Leech effect also restores mana to you and your summoned demon equal to 2% of maximum mana, and has a 100% chance to grant up to 10 party or raid members mana regeneration equal to 1% of maximum mana per 5 sec. Lasts for 15 sec."
+          ],
+          "requires": "warlock-72",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/improvedsoulleech.jpg"
+        },
+        {
+          "id": "warlock-76",
+          "name": "Backdraft",
+          "maxRank": 3,
+          "col": 0,
+          "row": 8,
+          "descriptions": [
+            "When you cast Conflagrate, the cast time of your next three Destruction spells is reduced by 10%. Lasts 15 sec.",
+            "When you cast Conflagrate, the cast time of your next three Destruction spells is reduced by 20%. Lasts 15 sec.",
+            "When you cast Conflagrate, the cast time of your next three Destruction spells is reduced by 30%. Lasts 15 sec."
+          ],
+          "requires": "warlock-71",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/backdraft.jpg"
+        },
+        {
+          "id": "warlock-77",
+          "name": "Shadowfury",
+          "maxRank": 1,
+          "col": 1,
+          "row": 8,
+          "descriptions": [
+            "27% of base mana 30 yd range \nInstant cast 20 sec cooldown \nShadowfury is unleashed, causing 343 to 407 Shadow damage and stunning all enemies within 8 yds for 3 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/shadowfury.jpg"
+        },
+        {
+          "id": "warlock-78",
+          "name": "Empowered Imp",
+          "maxRank": 3,
+          "col": 2,
+          "row": 8,
+          "descriptions": [
+            "Increases the damage done by your Imp by 10%, and all critical hits done by your Imp have a 33% chance to increase your spell critical hit chance for your next spell by 20%. This effect lasts 8 sec.",
+            "Increases the damage done by your Imp by 20%, and all critical hits done by your Imp have a 66% chance to increase your spell critical hit chance for your next spell by 20%. This effect lasts 8 sec.",
+            "Increases the damage done by your Imp by 30%, and all critical hits done by your Imp have a 100% chance to increase your spell critical hit chance for your next spell by 20%. This effect lasts 8 sec."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/empoweredimp.jpg"
+        },
+        {
+          "id": "warlock-79",
+          "name": "Fire and Brimstone",
+          "maxRank": 5,
+          "col": 1,
+          "row": 9,
+          "descriptions": [
+            "Increases the damage done by your Incinerate and Chaos Bolt spells to targets afflicted by your Immolate by 2%, and the critical strike chance of your Conflagrate spell is increased by 5%.",
+            "Increases the damage done by your Incinerate and Chaos Bolt spells to targets afflicted by your Immolate by 4%, and the critical strike chance of your Conflagrate spell is increased by 10%.",
+            "Increases the damage done by your Incinerate and Chaos Bolt spells to targets afflicted by your Immolate by 6%, and the critical strike chance of your Conflagrate spell is increased by 15%.",
+            "Increases the damage done by your Incinerate and Chaos Bolt spells to targets afflicted by your Immolate by 8%, and the critical strike chance of your Conflagrate spell is increased by 20%.",
+            "Increases the damage done by your Incinerate and Chaos Bolt spells to targets afflicted by your Immolate by 10%, and the critical strike chance of your Conflagrate spell is increased by 25%."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/fireandbrimstone.jpg"
+        },
+        {
+          "id": "warlock-80",
+          "name": "Chaos Bolt",
+          "maxRank": 1,
+          "col": 1,
+          "row": 10,
+          "descriptions": [
+            "7% of base mana 30 yd range \n2.5 sec cast 12 sec cooldown \n Sends a bolt of chaotic fire at the enemy, dealing 837 to 1061 Fire damage. Chaos Bolt cannot be resisted, and pierces through all absorption effects."
+          ],
+          "requires": "",
+          "icon": "wotlk:shared/global/talents/warlock/images/destruction/chaosbolt.jpg"
+        }
+      ]
+    }
+  ],
+  "abilities": [],
+  "build": {},
+  "source": {
+    "version": "3.3.5a",
+    "url": "https://github.com/CraftedRO/Offline-talent-calculator-for-WotLK-3.3.5a",
+    "dataBlob": "a120d575af909b270704783a31a5ab7cff3daa0a",
+    "license": "GPL-3.0",
+    "language": "en"
+  }
+}
