@@ -48,7 +48,30 @@ export function normalize(doc) {
     }
   }
   if(!Array.isArray(doc.abilities)||doc.abilities.some(a=>!a||typeof a.id!=='string'||typeof a.name!=='string'||typeof a.description!=='string')) throw Error('Неверный список способностей');
+  if(doc.character){
+    const c=doc.character;
+    if(!Number.isInteger(c.hp)||c.hp<1||c.hp>100000000||typeof c.race!=='string'||typeof c.gender!=='string'||typeof c.armory!=='string'||!Array.isArray(c.resources))throw Error('Неверные настройки персонажа');
+    for(const r of c.resources)if(typeof r.name!=='string'||!r.name.trim()||!Number.isInteger(r.max)||r.max<1||r.max>100000000||!Number.isInteger(r.current)||r.current<0||r.current>r.max||!['bar','icons'].includes(r.display)||!['circle','diamond','triangle'].includes(r.shape)||!/^#[0-9a-f]{6}$/i.test(r.color)||(r.display==='icons'&&r.max>100))throw Error('Неверный ресурс');
+  }
   doc.build=doc.build&&typeof doc.build==='object'&&!Array.isArray(doc.build)?doc.build:{};
   if(!validBuild(doc,doc.build)) doc.build={};
   return doc;
 }
+
+// Orthogonal routes use empty cells; occupied talent cells cannot be crossed.
+export function route(branch, parent, child) {
+ if(!parent||!child||parent.id===child.id)return null;
+ const occupied=new Set(branch.talents.filter(t=>t.id!==parent.id&&t.id!==child.id).map(t=>`${t.row},${t.col}`));
+ const start=[parent.row,parent.col],queue=[[start]],seen=new Set([start.join(',')]);
+ for(let i=0;i<queue.length;i++){
+  const path=queue[i], [r,c]=path.at(-1);
+  if(r===child.row&&c===child.col)return path;
+  for(const [nr,nc] of [[r+1,c],[r,c+1],[r,c-1],[r-1,c]]){
+   const key=`${nr},${nc}`;
+   if(nr<0||nr>=branch.rows||nc<0||nc>=4||occupied.has(key)||seen.has(key))continue;
+   seen.add(key);queue.push([...path,[nr,nc]]);
+  }
+ }
+ return null;
+}
+export function reserved(branch,row,col){return branch.talents.some(t=>t.requires&&route(branch,branch.talents.find(p=>p.id===t.requires),t)?.slice(1,-1).some(([r,c])=>r===row&&c===col));}

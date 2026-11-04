@@ -12,3 +12,10 @@ test('unknown, negative and fractional ranks rejected',()=>{const d=fixture();fo
 test('same-row dependencies supported; cycles rejected',()=>{const d=fixture();d.rowCost=0;d.branches[0].talents[1].row=0;d.branches[0].talents[1].col=1;assert.doesNotThrow(()=>normalize(d));d.branches[0].talents[0].requires='b';assert.throws(()=>normalize(d),/циклов/);});
 test('duplicate cells and identifiers rejected',()=>{const d=fixture();d.branches[0].talents[1].row=0;assert.throws(()=>normalize(d));});
 test('all ten 3.3.5a presets satisfy schema, ranks and dependencies',()=>{const index=JSON.parse(fs.readFileSync(new URL('../static/presets/index.json',import.meta.url)));assert.equal(index.length,10);let count=0;for(const c of index){const d=normalize(JSON.parse(fs.readFileSync(new URL(`../static/presets/${c.id}.json`,import.meta.url))));assert.equal(d.branches.length,3);assert.ok(d.branches.every(b=>b.rows===11));assert.equal(d.budget,71);for(const b of d.branches)for(const t of b.talents){count++;assert.ok(t.descriptions.every(s=>s.length>0));assert.ok(t.icon.startsWith('wotlk:'));}assert.equal(d.branches.flatMap(b=>b.talents).length,c.talents);}assert.equal(count,829);});
+
+test('dependency routes turn through empty cells and reserve their cells',async()=>{
+ const {route,reserved}=await import('../static/engine.js');const b={rows:4,talents:[{id:'p',row:0,col:2},{id:'block',row:1,col:2},{id:'c',row:3,col:3,requires:'p'}]};
+ const path=route(b,b.talents[0],b.talents[2]);assert.ok(path);assert.ok(path.some(([r,c])=>c===3&&r<3));assert.ok(!path.some(([r,c])=>r===1&&c===2));for(let i=1;i<path.length;i++)assert.equal(Math.abs(path[i][0]-path[i-1][0])+Math.abs(path[i][1]-path[i-1][1]),1);
+ const [r,c]=path[1];assert.equal(reserved(b,r,c),true);
+ b.talents.push(...[0,1,2,3].filter(c=>c!==2).map(c=>({id:'wall'+c,row:1,col:c})));assert.equal(route(b,b.talents[0],b.talents[2]),null);
+});
