@@ -112,6 +112,32 @@ class API(unittest.TestCase):
         self.assertEqual(self.request(alice, '/api/favorites/'+fid, {}, 'DELETE')[0], 200)
         self.assertEqual(self.request(alice, '/api/favorites')[1]['favorites'], [])
 
+    def test_share_counters_deduplicate_browsers_and_accounts(self):
+        owner, visitor, saver, second = self.client(), self.client(), self.client(), self.client()
+        self.register(owner, 'counter_owner')
+        token = self.request(owner, '/api/share', {'document': DOCUMENT})[1]['token']
+        path = '/api/shared/' + token
+        self.assertEqual(self.request(visitor, path)[1]['stats'], {'allocated': 0, 'saved': 0})
+        for _ in range(3):
+            self.assertEqual(self.request(visitor, path+'/interact', {})[1]['stats']['allocated'], 1)
+        self.assertEqual(self.request(visitor, path)[1]['stats']['allocated'], 1)
+        self.request(second, path)
+        self.assertEqual(self.request(second, path+'/interact', {})[1]['stats']['allocated'], 2)
+        self.assertEqual(self.request(visitor, '/api/projects', {'document': DOCUMENT, 'sourceShare': token})[0], 401)
+        self.register(saver, 'counter_saver')
+        for _ in range(2):
+            self.assertEqual(self.request(saver, '/api/projects', {'document': DOCUMENT, 'sourceShare': token})[0], 200)
+        self.assertEqual(self.request(visitor, path)[1]['stats'], {'allocated': 2, 'saved': 1})
+
+    def test_custom_icon_upload_is_rejected(self):
+        client = self.client()
+        self.register(client, 'icon_guard')
+        bad = copy.deepcopy(DOCUMENT)
+        bad['abilities'] = [{'id': 'a', 'name': 'Custom', 'description': 'x', 'icon': 'data:image/png;base64,YWJj'}]
+        status, result, _ = self.request(client, '/api/projects', {'document': bad})
+        self.assertEqual(status, 400)
+        self.assertIn('собственных иконок отключена', result['error'])
+
     def test_presets_validate_on_server(self):
         files = list((server.ROOT / 'static' / 'presets').glob('*.json'))
         self.assertEqual(len(files), 29)

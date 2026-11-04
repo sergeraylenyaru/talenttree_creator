@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import json
 import math
+from functools import lru_cache
 import os
 import re
 import secrets
@@ -29,11 +30,26 @@ def initialize():
         CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY, user_id INTEGER REFERENCES users(id), name TEXT, document TEXT, updated INTEGER);
         CREATE TABLE IF NOT EXISTS attempts(key TEXT PRIMARY KEY, count INTEGER, until INTEGER);
         CREATE TABLE IF NOT EXISTS favorites(id TEXT PRIMARY KEY, user_id INTEGER REFERENCES users(id), kind TEXT, item TEXT, created INTEGER);
+        CREATE TABLE IF NOT EXISTS share_allocations(token TEXT REFERENCES shares(token), visitor TEXT, PRIMARY KEY(token,visitor));
+        CREATE TABLE IF NOT EXISTS share_saves(token TEXT REFERENCES shares(token), user_id INTEGER REFERENCES users(id), PRIMARY KEY(token,user_id));
         CREATE TABLE IF NOT EXISTS shares(token TEXT PRIMARY KEY, document TEXT, created INTEGER);
         ''')
 
 def password_hash(password, salt):
     return hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), n=16384, r=8, p=1).hex()
+
+def share_stats(db, token):
+    allocated = db.execute('SELECT COUNT(*) FROM share_allocations WHERE token=?', (token,)).fetchone()[0]
+    saved = db.execute('SELECT COUNT(*) FROM share_saves WHERE token=?', (token,)).fetchone()[0]
+    return {'allocated': allocated, 'saved': saved}
+
+@lru_cache(maxsize=1)
+def builtin_images():
+    return {t['icon'] for path in (ROOT / 'static' / 'presets').glob('forever-*.json') for b in json.loads(path.read_text(encoding='utf-8'))['branches'] for t in b['talents']}
+
+def validate_icon(value):
+    if isinstance(value, str) and value.startswith('data:') and value not in builtin_images():
+        raise ValueError('Загрузка собственных иконок отключена. Выбери иконку из каталога.')
 
 def validate(document):
     if not isinstance(document, dict):
@@ -56,6 +72,7 @@ def validate(document):
         for talent in branch.get('talents', []):
             if not isinstance(talent, dict) or not isinstance(talent.get('name'), str) or not isinstance(talent.get('icon'), str):
                 raise ValueError('Неверный талант')
+            validate_icon(talent.get('icon'))
             position = (talent.get('row'), talent.get('col'))
             if any(type(x) is not int for x in position) or not 0 <= position[0] < rows or not 0 <= position[1] < 4 or position in positions:
                 raise ValueError('Неверная позиция таланта')
@@ -85,6 +102,7 @@ def validate(document):
     if document.get('version') != 1 or not isinstance(abilities, list) or any(not isinstance(a, dict) or any(not isinstance(a.get(k), str) for k in ('id', 'name', 'description', 'icon')) for a in abilities):
         raise ValueError('Неверный формат класса или способностей')
     for ability in abilities:
+        validate_icon(ability.get('icon'))
         if 'resourceType' in ability:
             if not isinstance(ability['resourceType'], str) or not 1 <= len(ability['resourceType']) <= 100:
                 raise ValueError('Неверный ресурс способности')
@@ -155,10 +173,29 @@ class Handler(SimpleHTTPRequestHandler):
                 user = self.session(db)
                 if self.path == '/api/me' and method == 'GET':
                     return self.reply(200, {'user': {'login': user[1]} if user else None})
-                if self.path.startswith('/api/shared/') and method == 'GET':
-                    token = self.path.removeprefix('/api/shared/')
+                if self.path.startswith('/api/shared/'):
+                    parts = self.path.removeprefix('/api/shared/').split('/')
+                    token = parts[0]
                     row = db.execute('SELECT document FROM shares WHERE token=?', (token,)).fetchone()
-                    return self.reply(200, {'document': json.loads(row[0])}) if row else self.reply(404, {'error': 'Ссылка не найдена'})
+                    if not row:
+                        return self.reply(404, {'error': 'Ссылка не найдена'})
+                    jar = cookies.SimpleCookie()
+                    try:
+                        jar.load(self.headers.get('Cookie', ''))
+                    except cookies.CookieError:
+                        jar = cookies.SimpleCookie()
+                    visitor = jar['visitor'].value if 'visitor' in jar else ''
+                    if not re.fullmatch(r'[A-Za-z0-9_-]{32,64}', visitor):
+                        visitor = secrets.token_urlsafe(32)
+                    secure = '; Secure' if os.environ.get('COOKIE_SECURE') == '1' else ''
+                    cookie = f'visitor={visitor}; HttpOnly; SameSite=Lax; Path=/; Max-Age=31536000{secure}'
+                    if len(parts) == 1 and method == 'GET':
+                        return self.reply(200, {'document': json.loads(row[0]), 'stats': share_stats(db, token)}, cookie)
+                    if len(parts) == 2 and parts[1] == 'interact' and method == 'POST':
+                        db.execute('INSERT OR IGNORE INTO share_allocations VALUES(?,?)', (token, hashlib.sha256(visitor.encode()).hexdigest()))
+                        db.commit()
+                        return self.reply(200, {'stats': share_stats(db, token)}, cookie)
+                    return self.reply(404, {'error': 'Не найдено'})
                 if self.path in ('/api/register', '/api/login') and method == 'POST':
                     login, password = data.get('login', ''), data.get('password', '')
                     if not isinstance(login, str) or not isinstance(password, str) or not re.fullmatch(r'[A-Za-z0-9_\-]{3,32}', login) or not 8 <= len(password) <= 128:
@@ -242,6 +279,9 @@ class Handler(SimpleHTTPRequestHandler):
                     if existing and existing[0] != user[0]:
                         return self.reply(404, {'error': 'Проект не найден'})
                     db.execute('INSERT INTO projects VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,document=excluded.document,updated=excluded.updated', (pid,user[0],document['name'],json.dumps(document),int(time.time())))
+                    shared_from = data.get('sourceShare')
+                    if isinstance(shared_from, str) and db.execute('SELECT 1 FROM shares WHERE token=?', (shared_from,)).fetchone():
+                        db.execute('INSERT OR IGNORE INTO share_saves VALUES(?,?)', (shared_from, user[0]))
                     db.commit()
                     return self.reply(200, {'id': pid})
                 if self.path.startswith('/api/projects/'):

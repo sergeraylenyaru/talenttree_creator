@@ -1,5 +1,5 @@
 export function blank() {
-  return {version:1,name:'Новый класс',budget:71,rowCost:5,branches:[branch('Ветка 1'),branch('Ветка 2')],abilities:[],build:{}};
+  return {version:1,name:'Новый класс',budget:41,budgetAuto:true,rowCost:5,branches:[branch('Ветка 1'),branch('Ветка 2')],abilities:[],build:{}};
 }
 export function branch(name) { return {id:crypto.randomUUID(),name,rows:5,talents:[]}; }
 export function total(doc, build=doc.build) { return Object.values(build).reduce((sum,n)=>sum+n,0); }
@@ -52,7 +52,7 @@ export function normalize(doc) {
   if(doc.character){
     const c=doc.character;
     if(!Number.isInteger(c.hp)||c.hp<1||c.hp>100000000||typeof c.race!=='string'||typeof c.gender!=='string'||typeof c.armory!=='string'||!Array.isArray(c.resources))throw Error('Неверные настройки персонажа');
-    for(const r of c.resources)if(typeof r.name!=='string'||!r.name.trim()||!Number.isInteger(r.max)||r.max<1||r.max>100000000||!Number.isInteger(r.current)||r.current<0||r.current>r.max||!['bar','icons'].includes(r.display)||!['circle','diamond','triangle'].includes(r.shape)||!/^#[0-9a-f]{6}$/i.test(r.color)||(r.display==='icons'&&r.max>100))throw Error('Неверный ресурс');
+    for(const r of c.resources)if(typeof r.name!=='string'||!r.name.trim()||!Number.isInteger(r.max)||r.max<1||r.max>100000000||!Number.isInteger(r.current)||r.current<0||r.current>r.max||!['bar','icons'].includes(r.display)||!['circle','diamond','triangle','crystal','gem','orb','flame','star'].includes(r.shape)||!/^#[0-9a-f]{6}$/i.test(r.color)||(r.display==='icons'&&r.max>100))throw Error('Неверный ресурс');
   }
   doc.build=doc.build&&typeof doc.build==='object'&&!Array.isArray(doc.build)?doc.build:{};
   if(!validBuild(doc,doc.build)) doc.build={};
@@ -90,3 +90,5 @@ export function moveTalent(document,id,branchId,row,col){
  for(const b of next.branches)for(const child of b.talents)if(child.requires&&!route(b,b.talents.find(p=>p.id===child.requires),child))throw Error('Нет свободного пути для стрелки. Сначала убери зависимость.');
  return next;
 }
+
+export function defaultBudget(doc){return Math.max(0,41+(Math.max(...doc.branches.map(b=>b.rows))-5)*5);}
