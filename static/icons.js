@@ -11,7 +11,7 @@ export const icons = [
 ['spell_deathknight_frostpresence','Власть льда рыцарь смерти'],['spell_deathknight_bloodpresence','Власть крови'],['spell_deathknight_unholypresence','Власть нечестивости'],['spell_deathknight_deathstrike','Удар смерти'],['inv_sword_04','Меч оружие'],['inv_axe_09','Топор оружие'],['inv_shield_04','Щит'],['inv_staff_13','Посох'],['inv_misc_questionmark','Вопрос неизвестно']
 ].map(([id,label])=>({id:id.toLowerCase(),label}));
 export function iconURL(id) {
- if(/^wotlk:shared\/global\/talents\/[a-z]+\/images\/[a-z]+\/[a-z0-9'_-]+\.jpg$/.test(id||'')) return 'https://raw.githubusercontent.com/CraftedRO/Offline-talent-calculator-for-WotLK-3.3.5a/master/'+id.slice(6).split('/').map(encodeURIComponent).join('/');
+ if(/^wotlk:shared\/global\/talents\/[a-z]+\/images\/[a-z]+\/[a-z0-9'_,.\-]+\.jpg$/.test(id||'')) return 'https://raw.githubusercontent.com/CraftedRO/Offline-talent-calculator-for-WotLK-3.3.5a/master/'+id.slice(6).split('/').map(encodeURIComponent).join('/');
  if(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(id||'') && id.length<=350000)return id;
  return /^[a-z0-9_]+$/i.test(id||'')?`https://wow.zamimg.com/images/wow/icons/large/${id.toLowerCase()}.jpg`:'';
 }

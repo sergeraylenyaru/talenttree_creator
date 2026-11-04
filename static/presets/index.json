@@ -2,51 +2,169 @@
   {
     "id": "deathknight",
     "name": "Рыцарь смерти",
-    "talents": 88
+    "talents": 88,
+    "version": "3.3.5a"
   },
   {
     "id": "druid",
     "name": "Друид",
-    "talents": 85
+    "talents": 85,
+    "version": "3.3.5a"
   },
   {
     "id": "hunter",
     "name": "Охотник",
-    "talents": 81
+    "talents": 81,
+    "version": "3.3.5a"
   },
   {
     "id": "mage",
     "name": "Маг",
-    "talents": 86
+    "talents": 86,
+    "version": "3.3.5a"
   },
   {
     "id": "paladin",
     "name": "Паладин",
-    "talents": 78
+    "talents": 78,
+    "version": "3.3.5a"
   },
   {
     "id": "priest",
     "name": "Жрец",
-    "talents": 82
+    "talents": 82,
+    "version": "3.3.5a"
   },
   {
     "id": "rogue",
     "name": "Разбойник",
-    "talents": 83
+    "talents": 83,
+    "version": "3.3.5a"
   },
   {
     "id": "shaman",
     "name": "Шаман",
-    "talents": 80
+    "talents": 80,
+    "version": "3.3.5a"
   },
   {
     "id": "warlock",
     "name": "Чернокнижник",
-    "talents": 81
+    "talents": 81,
+    "version": "3.3.5a"
   },
   {
     "id": "warrior",
     "name": "Воин",
-    "talents": 85
+    "talents": 85,
+    "version": "3.3.5a"
+  },
+  {
+    "id": "tbc-druid",
+    "name": "Друид",
+    "talents": 62,
+    "version": "2.4.3"
+  },
+  {
+    "id": "tbc-hunter",
+    "name": "Охотник",
+    "talents": 64,
+    "version": "2.4.3"
+  },
+  {
+    "id": "tbc-mage",
+    "name": "Маг",
+    "talents": 67,
+    "version": "2.4.3"
+  },
+  {
+    "id": "tbc-paladin",
+    "name": "Паладин",
+    "talents": 64,
+    "version": "2.4.3"
+  },
+  {
+    "id": "tbc-priest",
+    "name": "Жрец",
+    "talents": 64,
+    "version": "2.4.3"
+  },
+  {
+    "id": "tbc-rogue",
+    "name": "Разбойник",
+    "talents": 67,
+    "version": "2.4.3"
+  },
+  {
+    "id": "tbc-shaman",
+    "name": "Шаман",
+    "talents": 61,
+    "version": "2.4.3"
+  },
+  {
+    "id": "tbc-warlock",
+    "name": "Чернокнижник",
+    "talents": 64,
+    "version": "2.4.3"
+  },
+  {
+    "id": "tbc-warrior",
+    "name": "Воин",
+    "talents": 66,
+    "version": "2.4.3"
+  },
+  {
+    "id": "forever-warrior",
+    "name": "Воин",
+    "talents": 53,
+    "version": "Forever"
+  },
+  {
+    "id": "forever-paladin",
+    "name": "Паладин",
+    "talents": 52,
+    "version": "Forever"
+  },
+  {
+    "id": "forever-hunter",
+    "name": "Охотник",
+    "talents": 50,
+    "version": "Forever"
+  },
+  {
+    "id": "forever-rogue",
+    "name": "Разбойник",
+    "talents": 53,
+    "version": "Forever"
+  },
+  {
+    "id": "forever-priest",
+    "name": "Жрец",
+    "talents": 53,
+    "version": "Forever"
+  },
+  {
+    "id": "forever-shaman",
+    "name": "Шаман",
+    "talents": 50,
+    "version": "Forever"
+  },
+  {
+    "id": "forever-mage",
+    "name": "Маг",
+    "talents": 54,
+    "version": "Forever"
+  },
+  {
+    "id": "forever-warlock",
+    "name": "Чернокнижник",
+    "talents": 52,
+    "version": "Forever"
+  },
+  {
+    "id": "forever-druid",
+    "name": "Друид",
+    "talents": 51,
+    "version": "Forever"
   }
 ]

@@ -97,9 +97,24 @@ class API(unittest.TestCase):
         self.assertEqual(self.request(client, '/api/projects', {'id': [], 'document': DOCUMENT})[0], 400)
         self.assertEqual(self.request(client, '/api/projects', {'id': ['bad'], 'document': DOCUMENT})[0], 400)
 
+    def test_favorites_persist_and_are_private(self):
+        alice, bob = self.client(), self.client()
+        self.register(alice, 'fav_alice')
+        self.register(bob, 'fav_bob')
+        item = {'id': 'a', 'name': 'Flame', 'icon': 'spell_fire_fireball02', 'row': 0, 'col': 0, 'maxRank': 1, 'descriptions': ['Fire'], 'requires': 'old-id'}
+        status, result, _ = self.request(alice, '/api/favorites', {'kind': 'talent', 'item': item})
+        self.assertEqual(status, 200)
+        fid = result['id']
+        favorite = self.request(alice, '/api/favorites')[1]['favorites'][0]
+        self.assertEqual(favorite['item']['requires'], '')
+        self.assertEqual(self.request(bob, '/api/favorites')[1]['favorites'], [])
+        self.assertEqual(self.request(bob, '/api/favorites/'+fid, {}, 'DELETE')[0], 404)
+        self.assertEqual(self.request(alice, '/api/favorites/'+fid, {}, 'DELETE')[0], 200)
+        self.assertEqual(self.request(alice, '/api/favorites')[1]['favorites'], [])
+
     def test_presets_validate_on_server(self):
         files = list((server.ROOT / 'static' / 'presets').glob('*.json'))
-        self.assertEqual(len(files), 11)
+        self.assertEqual(len(files), 29)
         for path in files:
             if path.name != 'index.json':
                 server.validate(json.loads(path.read_text()))

@@ -2,6 +2,7 @@
 import hashlib
 import hmac
 import json
+import math
 import os
 import re
 import secrets
@@ -27,6 +28,7 @@ def initialize():
         CREATE TABLE IF NOT EXISTS sessions(token TEXT PRIMARY KEY, user_id INTEGER REFERENCES users(id), expires INTEGER);
         CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY, user_id INTEGER REFERENCES users(id), name TEXT, document TEXT, updated INTEGER);
         CREATE TABLE IF NOT EXISTS attempts(key TEXT PRIMARY KEY, count INTEGER, until INTEGER);
+        CREATE TABLE IF NOT EXISTS favorites(id TEXT PRIMARY KEY, user_id INTEGER REFERENCES users(id), kind TEXT, item TEXT, created INTEGER);
         CREATE TABLE IF NOT EXISTS shares(token TEXT PRIMARY KEY, document TEXT, created INTEGER);
         ''')
 
@@ -82,6 +84,14 @@ def validate(document):
     abilities = document.get('abilities')
     if document.get('version') != 1 or not isinstance(abilities, list) or any(not isinstance(a, dict) or any(not isinstance(a.get(k), str) for k in ('id', 'name', 'description', 'icon')) for a in abilities):
         raise ValueError('Неверный формат класса или способностей')
+    for ability in abilities:
+        if 'resourceType' in ability:
+            if not isinstance(ability['resourceType'], str) or not 1 <= len(ability['resourceType']) <= 100:
+                raise ValueError('Неверный ресурс способности')
+            for field in ('resource', 'cast', 'cooldown', 'range'):
+                value = ability.get(field)
+                if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1000000000:
+                    raise ValueError('Параметры способности должны быть неотрицательными числами')
     return document
 
 class Handler(SimpleHTTPRequestHandler):
@@ -180,6 +190,32 @@ class Handler(SimpleHTTPRequestHandler):
                     return self.reply(200, {'user': {'login': login}}, f'session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800{secure}')
                 if not user:
                     return self.reply(401, {'error': 'Войдите в аккаунт'})
+                if self.path == '/api/favorites' and method == 'GET':
+                    rows = db.execute('SELECT id,kind,item FROM favorites WHERE user_id=? ORDER BY created DESC', (user[0],)).fetchall()
+                    return self.reply(200, {'favorites': [{'id': r[0], 'kind': r[1], 'item': json.loads(r[2])} for r in rows]})
+                if self.path == '/api/favorites' and method == 'POST':
+                    kind, item = data.get('kind'), data.get('item')
+                    if kind not in ('talent', 'ability') or not isinstance(item, dict):
+                        raise ValueError('Неверный элемент избранного')
+                    check = {'version': 1, 'name': 'Избранное', 'budget': 71, 'rowCost': 5, 'build': {}, 'branches': [{'id': 'favorite', 'name': 'Избранное', 'rows': 1, 'talents': []}], 'abilities': []}
+                    item = dict(item)
+                    item['id'] = secrets.token_hex(12)
+                    if kind == 'talent':
+                        item.update(row=0, col=0, requires='')
+                        check['branches'][0]['talents'] = [item]
+                    else:
+                        item['talentId'] = ''
+                        check['abilities'] = [item]
+                    validate(check)
+                    fid = secrets.token_hex(12)
+                    db.execute('INSERT INTO favorites VALUES(?,?,?,?,?)', (fid, user[0], kind, json.dumps(item), int(time.time())))
+                    db.commit()
+                    return self.reply(200, {'id': fid})
+                if self.path.startswith('/api/favorites/') and method == 'DELETE':
+                    fid = self.path.removeprefix('/api/favorites/')
+                    deleted = db.execute('DELETE FROM favorites WHERE id=? AND user_id=?', (fid, user[0])).rowcount
+                    db.commit()
+                    return self.reply(200, {}) if deleted else self.reply(404, {'error': 'Элемент не найден'})
                 if self.path == '/api/share' and method == 'POST':
                     document = validate(data['document'])
                     token = secrets.token_urlsafe(24)

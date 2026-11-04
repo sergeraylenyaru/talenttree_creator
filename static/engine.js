@@ -48,6 +48,7 @@ export function normalize(doc) {
     }
   }
   if(!Array.isArray(doc.abilities)||doc.abilities.some(a=>!a||typeof a.id!=='string'||typeof a.name!=='string'||typeof a.description!=='string')) throw Error('Неверный список способностей');
+  for(const a of doc.abilities)if(a.resourceType!==undefined){if(typeof a.resourceType!=='string'||!a.resourceType||a.resourceType.length>100||['resource','cast','cooldown','range'].some(k=>!Number.isFinite(a[k])||a[k]<0||a[k]>1e9))throw Error('Неверные числовые параметры способности');}
   if(doc.character){
     const c=doc.character;
     if(!Number.isInteger(c.hp)||c.hp<1||c.hp>100000000||typeof c.race!=='string'||typeof c.gender!=='string'||typeof c.armory!=='string'||!Array.isArray(c.resources))throw Error('Неверные настройки персонажа');
@@ -75,3 +76,17 @@ export function route(branch, parent, child) {
  return null;
 }
 export function reserved(branch,row,col){return branch.talents.some(t=>t.requires&&route(branch,branch.talents.find(p=>p.id===t.requires),t)?.slice(1,-1).some(([r,c])=>r===row&&c===col));}
+
+export function moveTalent(document,id,branchId,row,col){
+ const next=structuredClone(document),source=next.branches.find(b=>b.talents.some(t=>t.id===id)),dest=next.branches.find(b=>b.id===branchId);
+ if(!source||!dest||!Number.isInteger(row)||row<0||row>=dest.rows||!Number.isInteger(col)||col<0||col>3)throw Error('Неверная ячейка');
+ const t=source.talents.find(t=>t.id===id),other=dest.talents.find(t=>t.row===row&&t.col===col);
+ if(other===t)return next;
+ if(!other&&reserved(dest,row,col))throw Error('Здесь проходит стрелка. Сначала убери зависимость.');
+ const old={row:t.row,col:t.col};source.talents=source.talents.filter(x=>x!==t);
+ if(other){dest.talents=dest.talents.filter(x=>x!==other);Object.assign(other,old);source.talents.push(other);}
+ Object.assign(t,{row,col});dest.talents.push(t);
+ try{normalize(next);}catch{throw Error('Перемещение нарушает зависимости. Сначала убери зависимость.');}
+ for(const b of next.branches)for(const child of b.talents)if(child.requires&&!route(b,b.talents.find(p=>p.id===child.requires),child))throw Error('Нет свободного пути для стрелки. Сначала убери зависимость.');
+ return next;
+}

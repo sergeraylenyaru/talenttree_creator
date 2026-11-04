@@ -1,0 +1,838 @@
+{
+  "version": 1,
+  "name": "Паладин · Forever",
+  "budget": 51,
+  "rowCost": 5,
+  "branches": [
+    {
+      "id": "forever-paladin-0",
+      "name": "Holy",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "forever-105328",
+          "name": "Improved Holy Strike",
+          "icon": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAA4ADgDASIAAhEBAxEB/8QAGwAAAgMBAQEAAAAAAAAAAAAAAAYEBQcIAwH/xAA2EAABAwMDAgUCBAMJAAAAAAABAgMEBQYRABIhBzETIkFRYQgUFSRCcRYygSMlM0NigpGhwf/EABgBAAMBAQAAAAAAAAAAAAAAAAMEBQIG/8QALhEAAgEDAgMHAgcAAAAAAAAAAQIDAAQRITEFEkEUIlFhcZGhMoFSscHR4fDx/9oADAMBAAIRAxEAPwDjiZJkzJTkqZIekyHDlx11ZWtZ9yTydSYrTYYStxAJPI4z+2oJ761voPbUaZLeuqstpVTKQoBCFpBS++Rwn/bkK7H00pe3K20Jkbp8+ArcUJmcIK0yxunsS3enrbc6m/c3BVwl6Sw6wlxxtoEltpKCNyCf5leuUkEeXTK3a1o0W9LYoKKLQnjBmtrrSxEbKX3V+UsE8gobB5zkFQ7JIOfnTyo/j12NVqM4/wD3VGkobfUlO1xxTa8Ee45V6eg/r4QihuhNuII8TCXyo5JU5kFROfc+muOtbmbtBZjqTnH6e2lWJgqqEUaVp9Ys6z1y5KqbZUN5LTykrLISkq577MjA74A/81Efty2WoYcbtymvhBCNqobe8+4GRkqHse+p91XLGo1PYuORHc8B9oeEgYCmzt47kA/HvnWVU3qRcMBLdzVm1Y6KQlZWWUvKTNiRlbUpfUgnDiTu52jjH747Wa5RGwTrUZQ+dK8/rOs+i0azrYu6yqOKS2iWsuutANONEY2KHO8Hd7HjAPGjTB9UdYjXB9Nrr8IZipqUdbL4WlSX0KUcKTtJwOPXB9wNGhx8jFgRoDp7CjMzHBrjC3qRLrtZjUqCAZEhzYnd2HqVH4ABJ+BrZbjqsOmQItm24pSWorO1Sm3P8RZ8zjqj7qPYZOOCMDGkuhzmbKtNyYnwXa3WE4YT5VmPGxjd/pUslXB9EjjnXnYypMB77+V2lODwE7VFbivYJHJHYanXsb3JLkdxNh+I9T6DYfc0RJ0t1C57zb+Q8PXqftW/dEosxbNObVHKpKni0ylQ2bU8gnnvwT31PlIZC5VNUQr7adIjKQCdqC2o91YGRwDn5+NRao9VLWoaWpdQZi12ejlpsjfTmDjB458RQBHlxtGT351R2K8yzSZkBhlwfmvEJW4SopIGT5u2e+M6k2Vk+GuW0BOnzn+9afuXTnCLrWq1GGarY9ImR4oqEpuKA5T1JO+VGxtdS3gj+0Sk5Tg5OOATpWqVMduixYVBpVwW9OtxbG2FXJzoTPgw/MFR1MJwp1xCQUp5AJPYdw82FFqlU6fxFU3wkupdfbC1qx4aScnaR+ok9/TU5pimSI8dmRRG1qZQNjohoLiCnHOQnk5AyT7c66hohMqtsaisxjcg1m3VKnxqZ9M8ijUxKnY8ZhhltW7ctSW5DWVqA7E4KiP050asvqBjvxei9akR/E3l9tp8+CRhLjicrIPbOAn91d86NaMIzkdaNHLyrg1xZDamVWoR4jDL82U6pDEdhtJWtxRwlCEpHJOcAAd9dS0CLA6PVRmjt0dEu6JFKckvV2SgOMxHuxRGRkoWWlAgrwVbgRgJJSEO0Gv4Es+S7RFBu8i4zKlVEtDxKdEWgkNMhX+YoKBUpJHlUUH1zb2lAeu+RVraguU6dbkcmoKrVRWthFHU4OT4pOTuwAW1Z3KTnCdqlATsHUu47g3/AC/wdfatxwhSM71Ftz8evC7XkUaA5WaiAp6RKkKKGY3GS66s+VKQArkkewySBp/vC1aTZtuUKqxqs3VnqhKWioVRSvDEmUNuGUJVg7EgHbgYI0von/itvw7B6P1J5NGaQqRcVyPxVR25DmMgZUkKG3JwnuPKc+Ur0629f9vW1a8KjWxSKXPoVJSpAMlJdckyycLkZP8AKTleB7LGMJwBE4hf97AOAOmNcdM+GdwPuabjtnbvDWl60eqdy2lT1xaLX6Q1HkOF4tOtpcCFHvgAeX9u3t66s2eud9bg2it0vxlKCQ0inb1qJOAEpzknn0GtTsG5aRXozLjtvWvH43Si3GShLSQCo5JzjCR3OpFW6j0A1mY3b1LgsPsjYzUxHQXFqIIJQNvYDjJ7g+g0ovFmC/URjzrXZ2LY5NaybrjUupMzpBV1dRajToDL6Wvs6S0y2JjwL6Clx3aVBpI2g7QSTgpJSQMmqH6grg+/sSWKzCXGqSXEhL6lKUHEhflSO/B29yeMfOjVjh00t3EX86BcqkLcprNjdlm/kpV025W36pGiIjSozEoNMVINgJQXHM70jyIJKQckfAOq+4+qs66lSaTLcaty1XiFqo1HiIbZwlSVBISAAVkpCitRPPwANGjTsVskgBbJ8NdvTw+fagTzvnf+apbj6gPTaS3b1MhJptAYUFNRG1Hc6ofrdV+tXJ54HxqP03uFi3331zJjoiuJyphtJUoqHYgHy5PbORx/0aNa7BA0Zixod/39fOhi5kDh86iruv8AVirToxhUtpFJgbgoRY6QVLKSCkuLIyo8DPYH1B0zWL1pjUNlxFUoC5TxbAbUhe0N+mCD34zzkaNGln4RZsojKafPvTCcRuVPMG1qn6o9QGLzpn2yN6XEuJ8FpLZx35/r2/40aNGmYYks0EcY0pWVzM3M+9f/2Q==",
+          "maxRank": 2,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "Reduces the cooldown of your Holy Strike ability by 1 sec.",
+            "Reduces the cooldown of your Holy Strike ability by 2 sec."
+          ],
+          "requires": "",
+          "sourceSpellID": 1310902
+        },
+        {
+          "id": "forever-105639",
+          "name": "Divine Strength",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 5,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Increases your Strength by 2%.",
+            "Increases your Strength by 4%.",
+            "Increases your Strength by 6%.",
+            "Increases your Strength by 8%.",
+            "Increases your Strength by 10%."
+          ],
+          "requires": "",
+          "sourceSpellID": 20262
+        },
+        {
+          "id": "forever-105332",
+          "name": "Divine Intellect",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 5,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Increases your total Intellect by 2%.",
+            "Increases your total Intellect by 4%.",
+            "Increases your total Intellect by 6%.",
+            "Increases your total Intellect by 8%.",
+            "Increases your total Intellect by 10%."
+          ],
+          "requires": "",
+          "sourceSpellID": 20257
+        },
+        {
+          "id": "forever-105333",
+          "name": "Healing Light",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 3,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Increases the amount healed by your Holy Light, Flash of Light, and Holy Shock spells by 4%.",
+            "Increases the amount healed by your Holy Light, Flash of Light, and Holy Shock spells by 8%.",
+            "Increases the amount healed by your Holy Light, Flash of Light, and Holy Shock spells by 12%."
+          ],
+          "requires": "",
+          "sourceSpellID": 20237
+        },
+        {
+          "id": "forever-105335",
+          "name": "Spiritual Focus",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 2,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Gives your Flash of Light, Holy Light, and Light's Vigil spells a 35% chance to not lose casting time when you take damage.",
+            "Gives your Flash of Light, Holy Light, and Light's Vigil spells a 70% chance to not lose casting time when you take damage."
+          ],
+          "requires": "",
+          "sourceSpellID": 20205
+        },
+        {
+          "id": "forever-105334",
+          "name": "Improved Seals",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 3,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Increases the damage done by your Seals and Judgements by 5%.",
+            "Increases the damage done by your Seals and Judgements by 10%.",
+            "Increases the damage done by your Seals and Judgements by 15%."
+          ],
+          "requires": "",
+          "sourceSpellID": 20224
+        },
+        {
+          "id": "forever-105331",
+          "name": "Unyielding Faith",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 2,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "Reduces the duration of  Fear and Disorient effects on you by 15%.",
+            "Reduces the duration of  Fear and Disorient effects on you by 30%."
+          ],
+          "requires": "",
+          "sourceSpellID": 9453
+        },
+        {
+          "id": "forever-105330",
+          "name": "Voice of Truth",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 1,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Grants you immunity to Silence and Interrupt effects.  Lasts 6 sec."
+          ],
+          "requires": "",
+          "sourceSpellID": 1310897
+        },
+        {
+          "id": "forever-110871",
+          "name": "Reverence",
+          "icon": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAA4ADgDASIAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAAAAcFBggCBAMJ/8QAMRAAAQMDAwIFAgYCAwAAAAAAAQIDBAAFEQYSIQcxE0FRYXGBkRQWIiOhwTJCU9Hw/8QAGQEBAQADAQAAAAAAAAAAAAAABQQCAwYA/8QAKhEAAgICAgEBBgcAAAAAAAAAAQIAAwQREjFBIQUTIlGh0TJhcZKx4fD/2gAMAwEAAhEDEQA/ANfxYkeKxGixGWo8ZhAQ000gJQhCQAlKQOAAAAAK8V8jIctMhtav0lPPvzmpRBzsPqK8N02qiOhfITz39KEuOl5fP7CU0/jH+8zJfWCciTq9Fri4DcLlX6cfuEDOB7cVN9KLIpuciQVlannUtuDbkBOfP/3lUVqm0P8A5+nyXgpYkSSps89vL/r6U4Oi2m2noT0h54ftv8pGclQx/Ao7IqdwqVjZOv7jQsVOTv4nXVCwNu2me6ydqUrXlO3IATsAwPpn6Vl3VbpjJdYWobQeD6it13uyx7lb5EckNF5tSSvGeTg5+4FYq6laamrdfbKVYQ6sIWkZ3pyRuA9DVFuKyXgkehmnHsFtWl7EQ9+fS7JJTwd5PxRXWobVJgSCpaSpvtvCcD6+hop1FCqBIH3yM/Uez3WLcIsOTFc3tvBW3ccK47jFF+cSmHIBIz8+9RWktOGFZrQzOcAkQEnhB4yo5xUD1FvEmFIm4J8NMcEIz3HckZ+1cs11iKofoka/b6/WU49CWXaQ9feLvqan8NNQ+0jc6gb0kd++an+gWpEOWq4x8nxW5ancOLzlK+R/OaqBnm53BlDxBQVbSTzxVitGhk26eqdb5ynQvKg0v/AH1Pv3xSYKooPkS5qmsY7HoYz9Sauj2+3OOYQt/B8OOlQ8R1fkkD5xz5UvrtamVWRAmFK1tMnesJwFuqVk7T8nH0r7T3JluCpKbPFW6E4LuCr2yM1TLtrNZ3+M4XHDlO08bDU9rWZBHEdSvEorxjy3oRPdQ7VG/HuslALboO8YxmivXrKSiZI3IOfU+9FO1bCAGGZHFrCRNzMxVfh2W3HDubOTjsfalZ1RtsyHOlPvRSqLIadLbzWTz3KVDy7nn5puhxCgFBaceuao3UG6qfulsscRfD7inZCh/wAaBkj4JwKKycPFqoBUda8nwND6STBss99oee/5mfrm1JtWy4QyX4TisBRGC2rzQr+j51bdFa/ZWUNPOpChhJ3nBPf71P8AUSzNM2e7MNsIbalpS836JUCDx9aR0m0vItpu8dex1h3Y+gDg55Ck+3rW/FRMivRMutvav4h0Zqi3T7bco+5XhhWAdwNRV90VAuSCtcCO8DyVJSAon1rOWntVXa3zG1sPOFO4ZRu/SR6EYpxQuqDNvgjcA2pY4DnYH0+Kwtwnpf5/pPU5C2KSh1+R6iz6v6Rg2RDEqCgshSihxo5x7YoqO6n6q/MM8KS5vbSsrKhwkk4xgfeik8cMEAbuaLXBb4Y1bb1Tk3SC0/BtsYBxIPjPzApvt3G0ZI/rFWDRS47z0qbInuT5LiU+O+6nalIBJDTSf9E5PnyftRRXPZZJPHfpFqalZNyZ1Itu4WtbTmPEzuR7ewpK6whCJEeZb4Dx7CiirfZ502hJsypRSQJTNJy4sO7uGa0FJUnahRGSk/HvXepbhGlFSUEEdxiiinrKxy5wihzw4ykXqaGjgqShDYKlqUcAD5ooorEkCYOxBn//2Q==",
+          "maxRank": 3,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "Allows 10% of your Mana regeneration to continue while casting.",
+            "Allows 20% of your Mana regeneration to continue while casting.",
+            "Allows 30% of your Mana regeneration to continue while casting."
+          ],
+          "requires": "",
+          "sourceSpellID": 1310899
+        },
+        {
+          "id": "forever-105327",
+          "name": "Purifying Power",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 2,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Reduces the mana cost of your Cleanse and Purify spells by 10% and reduces the cooldown of your Exorcism and Holy Wrath spells by 17%.",
+            "Reduces the mana cost of your Cleanse and Purify spells by 20% and reduces the cooldown of your Exorcism and Holy Wrath spells by 33%."
+          ],
+          "requires": "",
+          "sourceSpellID": 429144
+        },
+        {
+          "id": "forever-110873",
+          "name": "Infusion of Light",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 2,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "Your Holy Shock and Flash of Light critical hits reduce the cast time of your next Holy Light cast within 15 sec by 0.5 sec.",
+            "Your Holy Shock and Flash of Light critical hits reduce the cast time of your next Holy Light cast within 15 sec by 1 sec."
+          ],
+          "requires": "",
+          "sourceSpellID": 426065
+        },
+        {
+          "id": "forever-105329",
+          "name": "Illumination",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 5,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "After getting a critical effect from your Flash of Light, Holy Light, Light's Vigil, or Holy Shock heal spell you have a 20% chance to gain Mana equal to 50% of the base cost of the spell.",
+            "After getting a critical effect from your Flash of Light, Holy Light, Light's Vigil, or Holy Shock heal spell you have a 40% chance to gain Mana equal to 50% of the base cost of the spell.",
+            "After getting a critical effect from your Flash of Light, Holy Light, Light's Vigil, or Holy Shock heal spell you have a 60% chance to gain Mana equal to 50% of the base cost of the spell.",
+            "After getting a critical effect from your Flash of Light, Holy Light, Light's Vigil, or Holy Shock heal spell you have a 80% chance to gain Mana equal to 50% of the base cost of the spell.",
+            "After getting a critical effect from your Flash of Light, Holy Light, Light's Vigil, or Holy Shock heal spell you have a 100% chance to gain Mana equal to 50% of the base cost of the spell."
+          ],
+          "requires": "forever-110871",
+          "sourceSpellID": 20210
+        },
+        {
+          "id": "forever-105325",
+          "name": "Divine Favor",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 1,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "When activated, gives your next Flash of Light, Holy Light, or Holy Shock spell a 100% critical effect chance."
+          ],
+          "requires": "",
+          "sourceSpellID": 20216
+        },
+        {
+          "id": "forever-105324",
+          "name": "Divine Precision",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 3,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "Improves your chance to hit with Holy spells by 6%.",
+            "Improves your chance to hit with Holy spells by 12%.",
+            "Improves your chance to hit with Holy spells by 18%."
+          ],
+          "requires": "forever-105323",
+          "sourceSpellID": 1310904
+        },
+        {
+          "id": "forever-105323",
+          "name": "Holy Shock",
+          "icon": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAA4ADgDASIAAhEBAxEB/8QAHQAAAgICAwEAAAAAAAAAAAAAAAcGCAMEAQIFCf/EADcQAAIBAgQEAwUGBgMAAAAAAAECAwQRAAUSIQYHMUETYXEUIjJRgQhCUpGhwRUjJDOx8GLR4f/EABgBAQADAQAAAAAAAAAAAAAAAAUCBAYD/8QALhEAAgEDAgQEBAcAAAAAAAAAAQIDAAQRBRITITFBIlFhsRSBkfEVcaHB0eHw/9oADAMBAAIRAxEAPwB+cquBOFY+BMpWPJKER+yRGxgXUTpsSSLXJsP8dMZeMOVHC2bUZjTKqSGZUbwnWO1j/j9N/oMR/kNxQkXCtDRyTRSr4SiKQMbW6hCCNiL2/wCsOWN0mjDKQynGcSWLVIzETh1pKWKWxlz9KpLzA5RjLa+aSjgj8JxstgCjDsFv0Pl+eEvXcKLBUTsVRamIe/TMmljb4iB5fL8sfSbiPhmhzmDTURIXA2kAswPbcYUnGHLJ40pqmPx2qUkC64LfzASQAdrjbSCehxG31KezAgu1z5N/vpSqPa3oGfC3f1qmtZwHm9Jkn8dqOHmiy7vP4i6RvYEgG4BJABtudhiI5nkpjQyRXbvo7W9cWy4wyrOxSHJqmKoigd1BdItMkgUGynrdRrPb5dcQduUGc5nO7U1FVqg3Cywsmn69/Tb62wp+IQrHvdwB+ddLjR/CCmD8xVbpYmW6SRlT8jgw1uIMnTLRU0dRAgqIl0sWXcGwNsGL0bh1yDmgp7FomwaafJ7N6iOo0w1MbDwg4S4Nha1h54tnwjnEU9BCyOXTwx8QsfrihHLLMXy+WleGVZCyghLbhW6g29MWz5WZ5T1Z0RQlGSIAX2Fx8vp++MfrETWVyt3F0PX0NaSfF5ZDcPEnt2p3MwVVcHUh6+Xnjo8QZSCFZT1vvfGKlkUQx6DqjYXF8atVTzU9Q08LSAMwYlBq7Wsy/eXvtYjscP7w6gkcvb+QayeMGuZ8spX1EQRBj97QL4ifFUOYJk1WtHKRJEhdyTZvDHxEfTErocz8QAVYhALaUmhfVGx/Ce6nyP542sxo0qaWWnZmVJUKMRv1/bBF7o0c44kXUVbgu2iYbudUT5y0+WV+U5lW01SFrYDYkA+8pO62PXra/wD4MGJN9pjh4UST1MMbK1HrintEFV1KqUe9773AtYjzwYR0WQ/Dcvt2xTupRrK6uvcUjOXOYw0FFGXZkEqMpdbXQk3Dee23lh28qeIWTN5qenqJBIXSREO6+717bEgftiruQZi8MyIVuFXaxw+MhrTlNPQ09CY9XuanG5ZmFySD1ANrYs30KyRNGRnd9646XcbwB2H78qvDwlXjMMqidQttAPum/wBMetm03s2Wz1OiSQQoXKJ8TADp5YSHIiszCc5nT+2eLTpEDGh3IkJ6g/72w5MuzRmjhjmjcs3us5FhfzwRpF8iLwZe3LPsP1FUdVsDbzsqnP8AfOlhm3EM+T5tPUsscSV6o0NIi+IsllttpuGJ6XHl5YmfDHEiF1grJTE7gXhla/hsOoVupHkdx8zjbzjI5dM0uW1MUUMra9GrQEPfSwB2O2xFsLbjLK8xoaGLMo9TAnaRWVtP/IFSemHII4YztzzPSuS8OdAp5Goj9sZY3oP7Z/qaUxeIg2927gk9z+3pgxm4mzqi4u4GqMkz+TTWINdPKNtTCxBv0B6jzB9cGK1qht9yOOeevnSavFw1STqox3qg9Gx9qj36H9MM/hfOBBMonryacKF0k30jrb529MGDCm0McGg7SZosstObgbmvl2RU/sUeYCgUHWsgGrUbWJOxt16YmWWc66aVGC59SVUeo6vFbSy3B6GwP+7YMGB73Q7aQNIc5NaJdQLnDop+VZM1+0Vl1G3sorMufWmh1bU5UHuSLdvU41+DebHCdZPVZBW5hMIq5gmssfDga90ZSeu5sQLd+w3MGIx6NAihlJzUI7gSboQgAPl6VEePs6yyiy2ujkqoknVXRY9YBdh+H17YMGDDeOQzQ00rFq//2Q==",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "Blasts the target with Holy energy, causing 134 Holy damage to an enemy, or 114 healing to an ally."
+          ],
+          "requires": "",
+          "sourceSpellID": 1311606
+        },
+        {
+          "id": "forever-110872",
+          "name": "Consecrated Ground",
+          "icon": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAA4ADgDASIAAhEBAxEB/8QAHAAAAQUBAQEAAAAAAAAAAAAAAAQFBgcIAwEC/8QAPBAAAQIEBAMEBgYLAAAAAAAAAQIDAAQFEQYSITEHCEETFGGBFSIyQnGRCSOhwdHwFiRRUmJ0kqKx0uH/xAAaAQACAwEBAAAAAAAAAAAAAAAEBgIDBQAH/8QAMBEAAQMDAQUGBQUAAAAAAAAAAQIDBAAFESESMUGx0TJRcZGhwRMiQmHwFBWBgtL/2gAMAwEAAhEDEQA/AM48IJSXmnah27SXMqUWv03hdU+HuLa7UZ6u0ijPzlNlCFuuoypQ2lKcxFyRtr+bRy4FsOTNTqTSCkDsUqurwV/2L+wtjicouCq1QJGnNrl30uZ3FueupS0BKiBbTRNgPHeFSXPMWe54D1FNUeEZNubKRuJ5+1ULi6msqkZNLLSUlTgK8qdxpDHxEpiZZ+mNyzRLjrRGRCb3IItYecWrgzDqcU1F2QcccaEnJ9r2iU3AsRor4gHqIiHHinusVykSTLay0lCkJ9W1zmAuT4xGBNBloYJ1GSf5GldOip/TLdA37I9a6YLo7a0HvEsUkMDNnQdFWiMPyzZriGUJSAVjTobxZnCqnvvTE4lKFD6rYj/MQmelVN4uBFgO8G4/dI3Gn51ixl4l5w54daskNJDTaccelNPFGUYlJ1hDSUpzAnQeAghXxmFqpT/5f8II2bUoqiIJ/NTWFdkhMxYHf7Cn7lnlXpit1t0GzLEjnUbX9bMLDfS4CvlF54YoYXKzEz2IS2+sgG251++Kp5SUlTWL7dJeWJ/qXGocJUhP6HSc0oqUlc0c1vdsoj8IQb+VuXCQE/SE8h1pttD6Wbc3niTzPSoHw5whP0iZqc86ytpp9rIjMmwUcx2hFiHCK61OsltkKdQqylK0snSLpq02h930dkSjJonKnfwPlHPDtFLz7hCw0VJOcqQDZNwb773+H2xjl59yQVtaqOMcOGKuS+EsfOMCqvwzhJVIqS+zbSoOoCbja99jEJ4mcM5ukYllJ5aGUNTD6nCG9gVW3877RoacZZYmAhF1lAtm2uY8xHSXqlQpp2ouZXGUJyBIBsMwO8FQri4oZI+c53bsDOc+1CqWkKTtdn113VhbmFZRK4nkpZIsBLZ0j+Eqtf5hXyghx5rmO68SpeXz5+zpjQzWte63D98EelWcgwWiOI60qXRW1McP36VJuTpGdnGetv1eVH97kbNwbTynBEky8sAOOZx6p1BXoIyPyIynfp7GEsUKWlUvKlQTvbM5GxJisLpkoywy0jI2nKm+pNoUJ0iLb7pJkzc/DUEpAAyScJz6DvFabKnHYbTTXayTzr5VRlLxq5MrZV3YpC7kXSs5bEQ6PybCnnUS7RQ0WyLBJFzEaXjieSr6uWSR4/thMrG1WvdTLar7Ap2gA3e0YONogknsjPhna3fhov8AbrgsDQaDG+nSoSrS25ZlLLgdW6kXyHTUdYeJ2Qbc7/nJIeQlJFvZAHSI3TsVVOYNl6G+hKAUxIpSqvrdIclmezsLuBwhRVfQZbfbfygu13ezSHlMEkKI0ynAGEqH0kgnBO+hJjUmOBtDyOeIPlpWC+dm7XFiXlNCG6c2vNlAJzE/6wRJfpCaF6P4hUCsAotP05TJsokktL3Itpo4BoTt06kO9sYMeI20d4GKwn17bhV31QeAcX17A2KJXEeHJ1UrPS5+KHUH2m1p95J6jzFiAY1zgrnAwxUJFDOM8LTMtNIaHaOylnWlr65UqOZI66k7bwQQS4w25naSDn7dc1FK1J3GprROYTgfVylv0mmnOK9yflFtdbe2AUjod9j4G3aocfOBElOrl1VhyayWs4xIvLbNwDoba72gggJdrhkjLST/AFT/AJq0SXhoFnzPWkTfMxwMQsLRPzaFDUEUx38IhfELnGojDJZwXhaanZgtkJmak4GmkK6Hs0XUsDqMyPj1gggxmO2yMIAHgAOQFQW6peqjmsncQsZYgx5iqbxLiWdVNz8yr4IaQPZbQn3UDoPM3JJJBBF1VV//2Q==",
+          "maxRank": 2,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "Gives your Holy spells 5% increased damage against the first 4 enemies that enter your Consecration.",
+            "Gives your Holy spells 10% increased damage against the first 4 enemies that enter your Consecration."
+          ],
+          "requires": "",
+          "sourceSpellID": 1310905
+        },
+        {
+          "id": "forever-105321",
+          "name": "Holy Power",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 5,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Increases the critical strike chance of your Holy Shock spell by 3%, and all other spells by 1%.",
+            "Increases the critical strike chance of your Holy Shock spell by 6%, and all other spells by 2%.",
+            "Increases the critical strike chance of your Holy Shock spell by 9%, and all other spells by 3%.",
+            "Increases the critical strike chance of your Holy Shock spell by 12%, and all other spells by 4%.",
+            "Increases the critical strike chance of your Holy Shock spell by 15%, and all other spells by 5%."
+          ],
+          "requires": "",
+          "sourceSpellID": 5923
+        },
+        {
+          "id": "forever-105320",
+          "name": "Light's Vigil",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "Applies Light's Vigil to the target for 30 sec. Your next Holy Shock cast on them triggers no cooldown and causes friendly targets to heal their party for 324, or enemy targets to suffer 182 Holy damage and refund 75% of Light's Vigil's Mana cost.  You may only have 1 Light's Vigil active per Paladin, per party."
+          ],
+          "requires": "forever-105323",
+          "sourceSpellID": 1310911
+        }
+      ]
+    },
+    {
+      "id": "forever-paladin-1",
+      "name": "Protection",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "forever-105630",
+          "name": "Toughness",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 5,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Increases your armor value from items by 2%.",
+            "Increases your armor value from items by 4%.",
+            "Increases your armor value from items by 6%.",
+            "Increases your armor value from items by 8%.",
+            "Increases your armor value from items by 10%."
+          ],
+          "requires": "",
+          "sourceSpellID": 20143
+        },
+        {
+          "id": "forever-105626",
+          "name": "Redoubt",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 5,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Damaging melee attacks against you have a 10% chance to increase your chance to block by 6%.  Lasts 10 sec or 5 blocks.",
+            "Damaging melee attacks against you have a 10% chance to increase your chance to block by 12%.  Lasts 10 sec or 5 blocks.",
+            "Damaging melee attacks against you have a 10% chance to increase your chance to block by 18%.  Lasts 10 sec or 5 blocks.",
+            "Damaging melee attacks against you have a 10% chance to increase your chance to block by 24%.  Lasts 10 sec or 5 blocks.",
+            "Damaging melee attacks against you have a 10% chance to increase your chance to block by 30%.  Lasts 10 sec or 5 blocks."
+          ],
+          "requires": "",
+          "sourceSpellID": 20127
+        },
+        {
+          "id": "forever-105638",
+          "name": "Precision",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 3,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Improves your chance to hit by 1%.",
+            "Improves your chance to hit by 2%.",
+            "Improves your chance to hit by 3%."
+          ],
+          "requires": "",
+          "sourceSpellID": 20189
+        },
+        {
+          "id": "forever-105637",
+          "name": "Guardian's Favor",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 2,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Reduces the cooldown of your Blessing of Protection by 1 min and increases the duration of your Blessing of Freedom by 3 sec.",
+            "Reduces the cooldown of your Blessing of Protection by 2 min and increases the duration of your Blessing of Freedom by 6 sec."
+          ],
+          "requires": "",
+          "sourceSpellID": 20174
+        },
+        {
+          "id": "forever-105636",
+          "name": "Anticipation",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 5,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "Increases your Defense Skill by 4.",
+            "Increases your Defense Skill by 8.",
+            "Increases your Defense Skill by 12.",
+            "Increases your Defense Skill by 16.",
+            "Increases your Defense Skill by 20."
+          ],
+          "requires": "",
+          "sourceSpellID": 20096
+        },
+        {
+          "id": "forever-110875",
+          "name": "Improved Seal of Fury",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 1,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "When Seal of Fury's shield is fully absorbed, restore $m1 Mana, increased by 15% per level the attacker is above you, up to 45%."
+          ],
+          "requires": "",
+          "sourceSpellID": 1314103
+        },
+        {
+          "id": "forever-105634",
+          "name": "Improved Righteous Fury",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 3,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "While Righteous Fury is active, all damage taken is reduced by 2%.",
+            "While Righteous Fury is active, all damage taken is reduced by 4%.",
+            "While Righteous Fury is active, all damage taken is reduced by 6%."
+          ],
+          "requires": "",
+          "sourceSpellID": 20468
+        },
+        {
+          "id": "forever-110874",
+          "name": "Shield Specialization",
+          "icon": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAA4ADgDASIAAhEBAxEB/8QAHAAAAgIDAQEAAAAAAAAAAAAAAAYDBwQFCAIB/8QANxAAAgEDAwIEAwUGBwAAAAAAAQIDBAURAAYhEjEHIkFRExRhCCMycaEVFkJDgZEkcoKxwdHw/8QAGAEBAQEBAQAAAAAAAAAAAAAABAUDAgb/xAAtEQABAgQEBAUFAQAAAAAAAAABAgMABBExEiFBYQVRkbETFCJxoRUjgcHR4f/aAAwDAQACEQMRAD8A5f2tb6nce5YY6qomnmrajrqJZGLO+SWdixOScdRzrrqt8HBa71tu02Ka2x1t6o5Hlgnt8bLThVDl3ZiSzZbpAAwADwe+qN+ytt83nekLSx9calIwSBgM+RnBPOFDHHr211NtSpuEHiFuSpu18lvc1qiFBFWND8Pqmk+9kVVyQFQsFC5OOfpp3GVIQhppN6VP5OUGk8SnVk2FB/YX4fs97Yim+c3NuKprquQHqjt1IlMrexbjJ/T/AI1qbp4ReHNyuddt+jtctHSWyLE9xSpZphUOAwUdXlKonJz3MgHHTqw9xbkgtdorbpUeSOmiMrnOST6D+p41XFDep7NtenpazzV1SXqatsnreWQlmz9BkKP8uo6ErOYh5wiKc3hs1Nq3eK31T0lXQYf5GpWnAWrVicrLnkOPY/6eMEq+7dlwW+oeGnQTRKqvMiFZXo2dQwBdCRInP4v4TwffVu3qrNwpJYrlFHPEw5XGGP5e2sfYO0rpd6S6zWz4YFHKsFPWSVHR8JmALMwwev4a9xxnIHPOqMpO+QViUMSDcddjrGLrPmBQZEWjmaqp6yz18dTTTTQywyLJDNGxR42ByrAjkEEZB+mjVvb9S1X2w3D5JY1lt8hKzrHgSoCQGHqAwBOPQ6NPmZWXWrxGFehVsj7QNl9yhS6mihfvpD19lCpax0C3uK01l0qVqGjhp6cYJLeTqZjwqgM5JPGrJ2zXSrZXr3CCou9XPcJ2UYy0rluBj0BA9e3tquvBy72/bvhXcZKmrWOett5hpk7s8rK+MDvgY5OMAkZIyNNVqrvhWy30a/dJFSRRkZyFAUZOfyGps8suTiybDCB0r3MbSaQlgEXJUT1p2EYviNeFNfQWXrD9L/O1eWGelT5E/qc8fTSxVVbzdTyMcnksT+ml+tuxuF+rrmSv38nkweRGvlUfoTnXsVeSquT1OeE7kD3PtrlIjYmJbxcVpaKasYMTGAI0zy7nhR+ecaYNzNfNn+HFutb1sdMKqmkgNPFkvPUz8zSSs3OUT8OMcr9RpbsqUtxqXuk8T1FDbJU+QpAjE19STgyFsdKRoM8nOT6ah3deDvHd5MMzfs+lQrEBnyJwXcfVjgD8hoD4XMOoZbFc/mGNFLLanFm0Ju6Zntm02UuENYmSnr09l/v3/I6NLfidef2jdxTRoqQ02EXp7HAxx9B20a9HPOCWWJdo5IFK8zrEiXBdSXVjNRr/AD4i/dmi2R+Ad5kqmo0rZqJYKUy4DsVDuwQ989PVwPb66wt83o0dmYBmPzKimiCrz1MOT9MKD+mtr4K0dnv3hJfaKpWghuUNsEdLPVYBTrLDyseBlvhjjkkge2qv3RdRW19IZR0pRU4DqeAsrdxg+oAA1MeTSZcB5j5AjdhX2En37mJadvhqqRj8K4HP++sq009TuB6uCkmipqGmiaS410rhfIO8EPo0r5wO2oLPaJLrDObjVLbqdYWljhKs01YwHEShQSueMkjAHPbW3uN1orXaIaSlp4Fq1iHRDjK0oYcZ93wTxnvye+hPzeHJMOZl6n1Rl7yvkNFbYdvWACISRqHEY6TGp/DGMdmPqP8AvSpue4ja230pImQV9T5psE5XA4X2yM/3z7a3lFDBtSha/X1Wa5OP8JRMPvAzfzHyODwe/Yemcap7eNymrrlKajzSlskk56fYavcKkvprBnXR6zkkHSv7O9he8S5yaE674DeaBc6E7cwOeptaNJNI8srSOcsxyTo140amKUVEqUakwoCmUXt4Gbts9nvtpF7t8VTT0tbH8zHOuUiHbrYd8owDDj+H6cz7vve1P373dcqK3UzRVdTIbXKz+SmYvkyon8WSMr6AHt6A0aTxhGItrNzUdDlGfDjhK0jY9Y0024Vnh+DQ4ZyMPIW83bv7DP8AfUtJe7PYadKz48NdeJc/ByPuqUjnqyfxN2wTjB7DPOjRrjgrTaXcRTU6bf7HfEVLcTgxUBvvt7ba65Qkbj3MZneUVElXUyfzXYnH/vbScSSSSSSeSTo0aTxGddmnKr0sIwl2EMpomPsaPJIscas7sQFVRkkn0GjRo1PhEf/Z",
+          "maxRank": 3,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Increases the amount of damage absorbed by your shield by 10%, and gives your blocks a 33% chance to restore 6% of your maximum Mana.  May only occur once every 3 sec.",
+            "Increases the amount of damage absorbed by your shield by 20%, and gives your blocks a 66% chance to restore 6% of your maximum Mana.  May only occur once every 3 sec.",
+            "Increases the amount of damage absorbed by your shield by 30%, and gives your blocks a 100% chance to restore 6% of your maximum Mana.  May only occur once every 3 sec."
+          ],
+          "requires": "forever-105626",
+          "sourceSpellID": 20150
+        },
+        {
+          "id": "forever-105632",
+          "name": "Sacred Duty",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 2,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "Increases your total Stamina by 2% and reduces the cooldown of your Divine Shield, Divine Protection, and Templar's Bulwark spells by 30 sec.",
+            "Increases your total Stamina by 4% and reduces the cooldown of your Divine Shield, Divine Protection, and Templar's Bulwark spells by 60 sec."
+          ],
+          "requires": "",
+          "sourceSpellID": 1224697
+        },
+        {
+          "id": "forever-110878",
+          "name": "Swift Judgement",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 1,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "Finishes the remaining cooldown on your Judgement ability and reduces the Mana cost of your next Judgement by 100%."
+          ],
+          "requires": "forever-110875",
+          "sourceSpellID": 1310994
+        },
+        {
+          "id": "forever-105629",
+          "name": "One-Handed Weapon Specialization",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 3,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "Increases the damage you deal with one-handed melee weapons by 3%.",
+            "Increases the damage you deal with one-handed melee weapons by 7%.",
+            "Increases the damage you deal with one-handed melee weapons by 10%."
+          ],
+          "requires": "",
+          "sourceSpellID": 20196
+        },
+        {
+          "id": "forever-105633",
+          "name": "Improved Hammer of Justice",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 3,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "Decreases the cooldown of your Hammer of Justice spell by 5 sec.",
+            "Decreases the cooldown of your Hammer of Justice spell by 10 sec.",
+            "Decreases the cooldown of your Hammer of Justice spell by 15 sec."
+          ],
+          "requires": "",
+          "sourceSpellID": 20487
+        },
+        {
+          "id": "forever-105625",
+          "name": "Templar's Bulwark",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "When activated, this ability grants you an absorb shield equal to 100% of your maximum health for 8 sec.  Applies Forbearance for 60 sec. Cannot be cast while Forbearance is active."
+          ],
+          "requires": "",
+          "sourceSpellID": 1311015
+        },
+        {
+          "id": "forever-105627",
+          "name": "Reckoning",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 5,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "Gives you a 8% chance to gain an extra attack after Blocking a melee attack and a 20% chance to gain an extra attack after being the victim of a non-periodic critical strike.",
+            "Gives you a 16% chance to gain an extra attack after Blocking a melee attack and a 40% chance to gain an extra attack after being the victim of a non-periodic critical strike.",
+            "Gives you a 24% chance to gain an extra attack after Blocking a melee attack and a 60% chance to gain an extra attack after being the victim of a non-periodic critical strike.",
+            "Gives you a 32% chance to gain an extra attack after Blocking a melee attack and a 80% chance to gain an extra attack after being the victim of a non-periodic critical strike.",
+            "Gives you a 40% chance to gain an extra attack after Blocking a melee attack and a 100% chance to gain an extra attack after being the victim of a non-periodic critical strike."
+          ],
+          "requires": "",
+          "sourceSpellID": 20177
+        },
+        {
+          "id": "forever-110879",
+          "name": "Iron Creed",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 5,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Increases the threat generated by your Holy Strike ability 5%. While Righteous Fury is active, Holy Strike also reduces your damage taken by 2% for 6 sec.",
+            "Increases the threat generated by your Holy Strike ability 10%. While Righteous Fury is active, Holy Strike also reduces your damage taken by 4% for 6 sec.",
+            "Increases the threat generated by your Holy Strike ability 15%. While Righteous Fury is active, Holy Strike also reduces your damage taken by 6% for 6 sec.",
+            "Increases the threat generated by your Holy Strike ability 20%. While Righteous Fury is active, Holy Strike also reduces your damage taken by 8% for 6 sec.",
+            "Increases the threat generated by your Holy Strike ability 25%. While Righteous Fury is active, Holy Strike also reduces your damage taken by 10% for 6 sec."
+          ],
+          "requires": "",
+          "sourceSpellID": 1311034
+        },
+        {
+          "id": "forever-105628",
+          "name": "Holy Shield",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "Increases chance to block by 20% for 10 sec, and deals 110 Holy damage for each attack blocked while active.  Damage caused by Holy Shield causes 20% additional threat. Each block expends a charge. 4 charges."
+          ],
+          "requires": "forever-105625",
+          "sourceSpellID": 20925
+        }
+      ]
+    },
+    {
+      "id": "forever-paladin-2",
+      "name": "Retribution",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "forever-105707",
+          "name": "Deflection",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 5,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Increases your Parry chance by 1%.",
+            "Increases your Parry chance by 2%.",
+            "Increases your Parry chance by 3%.",
+            "Increases your Parry chance by 4%.",
+            "Increases your Parry chance by 5%."
+          ],
+          "requires": "",
+          "sourceSpellID": 20060
+        },
+        {
+          "id": "forever-105706",
+          "name": "Benediction",
+          "icon": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAA4ADgDASIAAhEBAxEB/8QAGwAAAwEBAQEBAAAAAAAAAAAAAAcIBgQFAQL/xAAyEAACAQMDBAIBAgQGAwAAAAABAgMEBREGEiEABxMxIkEUCFEVFjJCIzNSU2FxgpHw/8QAGAEAAwEBAAAAAAAAAAAAAAAAAgMFBAH/xAAoEQACAQQABQMFAQAAAAAAAAABAgMABBEhEjFBUWFxkfATIkKB0aH/2gAMAwEAAhEDEQA/AJE0zYrvqW/UdhsNBNX3Ktk8cEEQ5Y+ycngAAEliQAASSACeqn7d9qNIaYsdRda6ooqylt0Ra8ahmi84MpfYsFBTsMH5jaJnVmY8oAHUjL9nNNV2n+2tTcbbBK1xvZWOtqkH+XSmN5UpUIySXWIyvjHxMSn2ctNKJ9S6q0X2/WZ4rVS2Y3aRoG2+SVox4GDOGB2JsAYA/JmYcqCEwA3RJ/HkPPQ/rPvSbmb6Ghz6+KzNyttrudWzNZ4rRSqRtoIpN8rD/VUzHLPIeNyKdgI+zk9c72OxQQs/4FMqIuWOz0AOnq3YC3pQPt1NfGqQpERzCRGMcBgU/wATnGTwTjgjJyoaazJB3ZptB32WCSOK8wUtc6tsWaF18sfGcqJQY0IJPLsoJOCaSFFGFqeyyM2GzWv05oiw6a7e/wAe1foyCcXCpFTTCNQKikiKJ4RK52+Ik7i2CFXI3c5wutV6B0nqC1JFeYT5QpV7xRRFqmhkYDDOEASqTIG4NiTGdjEkAVr3Nsd6vWl6yisVXTRzvTtEtLVRK1PMG4IY4LA49EEYOM56R1uv9HZ4WtwetoblRI0Ei0nzngccKWABDgcEblZWH1+yRbpMOLke9Nlnkt3wNjt881EWu9J3nReoZLLeoYxKEWWCeF98FVC39E0T+njYej/2CAQQDqju8lJQ6ysMlql8EtYkL1lvqoFCCOpA3SoIiA0QnUEmPJXyAOp5YdHWBbgKSkpAYc+XbORuqiqZFDpsGmP27WKs0Jp2FWMFVSXhqp2HyLl6WYRtz9AIB/4Ef89ex24auseooYqGwz3emgpVpvyYpd70sBmdo1ZWI3IhaUKFOQqqPrnK6M0xd27d2S42m2LAtUkMUVTNKPjLNIo8jR7stEHwcghvWF2sx6obt3pH+VK67ItRWVcdUIGSeeUMCFVgVC/2kNk+sYZQPRApRFYIFQdBUVomuJ2Oepr1dLX/APjyVbfw6qoDTTeIx1ShJTwDu2c4U54yeekF+oa8aYrtUabnBpKe4xX2ES19NKFlNrjaPyzOw5CrOCqsfXikKnAfpjd1u9ultCXOSxJT1N31Jtj22+nUqAZAfGHkIx8scKgeQ/SHqO6q112l44qK+2uos08qb1Wsp2gabkgsquASM8fePXS1GTnkK3yMVXhOzV+ate/SWJ5NLChlrGXMbTuduD9rjgnHrJx/31idQ9rrdHpKopba00FW6s7VayYqY5Dg+VZTjLK3y54OMHjjrA/pe7i6TtHb6C1V+oLHakphLJVQV9d4Z1kG5i8StkSoygEhdpQhuGyD1vtc95tE2fShuNvvltvFTVRj8KjoqpJZahmGQNoPxXByWbAUcn6BKNmU4FJuI43XjOc9Pn9pF3uiuVVTaj0jd65LjfbJQLcLfWNIUkrqbkncC3wkjK+1O1s8rn5dHSthutfSXSgu9dVvPVir3VMzSEs4dWjI3NkkBW28/wBoHR0E0CStxGhilkhXhG61lw7i6+ttFZ7VbdRQUtspaeOstjwUUbPIrrxvZtwZQS6kDaTyM/Z+XHvL3TrZpDLrWWOGVRG8dPb4I8L6OxtpKscn5DnOP2HWE7OXen1jpFNA11Z+HebazTWWo2K/5ERbc9OQcEkHcwAbJBIGNoz59zE9uqkpasbJnUtGRkxzKCRvif1IuQeRyMYYKQQMVhOWDQyD7kO/IJOCOmx/oIrbdJhg6nR+GqO/R3otrnqG5dwLhO1StI0tFRtU5kmmqGx56lnbndwYvvOG9DHT6u1Fo/S01Dfay30q1kLPBSVMg31DPKPkA7Es8jBTySWI3D7IM4/o37jC0V83b+ppJZvzDJWUkyuiqu1RvVgfln0Rjd7PAAz059f60tFxtlZZ5FamqYlHmhmWNp13KSm2PO7eQpK4HsZ9c9UhGXbPSsTXIiQr+Vd/cbsxobXdyjudzop6KvVw71Nvl8DzMP6WfAwzD6YjcPWcdSp3j0DP2y1hHaZJDWUVxhM9FcDAIzMQTvifA2mRODx7VgcDnp60XcPXlbpm3hKCKBZKZDWTqwnqmGwBmiwFRT/dubI5wM8E9Gq3i726An0/bqWSzxU5p6lLldVSVoWQiZZNgYZVhHsZg4YCXOCM9c4GTZovrRynA51J/glusqW+A7TIdzP/ALar8if/AEPfR1+dX1qaD0TVQyun8yX2I09MsMuRT0Zxvn/fEmNqEhSylm9YDHUVpJ7t2eB+FBoaznufTOh3wapxxxwoFcZPrypJU801PUR1FPLJDNE4eORGKsjA5BBHIIP30+9E96qG7UgtetoqFXdw1RJVUK1NFXOI2QSSoB5IZwGwJoWGcjcMLydHWqe2SbBOmHIjmPnY6oUkK66dq11ND2Umro7jBYr5aZkBMEllv/nhBBI3CRh5FJwPYH3xjk9dDV6MmeagtcNRDHXL4q6t8pkrZIs/NPM+GLSDhnO1UT4oNxLdHR0EF3KG4GwfOKVcWceCQT71stR60ta2Bra9db0mrCsS0lHLlaWmwNzPLgI7/QjQ4BxksPSq7gd57HaoHprHHT3SrePw+GEt+Gsf7TsQPyMYGIwNgJ5ZwCrHR1nWWS+dklb7RjWt+pxn2xTUtIrUBkG++/7j3zU73y63G93equ92rJqyuqpDJPPK2Wdj/wDYA9AYA6Ojo6pKoUBVGAKAnNf/2Q==",
+          "maxRank": 5,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Reduces the Mana cost of all instant cast spells and abilities by 2%.",
+            "Reduces the Mana cost of all instant cast spells and abilities by 4%.",
+            "Reduces the Mana cost of all instant cast spells and abilities by 6%.",
+            "Reduces the Mana cost of all instant cast spells and abilities by 8%.",
+            "Reduces the Mana cost of all instant cast spells and abilities by 10%."
+          ],
+          "requires": "",
+          "sourceSpellID": 20101
+        },
+        {
+          "id": "forever-105705",
+          "name": "Improved Judgement",
+          "icon": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAA4ADgDASIAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAAAAUGBwgCBAED/8QAMRAAAQMCBQMEAgECBwAAAAAAAQIDBAURAAYSITEHE0EiMlFhCBShFnEjQlKBkeHw/8QAGQEAAgMBAAAAAAAAAAAAAAAABQYCAwQH/8QAKhEAAQIFAwMDBQEAAAAAAAAAAQIDAAQRITEFElFBYfATgZEicbHB0eH/2gAMAwEAAhEDEQA/AMvUxS6lIdlPPrfecXrfUtRUsqJuVKJ3NyecS2o5UbmUhsMhQS4bBy1wlYA5/wCd8VhTZb0OUl9hwoWng+LeQR5BxpDoPFYzbETKgFmWtrS3UKcpehTKjqAWPlBA93i5GF3Vy7KgPJNh5eGDTX2XUFpwX/MZ6l0WoRob7z8VxKmZYjODT7V2O38Ytn8WMut1jPtLbUyZKG3y7IQlruaEJ31HZRFtOxFjcixGNdTOidE/p6TFky0x2pDALrxaHdbX2ygFJ/1JSTpUQf4GI3mfIEdzKzeVcsSZdChRG+4WIatCnyCUrU4Ru5cFB359J+sWy8yue3MPJ2HOcj5t18ED1BuXVubO7pFpZpzrT6TGZaL7UN59ZQ0lbqFObAFSyCrShIG5KjcWtpJIGIRUptNzNUlM5ZXTHc6frpeQ9XI6lLbQTdPbS42kJSo3SFpR5HFxigHKHVsuSZKJU2TEeQjuU2YANLUgKCkFwEHY2sTba6Tj5TcyViZ1PpGZK1W3J1ZbCY85bCEoZYipc1FtARsdQKrg/wCY/eCSGACq+KUtEEhJbBiX59l5pzBQqnlHMEtwV8rbLDxUnuMvsr7kcpUg+k6tbdxz3kWtscGPz6l/kblKNDkR6fSIdamOoLaHVAKUjyD3ALAakpOyle1JtgxrrGIkRjcJVcgggjkfGNK/hBTqj/UFVrynv1qNTo2mZLkKcS0nVc9tASQlatkn1EhN7hN7E9U7oQ9mYwqjFWEuPJJkKCSlBQpKwLm/u4II28H5xdNByy1lvJlPyjEZ1w6THCnnTsmVJPqdJ5OkqKrb+kgcgDCfq2vMqY9NAurPYfvpT/INM6cpt41VYdY9mceqrVYmfrxYTqKczs2NYGs3PqItxa1hiOO5inSawxVKOxKDcX1SmlLs2tG4Vqte21jcA+zg49CKBlqos/tRZRbbCNa/VYJA51X9pHnEOhV6k5oYl0zKjq3YtNkWkMo0lT447u59aCQN7hIAF+RpCS2oOMvmaAJIyTi9vbtj4gsqSYeQGRaFPVHrAFwXFzltOP7IbiR0JRrNt1KVuq1rc2HHp8YVZPrFHh5xTUaw+mdQ5KGHYplMjtBpa1BxJI21ospOwuSk7C2Ev5IQ4NXp0GrU2C1+5DHanyWL6HwABqSPIFgCq+9vgA4iv4+V2iwsxqgZiS8Iq0HsSWVrDjB3JSNPCTydvH3h101xWpMhRVQk0ItbzN+YBz7AknAkJtSv3iF9RIFKpeea1T6E869SmZriYTjiFIUpnVdFwqx9ttzzz5wYnP5I0Kjwc2KqeW5aJdJfVpQsOhagbXTfe/tFuB7fm+DBhbamztVmBdQbiL4/E/qfVpWVq2ibTUtRILICJvdVpSpSjpSAfjc7fX9sOalnGI3cNF2Qrfxt/OEmQMrSo3SHL9EgNBl+oNpmytVgpaiApKT5Pvva+1jxwOapltymRFvypKO6lYSEA7j5JHiwuccn1BxuZmFFVkgkJHvQn3IrDpKNJCaqNVGkK89w6rm6jSstZfmRYEuUtC57jilIS5sbMgp+bAEm99h52zFVYFYydmN2FKvGnxHChehwKSbGxF0mxB3BH9wfIxc9L6mZX1vodbmQp0RfbQlaApuUoK2UpYN0b7m44A3w2ZayVXKIlypPN1KpLRaKlj1hKle65V5uN1E2Hxtud0+ZmdOKkPNnYe16816inxFc1KszQC2V/UPPaOOmfUBqvZZdoUaj0pMp1sIeW+rRpXY2OyTqBsNz5NrjFY9RsuVHK+YmK7EhIQx3ApaGrlLSxbUDfcA2J/3Iw6qfTqpU2vRp9CU3GkqULQLqUFbDUEK5ULG52FtzceLModRhriPUuXRg3Uu0kklAcUlfFtazulQJ3v8AGNCZpEu768sdyTkdfODElyqnmS0+migcjr3/AKLQjzZl2s9R8nCbDo/dlfrMuB1p5pai6DYXTqCgCm4+j9YMc9PZU2h1aoZUkuIhpUksxm6hcf4bp1o3BG4KQARexH3bBh1bckVNpUFkV9/1Co4zMBZBTWnnMaUlVShSaJCq+XXm5FOnsBLThJUCEGxCgrhYUSCkgFKgQQCLCqs/VX9qA8wiQ65ZahqUdXjcA/8AvrBgxyhbQanHG04Bhs07620rOYqbNPSTKwokd2h1qeieXQhaZLN21XCj6SN7DQf+8R5fSvNGX2o052pLgmUQI4bQ4kuHc6b+Nhfe4tzwcGDG6X1mcRtaUvcFE5ocVPEXvabLBwEJoexI/BiZ5HTnOmpkKkRmH3Gm9ZkMOEKQn4JIskEjgW1b/Bw4jFit1BaJbSm6mFaFOmzLTXFwRsCeDtcn65BgxJpwPuKUQAe1o07dilJHTnMM8/LotGao9XdgJmTIT5jVBt9Sn3JDLgACwFlV9KwixHhQHxcwYMdD06ZcZlwhBtfjnuITNQZQuYJI454+8f/Z",
+          "maxRank": 2,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Decreases the cooldown of your Judgement ability by 1 sec.",
+            "Decreases the cooldown of your Judgement ability by 2 sec."
+          ],
+          "requires": "",
+          "sourceSpellID": 25956
+        },
+        {
+          "id": "forever-105704",
+          "name": "Holy Conduit",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 2,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Reduces the mana cost of your Consecration, Holy Wrath, Exorcism, and Hammer of Wrath spells by 20%.",
+            "Reduces the mana cost of your Consecration, Holy Wrath, Exorcism, and Hammer of Wrath spells by 40%."
+          ],
+          "requires": "",
+          "sourceSpellID": 1237268
+        },
+        {
+          "id": "forever-105703",
+          "name": "Conviction",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 5,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Improves your chance to get a critical strike with melee attacks by 1%.",
+            "Improves your chance to get a critical strike with melee attacks by 2%.",
+            "Improves your chance to get a critical strike with melee attacks by 3%.",
+            "Improves your chance to get a critical strike with melee attacks by 4%.",
+            "Improves your chance to get a critical strike with melee attacks by 5%."
+          ],
+          "requires": "",
+          "sourceSpellID": 20117
+        },
+        {
+          "id": "forever-105702",
+          "name": "Vindication",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 3,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Gives your damaging melee attacks a chance to reduce the target's Attack Power by -2, and increase your Attack Power by 1% for 30 sec.",
+            "Gives your damaging melee attacks a chance to reduce the target's Attack Power by -4, and increase your Attack Power by 2% for 30 sec.",
+            "Gives your damaging melee attacks a chance to reduce the target's Attack Power by -6, and increase your Attack Power by 3% for 30 sec."
+          ],
+          "requires": "",
+          "sourceSpellID": 9452
+        },
+        {
+          "id": "forever-105701",
+          "name": "Sanctified Judgement",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 3,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "Gives your Judgement ability a 33% chance to return 20% of the Mana cost of the judged seal.",
+            "Gives your Judgement ability a 66% chance to return 40% of the Mana cost of the judged seal.",
+            "Gives your Judgement ability a 100% chance to return 60% of the Mana cost of the judged seal."
+          ],
+          "requires": "",
+          "sourceSpellID": 1311074
+        },
+        {
+          "id": "forever-105696",
+          "name": "Seal of Command",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 1,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Gives the Paladin a chance to deal additional Holy damage equal to 70% of normal weapon damage.  Only one Seal can be active on the Paladin at any one time.  Lasts 30 sec.\n\nUnleashing this Seal's energy will judge an enemy, instantly causing 48.5 Holy damage, 97 if the target is stunned or incapacitated."
+          ],
+          "requires": "",
+          "sourceSpellID": 20375
+        },
+        {
+          "id": "forever-105699",
+          "name": "Pursuit of Justice",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 2,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "Increases movement speed and mounted movement speed by 8%.  This does not stack with other movement speed increasing effects.",
+            "Increases movement speed and mounted movement speed by 15%.  This does not stack with other movement speed increasing effects."
+          ],
+          "requires": "",
+          "sourceSpellID": 26022
+        },
+        {
+          "id": "forever-105698",
+          "name": "Eye for an Eye",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 2,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "All critical strikes against you cause 5% of the damage taken to the attacker as well. The damage caused by Eye for an Eye will not exceed 50% of the Paladin's total health.",
+            "All critical strikes against you cause 10% of the damage taken to the attacker as well. The damage caused by Eye for an Eye will not exceed 50% of the Paladin's total health."
+          ],
+          "requires": "",
+          "sourceSpellID": 9799
+        },
+        {
+          "id": "forever-105700",
+          "name": "Sacred Arbiter",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 1,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "Increases the damage of your Holy Strike ability by 10% and causes it to refresh all Judgement effects on the target."
+          ],
+          "requires": "",
+          "sourceSpellID": 1311087
+        },
+        {
+          "id": "forever-110883",
+          "name": "Crusade",
+          "icon": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAA4ADgDASIAAhEBAxEB/8QAGwAAAwEBAQEBAAAAAAAAAAAAAAUGBAcDAQj/xAAxEAABAwMCBAQGAQUBAAAAAAABAgMEAAUREiEGEzFBB1FxgRQiMmGRwaEVJDNCUrH/xAAaAQACAwEBAAAAAAAAAAAAAAAEBQIDBgcA/8QALBEAAgEDAwIEBQUAAAAAAAAAAQIRAAMEBSFBEjETImHwBnGBkcE0UqGx0f/aAAwDAQACEQMRAD8Ar59vjt28W9KmmSpsJjtJTpA09AMdOwxXhwo1OdkBlhSVJSNSg59IGe3lVLxdag7axJT9cZWv7lJ6/r8Vk4QaSjiblRlJdZUSMkZ+TBP6FcXfNBx2bud+9dOuXi5LjgVTxLcCPp39K2G1n/mm9taR8bKbI/xhGPcGmehvH01jb+qENFJb2e4aomTb8dsVgchb9Ku5kRKk5ApO/ESFVfj6n1UTj6gSK5vH0TuMrnZ5AbdjfAoS42tAUlYJ3Cgfs4RjuKKXcBlxHi9cGJL6XHVc9GtO4JSRt7AfxRWkzM18VlW2xAKqdiRx9KkckE+cA/MD/DXWOQl1tTKvpWClXodqS8MR4trcVdpqktoaa+GyE9XEqIOw76QPyaxcaT3rW+h5h53ChlSUL2SRtn7bEUlbuv8AU4qYZbTH1yuaCVkpGU4Oe/UZ9zWcuJca2YPlbv8AmiLGK1xYnyt3+XNdIgSObIuTkLDqlJ5jOTso4OPLuak3vE8sy22nrMpKUgpfHN+YLHUDbpnzpUjjuFw2Xo6Ir0iQWRyjgaCe2TnOOv4rnl9vjNyvj1zXFDaXnOYtoOZHbIzjvv8AmqcHSGvOxvpKwIPs+zRGLpSPcfxklYEGfSPfrX6O4dmyrhZmZs2OmM48Cvlj/VOTp/jB96zR7hbp6XHIclt5LR+cp6CufW/xcZmMNQ5FpW2+87yiGyCgIOwwSc538sUkeukOHw3eLdIafWma2WwttWnTgHT+VEZHlmgrOkZCO3iL0kkQBB2nfnj+aXLpjjrZh0mdgO0TSHw2uJf8XGJKQFCXJfyT5LCjmisPBtluLXFEScwdMRqUtpEjUMqxlJIHuN/vt0orSa0EuXUKtELH2qi/aJbY1T3UqfiOqdcWVY1aickkdKxRZzMOKqQ6oJQ13Nbr0lHNksNqCUJUoA5ztmuY/wB3ersppGsxUOYKhslI8/XaisbHXIUyYUb06sXumvsuY864qS5zCHFHC1ZOft/NZjKqj40fixeHWYISlJ5gUygDy6nPv1qGLxp7iAXrfVECjmvdBiaZNPKW6NBIUNwQelVU+5tyuFG1c4KecUhpYJ+bVkZ/8z6Vl8LJsFEmbDkN5flISlsqwU4GSU+p/VKb0z8FxcWkMJWn4lKkNg5CgVA4/WKouAXcg2yIKbj1oa7dPTI5q24MS41aS2taVBKtgFZI7nPqcn3or0ZaahXaS0yTyjkJB7DyopJcJZyw53paw3r0acanRCtt1DrT6NSXEKylSVDYgjqMd6XWWxsWsyHUuF1azkqIxt1xiiiisqbLvaU7TH2JH4r2K5dQxqX8QdZlRlaspKDhOOnvUsSRRRT/AAP061O65DmmnCWo8QQwhxTauaMKAzirObDbXxky6pPM0NF453CVattqKKA1Fit/b9p/upKZH1pxNkMxo7kiQ4202hBU46tQSlCQMkknoB50UUUf8P6Fb1Ky7u5WDGwB4nmkmoZ7YzgATNf/2Q==",
+          "maxRank": 2,
+          "row": 3,
+          "col": 3,
+          "descriptions": [
+            "Increases all damage dealt by 1%. Increased by an additional 1% against Demon and Undead targets.",
+            "Increases all damage dealt by 2%. Increased by an additional 2% against Demon and Undead targets."
+          ],
+          "requires": "",
+          "sourceSpellID": 1311083
+        },
+        {
+          "id": "forever-105697",
+          "name": "Two-Handed Weapon Specialization",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 3,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "Increases the damage you deal with two-handed melee weapons by 3%.",
+            "Increases the damage you deal with two-handed melee weapons by 6%.",
+            "Increases the damage you deal with two-handed melee weapons by 9%."
+          ],
+          "requires": "",
+          "sourceSpellID": 20111
+        },
+        {
+          "id": "forever-105693",
+          "name": "Vengeance",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 3,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "Increases your Physical and Holy damage dealt by 1% for 30 sec after landing a critical strike.  Stacks up to 5 times.",
+            "Increases your Physical and Holy damage dealt by 2% for 30 sec after landing a critical strike.  Stacks up to 5 times.",
+            "Increases your Physical and Holy damage dealt by 3% for 30 sec after landing a critical strike.  Stacks up to 5 times."
+          ],
+          "requires": "forever-105701",
+          "sourceSpellID": 20049
+        },
+        {
+          "id": "forever-105694",
+          "name": "Repentance",
+          "icon": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAA4ADgDASIAAhEBAxEB/8QAHAAAAgMAAwEAAAAAAAAAAAAAAAYEBQcBAggD/8QANBAAAgEDBAECBAMGBwAAAAAAAQIDBAURAAYSITEHExQiQVEykaEIFWGBsfAXI0JScXLR/8QAGwEAAQUBAQAAAAAAAAAAAAAABwEDBAUGAgD/xAAuEQABAwIFAgQFBQAAAAAAAAABAgMRAAQFEiExQVFxBhMiYRSBkbHwIzLB0eH/2gAMAwEAAhEDEQA/AFK10qCDjGhxkk8mLEknJYk9kkkkk9kkk6+F3gpaV0FTUJDy6AJ86v7XA8LLGVz99Zt6sWW50+7WdGiuPxMfuU0PFmkjA6KhQD2TnHfeP4aK13fCzQCBp+fOhBgrIxW/LDjuXQkaSTHA499eKvXoC4DR444z1rmO2rIw4Ahx/XVH6K3SW53k2mectC8LOgd8shX6frn+WtYsFhqprxHBFT5JYYJXojS2uIs3TJdAgVxjHmYXcqtlmSACPcHau22LLTW611VfUyok0MfuHkuVVQDl276A/UnA0qS3c1OyI7pLC6m6TSPGHbLGMEhWPQwSPmx9jpi3vuIbkdNnWnM9LdKnlNOq8kemjdl5MPouctxOPCd951S7siNxuEVvpMJBTqIokOcKB0P01XYY6vELwvr/AGp2+Y3/ADrU2/thhrTVs6f1Fwtw9Ep1SnmPUfacpMHSlzatphrqhpZlyCwBIYqeiG6IIIOQCCOwRkY0aco7etjrrLbkkEpqang78eP0PeO/vo1ZodZK1JTx7b6TVFjGIO23lOZvS4CR2Cinod4ntT1TW6GhRX9+BJ55eEXxCH2xxGWdwCCQuV+UdksB0MnSTuS77frrpLV/AXa73enk981ZqhDPS4B9oxIsqciBybgiOBkAliddN+bsrLhPaq/32NLc7PHV07AgHALCWI4ABZWPZHnI+2kiKO2Naa2qraG0S3Cro2amqq5CWglp2EaMjchx5gd+RlD2PGh7fX67pebjiij4b8Ot4U0Mxlwj1Hrvp2Gn+1e2Hb1HujfED7O3DS0O6Aj1FFXRRf5FUvEM6VSLGFV+JPaDvHzojHWg7jvu5LTs+j2/NRu26L/VGgMUEbRoioSGcMc5Rsgcjj5SzD8OlD09v9Ht71LtG5lpUs0M9FV1N5t7VZko6dGCBZIOIwGL+QOQI8cc9aDsiOs3LV1vrDeKGaJ7i3wtlpJfNPQJ0H+uGduRP/JIOH09ZurJCUnVW/y5jr96r8cZYsHfjHUBSWQCnkzrCZ3yz6iDMRpExVZUWuLbdmp7Fb5UmmxzrKtejUykDk3j8OQQvfgDUGyWpfiecgDNz6BHjTFU2uY+5WVEghhiy7TyYVEQfUn+zqXsiggvb01XA7NBOyuMr2Ezjv8Aj/Q61rdwhhvIDsKET9xdXmZ86lZgn3Ow+g+g6UkXGshrfULbk3uSKqTuwUpglmd4kBB7GFjYn/sPOjULaEVA+9r5uGupVqnpZJJIS3axO9Q3a+cHro/Tv76NQrG3dSgneTNarxmWlXbTDYy+WhII4EgKAHYGJ5rP7tMsu26emkc8LbepDCUA4xQzplgOvGUB/wDPOrS0U1B8dbIbpVLTLHQM8ntxCYyCSV2+UHKlTnvIYYOOjpFr7oktpqAzgmqlTAUddH8/uNXUNg2jW2qK5Vd7nNTAfaWE1BHBBnwv4sHvx99YuOKM6VQZqRZRRUW44KGGpjrPjb2kHw6EIiwIjSSjj3xBaRDxGPGvTfplfJLdsa1xXSL9820xKIAkwjq6VR1wIYhZFHQUjGAMEa8dVrUttulLJSUUUcNCjSKUT5znrkxPZ/nq0sHqbVWuCmtVu5sy4VVVScn+86VBLZkGo11btXSMjqQR71r2/wDfd6qK+41W5dqQ18ZqjSW6mlYn4MOG9rgqsUkd0XkznkVboBRga+H7Pm+a+zbjWxVB4UFdJUNJbmU8qAxxtJzHeQDxIK8cZIxjWV3Td9TctxJQDjPPDFJNI6n8U+FBVSPGEBTI/wBzHzq+tl9eglkqqulqfiKeOp5iV/fxG8BWJTLkOVVv9JJGSPA1208oLmaZubBl63LOXjT+/wA/mmz0rgqP8PKy4F5Gkr7g0bFmzlI1U57+7SN+WjT16X7Zkj9Hdsw8U5y0xqmXI7ExMgOfvhl/p9NGtvhtylFskE60E/ENwteK3Ckp0KjHYQB9q8YXa6zmrEVJ71JDT5SOM/Kw+/IffP5alVG991z0K0Ut8qjAoYBQQCATk9gZ/XRo0PCTNHioVFfKykqDPG3NmzzEnzB8jBBz561yb1MGkaCKKmZxxPsjj1o0aXMa9VzsKSnjmjOSKmSYqrHvHRycZ+x+vXZ0zbtnt9ltzy01Q/vVUUgdS5YyOcYc9kecn9fro0adBhE0kVd+lv7Qd+2jtiXbbWlLmqwtHbZfcIlhkOeIPRDoCel6P0zjABo0alMPvKTGbbtVarBbBa1LU0JJk96//9k=",
+          "maxRank": 1,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "Puts the enemy target in a state of meditation, incapacitating them for up to 6 sec. Any damage caused will awaken the target. Only works against Humanoids."
+          ],
+          "requires": "",
+          "sourceSpellID": 20066
+        },
+        {
+          "id": "forever-110882",
+          "name": "Champion of the Light",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 3,
+          "row": 5,
+          "col": 1,
+          "descriptions": [
+            "Increases your spell damage and healing by up to 33% of your Intellect.",
+            "Increases your spell damage and healing by up to 66% of your Intellect.",
+            "Increases your spell damage and healing by up to 100% of your Intellect."
+          ],
+          "requires": "",
+          "sourceSpellID": 1311084
+        },
+        {
+          "id": "forever-110880",
+          "name": "Instrument of Law",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 2,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Reduces the cast time of your Hammer of Wrath by 0.5 sec, and reduces all threat you generate by 10% while Righteous Fury is not active.",
+            "Reduces the cast time of your Hammer of Wrath by 1 sec, and reduces all threat you generate by 20% while Righteous Fury is not active."
+          ],
+          "requires": "",
+          "sourceSpellID": 1311085
+        },
+        {
+          "id": "forever-105692",
+          "name": "Twist of Light",
+          "icon": "data:image/jpeg;base64,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",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "When you replace your Seal of Command, Seal of Righteousness, Seal of Fury, or Seal of Justice with a different Seal, gain an Echo. Your next melee attack applies the replaced Seal's effects, consuming the Echo."
+          ],
+          "requires": "",
+          "sourceSpellID": 1310735
+        }
+      ]
+    }
+  ],
+  "abilities": [],
+  "build": {},
+  "source": {
+    "version": "Forever",
+    "build": "1.60.1.69876",
+    "language": "en",
+    "url": "https://github.com/MAF2414/wow-forever-talents",
+    "originalSource": "https://wago.tools/db2/TraitNode?build=1.60.1.69876",
+    "notes": [
+      {
+        "node": 104982,
+        "name": "Lightning Reflexes",
+        "sourceX": 102800,
+        "sourceY": 5740,
+        "note": "Outside the normal tree grid. Preserved and shown separately; availability unclear."
+      },
+      {
+        "node": 105003,
+        "name": "Improved Serpent Sting",
+        "sourceX": 6820,
+        "sourceY": 39300,
+        "note": "Outside the normal tree grid. Preserved and shown separately; availability unclear."
+      },
+      {
+        "edge": {
+          "from": 104961,
+          "to": 104964,
+          "type": 2,
+          "requiredRanks": 1,
+          "warning": "Backwards connection in the client snapshot."
+        },
+        "note": "Direction preserved from TraitEdge."
+      },
+      {
+        "node": 105865,
+        "name": "Holy Specialization",
+        "sourceX": 9280,
+        "sourceY": 21300,
+        "note": "Outside the normal tree grid. Preserved and shown separately; availability unclear."
+      }
+    ],
+    "notice": "Снимок клиента 1.60.1.69876, 16.09.2026. Возможны отличия от текущего Wowhead. Три узла вне обычной сетки не импортированы. Одна ошибочная обратная связь охотника из снимка исключена; сохранена обычная зависимость."
+  }
+}

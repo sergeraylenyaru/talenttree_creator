@@ -1,0 +1,900 @@
+{
+  "version": 1,
+  "name": "Шаман · 2.4.3",
+  "budget": 61,
+  "rowCost": 5,
+  "branches": [
+    {
+      "id": "tbc-shaman-0",
+      "name": "Elemental",
+      "rows": 9,
+      "talents": [
+        {
+          "id": "tbc-shaman-0-1",
+          "name": "Convection",
+          "icon": "spell_nature_wispsplode",
+          "maxRank": 5,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Reduces the mana cost of your Shock, Lightning Bolt and Chain Lightning spells by 2%.",
+            "Reduces the mana cost of your Shock, Lightning Bolt and Chain Lightning spells by 4%.",
+            "Reduces the mana cost of your Shock, Lightning Bolt and Chain Lightning spells by 6%.",
+            "Reduces the mana cost of your Shock, Lightning Bolt and Chain Lightning spells by 8%.",
+            "Reduces the mana cost of your Shock, Lightning Bolt and Chain Lightning spells by 10%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-2",
+          "name": "Concussion",
+          "icon": "spell_fire_fireball",
+          "maxRank": 5,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Increases the damage done by your Lightning Bolt, Chain Lightning and Shock spells by 1%.",
+            "Increases the damage done by your Lightning Bolt, Chain Lightning and Shock spells by 2%.",
+            "Increases the damage done by your Lightning Bolt, Chain Lightning and Shock spells by 3%.",
+            "Increases the damage done by your Lightning Bolt, Chain Lightning and Shock spells by 4%.",
+            "Increases the damage done by your Lightning Bolt, Chain Lightning and Shock spells by 5%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-4",
+          "name": "Earth's Grasp",
+          "icon": "spell_nature_stoneclawtotem",
+          "maxRank": 2,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Increases the health of your Stoneclaw Totem by 25% and the radius of your Earthbind Totem by 10%.",
+            "Increases the health of your Stoneclaw Totem by 50% and the radius of your Earthbind Totem by 20%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-5",
+          "name": "Elemental Warding",
+          "icon": "spell_nature_spiritarmor",
+          "maxRank": 3,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Reduces damage taken from Fire, Frost and Nature effects by 4%.",
+            "Reduces damage taken from Fire, Frost and Nature effects by 7%.",
+            "Reduces damage taken from Fire, Frost and Nature effects by 10%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-6",
+          "name": "Call of Flame",
+          "icon": "spell_fire_immolation",
+          "maxRank": 3,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Increases the damage done by your Fire Totems by 5%.",
+            "Increases the damage done by your Fire Totems by 10%.",
+            "Increases the damage done by your Fire Totems by 15%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-8",
+          "name": "Elemental Focus",
+          "icon": "spell_shadow_manaburn",
+          "maxRank": 1,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "After landing a critical strike with a Fire, Frost, or Nature damage spell, you enter a Clearcasting state.  The Clearcasting state reduces the mana cost of your next 2 damage spells by 40%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-9",
+          "name": "Reverberation",
+          "icon": "spell_frost_frostward",
+          "maxRank": 5,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "Reduces the cooldown of your Shock spells by 0.2 sec.",
+            "Reduces the cooldown of your Shock spells by 0.4 sec.",
+            "Reduces the cooldown of your Shock spells by 0.6 sec.",
+            "Reduces the cooldown of your Shock spells by 0.8 sec.",
+            "Reduces the cooldown of your Shock spells by 1 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-10",
+          "name": "Call of Thunder",
+          "icon": "spell_nature_callstorm",
+          "maxRank": 5,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Increases the critical strike chance of your Lightning Bolt and Chain Lightning spells by an additional 1%.",
+            "Increases the critical strike chance of your Lightning Bolt and Chain Lightning spells by an additional 2%.",
+            "Increases the critical strike chance of your Lightning Bolt and Chain Lightning spells by an additional 3%.",
+            "Increases the critical strike chance of your Lightning Bolt and Chain Lightning spells by an additional 4%.",
+            "Increases the critical strike chance of your Lightning Bolt and Chain Lightning spells by an additional 5%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-12",
+          "name": "Improved Fire Totems",
+          "icon": "spell_fire_sealoffire",
+          "maxRank": 2,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "Reduces the delay before your Fire Nova Totem activates by 1 sec. and decreases the threat generated by your Magma Totem by 25%.",
+            "Reduces the delay before your Fire Nova Totem activates by 2 sec. and decreases the threat generated by your Magma Totem by 50%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-13",
+          "name": "Eye of the Storm",
+          "icon": "spell_shadow_soulleech_2",
+          "maxRank": 3,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "Gives you a 33% chance to gain the Focused Casting effect that lasts for 6 sec after being the victim of a melee or ranged critical strike.  The Focused Casting effect prevents you from losing casting time on Shaman spells when taking damage.",
+            "Gives you a 66% chance to gain the Focused Casting effect that lasts for 6 sec after being the victim of a melee or ranged critical strike.  The Focused Casting effect prevents you from losing casting time on Shaman spells when taking damage.",
+            "Gives you a 100% chance to gain the Focused Casting effect that lasts for 6 sec after being the victim of a melee or ranged critical strike.  The Focused Casting effect prevents you from losing casting time on Shaman spells when taking damage."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-15",
+          "name": "Elemental Devastation",
+          "icon": "spell_fire_elementaldevastation",
+          "maxRank": 3,
+          "row": 3,
+          "col": 3,
+          "descriptions": [
+            "Your offensive spell crits will increase your chance to get a critical strike with melee attacks by 3% for 10 sec.",
+            "Your offensive spell crits will increase your chance to get a critical strike with melee attacks by 6% for 10 sec.",
+            "Your offensive spell crits will increase your chance to get a critical strike with melee attacks by 9% for 10 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-16",
+          "name": "Storm Reach",
+          "icon": "spell_nature_stormreach",
+          "maxRank": 2,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "Increases the range of your Lightning Bolt and Chain Lightning spells by 3 yards.",
+            "Increases the range of your Lightning Bolt and Chain Lightning spells by 6 yards."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-17",
+          "name": "Elemental Fury",
+          "icon": "spell_fire_volcano",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "Increases the critical strike damage bonus of your Searing, Magma, and Fire Nova Totems and your Fire, Frost, and Nature spells by 100%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-19",
+          "name": "Unrelenting Storm",
+          "icon": "spell_nature_unrelentingstorm",
+          "maxRank": 5,
+          "row": 4,
+          "col": 3,
+          "descriptions": [
+            "Regenerate mana equal to 2% of your Intellect every 5 sec, even while casting.",
+            "Regenerate mana equal to 4% of your Intellect every 5 sec, even while casting.",
+            "Regenerate mana equal to 6% of your Intellect every 5 sec, even while casting.",
+            "Regenerate mana equal to 8% of your Intellect every 5 sec, even while casting.",
+            "Regenerate mana equal to 10% of your Intellect every 5 sec, even while casting."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-20",
+          "name": "Elemental Precision",
+          "icon": "spell_nature_elementalprecision_1",
+          "maxRank": 3,
+          "row": 5,
+          "col": 0,
+          "descriptions": [
+            "Increases your chance to hit with Fire, Frost and Nature spells by 2% and reduces the threat caused by Fire, Frost and Nature spells by 4%.",
+            "Increases your chance to hit with Fire, Frost and Nature spells by 4% and reduces the threat caused by Fire, Frost and Nature spells by 7%.",
+            "Increases your chance to hit with Fire, Frost and Nature spells by 6% and reduces the threat caused by Fire, Frost and Nature spells by 10%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-22",
+          "name": "Lightning Mastery",
+          "icon": "spell_lightning_lightningbolt01",
+          "maxRank": 5,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Reduces the cast time of your Lightning Bolt and Chain Lightning spells by 0.1 sec.",
+            "Reduces the cast time of your Lightning Bolt and Chain Lightning spells by 0.2 sec.",
+            "Reduces the cast time of your Lightning Bolt and Chain Lightning spells by 0.3 sec.",
+            "Reduces the cast time of your Lightning Bolt and Chain Lightning spells by 0.4 sec.",
+            "Reduces the cast time of your Lightning Bolt and Chain Lightning spells by 0.5 sec."
+          ],
+          "requires": "tbc-shaman-0-10"
+        },
+        {
+          "id": "tbc-shaman-0-25",
+          "name": "Elemental Mastery",
+          "icon": "spell_nature_wispheal",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "When activated, this spell gives your next Fire, Frost, or Nature damage spell a 100% critical strike chance and reduces the mana cost by 100%."
+          ],
+          "requires": "tbc-shaman-0-17"
+        },
+        {
+          "id": "tbc-shaman-0-26",
+          "name": "Elemental Shields",
+          "icon": "spell_nature_elementalshields",
+          "maxRank": 3,
+          "row": 6,
+          "col": 2,
+          "descriptions": [
+            "Reduces the chance you will be critically hit by melee and ranged attacks by 2%.",
+            "Reduces the chance you will be critically hit by melee and ranged attacks by 4%.",
+            "Reduces the chance you will be critically hit by melee and ranged attacks by 6%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-29",
+          "name": "Lightning Overload",
+          "icon": "spell_nature_lightningoverload",
+          "maxRank": 5,
+          "row": 7,
+          "col": 1,
+          "descriptions": [
+            "Gives your Lightning Bolt and Chain Lightning spells a 4% chance to cast a second, similar spell on the same target at no additional cost that causes half damage and no threat.",
+            "Gives your Lightning Bolt and Chain Lightning spells a 8% chance to cast a second, similar spell on the same target at no additional cost that causes half damage and no threat.",
+            "Gives your Lightning Bolt and Chain Lightning spells a 12% chance to cast a second, similar spell on the same target at no additional cost that causes half damage and no threat.",
+            "Gives your Lightning Bolt and Chain Lightning spells a 16% chance to cast a second, similar spell on the same target at no additional cost that causes half damage and no threat.",
+            "Gives your Lightning Bolt and Chain Lightning spells a 20% chance to cast a second, similar spell on the same target at no additional cost that causes half damage and no threat."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-0-33",
+          "name": "Totem of Wrath",
+          "icon": "spell_fire_totemofwrath",
+          "maxRank": 1,
+          "row": 8,
+          "col": 1,
+          "descriptions": [
+            "Summons a Totem of Wrath with 5 health at the feet of the caster.  The totem increases the chance to hit and critically strike with spells by 3% for all party members within 20 yards.  Lasts 2 min."
+          ],
+          "requires": "tbc-shaman-0-29"
+        }
+      ]
+    },
+    {
+      "id": "tbc-shaman-1",
+      "name": "Enhancement",
+      "rows": 9,
+      "talents": [
+        {
+          "id": "tbc-shaman-1-1",
+          "name": "Ancestral Knowledge",
+          "icon": "spell_shadow_grimward",
+          "maxRank": 5,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Increases your maximum mana by 1%.",
+            "Increases your maximum mana by 2%.",
+            "Increases your maximum mana by 3%.",
+            "Increases your maximum mana by 4%.",
+            "Increases your maximum mana by 5%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-2",
+          "name": "Shield Specialization",
+          "icon": "inv_shield_06",
+          "maxRank": 5,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Increases your chance to block attacks with a shield by 1% and increases the amount blocked by 5%.",
+            "Increases your chance to block attacks with a shield by 2% and increases the amount blocked by 10%.",
+            "Increases your chance to block attacks with a shield by 3% and increases the amount blocked by 15%.",
+            "Increases your chance to block attacks with a shield by 4% and increases the amount blocked by 20%.",
+            "Increases your chance to block attacks with a shield by 5% and increases the amount blocked by 25%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-4",
+          "name": "Guardian Totems",
+          "icon": "spell_nature_stoneskintotem",
+          "maxRank": 2,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Increases the amount of damage reduced by your Stoneskin Totem and Windwall Totem by 10% and reduces the cooldown of your Grounding Totem by 1 sec.",
+            "Increases the amount of damage reduced by your Stoneskin Totem and Windwall Totem by 20% and reduces the cooldown of your Grounding Totem by 2 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-5",
+          "name": "Thundering Strikes",
+          "icon": "ability_thunderbolt",
+          "maxRank": 5,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Improves your chance to get a critical strike with your weapon attacks by 1%.",
+            "Improves your chance to get a critical strike with your weapon attacks by 2%.",
+            "Improves your chance to get a critical strike with your weapon attacks by 3%.",
+            "Improves your chance to get a critical strike with your weapon attacks by 4%.",
+            "Improves your chance to get a critical strike with your weapon attacks by 5%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-6",
+          "name": "Improved Ghost Wolf",
+          "icon": "spell_nature_spiritwolf",
+          "maxRank": 2,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Reduces the cast time of your Ghost Wolf spell by 1 sec.",
+            "Reduces the cast time of your Ghost Wolf spell by 2 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-7",
+          "name": "Improved Lightning Shield",
+          "icon": "spell_nature_lightningshield",
+          "maxRank": 3,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "Increases the damage done by your Lightning Shield orbs by 5%.",
+            "Increases the damage done by your Lightning Shield orbs by 10%.",
+            "Increases the damage done by your Lightning Shield orbs by 15%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-8",
+          "name": "Enhancing Totems",
+          "icon": "spell_nature_earthbindtotem",
+          "maxRank": 2,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Increases the effect of your Strength of Earth and Grace of Air Totems by 8%.",
+            "Increases the effect of your Strength of Earth and Grace of Air Totems by 15%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-10",
+          "name": "Shamanistic Focus",
+          "icon": "spell_nature_elementalabsorption",
+          "maxRank": 1,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "After landing a melee critical strike, you enter a Focused state.  The Focused state reduces the mana cost of your next Shock spell by 60%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-11",
+          "name": "Anticipation",
+          "icon": "spell_nature_mirrorimage",
+          "maxRank": 5,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "Increases your chance to dodge by an additional 1%.",
+            "Increases your chance to dodge by an additional 2%.",
+            "Increases your chance to dodge by an additional 3%.",
+            "Increases your chance to dodge by an additional 4%.",
+            "Increases your chance to dodge by an additional 5%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-13",
+          "name": "Flurry",
+          "icon": "ability_ghoulfrenzy",
+          "maxRank": 5,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "Increases your attack speed by 10% for your next 3 swings after dealing a critical strike.",
+            "Increases your attack speed by 15% for your next 3 swings after dealing a critical strike.",
+            "Increases your attack speed by 20% for your next 3 swings after dealing a critical strike.",
+            "Increases your attack speed by 25% for your next 3 swings after dealing a critical strike.",
+            "Increases your attack speed by 30% for your next 3 swings after dealing a critical strike."
+          ],
+          "requires": "tbc-shaman-1-5"
+        },
+        {
+          "id": "tbc-shaman-1-14",
+          "name": "Toughness",
+          "icon": "spell_holy_devotion",
+          "maxRank": 5,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "Increases your armor value from items by 2%, and reduces the duration of movement slowing effects on you by 10%.",
+            "Increases your armor value from items by 4%, and reduces the duration of movement slowing effects on you by 20%.",
+            "Increases your armor value from items by 6%, and reduces the duration of movement slowing effects on you by 30%.",
+            "Increases your armor value from items by 8%, and reduces the duration of movement slowing effects on you by 40%.",
+            "Increases your armor value from items by 10%, and reduces the duration of movement slowing effects on you by 50%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-16",
+          "name": "Improved Weapon Totems",
+          "icon": "spell_fire_enchantweapon",
+          "maxRank": 2,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "Increases the melee attack power bonus of your Windfury Totem by 15% and increases the damage caused by your Flametongue Totem by 6%.",
+            "Increases the melee attack power bonus of your Windfury Totem by 30% and increases the damage caused by your Flametongue Totem by 12%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-17",
+          "name": "Spirit Weapons",
+          "icon": "ability_parry",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "Gives a chance to parry enemy melee attacks and reduces the threat generated by your melee attacks by 30%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-18",
+          "name": "Elemental Weapons",
+          "icon": "spell_fire_flametounge",
+          "maxRank": 3,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "Increases the damage caused by your Rockbiter Weapon by 7%, your Windfury Weapon effect by 13% and increases the damage caused by your Flametongue Weapon and Frostbrand Weapon by 5%.",
+            "Increases the damage caused by your Rockbiter Weapon by 14%, your Windfury Weapon effect by 27% and increases the damage caused by your Flametongue Weapon and Frostbrand Weapon by 10%.",
+            "Increases the damage caused by your Rockbiter Weapon by 20%, your Windfury Weapon effect by 40% and increases the damage caused by your Flametongue Weapon and Frostbrand Weapon by 15%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-20",
+          "name": "Mental Quickness",
+          "icon": "spell_nature_mentalquickness",
+          "maxRank": 3,
+          "row": 5,
+          "col": 0,
+          "descriptions": [
+            "Reduces the mana cost of your instant cast Shaman spells by 2% and increases your spell damage and healing by an amount equal to 10% of your attack power.",
+            "Reduces the mana cost of your instant cast Shaman spells by 4% and increases your spell damage and healing by an amount equal to 20% of your attack power.",
+            "Reduces the mana cost of your instant cast Shaman spells by 6% and increases your spell damage and healing by an amount equal to 30% of your attack power."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-23",
+          "name": "Weapon Mastery",
+          "icon": "ability_hunter_swiftstrike",
+          "maxRank": 5,
+          "row": 5,
+          "col": 3,
+          "descriptions": [
+            "Increases the damage you deal with all weapons by 2%.",
+            "Increases the damage you deal with all weapons by 4%.",
+            "Increases the damage you deal with all weapons by 6%.",
+            "Increases the damage you deal with all weapons by 8%.",
+            "Increases the damage you deal with all weapons by 10%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-24",
+          "name": "Dual Wield Specialization",
+          "icon": "ability_dualwieldspecialization",
+          "maxRank": 3,
+          "row": 6,
+          "col": 0,
+          "descriptions": [
+            "Increases your chance to hit while dual wielding by an additional 2%.",
+            "Increases your chance to hit while dual wielding by an additional 4%.",
+            "Increases your chance to hit while dual wielding by an additional 6%."
+          ],
+          "requires": "tbc-shaman-1-25"
+        },
+        {
+          "id": "tbc-shaman-1-25",
+          "name": "Dual Wield",
+          "icon": "ability_dualwield",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "Allows one-hand and off-hand weapons to be equipped in the off-hand."
+          ],
+          "requires": "tbc-shaman-1-17"
+        },
+        {
+          "id": "tbc-shaman-1-26",
+          "name": "Stormstrike",
+          "icon": "ability_shaman_stormstrike",
+          "maxRank": 1,
+          "row": 6,
+          "col": 2,
+          "descriptions": [
+            "Instantly attack with both weapons.  In addition, the next 2 sources of Nature damage dealt to the target are increased by 20%.  Lasts 12 sec."
+          ],
+          "requires": "tbc-shaman-1-18"
+        },
+        {
+          "id": "tbc-shaman-1-29",
+          "name": "Unleashed Rage",
+          "icon": "spell_nature_unleashedrage",
+          "maxRank": 5,
+          "row": 7,
+          "col": 1,
+          "descriptions": [
+            "Causes your critical hits with melee attacks to increase all party members' melee attack power by 2% if within 20 yards of the Shaman.  Lasts 10 sec.",
+            "Causes your critical hits with melee attacks to increase all party members' melee attack power by 4% if within 20 yards of the Shaman.  Lasts 10 sec.",
+            "Causes your critical hits with melee attacks to increase all party members' melee attack power by 6% if within 20 yards of the Shaman.  Lasts 10 sec.",
+            "Causes your critical hits with melee attacks to increase all party members' melee attack power by 8% if within 20 yards of the Shaman.  Lasts 10 sec.",
+            "Causes your critical hits with melee attacks to increase all party members' melee attack power by 10% if within 20 yards of the Shaman.  Lasts 10 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-1-33",
+          "name": "Shamanistic Rage",
+          "icon": "spell_nature_shamanrage",
+          "maxRank": 1,
+          "row": 8,
+          "col": 1,
+          "descriptions": [
+            "Reduces all damage taken by 30% and gives your successful melee attacks a chance to regenerate mana equal to 30% of your attack power.  Lasts 15 sec."
+          ],
+          "requires": ""
+        }
+      ]
+    },
+    {
+      "id": "tbc-shaman-2",
+      "name": "Restoration",
+      "rows": 9,
+      "talents": [
+        {
+          "id": "tbc-shaman-2-1",
+          "name": "Improved Healing Wave",
+          "icon": "spell_nature_magicimmunity",
+          "maxRank": 5,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Reduces the casting time of your Healing Wave spell by 0.1 sec.",
+            "Reduces the casting time of your Healing Wave spell by 0.2 sec.",
+            "Reduces the casting time of your Healing Wave spell by 0.3 sec.",
+            "Reduces the casting time of your Healing Wave spell by 0.4 sec.",
+            "Reduces the casting time of your Healing Wave spell by 0.5 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-2",
+          "name": "Tidal Focus",
+          "icon": "spell_frost_manarecharge",
+          "maxRank": 5,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Reduces the mana cost of your healing spells by 1%.",
+            "Reduces the mana cost of your healing spells by 2%.",
+            "Reduces the mana cost of your healing spells by 3%.",
+            "Reduces the mana cost of your healing spells by 4%.",
+            "Reduces the mana cost of your healing spells by 5%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-4",
+          "name": "Improved Reincarnation",
+          "icon": "spell_nature_reincarnation",
+          "maxRank": 2,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Reduces the cooldown of your Reincarnation spell by 10 min and increases the amount of health and mana you reincarnate with by an additional 10%.",
+            "Reduces the cooldown of your Reincarnation spell by 20 min and increases the amount of health and mana you reincarnate with by an additional 20%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-5",
+          "name": "Ancestral Healing",
+          "icon": "spell_nature_undyingstrength",
+          "maxRank": 3,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Increases your target's armor value by 8% for 15 sec after getting a critical effect from one of your healing spells.",
+            "Increases your target's armor value by 16% for 15 sec after getting a critical effect from one of your healing spells.",
+            "Increases your target's armor value by 25% for 15 sec after getting a critical effect from one of your healing spells."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-6",
+          "name": "Totemic Focus",
+          "icon": "spell_nature_moonglow",
+          "maxRank": 5,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Reduces the mana cost of your totems by 5%.",
+            "Reduces the mana cost of your totems by 10%.",
+            "Reduces the mana cost of your totems by 15%.",
+            "Reduces the mana cost of your totems by 20%.",
+            "Reduces the mana cost of your totems by 25%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-8",
+          "name": "Nature's Guidance",
+          "icon": "spell_frost_stun",
+          "maxRank": 3,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Increases your chance to hit with melee attacks and spells by 1%.",
+            "Increases your chance to hit with melee attacks and spells by 2%.",
+            "Increases your chance to hit with melee attacks and spells by 3%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-9",
+          "name": "Healing Focus",
+          "icon": "spell_nature_healingwavelesser",
+          "maxRank": 5,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "Gives you a 14% chance to avoid interruption caused by damage while casting any Shaman healing spell.",
+            "Gives you a 28% chance to avoid interruption caused by damage while casting any Shaman healing spell.",
+            "Gives you a 42% chance to avoid interruption caused by damage while casting any Shaman healing spell.",
+            "Gives you a 56% chance to avoid interruption caused by damage while casting any Shaman healing spell.",
+            "Gives you a 70% chance to avoid interruption caused by damage while casting any Shaman healing spell."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-10",
+          "name": "Totemic Mastery",
+          "icon": "spell_nature_nullward",
+          "maxRank": 1,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "The radius of your totems that affect friendly targets is increased to 30 yards."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-11",
+          "name": "Healing Grace",
+          "icon": "spell_nature_healingtouch",
+          "maxRank": 3,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "Reduces the threat generated by your healing spells by 5% and reduces the chance your spells will be dispelled by 10%.",
+            "Reduces the threat generated by your healing spells by 10% and reduces the chance your spells will be dispelled by 20%.",
+            "Reduces the threat generated by your healing spells by 15% and reduces the chance your spells will be dispelled by 30%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-13",
+          "name": "Restorative Totems",
+          "icon": "spell_nature_manaregentotem",
+          "maxRank": 5,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "Increases the effect of your Mana Spring and Healing Stream Totems by 5%.",
+            "Increases the effect of your Mana Spring and Healing Stream Totems by 10%.",
+            "Increases the effect of your Mana Spring and Healing Stream Totems by 15%.",
+            "Increases the effect of your Mana Spring and Healing Stream Totems by 20%.",
+            "Increases the effect of your Mana Spring and Healing Stream Totems by 25%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-14",
+          "name": "Tidal Mastery",
+          "icon": "spell_nature_tranquility",
+          "maxRank": 5,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "Increases the critical effect chance of your healing and lightning spells by 1%.",
+            "Increases the critical effect chance of your healing and lightning spells by 2%.",
+            "Increases the critical effect chance of your healing and lightning spells by 3%.",
+            "Increases the critical effect chance of your healing and lightning spells by 4%.",
+            "Increases the critical effect chance of your healing and lightning spells by 5%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-16",
+          "name": "Healing Way",
+          "icon": "spell_nature_healingway",
+          "maxRank": 3,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "Your Healing Wave spells have a 33% chance to increase the effect of subsequent Healing Wave spells on that target by 6% for 15 sec.  This effect will stack up to 3 times.",
+            "Your Healing Wave spells have a 66% chance to increase the effect of subsequent Healing Wave spells on that target by 6% for 15 sec.  This effect will stack up to 3 times.",
+            "Your Healing Wave spells have a 100% chance to increase the effect of subsequent Healing Wave spells on that target by 6% for 15 sec.  This effect will stack up to 3 times."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-18",
+          "name": "Nature's Swiftness",
+          "icon": "spell_nature_ravenform",
+          "maxRank": 1,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "When activated, your next Nature spell with a casting time less than 10 sec. becomes an instant cast spell."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-19",
+          "name": "Focused Mind",
+          "icon": "spell_nature_focusedmind",
+          "maxRank": 3,
+          "row": 4,
+          "col": 3,
+          "descriptions": [
+            "Reduces the duration of any Silence or Interrupt effects used against the Shaman by 10%. This effect does not stack with other similar effects.",
+            "Reduces the duration of any Silence or Interrupt effects used against the Shaman by 20%. This effect does not stack with other similar effects.",
+            "Reduces the duration of any Silence or Interrupt effects used against the Shaman by 30%. This effect does not stack with other similar effects."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-22",
+          "name": "Purification",
+          "icon": "spell_frost_wizardmark",
+          "maxRank": 5,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Increases the effectiveness of your healing spells by 2%.",
+            "Increases the effectiveness of your healing spells by 4%.",
+            "Increases the effectiveness of your healing spells by 6%.",
+            "Increases the effectiveness of your healing spells by 8%.",
+            "Increases the effectiveness of your healing spells by 10%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-25",
+          "name": "Mana Tide Totem",
+          "icon": "spell_frost_summonwaterelemental",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "Summons a Mana Tide Totem with 5 health at the feet of the caster for 12 sec that restores 6% of total mana every 3 seconds to group members within 20 yards."
+          ],
+          "requires": "tbc-shaman-2-13"
+        },
+        {
+          "id": "tbc-shaman-2-26",
+          "name": "Nature's Guardian",
+          "icon": "spell_nature_natureguardian",
+          "maxRank": 4,
+          "row": 6,
+          "col": 2,
+          "descriptions": [
+            "Whenever a damaging attack is taken that reduces you below 30% health, you have a 10% chance to heal 10% of your total health and reduce your threat level on that target.  5 second cooldown.",
+            "Whenever a damaging attack is taken that reduces you below 30% health, you have a 20% chance to heal 10% of your total health and reduce your threat level on that target.  5 second cooldown.",
+            "Whenever a damaging attack is taken that reduces you below 30% health, you have a 30% chance to heal 10% of your total health and reduce your threat level on that target.  5 second cooldown.",
+            "Whenever a damaging attack is taken that reduces you below 30% health, you have a 40% chance to heal 10% of your total health and reduce your threat level on that target.  5 second cooldown."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-29",
+          "name": "Nature's Blessing",
+          "icon": "spell_nature_natureblessing",
+          "maxRank": 3,
+          "row": 7,
+          "col": 1,
+          "descriptions": [
+            "Increases your spell damage and healing by an amount equal to 10% of your Intellect.",
+            "Increases your spell damage and healing by an amount equal to 20% of your Intellect.",
+            "Increases your spell damage and healing by an amount equal to 30% of your Intellect."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-30",
+          "name": "Improved Chain Heal",
+          "icon": "spell_nature_healingwavegreater",
+          "maxRank": 2,
+          "row": 7,
+          "col": 2,
+          "descriptions": [
+            "Increases the amount healed by your Chain Heal spell by 10%.",
+            "Increases the amount healed by your Chain Heal spell by 20%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "tbc-shaman-2-33",
+          "name": "Earth Shield",
+          "icon": "spell_nature_skinofearth",
+          "maxRank": 1,
+          "row": 8,
+          "col": 1,
+          "descriptions": [
+            "Protects the target with an earthen shield, giving a 30% chance of ignoring spell interruption when damaged and causing attacks to heal the shielded target for 150.  This effect can only occur once every few seconds.  6 charges.  Lasts 10 min.  Earth Shield can only be placed on one target at a time and only one Elemental Shield can be active on a target at a time."
+          ],
+          "requires": "tbc-shaman-2-29"
+        }
+      ]
+    }
+  ],
+  "abilities": [],
+  "build": {},
+  "source": {
+    "version": "2.4.3",
+    "url": "https://github.com/Vampyr7878/WoW-Talent-Caluclator-TBC",
+    "language": "en"
+  }
+}

@@ -1,4 +1,4 @@
-import {blank,branch,total,validBuild,changeRank,normalize,route,reserved} from './engine.js';
+import {blank,branch,total,validBuild,changeRank,normalize,route,reserved,moveTalent} from './engine.js';
 import {icons,iconURL} from './icons.js';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12,7 +12,7 @@ async function api(path, data, method) {
  const response=await fetch('/api'+path,options);
  const result=await response.json();if(!response.ok) throw Error(result.error||'Ошибка сервера');return result;
 }
-function image(id,extra='') { return `<img src="${esc(iconURL(id))||'missing-icon'}" alt="" loading="lazy" ${extra}>`; }
+function image(id,extra='') { return `<img src="${esc(iconURL(id))||'missing-icon'}" alt="" loading="lazy" draggable="false" ${extra}>`; }
 document.addEventListener('error',e=>{if(e.target.tagName==='IMG'){e.target.style.visibility='hidden';e.target.alt='Иконка недоступна';}},true);
 function render() {
  renderCharacter();
@@ -27,9 +27,9 @@ function render() {
  if(!t) return `<button class="slot ${mode==='play'?'empty-slot':''}" data-row="${row}" data-col="${col}" aria-label="Создать талант: ряд ${row+1}, столбец ${col+1}" ${mode!=='edit'?'disabled':''}>${mode==='edit'?'+':'·'}</button>`;
  const rank=doc.build[t.id]||0, next={...doc.build,[t.id]:rank+1};
  const available=validBuild(doc,next), desc=t.descriptions[Math.max(0,rank-1)]||'Описание не задано';
- return `<button class="slot filled ${rank===t.maxRank?'maxed':available?'available':rank?'':'locked'}" data-talent="${esc(t.id)}" data-tip="${esc(t.name)} (${rank}/${t.maxRank})\n${esc(desc)}${t.requires?'\nТребуется полностью изучить: '+esc(b.talents.find(x=>x.id===t.requires)?.name):''}" aria-label="${esc(t.name)}, ранг ${rank} из ${t.maxRank}"><span class="fallback">✦</span>${image(t.icon)}<span class="rank">${mode==='edit'?'0':rank}/${t.maxRank}</span></button>`;
+ return `<button class="slot filled ${rank===t.maxRank?'maxed':available?'available':rank?'':'locked'}" data-talent="${esc(t.id)}" data-row="${row}" data-col="${col}" draggable="${mode==='edit'}" data-tip="${esc(t.name)} (${rank}/${t.maxRank})\n${esc(desc)}${t.requires?'\nТребуется полностью изучить: '+esc(b.talents.find(x=>x.id===t.requires)?.name):''}" aria-label="${esc(t.name)}, ранг ${rank} из ${t.maxRank}"><span class="fallback">✦</span>${image(t.icon)}<span class="rank">${mode==='edit'?'0':rank}/${t.maxRank}</span></button>`;
  }).join('')}</div>${mode==='edit'?'<div class="tree-footer"><button data-action="add-row">＋ Добавить ряд</button><button data-action="remove-row" title="Удалить последний ряд">− Ряд</button></div>':''}</article>`).join('');
- $('#abilities').innerHTML=doc.abilities.length?doc.abilities.map(a=>{const unlocked=!a.talentId||(doc.build[a.talentId]||0)>0;return `<button class="ability-card ${mode==='play'&&!unlocked?'locked':''}" data-ability="${esc(a.id)}">${image(a.icon)}<div><strong>${esc(a.name)}</strong><p>${esc(a.description)}</p><p>${[a.resource&&'Стоимость: '+a.resource,a.cast&&'Применение: '+a.cast,a.cooldown&&'Восстановление: '+a.cooldown,a.range&&'Дальность: '+a.range].filter(Boolean).map(esc).join(' · ')}</p>${a.talentId?`<small class="gold">${unlocked?'✦':'🔒'} ${esc(doc.branches.flatMap(b=>b.talents).find(t=>t.id===a.talentId)?.name||'Талант удалён')}</small>`:''}</div></button>`;}).join(''):'<div class="empty"><strong>Здесь начинается арсенал твоего класса</strong>Добавь первую способность — активную или пассивную.</div>';
+ $('#abilities').innerHTML=doc.abilities.length?doc.abilities.map(a=>{const unlocked=!a.talentId||(doc.build[a.talentId]||0)>0;return `<button class="ability-card ${mode==='play'&&!unlocked?'locked':''}" data-ability="${esc(a.id)}">${image(a.icon)}<div><strong>${esc(a.name)}</strong><p>${esc(a.description)}</p><p>${abilityStats(a).map(esc).join(' · ')}</p>${a.talentId?`<small class="gold">${unlocked?'✦':'🔒'} ${esc(doc.branches.flatMap(b=>b.talents).find(t=>t.id===a.talentId)?.name||'Талант удалён')}</small>`:''}</div></button>`;}).join(''):'<div class="empty"><strong>Здесь начинается арсенал твоего класса</strong>Добавь первую способность — активную или пассивную.</div>';
  requestAnimationFrame(drawDependencies);
 }
 function drawDependencies(){
@@ -52,6 +52,7 @@ function drawDependencies(){
 }
 window.addEventListener('resize',drawDependencies);
 function modal(title, body, save, remove) {
+ $('#favoriteItem').hidden=true;
  $('#modalTitle').textContent=title;$('#modalBody').innerHTML=body;$('#formError').textContent='';modalSave=save;modalDelete=remove;
  $('#submitModal').hidden=!save;$('#deleteItem').hidden=!remove;$('#modal').showModal();
 }
@@ -60,16 +61,16 @@ $('#modalForm').onsubmit=async e=>{e.preventDefault();$('#formError').textConten
 $('#deleteItem').onclick=()=>modalDelete?.();
 function field(id,label,value='',type='text',attrs=''){return `<label for="${id}">${label}</label><input id="${id}" type="${type}" value="${esc(value)}" ${attrs}>`;}
 function iconPicker(selected='inv_misc_questionmark'){
- return `<label for="iconSearch">ИКОНКА · ПОИСК В СТАРТОВОМ КАТАЛОГЕ</label><input id="iconSearch" placeholder="Огонь, лечение, воин…"><div id="iconGrid" class="icon-grid"></div>${field('iconName','ИЛИ ВВЕДИ ИМЯ ЛЮБОЙ WOW-ИКОНКИ',/^[a-z0-9_]+$/i.test(selected)?selected:'','text',`pattern="[A-Za-z0-9_]+" data-initial="${esc(selected)}"`)}<div class="icon-preview">${image(selected,'id="iconPreview"')}<small class="muted">Каталог: ${icons.length} иконок. Для стандартных талантов сохранены исходные изображения.</small></div><label for="customIcon">СВОЯ ИКОНКА · PNG, JPEG ИЛИ WEBP, ДО 250 КБ</label><input type="file" id="customIcon" accept="image/png,image/jpeg,image/webp">`;
+ return `<label for="iconSearch">ИКОНКА · ПОИСК ПО НАЗВАНИЮ ИЛИ КЛАССУ</label><input id="iconSearch" placeholder="Огонь, лечение, воин…"><div id="iconGrid" class="icon-grid"></div>${field('iconName','ИЛИ ВВЕДИ ИМЯ ЛЮБОЙ WOW-ИКОНКИ',/^[a-z0-9_]+$/i.test(selected)?selected:'','text',`pattern="[A-Za-z0-9_]+" data-initial="${esc(selected)}"`)}<div class="icon-preview">${image(selected,'id="iconPreview"')}<small class="muted"><span id="iconCount">Загрузка каталога…</span></small></div><label for="customIcon">СВОЯ ИКОНКА · PNG, JPEG ИЛИ WEBP, ДО 250 КБ</label><input type="file" id="customIcon" accept="image/png,image/jpeg,image/webp">`;
 }
 function readIcon(){return $('#iconName').value.toLowerCase()||$('#iconName').dataset.initial||'inv_misc_questionmark';}
 function bindPicker(){
- const update=()=>{$('#iconGrid').innerHTML=icons.filter(i=>(i.id+' '+i.label).toLowerCase().includes($('#iconSearch').value.toLowerCase())).map(i=>`<button type="button" class="icon-choice ${i.id===$('#iconName').value?'active':''}" data-icon="${esc(i.id)}" title="${esc(i.label)}">${image(i.id)}</button>`).join('');};
+ const update=()=>{if(!$('#iconGrid'))return;$('#iconCount').textContent=`Каталог: ${iconCatalog.length} иконок`;$('#iconGrid').innerHTML=iconCatalog.filter(i=>(i.id+' '+i.label).toLowerCase().includes($('#iconSearch').value.toLowerCase())).map(i=>`<button type="button" class="icon-choice ${i.id===$('#iconName').value?'active':''}" data-icon="${esc(i.id)}" title="${esc(i.label)}">${image(i.id)}</button>`).join('');};
  $('#iconSearch').oninput=update;
  const preview=()=>{$('#iconPreview').style.visibility='visible';$('#iconPreview').src=iconURL(readIcon())||'missing-icon';};
- $('#iconGrid').onclick=e=>{const btn=e.target.closest('[data-icon]');if(btn){$('#iconName').value=btn.dataset.icon;preview();update();}};
+ $('#iconGrid').onclick=e=>{const btn=e.target.closest('[data-icon]');if(btn){$('#iconName').dataset.initial=btn.dataset.icon;$('#iconName').value=/^[a-z0-9_]+$/i.test(btn.dataset.icon)?btn.dataset.icon:'';preview();update();}};
  $('#iconName').oninput=preview;
- $('#customIcon').onchange=async e=>{const file=e.target.files[0];if(!file)return;if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>250000){toast('Нужна картинка PNG, JPEG или WebP до 250 КБ');return;}const reader=new FileReader();reader.onload=()=>{$('#iconName').dataset.initial=reader.result;$('#iconName').value='';preview();};reader.readAsDataURL(file);};update();
+ $('#customIcon').onchange=async e=>{const file=e.target.files[0];if(!file)return;if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>250000){toast('Нужна картинка PNG, JPEG или WebP до 250 КБ');return;}const reader=new FileReader();reader.onload=()=>{$('#iconName').dataset.initial=reader.result;$('#iconName').value='';preview();};reader.readAsDataURL(file);};update();loadIconCatalog().then(update).catch(()=>toast('Не удалось загрузить полный каталог иконок'));
 }
 function editTalent(b,row,col,existing){
  const t=existing||{id:crypto.randomUUID(),row,col,name:'',icon:'inv_misc_questionmark',maxRank:1,descriptions:[''],requires:''};
@@ -87,25 +88,25 @@ function editTalent(b,row,col,existing){
  }:null);
  function capture(){for(const el of document.querySelectorAll('[data-description]'))descriptions[Number(el.dataset.description)]=el.value;}
  function ranks(){capture();const n=Math.max(1,Math.min(100,Number($('#maxRank').value)||1));$('#rankFields').innerHTML=Array.from({length:n},(_,i)=>`<label for="rank${i}">РАНГ ${i+1}</label><textarea id="rank${i}" data-description="${i}" maxlength="5000" placeholder="Увеличивает урон на ${(i+1)*2}%">${esc(descriptions[i]||'')}</textarea>`).join('');}
- $('#maxRank').oninput=ranks;ranks();bindPicker();
+ if(!existing){$('#modalBody').insertAdjacentHTML('afterbegin','<button type="button" id="pickFavorite">★ Взять из избранного</button>');$('#pickFavorite').onclick=()=>{$('#modal').close();showFavorites({branchId:b.id,row,col});};}$('#maxRank').oninput=ranks;ranks();bindPicker();favoriteButton('talent',()=>b.talents.find(x=>x.id===t.id));
 }
 function editAbility(existing){
  const a=existing||{id:crypto.randomUUID(),name:'',description:'',icon:'inv_misc_questionmark',resource:'',cast:'',cooldown:'',range:'',talentId:''};
- if(mode==='play'){modal(a.name,`<p class="tooltip-description">${esc(a.description)}</p><p class="gold">${[a.resource&&'Стоимость: '+a.resource,a.cast&&'Применение: '+a.cast,a.cooldown&&'Восстановление: '+a.cooldown,a.range&&'Дальность: '+a.range].filter(Boolean).map(esc).join(' · ')}</p>`,null);return;}
- modal(existing?'Редактировать способность':'Новая способность',field('abilityName','НАЗВАНИЕ',a.name,'text','required maxlength="100"')+iconPicker(a.icon)+`<label for="abilityDescription">ОПИСАНИЕ</label><textarea id="abilityDescription" maxlength="10000">${esc(a.description)}</textarea><div class="two-cols">${['resource','cast','cooldown','range'].map((k,i)=>`<div>${field(k,['СТОИМОСТЬ РЕСУРСА','ВРЕМЯ ПРИМЕНЕНИЯ','ПЕРЕЗАРЯДКА','ДАЛЬНОСТЬ'][i],a[k],'text','maxlength="100"')}</div>`).join('')}</div><label for="talentLink">ОТКРЫВАЕТСЯ ТАЛАНТОМ</label><select id="talentLink"><option value="">Базовая способность</option>${doc.branches.flatMap(b=>b.talents).map(t=>`<option value="${esc(t.id)}" ${a.talentId===t.id?'selected':''}>${esc(t.name)}</option>`).join('')}</select>`,()=>{
+ if(mode==='play'){modal(a.name,`<p class="tooltip-description">${esc(a.description)}</p><p class="gold">${abilityStats(a).map(esc).join(' · ')}</p>`,null);return;}
+ modal(existing?'Редактировать способность':'Новая способность',field('abilityName','НАЗВАНИЕ',a.name,'text','required maxlength="100"')+iconPicker(a.icon)+`<label for="abilityDescription">ОПИСАНИЕ</label><textarea id="abilityDescription" maxlength="10000">${esc(a.description)}</textarea><div class="two-cols">${['resource','cast','cooldown','range'].map((k,i)=>`<div>${field(k,['СТОИМОСТЬ РЕСУРСА','ВРЕМЯ ПРИМЕНЕНИЯ','ПЕРЕЗАРЯДКА','ДАЛЬНОСТЬ'][i],numericValue(a[k]),'number','min="0" max="1000000000" step="any" required')}</div>${k==='resource'?`<div><label for="resourceType">РАСХОДУЕМЫЙ РЕСУРС</label><select id="resourceType">${resourceOptions(a.resourceType)}</select></div>`:''}`).join('')}</div><p class="muted">Применение и восстановление — в секундах, дальность — в метрах. Название способности остаётся текстовым.</p><label for="talentLink">ОТКРЫВАЕТСЯ ТАЛАНТОМ</label><select id="talentLink"><option value="">Базовая способность</option>${doc.branches.flatMap(b=>b.talents).map(t=>`<option value="${esc(t.id)}" ${a.talentId===t.id?'selected':''}>${esc(t.name)}</option>`).join('')}</select>`,()=>{
   const updated={...a,name:$('#abilityName').value.trim(),description:$('#abilityDescription').value,icon:readIcon(),talentId:$('#talentLink').value};
   if(!updated.name)throw Error('Введи название');
-  for(const k of ['resource','cast','cooldown','range'])updated[k]=$('#'+k).value;
+  for(const k of ['resource','cast','cooldown','range']){updated[k]=Number($('#'+k).value);if(!Number.isFinite(updated[k])||updated[k]<0||updated[k]>1e9)throw Error('Характеристики должны быть неотрицательными числами');}updated.resourceType=$('#resourceType').value;
   if(existing)doc.abilities[doc.abilities.indexOf(existing)]=updated;else doc.abilities.push(updated);
   changed();render();$('#modal').close();
- },existing?()=>{if(confirm('Удалить способность?')){doc.abilities=doc.abilities.filter(x=>x.id!==a.id);changed();render();$('#modal').close();}}:null);bindPicker();
+ },existing?()=>{if(confirm('Удалить способность?')){doc.abilities=doc.abilities.filter(x=>x.id!==a.id);changed();render();$('#modal').close();}}:null);bindPicker();favoriteButton('ability',()=>doc.abilities.find(x=>x.id===a.id));
 }
 $('#trees').addEventListener('change',e=>{if(e.target.matches('.tree-header input')){doc.branches.find(b=>b.id===e.target.closest('.tree').dataset.branch).name=e.target.value;changed();}});
 function treeClick(e){
  const tree=e.target.closest('.tree');if(!tree)return;const b=doc.branches.find(b=>b.id===tree.dataset.branch),btn=e.target.closest('button');if(!btn)return;
  if(btn.dataset.talent){const t=b.talents.find(t=>t.id===btn.dataset.talent);if(mode==='edit'){editTalent(b,t.row,t.col,t);}else{if(changeRank(doc,t.id,e.type==='contextmenu'||e.shiftKey?-1:1)){changed();render();}else toast('Не хватает очков, не выполнены требования или от таланта зависят другие.');}return;}
  if(mode!=='edit')return;
- if(btn.dataset.row!==undefined){if(reserved(b,Number(btn.dataset.row),Number(btn.dataset.col))){toast('Здесь проходит стрелка. Сначала убери зависимость.');return;}editTalent(b,Number(btn.dataset.row),Number(btn.dataset.col));return;}
+ if(btn.dataset.row!==undefined){if(reserved(b,Number(btn.dataset.row),Number(btn.dataset.col))){toast('Здесь проходит стрелка. Сначала убери зависимость.');return;}if(favoritePlacement){placeFavorite(favoritePlacement,{branchId:b.id,row:Number(btn.dataset.row),col:Number(btn.dataset.col)});return;}editTalent(b,Number(btn.dataset.row),Number(btn.dataset.col));return;}
  switch(btn.dataset.action){
   case 'add-row':if(b.rows>=1000){toast('Достигнут технический предел: 1000 рядов.');return;}{const rows=Math.max(...doc.branches.map(b=>b.rows))+1;for(const x of doc.branches)x.rows=rows;}break;
   case 'remove-row':{
@@ -135,9 +136,9 @@ $('#new').onclick=()=>{if(dirty&&!confirm('Создать новый класс?
 $('#preset').onclick=async()=>{
  try{
   const response=await fetch('presets/index.json');if(!response.ok)throw Error('Не удалось загрузить каталог');const classes=await response.json();
-  modal('Стандартные таланты · 3.3.5a',`<p class="inline-info">Импортируется редактируемая копия: три ветки, все ранги и зависимости. Названия и описания талантов — на английском из исходного набора. Базовый список способностей не включён.</p><label for="presetClass">КЛАСС</label><select id="presetClass">${classes.map(c=>`<option value="${esc(c.id)}">${esc(c.name)} — ${c.talents} талантов</option>`).join('')}</select><p class="muted">Источник: CraftedRO / Offline talent calculator 3.3.5a, GPL-3.0. Это набор сообщества; игровые эффекты не симулируются.</p>`,async()=>{
+  modal('Загрузить стандартные таланты',`<p class="inline-info">Импортируется редактируемая копия: три ветки, все ранги и зависимости. Названия и описания талантов — на английском из исходного набора. Базовый список способностей не включён.</p><label for="presetClass">КЛАСС</label><select id="presetClass">${classes.map(c=>`<option value="${esc(c.id)}">${esc(c.version||'3.3.5a')} · ${esc(c.name)} — ${c.talents} талантов</option>`).join('')}</select><p class="muted">Наборы сообщества: 3.3.5a, TBC 2.4.3 и Forever (снимок 1.60.1.69876). Текущий Wowhead может отличаться. Тексты — на английском. Источники указаны в SOURCES.md.</p>`,async()=>{
    if(dirty&&!confirm('Заменить текущий черновик стандартным классом?'))return;
-   const response=await fetch(`presets/${$('#presetClass').value}.json`);if(!response.ok)throw Error('Не удалось загрузить класс');const incoming=normalize(await response.json());doc=incoming;projectId=null;mode='edit';changed();render();$('#modal').close();toast('Класс загружен. Все таланты можно редактировать.');
+   const response=await fetch(`presets/${$('#presetClass').value}.json`);if(!response.ok)throw Error('Не удалось загрузить класс');const incoming=normalize(await response.json());doc=incoming;projectId=null;mode='edit';changed();render();$('#modal').close();toast(incoming.source?.notice||'Класс загружен. Все таланты можно редактировать.');
   });$('#submitModal').textContent='Загрузить класс';
  }catch(err){toast(err.message);}
 };
@@ -212,7 +213,7 @@ function showTooltip(target,x,y){
  const a=doc.abilities.find(a=>a.id===target.dataset.ability);
  if(!t&&!a)return;
  if(t){const rank=doc.build[t.id]||0,parent=doc.branches.flatMap(b=>b.talents).find(p=>p.id===t.requires),b=doc.branches.find(b=>b.talents.includes(t));tip.innerHTML=`<strong>${esc(t.name)}</strong><div>Талант · Ранг ${rank}/${t.maxRank}</div><p class="effect">${esc(t.descriptions[Math.max(0,rank-1)])}</p>${rank>0&&rank<t.maxRank?`<div>Следующий ранг:</div><p class="effect">${esc(t.descriptions[rank])}</p>`:''}<p class="requirements">${t.row?`Требуется ${t.row*doc.rowCost} очк. в ветке ${esc(b.name)}<br>`:''}${parent?'Требуется: '+esc(parent.name)+' ('+parent.maxRank+'/'+parent.maxRank+')':''}</p>`;
- }else tip.innerHTML=`<strong>${esc(a.name)}</strong><div class="spell-stats"><span>Стоимость: ${esc(a.resource||'Нет')}</span><span>Дальность: ${esc(a.range||'—')}</span><span>Применение: ${esc(a.cast||'Мгновенно')}</span><span>Восстановление: ${esc(a.cooldown||'Нет')}</span></div><p class="effect">${esc(a.description)}</p>`;
+ }else tip.innerHTML=`<strong>${esc(a.name)}</strong><div class="spell-stats"><span>Стоимость: ${esc(abilityCost(a))}</span><span>Дальность: ${esc(a.range===0?'0 м':a.range?a.range+' м':'—')}</span><span>Применение: ${esc(a.cast?a.cast+' сек.':'Мгновенно')}</span><span>Восстановление: ${esc(a.cooldown?a.cooldown+' сек.':'Нет')}</span></div><p class="effect">${esc(a.description)}</p>`;
  tip.hidden=false;const box=tip.getBoundingClientRect();tip.style.left=Math.max(8,Math.min(x+16,innerWidth-box.width-8))+'px';tip.style.top=Math.max(8,Math.min(y+16,innerHeight-box.height-8))+'px';
 }
 let hoverTarget=null;
@@ -222,6 +223,34 @@ document.addEventListener('pointerout',e=>{if(hoverTarget&&!hoverTarget.contains
 document.addEventListener('focusin',e=>{if(e.target.matches('[data-talent],[data-ability]')){const r=e.target.getBoundingClientRect();showTooltip(e.target,r.right,r.top);}});
 document.addEventListener('focusout',()=>$('#tooltip').hidden=true);
 document.addEventListener('click',()=>{hoverTarget=null;$('#tooltip').hidden=true;});
+
+function numericValue(value){const n=Number.parseFloat(value);return Number.isFinite(n)&&n>=0?n:0;}
+function resourceOptions(selected){const names=[...new Set(['Здоровье','Мана','Энергия','Ярость',...character().resources.map(r=>r.name),...(selected?[selected]:[])])];return names.map(n=>`<option ${n===(selected||'Мана')?'selected':''}>${esc(n)}</option>`).join('');}
+function abilityStats(a){return ['Стоимость: '+abilityCost(a),'Применение: '+(a.cast?a.cast+' сек.':'Мгновенно'),'Восстановление: '+(a.cooldown?a.cooldown+' сек.':'Нет'),'Дальность: '+(a.range||0)+' м'];}
+function abilityCost(a){return a.resourceType?`${a.resource??0} ${a.resourceType}`:a.resource||'Нет';}
+let draggedTalent=null;
+$('#trees').addEventListener('dragstart',e=>{const slot=e.target.closest('[data-talent]');if(mode!=='edit'||!slot){e.preventDefault();return;}draggedTalent=slot.dataset.talent;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',draggedTalent);});
+$('#trees').addEventListener('dragover',e=>{if(mode==='edit'&&draggedTalent&&e.target.closest('.slot')){e.preventDefault();e.dataTransfer.dropEffect='move';}});
+$('#trees').addEventListener('drop',e=>{const slot=e.target.closest('.slot');if(mode!=='edit'||!draggedTalent||!slot)return;e.preventDefault();try{doc=moveTalent(doc,draggedTalent,slot.closest('.tree').dataset.branch,Number(slot.dataset.row),Number(slot.dataset.col));changed();render();}catch(err){toast(err.message);}finally{draggedTalent=null;}});
+$('#trees').addEventListener('dragend',()=>draggedTalent=null);
+let iconCatalog=[...icons],iconPromise=null;
+function loadIconCatalog(){
+ return iconPromise??=fetch('icon-catalog.json').then(r=>{if(!r.ok)throw Error('Иконки недоступны');return r.json();}).then(list=>{const combined=new Map();for(const i of [...icons,...list]){const previous=combined.get(i.id);combined.set(i.id,{id:i.id,label:(previous?previous.label+' ':'')+i.label});}iconCatalog=[...combined.values()];return iconCatalog;}).catch(e=>{iconPromise=null;throw e;});
+}
+function favoriteButton(kind,getItem){
+ const button=$('#favoriteItem');button.hidden=false;
+ button.onclick=async()=>{if(!user){toast('Войди в аккаунт, чтобы сохранять избранное');return;}try{if(!$('#modalForm').reportValidity())return;await modalSave();const item=getItem();if(!item)return;await api('/favorites',{kind,item});toast('Сохранено в избранное аккаунта');}catch(err){toast(err.message);}};
+}
+let favoritePlacement=null;
+$('#favorites').onclick=()=>showFavorites();
+async function showFavorites(target=null){
+ if(!user){auth();return;}
+ try{const {favorites}=await api('/favorites');modal('Избранные таланты и способности',`<p class="muted">Добавляются независимые копии. Зависимости от исходного дерева не переносятся.</p><div class="favorite-list">${favorites.filter(f=>!target||f.kind==='talent').map(f=>`<div class="favorite-row">${image(f.item.icon)}<span><strong>${esc(f.item.name)}</strong><br><small>${f.kind==='talent'?'Талант':'Способность'}</small></span><button type="button" data-use-favorite="${esc(f.id)}">Добавить</button><button type="button" data-delete-favorite="${esc(f.id)}" aria-label="Удалить из избранного">×</button></div>`).join('')||'<p>Здесь пока пусто. Открой талант или способность и нажми «В избранное».</p>'}</div>`,null);
+ for(const button of document.querySelectorAll('[data-delete-favorite]'))button.onclick=async()=>{try{await api('/favorites/'+button.dataset.deleteFavorite,{},'DELETE');button.closest('.favorite-row').remove();}catch(e){toast(e.message);}};
+ for(const button of document.querySelectorAll('[data-use-favorite]'))button.onclick=()=>{const f=favorites.find(f=>f.id===button.dataset.useFavorite);$('#modal').close();if(mode!=='edit'){mode='edit';render();}if(f.kind==='ability'){doc.abilities.push({...structuredClone(f.item),id:crypto.randomUUID(),talentId:''});changed();render();toast('Способность добавлена');}else if(target){placeFavorite(f.item,target);}else{favoritePlacement=structuredClone(f.item);toast('Нажми на пустую ячейку для размещения таланта');}};
+ }catch(err){toast(err.message);}
+}
+function placeFavorite(item,target){const b=doc.branches.find(b=>b.id===target.branchId);if(!b||b.talents.some(t=>t.row===target.row&&t.col===target.col)||reserved(b,target.row,target.col)){toast('Ячейка занята талантом или стрелкой');return;}b.talents.push({...structuredClone(item),id:crypto.randomUUID(),row:target.row,col:target.col,requires:''});favoritePlacement=null;changed();render();toast('Талант добавлен из избранного');}
 render();api('/me').then(result=>{user=result.user;renderUser();}).catch(()=>toast('Сервер недоступен. Редактор работает, сохранение — через JSON.'));
 const sharedToken=new URLSearchParams(location.search).get('share');
 if(sharedToken) api('/shared/'+encodeURIComponent(sharedToken)).then(result=>{
