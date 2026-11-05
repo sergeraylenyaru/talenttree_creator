@@ -14,5 +14,5 @@ jobs:
         with:
           node-version: '22'
       - run: python3 -m unittest discover -s tests -p 'test_*.py'
-      - run: node --test tests/engine.test.js
+      - run: node --test tests/*.test.js
       - run: node --check static/app.js

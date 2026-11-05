@@ -1,3 +1,4 @@
+import {createRankEditor} from './rank-editor.js';
 import {blank,branch,total,validBuild,changeRank,normalize,route,reserved,moveTalent,defaultBudget} from './engine.js';
 import {icons,iconURL} from './icons.js';
 const $=s=>document.querySelector(s);
@@ -75,11 +76,12 @@ function bindPicker(){
 }
 function editTalent(b,row,col,existing){
  const t=existing||{id:crypto.randomUUID(),row,col,name:'',icon:'inv_misc_questionmark',maxRank:1,descriptions:[''],requires:''};
- let descriptions=[...t.descriptions];
+ let rankEditor;
  function eligible(p){const candidate=p;if(p.id===t.id||p.row>t.row)return false;const seen=new Set();while(p.requires){if(p.requires===t.id||seen.has(p.id))return false;seen.add(p.id);p=b.talents.find(x=>x.id===p.requires);if(!p)return false;}return !!route(b,candidate,t);}
- modal(existing?'Редактировать талант':'Новый талант',field('talentName','НАЗВАНИЕ',t.name,'text','required maxlength="100"')+iconPicker(t.icon)+`<div class="two-cols"><div>${field('maxRank','КОЛИЧЕСТВО РАНГОВ',t.maxRank,'number','min="1" max="100" required')}</div><div><label for="requires">ТРЕБУЕТ ТАЛАНТ (ПОЛНЫЙ РАНГ)</label><select id="requires"><option value="">Без зависимости</option>${b.talents.filter(eligible).map(p=>`<option value="${esc(p.id)}" ${t.requires===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div></div><p class="muted">Укажи полный текст эффекта для каждого ранга. Он может отличаться целиком.</p><div id="rankFields" class="rank-fields"></div>`,()=>{
-  capture();const maxRank=Number($('#maxRank').value);
-  const updated={...t,name:$('#talentName').value.trim(),icon:readIcon(),maxRank,requires:$('#requires').value,descriptions:Array.from({length:maxRank},(_,i)=>descriptions[i]||'')};
+ modal(existing?'Редактировать талант':'Новый талант',field('talentName','НАЗВАНИЕ',t.name,'text','required maxlength="100"')+iconPicker(t.icon)+`<div class="two-cols"><div>${field('maxRank','КОЛИЧЕСТВО РАНГОВ',t.maxRank,'number','min="1" max="100" required')}</div><div><label for="requires">ТРЕБУЕТ ТАЛАНТ (ПОЛНЫЙ РАНГ)</label><select id="requires"><option value="">Без зависимости</option>${b.talents.filter(eligible).map(p=>`<option value="${esc(p.id)}" ${t.requires===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div></div><div id="rankFields" class="rank-editor"></div>`,()=>{
+  const maxRank=Number($('#maxRank').value),rankResult=rankEditor.result();
+  const updated={...t,name:$('#talentName').value.trim(),icon:readIcon(),maxRank,requires:$('#requires').value,descriptions:rankResult.descriptions};
+  if(rankResult.rankTemplate)updated.rankTemplate=rankResult.rankTemplate;else delete updated.rankTemplate;
   if(!updated.name)throw Error('Введи название');
   if(existing)b.talents[b.talents.indexOf(existing)]=updated;else b.talents.push(updated);
   if(!validBuild(doc,doc.build)) doc.build={};changed();render();$('#modal').close();
@@ -87,9 +89,7 @@ function editTalent(b,row,col,existing){
   if(!confirm('Удалить талант? Зависимости от него будут сняты.'))return;
   b.talents=b.talents.filter(x=>x.id!==t.id);for(const x of b.talents)if(x.requires===t.id)x.requires='';for(const a of doc.abilities)if(a.talentId===t.id)a.talentId='';doc.build={};changed();render();$('#modal').close();
  }:null);
- function capture(){for(const el of document.querySelectorAll('[data-description]'))descriptions[Number(el.dataset.description)]=el.value;}
- function ranks(){capture();const n=Math.max(1,Math.min(100,Number($('#maxRank').value)||1));$('#rankFields').innerHTML=Array.from({length:n},(_,i)=>`<label for="rank${i}">РАНГ ${i+1}</label><textarea id="rank${i}" data-description="${i}" maxlength="5000" placeholder="Увеличивает урон на ${(i+1)*2}%">${esc(descriptions[i]||'')}</textarea>`).join('');}
- if(!existing){$('#modalBody').insertAdjacentHTML('afterbegin','<button type="button" id="pickFavorite">★ Взять из избранного</button>');$('#pickFavorite').onclick=()=>{$('#modal').close();showFavorites({branchId:b.id,row,col});};}$('#maxRank').oninput=ranks;ranks();bindPicker();favoriteButton('talent',()=>b.talents.find(x=>x.id===t.id));
+ if(!existing){$('#modalBody').insertAdjacentHTML('afterbegin','<button type="button" id="pickFavorite">★ Взять из избранного</button>');$('#pickFavorite').onclick=()=>{$('#modal').close();showFavorites({branchId:b.id,row,col});};}rankEditor=createRankEditor($('#rankFields'),$('#maxRank'),t);bindPicker();favoriteButton('talent',()=>b.talents.find(x=>x.id===t.id));
 }
 function editAbility(existing){
  const a=existing||{id:crypto.randomUUID(),name:'',description:'',icon:'inv_misc_questionmark',resource:'',cast:'',cooldown:'',range:'',talentId:''};

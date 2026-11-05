@@ -1,0 +1,8 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {renderRankTemplate,inferRankTemplate} from '../static/rank-template.js';
+test('renders several values, decimal commas, repeated tokens and nonlinear growth',()=>{const model={text:'Урон {число1}%, время {число2} сек., снова {число1}%.',variables:[{key:'число1',label:'Урон',values:['2','7','20']},{key:'число2',label:'Время',values:['0,1','0,2','0,5']}]};assert.deepEqual(renderRankTemplate(model,3),['Урон 2%, время 0,1 сек., снова 2%.','Урон 7%, время 0,2 сек., снова 7%.','Урон 20%, время 0,5 сек., снова 20%.']);});
+test('infers variable numbers without changing fixed numbers',()=>{const descriptions=['За 10 сек. урон +2%, время -0,1 сек.','За 10 сек. урон +4%, время -0,2 сек.'];const model=inferRankTemplate(descriptions);assert.equal(model.variables.length,2);assert.ok(model.text.includes('10 сек.'));assert.deepEqual(renderRankTemplate(model,2),descriptions);});
+test('does not guess when rank wording differs',()=>{assert.equal(inferRankTemplate(['Увеличивает урон на 2%.','Открывает новую способность.']),null);});
+test('rejects unknown tokens, missing ranks, nonnumeric and duplicate variables',()=>{assert.throws(()=>renderRankTemplate({text:'{нет}',variables:[]},1));for(const values of [['1'],['1','hello']])assert.throws(()=>renderRankTemplate({text:'{число1}',variables:[{key:'число1',label:'Урон',values}]},2));const v={key:'число1',label:'Урон',values:['1']};assert.throws(()=>renderRankTemplate({text:'x',variables:[v,v]},1));});
+test('plain common text works without any variable',()=>{assert.deepEqual(renderRankTemplate({text:'Открывает новую способность.',variables:[]},2),['Открывает новую способность.','Открывает новую способность.']);});

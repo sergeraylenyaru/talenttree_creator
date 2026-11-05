@@ -51,6 +51,22 @@ def validate_icon(value):
     if isinstance(value, str) and value.startswith('data:') and value not in builtin_images():
         raise ValueError('Загрузка собственных иконок отключена. Выбери иконку из каталога.')
 
+def render_rank_template(model, count):
+    if not isinstance(model, dict) or not isinstance(model.get('text'), str) or len(model['text']) > 5000 or not isinstance(model.get('variables'), list) or len(model['variables']) > 32:
+        raise ValueError('Проверь общее описание')
+    variables = {}
+    for variable in model['variables']:
+        if not isinstance(variable, dict) or not isinstance(variable.get('key'), str) or not re.fullmatch(r'число[0-9]+', variable['key']) or variable['key'] in variables or not isinstance(variable.get('label'), str) or len(variable['label']) > 60 or not isinstance(variable.get('values'), list) or len(variable['values']) < count:
+            raise ValueError('Проверь меняющиеся числа')
+        for value in variable['values'][:count]:
+            if not isinstance(value, str) or len(value) > 32 or not re.fullmatch(r'[-+]?[0-9]+(?:[.,][0-9]+)?', value) or not math.isfinite(float(value.replace(',', '.'))):
+                raise ValueError('Заполни значения всех рангов числами')
+        variables[variable['key']] = variable['values']
+    for key in re.findall(r'\{([^{}]+)\}', model['text']):
+        if key not in variables:
+            raise ValueError('Неизвестное меняющееся число')
+    return [re.sub(r'\{([^{}]+)\}', lambda match: variables[match.group(1)][rank], model['text']) for rank in range(count)]
+
 def validate(document):
     if not isinstance(document, dict):
         raise ValueError('Неверный документ')
@@ -84,6 +100,8 @@ def validate(document):
                 raise ValueError('Ранги: от 1 до 100')
             if not isinstance(talent.get('descriptions'), list) or len(talent['descriptions']) != talent['maxRank'] or any(not isinstance(d, str) for d in talent['descriptions']):
                 raise ValueError('Нужно описание каждого ранга')
+            if 'rankTemplate' in talent and render_rank_template(talent['rankTemplate'], talent['maxRank']) != talent['descriptions']:
+                raise ValueError('Описания рангов не совпадают с общим текстом')
         by_id = {t['id']: t for t in branch.get('talents', [])}
         for talent in by_id.values():
             parent = talent.get('requires')

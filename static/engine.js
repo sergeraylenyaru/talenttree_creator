@@ -1,3 +1,4 @@
+import {renderRankTemplate} from './rank-template.js';
 export function blank() {
   return {version:1,name:'Новый класс',budget:41,budgetAuto:true,rowCost:5,branches:[branch('Ветка 1'),branch('Ветка 2')],abilities:[],build:{}};
 }
@@ -36,6 +37,7 @@ export function normalize(doc,{allowLegacy=false}={}) {
     for(const t of b.talents) {
       const pos=`${t.row}:${t.col}`;
       if(typeof t.id!=='string'||ids.has(t.id)||positions.has(pos)||!Number.isInteger(t.row)||t.row<0||t.row>=b.rows||!Number.isInteger(t.col)||t.col<0||t.col>3||typeof t.name!=='string'||!Number.isInteger(t.maxRank)||t.maxRank<1||t.maxRank>100||!Array.isArray(t.descriptions)||t.descriptions.length!==t.maxRank||t.descriptions.some(d=>typeof d!=='string')) throw Error('Неверный формат таланта');
+      if(t.rankTemplate){const rendered=renderRankTemplate(t.rankTemplate,t.maxRank);if(JSON.stringify(rendered)!==JSON.stringify(t.descriptions))throw Error('Описание рангов не совпадает с общим текстом');}
       ids.add(t.id);positions.add(pos);
     }
     for(const t of b.talents) {

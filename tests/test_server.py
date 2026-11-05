@@ -146,6 +146,25 @@ class API(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, '4 веток'):
             server.validate(document)
 
+    def test_rank_template_roundtrip_and_consistency(self):
+        client = self.client()
+        self.register(client, 'template_author')
+        document = copy.deepcopy(DOCUMENT)
+        model = {'text': 'Урон {число1}%, время {число2} сек.', 'variables': [
+            {'key': 'число1', 'label': 'Урон', 'values': ['2', '9', '20']},
+            {'key': 'число2', 'label': 'Время', 'values': ['0,1', '0,2', '0,3']}]}
+        talent = {'id': 'template', 'name': 'Flame', 'icon': 'spell_fire_fireball02', 'row': 0, 'col': 0, 'maxRank': 3, 'requires': '', 'rankTemplate': model, 'descriptions': server.render_rank_template(model, 3)}
+        document['branches'][0]['talents'] = [talent]
+        status, result, _ = self.request(client, '/api/projects', {'document': document})
+        self.assertEqual(status, 200)
+        saved = self.request(client, '/api/projects/'+result['id'])[1]['document']['branches'][0]['talents'][0]
+        self.assertEqual(saved['rankTemplate'], model)
+        self.assertEqual(saved['descriptions'][1], 'Урон 9%, время 0,2 сек.')
+        talent['descriptions'][1] = 'Wrong description'
+        self.assertEqual(self.request(client, '/api/projects', {'document': document})[0], 400)
+        talent['rankTemplate'] = {}
+        self.assertEqual(self.request(client, '/api/projects', {'document': document})[0], 400)
+
     def test_presets_validate_on_server(self):
         files = list((server.ROOT / 'static' / 'presets').glob('*.json'))
         self.assertEqual(len(files), 29)
