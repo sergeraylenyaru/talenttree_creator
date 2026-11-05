@@ -3,6 +3,8 @@ import hashlib
 import hmac
 import json
 import math
+import publications
+from urllib.parse import urlsplit, parse_qs
 from routing import dependency_routes
 from functools import lru_cache
 import os
@@ -35,6 +37,7 @@ def initialize():
         CREATE TABLE IF NOT EXISTS share_saves(token TEXT REFERENCES shares(token), user_id INTEGER REFERENCES users(id), PRIMARY KEY(token,user_id));
         CREATE TABLE IF NOT EXISTS shares(token TEXT PRIMARY KEY, document TEXT, created INTEGER);
         ''')
+        publications.migrate(db)
 
 def password_hash(password, salt):
     return hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), n=16384, r=8, p=1).hex()
@@ -206,6 +209,11 @@ class Handler(SimpleHTTPRequestHandler):
                     raise ValueError('Ожидается JSON-объект')
             with connect() as db:
                 user = self.session(db)
+                uid = user[0] if user else None
+                parsed = urlsplit(self.path)
+                if parsed.path == '/api/rankings' and method == 'GET':
+                    query = parse_qs(parsed.query)
+                    return self.reply(200, publications.listing(db, uid, query.get('sort', ['views'])[0], int(query.get('page', ['0'])[0])))
                 if self.path == '/api/me' and method == 'GET':
                     return self.reply(200, {'user': {'login': user[1]} if user else None})
                 if self.path.startswith('/api/shared/'):
@@ -225,11 +233,29 @@ class Handler(SimpleHTTPRequestHandler):
                     secure = '; Secure' if os.environ.get('COOKIE_SECURE') == '1' else ''
                     cookie = f'visitor={visitor}; HttpOnly; SameSite=Lax; Path=/; Max-Age=31536000{secure}'
                     if len(parts) == 1 and method == 'GET':
-                        return self.reply(200, {'document': json.loads(row[0]), 'stats': share_stats(db, token)}, cookie)
+                        db.execute('INSERT OR IGNORE INTO share_views VALUES(?,?)', (token, hashlib.sha256(visitor.encode()).hexdigest()))
+                        db.commit()
+                        return self.reply(200, {'document': json.loads(row[0]), 'stats': share_stats(db, token), 'publication': publications.info(db, token, uid)}, cookie)
                     if len(parts) == 2 and parts[1] == 'interact' and method == 'POST':
                         db.execute('INSERT OR IGNORE INTO share_allocations VALUES(?,?)', (token, hashlib.sha256(visitor.encode()).hexdigest()))
                         db.commit()
-                        return self.reply(200, {'stats': share_stats(db, token)}, cookie)
+                        return self.reply(200, {'stats': share_stats(db, token), 'publication': publications.info(db, token, uid)}, cookie)
+                    if len(parts) == 2 and parts[1] == 'vote' and method == 'POST':
+                        if not user:
+                            return self.reply(401, {'error': 'Для голосования войдите в аккаунт'})
+                        owner = db.execute('SELECT owner_id FROM shares WHERE token=?', (token,)).fetchone()[0]
+                        if owner == uid:
+                            return self.reply(403, {'error': 'Нельзя оценивать собственную публикацию'})
+                        vote = data.get('vote')
+                        if type(vote) is not int or vote not in (-1, 0, 1):
+                            raise ValueError('Неверная оценка')
+                        previous = db.execute('SELECT vote FROM share_votes WHERE token=? AND user_id=?', (token, uid)).fetchone()
+                        if vote == 0 or previous and previous[0] == vote:
+                            db.execute('DELETE FROM share_votes WHERE token=? AND user_id=?', (token, uid))
+                        else:
+                            db.execute('INSERT INTO share_votes VALUES(?,?,?) ON CONFLICT(token,user_id) DO UPDATE SET vote=excluded.vote', (token, uid, vote))
+                        db.commit()
+                        return self.reply(200, {'publication': publications.info(db, token, uid)})
                     return self.reply(404, {'error': 'Не найдено'})
                 if self.path in ('/api/register', '/api/login') and method == 'POST':
                     login, password = data.get('login', ''), data.get('password', '')
@@ -262,6 +288,32 @@ class Handler(SimpleHTTPRequestHandler):
                     return self.reply(200, {'user': {'login': login}}, f'session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800{secure}')
                 if not user:
                     return self.reply(401, {'error': 'Войдите в аккаунт'})
+                if parsed.path == '/api/publications' and method == 'GET':
+                    query = parse_qs(parsed.query)
+                    return self.reply(200, publications.listing(db, uid, 'latest', int(query.get('page', ['0'])[0]), owned=True))
+                if self.path == '/api/publish' and method == 'POST':
+                    pid, visibility = data.get('projectId'), data.get('visibility', 'unlisted')
+                    if not isinstance(pid, str):
+                        raise ValueError('Сначала сохраните класс')
+                    db.execute('BEGIN IMMEDIATE')
+                    saved = db.execute('SELECT document FROM projects WHERE id=? AND user_id=?', (pid, uid)).fetchone()
+                    if not saved:
+                        return self.reply(404, {'error': 'Сохранённый класс не найден'})
+                    document = validate(json.loads(saved[0]))
+                    token = publications.create(db, document, uid, pid, visibility)
+                    db.commit()
+                    return self.reply(200, {'token': token, 'publication': publications.info(db, token, uid)})
+                if self.path.startswith('/api/publications/') and self.path.endswith('/visibility') and method == 'POST':
+                    token = self.path.removeprefix('/api/publications/').removesuffix('/visibility')
+                    owner = db.execute('SELECT owner_id FROM shares WHERE token=?', (token,)).fetchone()
+                    if not owner or owner[0] != uid:
+                        return self.reply(404, {'error': 'Публикация не найдена'})
+                    visibility = data.get('visibility')
+                    if visibility not in ('public', 'unlisted'):
+                        raise ValueError('Неверная видимость')
+                    db.execute('UPDATE shares SET visibility=? WHERE token=?', (visibility, token))
+                    db.commit()
+                    return self.reply(200, {'publication': publications.info(db, token, uid)})
                 if self.path == '/api/favorites' and method == 'GET':
                     rows = db.execute('SELECT id,kind,item FROM favorites WHERE user_id=? ORDER BY created DESC', (user[0],)).fetchall()
                     return self.reply(200, {'favorites': [{'id': r[0], 'kind': r[1], 'item': json.loads(r[2])} for r in rows]})
@@ -291,8 +343,7 @@ class Handler(SimpleHTTPRequestHandler):
                     return self.reply(200, {}) if deleted else self.reply(404, {'error': 'Элемент не найден'})
                 if self.path == '/api/share' and method == 'POST':
                     document = validate(data['document'])
-                    token = secrets.token_urlsafe(24)
-                    db.execute('INSERT INTO shares VALUES(?,?,?)', (token, json.dumps(document), int(time.time())))
+                    token = publications.create(db, document, uid)
                     db.commit()
                     return self.reply(200, {'token': token})
                 if self.path == '/api/logout' and method == 'POST':

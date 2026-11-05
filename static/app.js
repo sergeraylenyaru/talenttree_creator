@@ -16,7 +16,7 @@ async function api(path, data, method) {
 function image(id,extra='') { return `<img src="${esc(iconURL(id))||'missing-icon'}" alt="" loading="lazy" draggable="false" ${extra}>`; }
 document.addEventListener('error',e=>{if(e.target.tagName==='IMG'){e.target.style.visibility='hidden';e.target.alt='Иконка недоступна';}},true);
 function render() {
- synchronizeAbilityTalents(doc);renderCharacter();updateHistoryButtons();if(!activeShare)$('#shareStats').hidden=true;
+ synchronizeAbilityTalents(doc);renderCharacter();updateHistoryButtons();if(!activeShare){$('#shareStats').hidden=true;$('#publicationBar').hidden=true;}
  $('#trees').style.setProperty('--tree-count',Math.min(4,doc.branches.length));
  $('#className').value=doc.name;$('#budget').value=doc.budget;$('#rowCost').value=doc.rowCost;
  $('#points').textContent=`${total(doc)} / ${doc.budget}`;
@@ -143,14 +143,14 @@ for(const id of ['className','budget','rowCost'])$('#'+id).onchange=()=>{
  if((key==='name'&&!value)||(key!=='name'&&(!Number.isInteger(value)||value<0||value>100000))){toast('Проверь значение');render();return;}
  doc[key]=value;if(key==='budget')doc.budgetAuto=false;if(!validBuild(doc,doc.build))doc.build={};changed();render();
 };
-$('#new').onclick=()=>{if(dirty&&!confirm('Создать новый класс? Текущий черновик будет заменён. Сначала можно сохранить или экспортировать его.'))return;doc=blank();projectId=null;activeShare=null;changed();render();};
+$('#new').onclick=()=>{if(dirty&&!confirm('Создать новый класс? Текущий черновик будет заменён. Сначала можно сохранить или экспортировать его.'))return;$('#community').hidden=true;$('.workspace').hidden=false;doc=blank();projectId=null;activeShare=null;changed();render();};
 $('#preset').onclick=async()=>{
  try{
   const response=await fetch('presets/index.json');if(!response.ok)throw Error('Не удалось загрузить каталог');const classes=await response.json();
   let version='Forever',selected=classes.find(c=>c.version===version)?.id;
   modal('Стандартные деревья',`<div id="versionFilters" class="version-filters">${[['Forever','Forever'],['2.4.3','TBC'],['3.3.5a','WotLK']].map(([v,n])=>`<button type="button" data-version="${v}">${n}</button>`).join('')}</div><input type="hidden" id="presetClass"><div id="classCards" class="class-cards"></div><p class="muted">Тексты стандартных наборов на английском. Forever — снимок 1.60.1.69876, возможны отличия от текущего Wowhead.</p>`,async()=>{
    if(!selected)throw Error('Выбери класс');if(dirty&&!confirm('Заменить текущий черновик выбранным классом?'))return;
-   const response=await fetch(`presets/${selected}.json`);if(!response.ok)throw Error('Не удалось загрузить класс');doc=normalize(await response.json());projectId=null;activeShare=null;allocationSent=false;$('#shareStats').hidden=true;mode=user?'edit':'play';changed();render();$('#modal').close();toast(doc.source?.notice||'Класс загружен');
+   const response=await fetch(`presets/${selected}.json`);if(!response.ok)throw Error('Не удалось загрузить класс');doc=normalize(await response.json());$('#community').hidden=true;$('.workspace').hidden=false;projectId=null;activeShare=null;allocationSent=false;$('#shareStats').hidden=true;mode=user?'edit':'play';changed();render();$('#modal').close();toast(doc.source?.notice||'Класс загружен');
   });
   function drawClasses(){
    for(const b of document.querySelectorAll('[data-version]')){b.classList.toggle('selected',b.dataset.version===version);b.setAttribute('aria-pressed',String(b.dataset.version===version));}
@@ -166,7 +166,7 @@ $('#export').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify
 $('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{
  try{const file=e.target.files[0];if(!file)return;if(file.size>2_000_000)throw Error('Файл больше 2 МБ');const incoming=normalize(JSON.parse(await file.text()));if(dirty&&!confirm('Заменить текущий черновик импортированным классом?'))return;doc=incoming;projectId=null;activeShare=null;changed();render();toast('Класс импортирован');}catch(err){toast(err.message);}finally{e.target.value='';}
 };
-function renderUser(){$('#user').textContent=user?.login||'';$('#auth').hidden=!!user;$('#logout').hidden=!user;}
+function renderUser(){if(!user){activePublication=null;$('#publicationBar').hidden=true;if(communityState.scope==='mine'){communityState.scope='rankings';$('#community').hidden=true;$('#community').innerHTML='';$('.workspace').hidden=false;}}if(activeShare)refreshShareStats();$('#user').textContent=user?.login||'';$('#auth').hidden=!!user;$('#logout').hidden=!user;}
 function auth(register=false){
  modal(register?'Создать аккаунт':'Войти в мастерскую',`<p class="muted">Сохраняй классы в своей учётной записи и возвращайся к ним позже.</p>${field('login','ЛОГИН','','text','required pattern="[A-Za-z0-9_\\-]{3,32}" minlength="3" maxlength="32" autocomplete="username"')}${field('password','ПАРОЛЬ','','password',`required minlength="8" maxlength="128" autocomplete="${register?'new-password':'current-password'}"`)}<p class="muted">Логин: латинские буквы, цифры, _ и -. Пароль: минимум 8 символов.</p><button type="button" id="switchAuth">${register?'Уже есть аккаунт? Войти':'Нет аккаунта? Зарегистрироваться'}</button>`,async()=>{const result=await api(register?'/register':'/login',{login:$('#login').value,password:$('#password').value});user=result.user;if(user&&!activeShare)mode='edit';renderUser();render();$('#modal').close();toast('Ты в мастерской. Теперь можно сохранить класс.');});
  $('#submitModal').textContent=register?'Зарегистрироваться':'Войти';$('#switchAuth').onclick=()=>{$('#modal').close();auth(!register);};
@@ -179,10 +179,13 @@ $('#save').onclick=async()=>{
 };
 $('#share').onclick=()=>{
  if(!user){auth();return;}
- modal('Поделиться классом и билдом','<p>Будет создана ссылка на текущую копию класса и распределение очков. Её смогут открыть все, у кого есть ссылка.</p><p class="muted">Последующие правки класса не изменят эту копию. Учётная запись автора не публикуется.</p>',async()=>{
-  const result=await api('/share',{document:normalize(doc)});const url=new URL(location.href);url.search='';url.searchParams.set('share',result.token);url.hash='';
-  $('#modal').close();modal('Ссылка готова',field('shareURL','СКОПИРУЙ ССЫЛКУ',url.href,'text','readonly')+'<p class="muted">Получатель сможет распределить очки и сохранить свою копию.</p>',null);$('#shareURL').select();
- });$('#submitModal').textContent='Создать ссылку';
+ modal('Зафиксировать версию',`<p>Будет сохранён и опубликован неизменяемый снимок класса с текущим билдом. Последующие правки рабочего класса не изменят эту версию.</p><label for="publicationVisibility">ВИДИМОСТЬ</label><select id="publicationVisibility"><option value="unlisted">Только по ссылке</option><option value="public">Общедоступное — участвует в рейтингах</option></select><p class="muted">Общедоступную версию смогут найти в рейтинге. Версию по ссылке увидят только те, кому передана ссылка.</p>`,async()=>{
+  const visibility=$('#publicationVisibility').value;
+  const saved=await api('/projects',{id:projectId,document:normalize(doc),sourceShare:activeShare});projectId=saved.id;
+  const result=await api('/publish',{projectId,visibility});dirty=false;$('#saveState').textContent='Сохранено в аккаунте';
+  const url=new URL(location.href);url.search='';url.searchParams.set('share',result.token);url.hash='';
+  $('#modal').close();modal('Версия '+result.publication.version+' зафиксирована',field('shareURL','ССЫЛКА НА ПУБЛИКАЦИЮ',url.href,'text','readonly')+`<p>${visibility==='public'?'Публикация появилась в рейтинге.':'Только по ссылке — в рейтинге не показывается.'}</p><p class="muted">Статистика и управление видимостью — в «Мои публикации».</p>`,null);$('#shareURL').select();
+ });$('#submitModal').textContent='Зафиксировать и опубликовать';
 };
 $('#projects').onclick=async()=>{
  if(!user){auth();return;}
@@ -279,7 +282,8 @@ async function showFavorites(target=null){
 }
 function placeFavorite(item,target){const b=doc.branches.find(b=>b.id===target.branchId);if(!b||b.talents.some(t=>t.row===target.row&&t.col===target.col)||reserved(b,target.row,target.col)){toast('Ячейка занята талантом или стрелкой');return;}const copy={...structuredClone(item),id:crypto.randomUUID(),row:target.row,col:target.col,requires:''};delete copy.grantedAbilityId;b.talents.push(copy);favoritePlacement=null;changed();render();toast('Талант добавлен из избранного');}
 
-let activeShare=null,allocationSent=false;
+let activeShare=null,allocationSent=false,activePublication=null;
+const communityState={scope:'rankings',sort:'views',page:0};
 const undoStates=[],redoStates=[];let historyCurrent=null;
 function snapshot(){return JSON.stringify({document:doc,projectId,share:activeShare});}
 function remember(){const next=snapshot();if(historyCurrent&&next!==historyCurrent){undoStates.push(historyCurrent);if(undoStates.length>100)undoStates.shift();redoStates.length=0;}historyCurrent=next;updateHistoryButtons();}
@@ -289,13 +293,45 @@ function restoreHistory(redo=false){const from=redo?redoStates:undoStates,to=red
 $('#undo').onclick=()=>restoreHistory();$('#redo').onclick=()=>restoreHistory(true);
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&!e.target.closest('input,textarea,select')&&['z','y'].includes(e.key.toLowerCase())){e.preventDefault();restoreHistory(e.key.toLowerCase()==='y'||e.shiftKey);}});
 document.addEventListener('click',e=>{if(!user&&e.target.closest('#new,#editMode,#export,#import,#characterSettings,#addBranch,#addAbility')){e.preventDefault();e.stopImmediatePropagation();auth();}},true);
-function showShareStats(stats){$('#shareStats').hidden=!activeShare;if(activeShare&&stats)$('#shareStats').textContent=`Распределяли очки: ${stats.allocated} · Сохранили себе: ${stats.saved}`;}
-async function refreshShareStats(){if(!activeShare){$('#shareStats').hidden=true;return;}try{const result=await api('/shared/'+encodeURIComponent(activeShare));showShareStats(result.stats);}catch{}}
-async function trackAllocation(){if(!activeShare||allocationSent)return;allocationSent=true;const token=activeShare;try{const result=await api('/shared/'+encodeURIComponent(token)+'/interact',{});if(activeShare===token)showShareStats(result.stats);}catch{allocationSent=false;}}
+function showShareStats(stats){$('#shareStats').hidden=!activeShare||!$('#community').hidden;if(activeShare&&stats)$('#shareStats').textContent=`Распределяли очки: ${stats.allocated} · Сохранили себе: ${stats.saved}`;}
+async function refreshShareStats(){if(!activeShare){$('#shareStats').hidden=true;return;}const token=activeShare,viewer=user?.login;try{const result=await api('/shared/'+encodeURIComponent(token));if(token===activeShare&&viewer===user?.login){showShareStats(result.stats);showPublication(result.publication);}}catch{}}
+async function trackAllocation(){if(!activeShare||allocationSent)return;allocationSent=true;const token=activeShare;try{const result=await api('/shared/'+encodeURIComponent(token)+'/interact',{});if(activeShare===token){showShareStats(result.stats);showPublication(result.publication);}}catch{allocationSent=false;}}
+
+function showPublication(info){
+ if(!activeShare||!info){$('#publicationBar').hidden=true;return;}if(info.token!==activeShare)return;activePublication=info;if(!$('#community').hidden){$('#publicationBar').hidden=true;return;}
+ const owner=!!user&&info.isOwner&&info.author?.toLowerCase()===user.login.toLowerCase();
+ $('#publicationBar').hidden=false;$('#publicationBar').innerHTML=`<div><strong>${esc(info.name)}</strong><p class="muted">${esc(info.author||'Автор старой ссылки не указан')} · Версия ${info.version} · ${info.visibility==='public'?'Общедоступное':'Только по ссылке'} · Просмотры: ${info.views}</p></div><div class="vote-controls"><button id="likePublication" aria-pressed="${info.myVote===1}" ${owner?'disabled title="Нельзя оценивать свою публикацию"':''}>👍 ${info.likes}</button><button id="dislikePublication" aria-pressed="${info.myVote===-1}" ${owner?'disabled title="Нельзя оценивать свою публикацию"':''}>👎</button>${owner?`<small>Дизлайки: ${info.dislikes??0} · Видно только тебе</small>`:''}</div>`;
+ for(const [id,vote]of [['likePublication',1],['dislikePublication',-1]])$('#'+id).onclick=async()=>{if(!user){auth();return;}for(const b of document.querySelectorAll('.vote-controls button'))b.disabled=true;try{const result=await api('/shared/'+encodeURIComponent(activeShare)+'/vote',{vote});showPublication(result.publication);}catch(err){toast(err.message);showPublication(activePublication);}};
+}
+async function openPublication(token){
+ if(dirty&&!confirm('Открыть опубликованную версию и заменить текущий черновик?'))return;
+ const result=await api('/shared/'+encodeURIComponent(token));doc=normalize(result.document,{allowLegacy:true});projectId=null;activeShare=token;allocationSent=false;dirty=false;mode='play';resetHistory();$('#community').hidden=true;$('.workspace').hidden=false;showShareStats(result.stats);showPublication(result.publication);render();$('#saveState').textContent='Копия опубликованной версии';const url=new URL(location.href);url.search='';url.searchParams.set('share',token);history.replaceState(null,'',url);
+}
+$('#rankings').onclick=()=>openCommunity('rankings');$('#publications').onclick=()=>{if(!user){auth();return;}openCommunity('mine');};
+async function openCommunity(scope='rankings'){
+ if(scope!==communityState.scope)communityState.page=0;communityState.scope=scope;
+ const mine=scope==='mine';if(mine&&!user){auth();return;}
+ $('#community').hidden=false;$('.workspace').hidden=true;$('#publicationBar').hidden=true;$('#shareStats').hidden=true;
+ $('#community').innerHTML=`<div class="community-heading"><div><p class="eyebrow">${mine?'ТВОЯ МАСТЕРСКАЯ':'СООБЩЕСТВО'}</p><h2>${mine?'Мои публикации':'Рейтинг деревьев'}</h2></div><button id="closeCommunity">← К калькулятору</button></div>${mine?'':`<div class="ranking-tabs">${[['views','Самые просматриваемые'],['usage','Чаще используют калькулятор'],['latest','Последние опубликованные']].map(([sort,name])=>`<button data-sort="${sort}" class="${sort===communityState.sort?'selected':''}">${name}</button>`).join('')}</div>`}<div id="publicationCards" class="publication-cards"><p class="muted">Загрузка…</p></div><div id="publicationPagination" class="publication-pagination"></div>`;
+ $('#closeCommunity').onclick=()=>{$('#community').hidden=true;$('.workspace').hidden=false;render();if(activeShare){showPublication(activePublication);refreshShareStats();}};
+ for(const b of document.querySelectorAll('[data-sort]'))b.onclick=()=>{communityState.sort=b.dataset.sort;communityState.page=0;openCommunity('rankings');};
+ const requested={...communityState},viewer=user?.login;
+ try{
+  const result=await api(mine?'/publications?page='+requested.page:'/rankings?sort='+requested.sort+'&page='+requested.page);
+  if(JSON.stringify(requested)!==JSON.stringify(communityState)||viewer!==user?.login)return;
+  $('#publicationCards').innerHTML=result.publications.length?result.publications.map(p=>`<article class="publication-card"><div class="publication-card-top"><h3>${esc(p.name)}</h3><span>v${p.version}</span></div><p class="muted">${esc(p.author||'Автор не указан')} · ${esc(new Date(p.published*1000).toLocaleString('ru-RU'))}</p><div class="publication-branches">${p.branches.map(b=>`<div>${image(b.icon)}<span>${esc(b.name)}</span></div>`).join('')}</div><p class="publication-metrics">Просмотры: ${p.views} · Калькулятор: ${p.allocated}<br>Сохранили: ${p.saved} · 👍 ${p.likes}${mine?`<br>👎 ${p.dislikes??0} — видно только автору`:''}</p>${mine?`<label>ВИДИМОСТЬ</label><select data-visibility="${esc(p.token)}"><option value="unlisted" ${p.visibility==='unlisted'?'selected':''}>Только по ссылке</option><option value="public" ${p.visibility==='public'?'selected':''}>Общедоступное</option></select>`:''}<button class="primary" data-open-publication="${esc(p.token)}">Открыть калькулятор</button>${mine?`<button data-copy-link="${esc(p.token)}">Ссылка</button>${p.projectId?`<button data-edit-project="${esc(p.projectId)}">Рабочий класс</button>`:''}`:''}</article>`).join(''):'<div class="empty">'+(mine?'Пока нет публикаций. Сохрани класс и нажми «Зафиксировать и опубликовать».':'Общедоступных публикаций пока нет. Здесь появятся зафиксированные версии авторов.')+'</div>';
+  for(const b of document.querySelectorAll('[data-open-publication]'))b.onclick=()=>openPublication(b.dataset.openPublication).catch(e=>toast(e.message));
+  for(const b of document.querySelectorAll('[data-edit-project]'))b.onclick=async()=>{if(dirty&&!confirm('Открыть рабочий класс вместо текущего черновика?'))return;try{const result=await api('/projects/'+b.dataset.editProject);doc=normalize(result.document,{allowLegacy:true});projectId=result.id;activeShare=null;activePublication=null;allocationSent=false;mode='edit';changed();$('#community').hidden=true;$('.workspace').hidden=false;render();}catch(err){toast(err.message);}};
+  for(const b of document.querySelectorAll('[data-copy-link]'))b.onclick=()=>{const url=new URL(location.href);url.search='';url.searchParams.set('share',b.dataset.copyLink);url.hash='';modal('Ссылка на публикацию',field('shareURL','ССЫЛКА',url.href,'text','readonly'),null);$('#shareURL').select();};
+  for(const select of document.querySelectorAll('[data-visibility]'))select.onchange=async()=>{select.disabled=true;try{await api('/publications/'+select.dataset.visibility+'/visibility',{visibility:select.value});openCommunity('mine');}catch(err){toast(err.message);openCommunity('mine');}};
+  $('#publicationPagination').innerHTML=`<button id="previousPublications" ${requested.page?'':'disabled'}>← Назад</button><span>Страница ${requested.page+1}</span><button id="nextPublications" ${result.hasMore?'':'disabled'}>Далее →</button>`;
+  $('#previousPublications').onclick=()=>{communityState.page--;openCommunity(scope);};$('#nextPublications').onclick=()=>{communityState.page++;openCommunity(scope);};
+ }catch(err){const cards=$('#publicationCards');if(cards)cards.textContent=err.message;}
+}
 resetHistory();
 render();api('/me').then(result=>{user=result.user;if(user&&!activeShare)mode='edit';renderUser();render();}).catch(()=>toast('Сервер недоступен. Проверь подключение и перезагрузи страницу.'));
 const sharedToken=new URLSearchParams(location.search).get('share');
 if(sharedToken) api('/shared/'+encodeURIComponent(sharedToken)).then(result=>{
  if(dirty&&!confirm('Открыть класс по ссылке и заменить черновик?'))return;
- doc=normalize(result.document,{allowLegacy:true});projectId=null;activeShare=sharedToken;showShareStats(result.stats);mode='play';resetHistory();render();$('#saveState').textContent='Копия класса по ссылке';toast('Открыта копия класса. Изменения не затрагивают оригинал.');
+ doc=normalize(result.document,{allowLegacy:true});projectId=null;activeShare=sharedToken;showShareStats(result.stats);showPublication(result.publication);mode='play';resetHistory();render();$('#saveState').textContent='Копия класса по ссылке';toast('Открыта копия класса. Изменения не затрагивают оригинал.');
 }).catch(err=>toast(err.message));
