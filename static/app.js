@@ -1,9 +1,9 @@
 import {createRankEditor} from './rank-editor.js';
-import {blank,branch,total,validBuild,changeRank,normalize,route,reserved,moveTalent,defaultBudget} from './engine.js';
+import {blank,branch,total,validBuild,changeRank,normalize,route,reserved,moveTalent,defaultBudget,abilityTalentDraft,placeAbilityTalent} from './engine.js';
 import {icons,iconURL} from './icons.js';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let doc=blank(), projectId=null, user=null, mode='play', modalSave=null, modalDelete=null, dirty=false;
+let doc=blank(), projectId=null, user=null, mode='play', modalSave=null, modalDelete=null, dirty=false,modalCancel=null;
 try { const draft=JSON.parse(localStorage.getItem('talentforge-draft')); if(draft) doc=normalize(draft,{allowLegacy:true}); } catch {}
 function toast(message) { $('#toast').textContent=message;$('#toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').hidden=true,4200); }
 function changed() { remember();dirty=true;$('#saveState').textContent='Есть несохранённые изменения';try{localStorage.setItem('talentforge-draft',JSON.stringify(doc));}catch{toast('Браузер не сохранил черновик. Экспортируй класс в JSON.');} }
@@ -31,7 +31,7 @@ function render() {
  const available=validBuild(doc,next), desc=t.descriptions[Math.max(0,rank-1)]||'Описание не задано';
  return `<button class="slot filled ${rank===t.maxRank?'maxed':available?'available':rank?'':'locked'}" data-talent="${esc(t.id)}" data-row="${row}" data-col="${col}" draggable="${mode==='edit'}" data-tip="${esc(t.name)} (${rank}/${t.maxRank})\n${esc(desc)}${t.requires?'\nТребуется полностью изучить: '+esc(b.talents.find(x=>x.id===t.requires)?.name):''}" aria-label="${esc(t.name)}, ранг ${rank} из ${t.maxRank}"><span class="fallback">✦</span>${image(t.icon)}<span class="rank">${mode==='edit'?'0':rank}/${t.maxRank}</span></button>`;
  }).join('')}</div>${mode==='edit'?'<div class="tree-footer"><button data-action="add-row">＋ Добавить ряд</button><button data-action="remove-row" title="Удалить последний ряд">− Ряд</button></div>':''}</article>`).join('');
- $('#abilities').innerHTML=doc.abilities.length?doc.abilities.map(a=>{const unlocked=!a.talentId||(doc.build[a.talentId]||0)>0;return `<button class="ability-card ${mode==='play'&&!unlocked?'locked':''}" data-ability="${esc(a.id)}">${image(a.icon)}<div><strong>${esc(a.name)}</strong><p>${esc(a.description)}</p><p>${abilityStats(a).map(esc).join(' · ')}</p>${a.talentId?`<small class="gold">${unlocked?'✦':'🔒'} ${esc(doc.branches.flatMap(b=>b.talents).find(t=>t.id===a.talentId)?.name||'Талант удалён')}</small>`:''}</div></button>`;}).join(''):'<div class="empty"><strong>Здесь начинается арсенал твоего класса</strong>Добавь первую способность — активную или пассивную.</div>';
+ $('#abilities').innerHTML=doc.abilities.length?doc.abilities.map(a=>{const unlocked=!a.talentId||(doc.build[a.talentId]||0)>0;return `<button class="ability-card ${mode==='play'&&!unlocked?'locked':''}" data-ability="${esc(a.id)}" draggable="${mode==='edit'}">${image(a.icon)}<div><strong>${esc(a.name)}</strong><p>${esc(a.description)}</p><p>${abilityStats(a).map(esc).join(' · ')}</p>${a.talentId?`<small class="gold">${unlocked?'✦':'🔒'} ${esc(doc.branches.flatMap(b=>b.talents).find(t=>t.id===a.talentId)?.name||'Талант удалён')}</small>`:''}</div></button>`;}).join(''):'<div class="empty"><strong>Здесь начинается арсенал твоего класса</strong>Добавь первую способность — активную или пассивную.</div>';
  requestAnimationFrame(drawDependencies);
 }
 function drawDependencies(){
@@ -54,11 +54,11 @@ function drawDependencies(){
 }
 window.addEventListener('resize',drawDependencies);
 function modal(title, body, save, remove) {
- $('#favoriteItem').hidden=true;
+ modalCancel=null;$('#favoriteItem').hidden=true;
  $('#modalTitle').textContent=title;$('#modalBody').innerHTML=body;$('#formError').textContent='';modalSave=save;modalDelete=remove;
  $('#submitModal').hidden=!save;$('#deleteItem').hidden=!remove;$('#modal').showModal();
 }
-$('#closeModal').onclick=()=>$('#modal').close();
+$('#closeModal').onclick=()=>{const back=modalCancel;modalCancel=null;$('#modal').close();if(back)setTimeout(back,0);};$('#modal').addEventListener('cancel',e=>{if(modalCancel){e.preventDefault();$('#closeModal').click();}});
 $('#modalForm').onsubmit=async e=>{e.preventDefault();$('#formError').textContent='';const button=$('#submitModal');button.disabled=true;try{if(modalSave) await modalSave();}catch(err){$('#formError').textContent=err.message;}finally{button.disabled=false;}};
 $('#deleteItem').onclick=()=>modalDelete?.();
 function field(id,label,value='',type='text',attrs=''){return `<label for="${id}">${label}</label><input id="${id}" type="${type}" value="${esc(value)}" ${attrs}>`;}
@@ -74,8 +74,8 @@ function bindPicker(){
  $('#iconName').oninput=preview;
  update();loadIconCatalog().then(update).catch(()=>toast('Не удалось загрузить полный каталог иконок'));
 }
-function editTalent(b,row,col,existing){
- const t=existing||{id:crypto.randomUUID(),row,col,name:'',icon:'inv_misc_questionmark',maxRank:1,descriptions:[''],requires:''};
+function editTalent(b,row,col,existing,draft){
+ const t=draft||existing||{id:crypto.randomUUID(),row,col,name:'',icon:'inv_misc_questionmark',maxRank:1,descriptions:[''],requires:''};
  let rankEditor;
  function eligible(p){const candidate=p;if(p.id===t.id||p.row>t.row)return false;const seen=new Set();while(p.requires){if(p.requires===t.id||seen.has(p.id))return false;seen.add(p.id);p=b.talents.find(x=>x.id===p.requires);if(!p)return false;}return !!route(b,candidate,t);}
  modal(existing?'Редактировать талант':'Новый талант',field('talentName','НАЗВАНИЕ',t.name,'text','required maxlength="100"')+iconPicker(t.icon)+`<div class="two-cols"><div>${field('maxRank','КОЛИЧЕСТВО РАНГОВ',t.maxRank,'number','min="1" max="100" required')}</div><div><label for="requires">ТРЕБУЕТ ТАЛАНТ (ПОЛНЫЙ РАНГ)</label><select id="requires"><option value="">Без зависимости</option>${b.talents.filter(eligible).map(p=>`<option value="${esc(p.id)}" ${t.requires===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div></div><div id="rankFields" class="rank-editor"></div>`,()=>{
@@ -83,15 +83,20 @@ function editTalent(b,row,col,existing){
   const updated={...t,name:$('#talentName').value.trim(),icon:readIcon(),maxRank,requires:$('#requires').value,descriptions:rankResult.descriptions};
   if(rankResult.rankTemplate)updated.rankTemplate=rankResult.rankTemplate;else delete updated.rankTemplate;
   if(!updated.name)throw Error('Введи название');
+  if(existing?.grantedAbilityId&&existing.grantedAbilityId!==updated.grantedAbilityId){const old=doc.abilities.find(a=>a.id===existing.grantedAbilityId);if(old?.talentId===updated.id)old.talentId='';}
+  if(updated.grantedAbilityId){let ability=doc.abilities.find(a=>a.id===updated.grantedAbilityId);if(ability?.talentId&&ability.talentId!==updated.id){ability={...structuredClone(ability),id:crypto.randomUUID(),talentId:''};doc.abilities.push(ability);updated.grantedAbilityId=ability.id;}if(ability)ability.talentId=updated.id;}
   if(existing)b.talents[b.talents.indexOf(existing)]=updated;else b.talents.push(updated);
   if(!validBuild(doc,doc.build)) doc.build={};changed();render();$('#modal').close();
  },existing?()=>{
   if(!confirm('Удалить талант? Зависимости от него будут сняты.'))return;
   b.talents=b.talents.filter(x=>x.id!==t.id);for(const x of b.talents)if(x.requires===t.id)x.requires='';for(const a of doc.abilities)if(a.talentId===t.id)a.talentId='';doc.build={};changed();render();$('#modal').close();
  }:null);
- if(!existing){$('#modalBody').insertAdjacentHTML('afterbegin','<button type="button" id="pickFavorite">★ Взять из избранного</button>');$('#pickFavorite').onclick=()=>{$('#modal').close();showFavorites({branchId:b.id,row,col});};}rankEditor=createRankEditor($('#rankFields'),$('#maxRank'),t);bindPicker();favoriteButton('talent',()=>b.talents.find(x=>x.id===t.id));
+ $('#modalBody').insertAdjacentHTML('afterbegin','<div class="talent-source-actions"><button type="button" id="pickFavorite">★ Взять из избранного</button><button type="button" id="pickAbility">＋ Добавить способность</button></div>');
+ $('#pickFavorite').hidden=!!existing;$('#pickFavorite').onclick=()=>{$('#modal').close();showFavorites({branchId:b.id,row,col});};
+ $('#pickAbility').onclick=()=>{const saved={...t,...rankEditor.draft(),name:$('#talentName').value,icon:readIcon(),maxRank:Number($('#maxRank').value),requires:$('#requires').value};if(!rankEditor.draft().rankTemplate)delete saved.rankTemplate;const reopen=()=>editTalent(b,row,col,existing,saved);$('#modal').close();setTimeout(()=>pickAbilityForTalent(ability=>editTalent(b,row,col,existing,abilityTalentDraft(ability,saved)),reopen),0);};
+ rankEditor=createRankEditor($('#rankFields'),$('#maxRank'),t,{name:()=>$('#talentName').value,icon:readIcon});$('#talentName').addEventListener('input',()=>rankEditor.refresh());$('#iconName').addEventListener('input',()=>rankEditor.refresh());bindPicker();$('#iconGrid').addEventListener('click',()=>rankEditor.refresh());favoriteButton('talent',()=>b.talents.find(x=>x.id===t.id));
 }
-function editAbility(existing){
+function editAbility(existing,onSaved=null,onCancel=null){
  const a=existing||{id:crypto.randomUUID(),name:'',description:'',icon:'inv_misc_questionmark',resource:'',cast:'',cooldown:'',range:'',talentId:''};
  if(mode==='play'){modal(a.name,`<p class="tooltip-description">${esc(a.description)}</p><p class="gold">${abilityStats(a).map(esc).join(' · ')}</p>`,null);return;}
  modal(existing?'Редактировать способность':'Новая способность',field('abilityName','НАЗВАНИЕ',a.name,'text','required maxlength="100"')+iconPicker(a.icon)+`<label for="abilityDescription">ОПИСАНИЕ</label><textarea id="abilityDescription" maxlength="10000">${esc(a.description)}</textarea><div class="two-cols">${['resource','cast','cooldown','range'].map((k,i)=>`<div>${field(k,['СТОИМОСТЬ РЕСУРСА','ВРЕМЯ ПРИМЕНЕНИЯ','ПЕРЕЗАРЯДКА','ДАЛЬНОСТЬ'][i],numericValue(a[k]),'number','min="0" max="1000000000" step="any" required')}</div>${k==='resource'?`<div><label for="resourceType">РАСХОДУЕМЫЙ РЕСУРС</label><select id="resourceType">${resourceOptions(a.resourceType)}</select></div>`:''}`).join('')}</div><p class="muted">Применение и восстановление — в секундах, дальность — в метрах. Название способности остаётся текстовым.</p><label for="talentLink">ОТКРЫВАЕТСЯ ТАЛАНТОМ</label><select id="talentLink"><option value="">Базовая способность</option>${doc.branches.flatMap(b=>b.talents).map(t=>`<option value="${esc(t.id)}" ${a.talentId===t.id?'selected':''}>${esc(t.name)}</option>`).join('')}</select>`,()=>{
@@ -99,8 +104,8 @@ function editAbility(existing){
   if(!updated.name)throw Error('Введи название');
   for(const k of ['resource','cast','cooldown','range']){updated[k]=Number($('#'+k).value);if(!Number.isFinite(updated[k])||updated[k]<0||updated[k]>1e9)throw Error('Характеристики должны быть неотрицательными числами');}updated.resourceType=$('#resourceType').value;
   if(existing)doc.abilities[doc.abilities.indexOf(existing)]=updated;else doc.abilities.push(updated);
-  changed();render();$('#modal').close();
- },existing?()=>{if(confirm('Удалить способность?')){doc.abilities=doc.abilities.filter(x=>x.id!==a.id);changed();render();$('#modal').close();}}:null);bindPicker();favoriteButton('ability',()=>doc.abilities.find(x=>x.id===a.id));
+  changed();render();$('#modal').close();if(onSaved)setTimeout(()=>onSaved(updated),0);
+ },existing?()=>{if(confirm('Удалить способность?')){doc.abilities=doc.abilities.filter(x=>x.id!==a.id);changed();render();$('#modal').close();}}:null);bindPicker();favoriteButton('ability',()=>doc.abilities.find(x=>x.id===a.id));modalCancel=onCancel;
 }
 $('#trees').addEventListener('change',e=>{if(e.target.matches('.tree-header input')){doc.branches.find(b=>b.id===e.target.closest('.tree').dataset.branch).name=e.target.value;changed();}});
 function treeClick(e){
@@ -222,7 +227,7 @@ function showTooltip(target,x,y){
  const t=doc.branches.flatMap(b=>b.talents).find(t=>t.id===id);
  const a=doc.abilities.find(a=>a.id===target.dataset.ability);
  if(!t&&!a)return;
- if(t){const rank=doc.build[t.id]||0,parent=doc.branches.flatMap(b=>b.talents).find(p=>p.id===t.requires),b=doc.branches.find(b=>b.talents.includes(t));tip.innerHTML=`<strong>${esc(t.name)}</strong><div>Талант · Ранг ${rank}/${t.maxRank}</div><p class="effect">${esc(t.descriptions[Math.max(0,rank-1)])}</p>${rank>0&&rank<t.maxRank?`<div>Следующий ранг:</div><p class="effect">${esc(t.descriptions[rank])}</p>`:''}<p class="requirements">${t.row?`Требуется ${t.row*doc.rowCost} очк. в ветке ${esc(b.name)}<br>`:''}${parent?'Требуется: '+esc(parent.name)+' ('+parent.maxRank+'/'+parent.maxRank+')':''}</p>`;
+ if(t){const rank=doc.build[t.id]||0,parent=doc.branches.flatMap(b=>b.talents).find(p=>p.id===t.requires),b=doc.branches.find(b=>b.talents.includes(t));tip.innerHTML=`<strong>${esc(t.name)}</strong><div>Талант · Ранг ${rank}/${t.maxRank}</div>${t.grantedAbilityId?`<div class="spell-stats">${abilityStats(doc.abilities.find(a=>a.id===t.grantedAbilityId)||{}).map(s=>`<span>${esc(s)}</span>`).join('')}</div>`:''}<p class="effect">${esc(t.descriptions[Math.max(0,rank-1)])}</p>${rank>0&&rank<t.maxRank?`<div>Следующий ранг:</div><p class="effect">${esc(t.descriptions[rank])}</p>`:''}<p class="requirements">${t.row?`Требуется ${t.row*doc.rowCost} очк. в ветке ${esc(b.name)}<br>`:''}${parent?'Требуется: '+esc(parent.name)+' ('+parent.maxRank+'/'+parent.maxRank+')':''}</p>`;
  }else tip.innerHTML=`<strong>${esc(a.name)}</strong><div class="spell-stats"><span>Стоимость: ${esc(abilityCost(a))}</span><span>Дальность: ${esc(a.range===0?'0 м':a.range?a.range+' м':'—')}</span><span>Применение: ${esc(a.cast?a.cast+' сек.':'Мгновенно')}</span><span>Восстановление: ${esc(a.cooldown?a.cooldown+' сек.':'Нет')}</span></div><p class="effect">${esc(a.description)}</p>`;
  tip.hidden=false;const box=tip.getBoundingClientRect();tip.style.left=Math.max(8,Math.min(x+16,innerWidth-box.width-8))+'px';tip.style.top=Math.max(8,Math.min(y+16,innerHeight-box.height-8))+'px';
 }
@@ -234,15 +239,22 @@ document.addEventListener('focusin',e=>{if(e.target.matches('[data-talent],[data
 document.addEventListener('focusout',()=>$('#tooltip').hidden=true);
 document.addEventListener('click',()=>{hoverTarget=null;$('#tooltip').hidden=true;});
 
+function pickAbilityForTalent(onPick,onBack){
+ modal('Добавить способность в талант',`<p class="muted">Выбери способность. Её название, иконка и описание станут основой таланта; способность откроется при изучении таланта.</p><div class="ability-picker-grid">${doc.abilities.map(a=>`<button type="button" data-pick-ability="${esc(a.id)}">${image(a.icon)}<span>${esc(a.name)}</span></button>`).join('')||'<p class="muted">Способностей пока нет. Создай первую ниже.</p>'}</div><div class="talent-source-actions"><button type="button" id="newPickerAbility" class="primary">＋ Добавить способность</button><button type="button" id="backToTalent">← К таланту</button></div>`,null);
+ modalCancel=onBack;
+ for(const button of document.querySelectorAll('[data-pick-ability]'))button.onclick=()=>{const ability=doc.abilities.find(a=>a.id===button.dataset.pickAbility);$('#modal').close();setTimeout(()=>onPick(ability),0);};
+ $('#backToTalent').onclick=()=>{$('#modal').close();setTimeout(onBack,0);};
+ $('#newPickerAbility').onclick=()=>{$('#modal').close();setTimeout(()=>editAbility(null,onPick,()=>pickAbilityForTalent(onPick,onBack)),0);};
+}
 function numericValue(value){const n=Number.parseFloat(value);return Number.isFinite(n)&&n>=0?n:0;}
 function resourceOptions(selected){const names=[...new Set(['Здоровье','Мана','Энергия','Ярость',...character().resources.map(r=>r.name),...(selected?[selected]:[])])];return names.map(n=>`<option ${n===(selected||'Мана')?'selected':''}>${esc(n)}</option>`).join('');}
 function abilityStats(a){return ['Стоимость: '+abilityCost(a),'Применение: '+(a.cast?a.cast+' сек.':'Мгновенно'),'Восстановление: '+(a.cooldown?a.cooldown+' сек.':'Нет'),'Дальность: '+(a.range||0)+' м'];}
 function abilityCost(a){return a.resourceType?`${a.resource??0} ${a.resourceType}`:a.resource||'Нет';}
-let draggedTalent=null;
+let draggedTalent=null,draggedAbility=null;
 $('#trees').addEventListener('dragstart',e=>{const slot=e.target.closest('[data-talent]');if(mode!=='edit'||!slot){e.preventDefault();return;}draggedTalent=slot.dataset.talent;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',draggedTalent);});
-$('#trees').addEventListener('dragover',e=>{if(mode==='edit'&&draggedTalent&&e.target.closest('.slot')){e.preventDefault();e.dataTransfer.dropEffect='move';}});
-$('#trees').addEventListener('drop',e=>{const slot=e.target.closest('.slot');if(mode!=='edit'||!draggedTalent||!slot)return;e.preventDefault();try{doc=moveTalent(doc,draggedTalent,slot.closest('.tree').dataset.branch,Number(slot.dataset.row),Number(slot.dataset.col));changed();render();}catch(err){toast(err.message);}finally{draggedTalent=null;}});
-$('#trees').addEventListener('dragend',()=>draggedTalent=null);
+$('#trees').addEventListener('dragover',e=>{if(mode==='edit'&&(draggedTalent||draggedAbility)&&e.target.closest('.slot')){e.preventDefault();e.dataTransfer.dropEffect=draggedAbility?'copy':'move';}});
+$('#trees').addEventListener('drop',e=>{const slot=e.target.closest('.slot');if(mode!=='edit'||(!draggedTalent&&!draggedAbility)||!slot)return;e.preventDefault();try{if(draggedAbility){if(slot.dataset.talent&&!confirm('Заменить талант выбранной способностью?'))return;doc=placeAbilityTalent(doc,draggedAbility,slot.closest('.tree').dataset.branch,Number(slot.dataset.row),Number(slot.dataset.col),!!slot.dataset.talent);}else doc=moveTalent(doc,draggedTalent,slot.closest('.tree').dataset.branch,Number(slot.dataset.row),Number(slot.dataset.col));changed();render();}catch(err){toast(err.message);}finally{draggedTalent=null;draggedAbility=null;}});
+$('#trees').addEventListener('dragend',()=>draggedTalent=null);$('#abilities').addEventListener('dragstart',e=>{const card=e.target.closest('[data-ability]');if(mode!=='edit'||!card){e.preventDefault();return;}draggedAbility=card.dataset.ability;e.dataTransfer.effectAllowed='copy';e.dataTransfer.setData('text/plain',draggedAbility);});$('#abilities').addEventListener('dragend',()=>draggedAbility=null);
 let iconCatalog=[...icons],iconPromise=null;
 function loadIconCatalog(){
  return iconPromise??=fetch('icon-catalog.json').then(r=>{if(!r.ok)throw Error('Иконки недоступны');return r.json();}).then(list=>{const combined=new Map();for(const i of [...icons,...list]){const previous=combined.get(i.id);combined.set(i.id,{id:i.id,label:(previous?previous.label+' ':'')+i.label});}iconCatalog=[...combined.values()];return iconCatalog;}).catch(e=>{iconPromise=null;throw e;});

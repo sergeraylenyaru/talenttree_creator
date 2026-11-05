@@ -94,3 +94,19 @@ export function moveTalent(document,id,branchId,row,col){
 }
 
 export function defaultBudget(doc){return Math.max(0,41+(Math.max(...doc.branches.map(b=>b.rows))-5)*5);}
+
+export function abilityTalentDraft(ability,existing={}){
+ const descriptions=[ability.description||''];
+ const talent={...existing,id:existing.id||crypto.randomUUID(),name:ability.name,icon:ability.icon,maxRank:1,descriptions,grantedAbilityId:ability.id};delete talent.rankTemplate;return talent;
+}
+export function placeAbilityTalent(document,abilityId,branchId,row,col,replace=false){
+ const next=structuredClone(document),branch=next.branches.find(b=>b.id===branchId),ability=next.abilities.find(a=>a.id===abilityId);
+ if(!branch||!ability||!Number.isInteger(row)||row<0||row>=branch.rows||!Number.isInteger(col)||col<0||col>3)throw Error('Неверная ячейка или способность');
+ const existing=branch.talents.find(t=>t.row===row&&t.col===col);
+ if(existing&&!replace)throw Error('Ячейка занята талантом');if(!existing&&reserved(branch,row,col))throw Error('Здесь проходит стрелка. Сначала убери зависимость.');
+ let used=ability;
+ if(ability.talentId&&ability.talentId!==existing?.id){used={...structuredClone(ability),id:crypto.randomUUID(),talentId:''};next.abilities.push(used);}
+ const talent=abilityTalentDraft(used,{...(existing||{}),row,col,requires:existing?.requires||''});if(existing?.grantedAbilityId&&existing.grantedAbilityId!==used.id){const old=next.abilities.find(a=>a.id===existing.grantedAbilityId);if(old?.talentId===existing.id)old.talentId='';}used.talentId=talent.id;
+ if(existing)branch.talents[branch.talents.indexOf(existing)]=talent;else branch.talents.push(talent);
+ if(!validBuild(next,next.build))next.build={};return normalize(next);
+}
