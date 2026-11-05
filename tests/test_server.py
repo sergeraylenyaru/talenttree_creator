@@ -165,6 +165,22 @@ class API(unittest.TestCase):
         talent['rankTemplate'] = {}
         self.assertEqual(self.request(client, '/api/projects', {'document': document})[0], 400)
 
+    def test_linked_talents_use_ability_as_source(self):
+        document = copy.deepcopy(DOCUMENT)
+        document['abilities'] = [{'id': 'source', 'name': 'Fire', 'icon': 'spell_fire_fireball02', 'description': 'Damage'}]
+        document['branches'][0]['talents'] = [{'id': 't'+str(i), 'row': 0, 'col': i, 'maxRank': 1, 'requires': '', 'grantedAbilityId': 'source', 'name': 'Stale', 'icon': 'inv_misc_questionmark', 'descriptions': ['Stale']} for i in range(2)]
+        server.validate(document)
+        document['abilities'][0]['name'] = 'Greater Fire'
+        document['abilities'][0]['description'] = 'New damage'
+        server.validate(document)
+        self.assertEqual(len(document['abilities']), 1)
+        for talent in document['branches'][0]['talents']:
+            self.assertEqual(talent['name'], 'Greater Fire')
+            self.assertEqual(talent['descriptions'], ['New damage'])
+        document['branches'][0]['talents'][0]['grantedAbilityId'] = 'missing'
+        with self.assertRaisesRegex(ValueError, 'не найдена'):
+            server.validate(document)
+
     def test_presets_validate_on_server(self):
         files = list((server.ROOT / 'static' / 'presets').glob('*.json'))
         self.assertEqual(len(files), 29)

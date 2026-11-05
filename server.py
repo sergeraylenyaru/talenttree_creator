@@ -75,6 +75,20 @@ def validate(document):
     branches = document.get('branches')
     if not isinstance(branches, list) or not 1 <= len(branches) <= 4:
         raise ValueError('Допустимо от 1 до 4 веток')
+    ability_list = document.get('abilities')
+    if not isinstance(ability_list, list) or any(not isinstance(a, dict) or not isinstance(a.get('id'), str) for a in ability_list):
+        raise ValueError('Неверный список способностей')
+    ability_by_id = {a['id']: a for a in ability_list}
+    if len(ability_by_id) != len(ability_list):
+        raise ValueError('Повторяющийся идентификатор способности')
+    for branch in branches:
+        for talent in branch.get('talents', []):
+            if isinstance(talent, dict) and talent.get('grantedAbilityId'):
+                linked = ability_by_id.get(talent['grantedAbilityId'])
+                if not linked or any(not isinstance(linked.get(k), str) for k in ('name', 'icon', 'description')):
+                    raise ValueError('Способность таланта не найдена')
+                talent.update(name=linked['name'], icon=linked['icon'], maxRank=1, descriptions=[linked['description']])
+                talent.pop('rankTemplate', None)
     ids = set()
     branch_ids = set()
     for branch in branches:
@@ -257,6 +271,7 @@ class Handler(SimpleHTTPRequestHandler):
                     item['id'] = secrets.token_hex(12)
                     if kind == 'talent':
                         item.update(row=0, col=0, requires='')
+                        item.pop('grantedAbilityId', None)
                         check['branches'][0]['talents'] = [item]
                     else:
                         item['talentId'] = ''

@@ -29,6 +29,7 @@ export function changeRank(doc, id, delta) {
 export function normalize(doc,{allowLegacy=false}={}) {
   if(!doc || doc.version!==1 || typeof doc.name!=='string' || !doc.name.trim() || doc.name.length>100 || !Array.isArray(doc.branches) || doc.branches.length<1 || doc.branches.length>(allowLegacy?5:4)) throw Error('Неверный формат класса Talent Forge v1');
   for(const key of ['budget','rowCost']) if(!Number.isInteger(doc[key])||doc[key]<0||doc[key]>100000) throw Error('Неверные правила очков');
+  synchronizeAbilityTalents(doc);
   const ids=new Set(),branchIds=new Set();
   for(const b of doc.branches) {
     if(typeof b.id!=='string'||!b.id||branchIds.has(b.id)||typeof b.name!=='string'||!Number.isInteger(b.rows)||b.rows<1||b.rows>1000||!Array.isArray(b.talents)) throw Error('Неверный формат ветки');
@@ -104,9 +105,20 @@ export function placeAbilityTalent(document,abilityId,branchId,row,col,replace=f
  if(!branch||!ability||!Number.isInteger(row)||row<0||row>=branch.rows||!Number.isInteger(col)||col<0||col>3)throw Error('Неверная ячейка или способность');
  const existing=branch.talents.find(t=>t.row===row&&t.col===col);
  if(existing&&!replace)throw Error('Ячейка занята талантом');if(!existing&&reserved(branch,row,col))throw Error('Здесь проходит стрелка. Сначала убери зависимость.');
- let used=ability;
- if(ability.talentId&&ability.talentId!==existing?.id){used={...structuredClone(ability),id:crypto.randomUUID(),talentId:''};next.abilities.push(used);}
- const talent=abilityTalentDraft(used,{...(existing||{}),row,col,requires:existing?.requires||''});if(existing?.grantedAbilityId&&existing.grantedAbilityId!==used.id){const old=next.abilities.find(a=>a.id===existing.grantedAbilityId);if(old?.talentId===existing.id)old.talentId='';}used.talentId=talent.id;
+ const talent=abilityTalentDraft(ability,{...(existing||{}),row,col,requires:existing?.requires||''});
+
  if(existing)branch.talents[branch.talents.indexOf(existing)]=talent;else branch.talents.push(talent);
  if(!validBuild(next,next.build))next.build={};return normalize(next);
 }
+
+// Display fields are a compatibility cache. The ability is the source of truth.
+export function synchronizeAbilityTalents(doc){
+ if(!Array.isArray(doc.abilities))throw Error('Неверный список способностей');
+ const nodes=doc.branches.flatMap(b=>b.talents||[]),referenced=new Set(nodes.map(t=>t.grantedAbilityId).filter(Boolean)),signatures=new Map(),aliases=new Map();
+ for(const a of doc.abilities){if(!referenced.has(a.id))continue;const fields=Object.keys(a).filter(k=>!['id','talentId'].includes(k)).sort();const signature=JSON.stringify(fields.map(k=>[k,a[k]]));if(signatures.has(signature))aliases.set(a.id,signatures.get(signature));else signatures.set(signature,a.id);}
+ if(aliases.size){for(const t of nodes)if(aliases.has(t.grantedAbilityId))t.grantedAbilityId=aliases.get(t.grantedAbilityId);doc.abilities=doc.abilities.filter(a=>!aliases.has(a.id));}
+ for(const t of nodes)if(t.grantedAbilityId){const a=doc.abilities.find(a=>a.id===t.grantedAbilityId);if(!a)throw Error('Способность таланта не найдена');Object.assign(t,{name:a.name,icon:a.icon,maxRank:1,descriptions:[a.description]});delete t.rankTemplate;}
+ return doc;
+}
+export function abilityUnlocked(doc,ability){const ids=new Set(doc.branches.flatMap(b=>b.talents).filter(t=>t.grantedAbilityId===ability.id).map(t=>t.id));if(ability.talentId)ids.add(ability.talentId);return !ids.size||[...ids].some(id=>(doc.build[id]||0)>0);}
+export function removeAbility(document,id){const next=structuredClone(document),removed=new Set();next.abilities=next.abilities.filter(a=>a.id!==id);for(const b of next.branches){for(const t of b.talents)if(t.grantedAbilityId===id)removed.add(t.id);b.talents=b.talents.filter(t=>!removed.has(t.id));}for(const b of next.branches)for(const t of b.talents)if(removed.has(t.requires))t.requires='';for(const a of next.abilities)if(removed.has(a.talentId))a.talentId='';next.build={};return next;}
