@@ -1,3 +1,4 @@
+import {validateClassIcon} from './class-emblem.js';
 import {renderRankTemplate} from './rank-template.js';
 export function blank() {
   return {version:1,name:'Новый класс',budget:41,budgetAuto:true,rowCost:5,branches:[branch('Ветка 1'),branch('Ветка 2')],abilities:[],build:{}};
@@ -28,6 +29,7 @@ export function changeRank(doc, id, delta) {
 }
 export function normalize(doc,{allowLegacy=false}={}) {
   if(!doc || doc.version!==1 || typeof doc.name!=='string' || !doc.name.trim() || doc.name.length>100 || !Array.isArray(doc.branches) || doc.branches.length<1 || doc.branches.length>(allowLegacy?5:4)) throw Error('Неверный формат класса Talent Forge v1');
+  if(doc.classIcon!==undefined)validateClassIcon(doc.classIcon);
   for(const key of ['budget','rowCost']) if(!Number.isInteger(doc[key])||doc[key]<0||doc[key]>100000) throw Error('Неверные правила очков');
   synchronizeAbilityTalents(doc);
   const ids=new Set(),branchIds=new Set();

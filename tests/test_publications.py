@@ -111,6 +111,53 @@ class PublicationAPI(unittest.TestCase):
         self.assertNotIn('avatar',publication['document'])
         self.assertEqual(self.request(guest,'/api/rankings')[1]['publications'][0]['avatar'],'spell_fire_flamebolt')
 
+    def test_private_publications_deny_every_non_owner_access(self):
+        owner,pid,token,document=self.publish(visibility='private')
+        guest=self.client();other=self.client();self.register(other,'private_other')
+        self.assertEqual(self.request(guest,'/api/rankings')[1]['publications'],[])
+        self.assertEqual(self.request(owner,'/api/rankings')[1]['publications'],[])
+        self.assertEqual(self.request(owner,'/api/publications')[1]['publications'][0]['visibility'],'private')
+        for client in (guest,other):
+            self.assertEqual(self.request(client,'/api/shared/'+token)[0],404)
+            self.assertEqual(self.request(client,'/api/shared/'+token+'/interact',{})[0],404)
+            self.assertEqual(self.request(client,'/api/shared/'+token+'/vote',{'vote':1})[0],404)
+        self.assertEqual(self.request(other,'/api/projects',{'document':document,'sourceShare':token})[0],404)
+        self.assertEqual(self.request(other,'/api/projects')[1]['projects'],[])
+        with server.connect() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM share_views WHERE token=?',(token,)).fetchone()[0],0)
+            self.assertEqual(db.execute('SELECT COUNT(*) FROM share_allocations WHERE token=?',(token,)).fetchone()[0],0)
+            uid=db.execute('SELECT id FROM users WHERE login=?',('private_other',)).fetchone()[0]
+            self.assertIsNone(publications.info(db,token,uid))
+        legacy=self.request(owner,'/api/share',{'document':document,'visibility':'private'})
+        self.assertEqual(legacy[0],200)
+        self.assertEqual(self.request(guest,'/api/shared/'+legacy[1]['token'])[0],404)
+        self.assertEqual(self.request(owner,'/api/shared/'+token)[0],200)
+        self.assertEqual(self.request(owner,'/api/publications/'+token+'/visibility',{'visibility':'unlisted'})[0],200)
+        self.assertEqual(self.request(other,'/api/shared/'+token)[0],200)
+        self.assertEqual(self.request(owner,'/api/publications/'+token+'/visibility',{'visibility':'private'})[0],200)
+        self.assertEqual(self.request(other,'/api/shared/'+token)[0],404)
+        self.assertEqual(self.request(owner,'/api/publications/'+token+'/visibility',{'visibility':'public'})[0],200)
+        self.assertEqual(len(self.request(guest,'/api/rankings')[1]['publications']),1)
+
+    def test_layered_class_icon_round_trip_and_snapshot(self):
+        owner=self.client();self.register(owner,'emblem_owner')
+        document=copy.deepcopy(base.DOCUMENT)
+        emblem={'background':'#234567','layers':[{'icon':'inv_sword_04','opacity':.45},{'icon':'inv_shield_04','opacity':.7}]}
+        document['classIcon']=emblem
+        status,result,_=self.request(owner,'/api/projects',{'document':document})
+        self.assertEqual(status,200);pid=result['id']
+        self.assertEqual(self.request(owner,'/api/projects')[1]['projects'][0]['classIcon'],emblem)
+        token=self.request(owner,'/api/publish',{'projectId':pid,'visibility':'private'})[1]['token']
+        saved=self.request(owner,'/api/shared/'+token)[1]
+        self.assertEqual(saved['publication']['classIcon'],emblem)
+        self.assertEqual(saved['document']['classIcon'],emblem)
+        document['classIcon']={'background':'#000000','layers':[{'icon':'inv_axe_09','opacity':1}]}
+        self.request(owner,'/api/projects',{'id':pid,'document':document})
+        self.assertEqual(self.request(owner,'/api/shared/'+token)[1]['document']['classIcon'],emblem)
+        for bad in [None,{}, {'background':'red','layers':emblem['layers']}, {'background':'#ffffff','layers':[]}, {'background':'#ffffff','layers':emblem['layers']*2}, {'background':'#ffffff','layers':[{'icon':'javascript:alert(1)','opacity':1}]}, {'background':'#ffffff','layers':[{'icon':'inv_sword_04','opacity':2}]}, {'background':'#ffffff','layers':[{'icon':'inv_sword_04','opacity':True}]}]:
+            document['classIcon']=bad
+            self.assertEqual(self.request(owner,'/api/projects',{'document':document})[0],400,bad)
+
 class PublicationMigration(unittest.TestCase):
     def test_existing_shares_stay_unlisted_without_claimed_owner(self):
         with tempfile.TemporaryDirectory() as tmp:

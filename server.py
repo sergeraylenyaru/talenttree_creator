@@ -77,11 +77,38 @@ def render_rank_template(model, count):
             raise ValueError('Неизвестное меняющееся число')
     return [re.sub(r'\{([^{}]+)\}', lambda match: variables[match.group(1)][rank], model['text']) for rank in range(count)]
 
+def project_summary(row):
+    document = json.loads(row[3])
+    branch = document['branches'][0]
+    icon = branch.get('icon') or next(iter(branch.get('talents', [])), {}).get('icon', 'inv_misc_questionmark')
+    return {'id': row[0], 'name': row[1], 'updated': row[2], 'classIcon': document.get('classIcon'), 'icon': icon}
+
+
+def validate_class_icon(value):
+    if not isinstance(value, dict) or set(value) != {'background', 'layers'} or not isinstance(value['background'], str) or not re.fullmatch(r'#[0-9a-fA-F]{6}', value['background']):
+        raise ValueError('Проверь фон иконки класса')
+    layers = value['layers']
+    if not isinstance(layers, list) or not 1 <= len(layers) <= 2:
+        raise ValueError('Иконка класса: один или два слоя')
+    for layer in layers:
+        if not isinstance(layer, dict) or set(layer) != {'icon', 'opacity'} or not isinstance(layer['icon'], str) or len(layer['icon']) > 350000 or not layer['icon'] or type(layer['opacity']) not in (int, float) or not math.isfinite(layer['opacity']) or not 0 <= layer['opacity'] <= 1:
+            raise ValueError('Проверь слой иконки класса и прозрачность от 0 до 100%')
+        icon = layer['icon']
+        if not (re.fullmatch(r'[A-Za-z0-9_]{1,100}', icon) or icon.startswith('wotlk:') or icon in builtin_images()):
+            raise ValueError('Выбери иконку класса из каталога')
+        if icon.startswith('wotlk:') and not re.fullmatch(r"wotlk:shared/global/talents/[a-z]+/images/[a-z]+/[a-z0-9'_,.\-]+\.jpg", icon):
+            raise ValueError('Неверная иконка класса')
+        validate_icon(icon)
+    return value
+
+
 def validate(document):
     if not isinstance(document, dict):
         raise ValueError('Неверный документ')
     if not isinstance(document.get('name'), str) or not 1 <= len(document['name'].strip()) <= 100:
         raise ValueError('Название: от 1 до 100 символов')
+    if 'classIcon' in document:
+        validate_class_icon(document['classIcon'])
     branches = document.get('branches')
     if not isinstance(branches, list) or not 1 <= len(branches) <= 4:
         raise ValueError('Допустимо от 1 до 4 веток')
@@ -233,9 +260,9 @@ class Handler(SimpleHTTPRequestHandler):
                 if self.path.startswith('/api/shared/'):
                     parts = self.path.removeprefix('/api/shared/').split('/')
                     token = parts[0]
-                    row = db.execute('SELECT document FROM shares WHERE token=?', (token,)).fetchone()
-                    if not row:
-                        return self.reply(404, {'error': 'Ссылка не найдена'})
+                    row = db.execute('SELECT document,owner_id,visibility FROM shares WHERE token=?', (token,)).fetchone()
+                    if not row or row[2]=='private' and (uid is None or row[1]!=uid):
+                        return self.reply(404, {'error': 'Ссылка не найдена или доступна только автору'})
                     jar = cookies.SimpleCookie()
                     try:
                         jar.load(self.headers.get('Cookie', ''))
@@ -332,7 +359,7 @@ class Handler(SimpleHTTPRequestHandler):
                     if not owner or owner[0] != uid:
                         return self.reply(404, {'error': 'Публикация не найдена'})
                     visibility = data.get('visibility')
-                    if visibility not in ('public', 'unlisted'):
+                    if visibility not in ('public', 'unlisted', 'private'):
                         raise ValueError('Неверная видимость')
                     db.execute('UPDATE shares SET visibility=? WHERE token=?', (visibility, token))
                     db.commit()
@@ -367,7 +394,7 @@ class Handler(SimpleHTTPRequestHandler):
                     return self.reply(200, {}) if deleted else self.reply(404, {'error': 'Элемент не найден'})
                 if self.path == '/api/share' and method == 'POST':
                     document = validate(data['document'])
-                    token = publications.create(db, document, uid)
+                    token = publications.create(db, document, uid, visibility=data.get('visibility', 'unlisted'))
                     db.commit()
                     return self.reply(200, {'token': token})
                 if self.path == '/api/logout' and method == 'POST':
@@ -377,8 +404,8 @@ class Handler(SimpleHTTPRequestHandler):
                     db.commit()
                     return self.reply(200, {}, 'session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0')
                 if self.path == '/api/projects' and method == 'GET':
-                    rows = db.execute('SELECT id,name,updated FROM projects WHERE user_id=? ORDER BY updated DESC', (user[0],)).fetchall()
-                    return self.reply(200, {'projects': [dict(zip(('id','name','updated'), r)) for r in rows]})
+                    rows = db.execute('SELECT id,name,updated,document FROM projects WHERE user_id=? ORDER BY updated DESC', (user[0],)).fetchall()
+                    return self.reply(200, {'projects': [project_summary(r) for r in rows]})
                 if self.path == '/api/projects' and method == 'POST':
                     document = validate(data['document'])
                     pid = data.get('id')
@@ -386,6 +413,11 @@ class Handler(SimpleHTTPRequestHandler):
                         pid = secrets.token_hex(12)
                     if not isinstance(pid, str) or not re.fullmatch(r'[a-f0-9]{24}', pid):
                         raise ValueError('Неверный идентификатор проекта')
+                    shared_from = data.get('sourceShare')
+                    if isinstance(shared_from, str):
+                        source = db.execute('SELECT owner_id,visibility FROM shares WHERE token=?', (shared_from,)).fetchone()
+                        if source and source[1]=='private' and source[0]!=uid:
+                            return self.reply(404, {'error': 'Публикация доступна только автору'})
                     existing = db.execute('SELECT user_id FROM projects WHERE id=?', (pid,)).fetchone()
                     if existing and existing[0] != user[0]:
                         return self.reply(404, {'error': 'Проект не найден'})

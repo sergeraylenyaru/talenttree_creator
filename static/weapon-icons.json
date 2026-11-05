@@ -1,0 +1,778 @@
+[
+  {
+    "id": "inv_axe_01",
+    "label": "Топор · оружие weapons · inv_axe_01"
+  },
+  {
+    "id": "inv_axe_02",
+    "label": "Топор · оружие weapons · inv_axe_02"
+  },
+  {
+    "id": "inv_axe_06",
+    "label": "Топор · оружие weapons · inv_axe_06"
+  },
+  {
+    "id": "inv_axe_07",
+    "label": "Топор · оружие weapons · inv_axe_07"
+  },
+  {
+    "id": "inv_axe_08",
+    "label": "Топор · оружие weapons · inv_axe_08"
+  },
+  {
+    "id": "inv_axe_09",
+    "label": "Топор · оружие weapons · inv_axe_09"
+  },
+  {
+    "id": "inv_axe_10",
+    "label": "Топор · оружие weapons · inv_axe_10"
+  },
+  {
+    "id": "inv_axe_11",
+    "label": "Топор · оружие weapons · inv_axe_11"
+  },
+  {
+    "id": "inv_axe_12",
+    "label": "Топор · оружие weapons · inv_axe_12"
+  },
+  {
+    "id": "inv_axe_15",
+    "label": "Топор · оружие weapons · inv_axe_15"
+  },
+  {
+    "id": "inv_axe_17",
+    "label": "Топор · оружие weapons · inv_axe_17"
+  },
+  {
+    "id": "inv_axe_21",
+    "label": "Топор · оружие weapons · inv_axe_21"
+  },
+  {
+    "id": "inv_axe_22",
+    "label": "Топор · оружие weapons · inv_axe_22"
+  },
+  {
+    "id": "inv_axe_24",
+    "label": "Топор · оружие weapons · inv_axe_24"
+  },
+  {
+    "id": "inv_axe_26",
+    "label": "Топор · оружие weapons · inv_axe_26"
+  },
+  {
+    "id": "inv_axe_35",
+    "label": "Топор · оружие weapons · inv_axe_35"
+  },
+  {
+    "id": "inv_hammer_03",
+    "label": "Молот · оружие weapons · inv_hammer_03"
+  },
+  {
+    "id": "inv_hammer_04",
+    "label": "Молот · оружие weapons · inv_hammer_04"
+  },
+  {
+    "id": "inv_hammer_05",
+    "label": "Молот · оружие weapons · inv_hammer_05"
+  },
+  {
+    "id": "inv_hammer_08",
+    "label": "Молот · оружие weapons · inv_hammer_08"
+  },
+  {
+    "id": "inv_hammer_09",
+    "label": "Молот · оружие weapons · inv_hammer_09"
+  },
+  {
+    "id": "inv_hammer_10",
+    "label": "Молот · оружие weapons · inv_hammer_10"
+  },
+  {
+    "id": "inv_hammer_11",
+    "label": "Молот · оружие weapons · inv_hammer_11"
+  },
+  {
+    "id": "inv_hammer_13",
+    "label": "Молот · оружие weapons · inv_hammer_13"
+  },
+  {
+    "id": "inv_hammer_17",
+    "label": "Молот · оружие weapons · inv_hammer_17"
+  },
+  {
+    "id": "inv_hammer_19",
+    "label": "Молот · оружие weapons · inv_hammer_19"
+  },
+  {
+    "id": "inv_hammer_20",
+    "label": "Молот · оружие weapons · inv_hammer_20"
+  },
+  {
+    "id": "inv_hammer_21",
+    "label": "Молот · оружие weapons · inv_hammer_21"
+  },
+  {
+    "id": "inv_hammer_23",
+    "label": "Молот · оружие weapons · inv_hammer_23"
+  },
+  {
+    "id": "inv_hammer_unique_sulfuras",
+    "label": "Молот · оружие weapons · inv_hammer_unique_sulfuras"
+  },
+  {
+    "id": "inv_knife_1h_stratholme_d_01",
+    "label": "Оружие · оружие weapons · inv_knife_1h_stratholme_d_01"
+  },
+  {
+    "id": "inv_knife_1h_stratholme_d_02",
+    "label": "Оружие · оружие weapons · inv_knife_1h_stratholme_d_02"
+  },
+  {
+    "id": "inv_knife_1h_stratholme_d_03",
+    "label": "Оружие · оружие weapons · inv_knife_1h_stratholme_d_03"
+  },
+  {
+    "id": "inv_mace_01",
+    "label": "Булава · оружие weapons · inv_mace_01"
+  },
+  {
+    "id": "inv_mace_02",
+    "label": "Булава · оружие weapons · inv_mace_02"
+  },
+  {
+    "id": "inv_mace_04",
+    "label": "Булава · оружие weapons · inv_mace_04"
+  },
+  {
+    "id": "inv_mace_05",
+    "label": "Булава · оружие weapons · inv_mace_05"
+  },
+  {
+    "id": "inv_mace_06",
+    "label": "Булава · оружие weapons · inv_mace_06"
+  },
+  {
+    "id": "inv_mace_08",
+    "label": "Булава · оружие weapons · inv_mace_08"
+  },
+  {
+    "id": "inv_mace_09",
+    "label": "Булава · оружие weapons · inv_mace_09"
+  },
+  {
+    "id": "inv_mace_13",
+    "label": "Булава · оружие weapons · inv_mace_13"
+  },
+  {
+    "id": "inv_mace_14",
+    "label": "Булава · оружие weapons · inv_mace_14"
+  },
+  {
+    "id": "inv_mace_15",
+    "label": "Булава · оружие weapons · inv_mace_15"
+  },
+  {
+    "id": "inv_mace_19",
+    "label": "Булава · оружие weapons · inv_mace_19"
+  },
+  {
+    "id": "inv_mace_1h_stratholme_d_01",
+    "label": "Булава · оружие weapons · inv_mace_1h_stratholme_d_01"
+  },
+  {
+    "id": "inv_mace_21",
+    "label": "Булава · оружие weapons · inv_mace_21"
+  },
+  {
+    "id": "inv_mace_24",
+    "label": "Булава · оружие weapons · inv_mace_24"
+  },
+  {
+    "id": "inv_mace_25",
+    "label": "Булава · оружие weapons · inv_mace_25"
+  },
+  {
+    "id": "inv_mace_26",
+    "label": "Булава · оружие weapons · inv_mace_26"
+  },
+  {
+    "id": "inv_mace_28",
+    "label": "Булава · оружие weapons · inv_mace_28"
+  },
+  {
+    "id": "inv_shield_05",
+    "label": "Щит · оружие weapons · inv_shield_05"
+  },
+  {
+    "id": "inv_shield_06",
+    "label": "Щит · оружие weapons · inv_shield_06"
+  },
+  {
+    "id": "inv_shield_10",
+    "label": "Щит · оружие weapons · inv_shield_10"
+  },
+  {
+    "id": "inv_shield_17",
+    "label": "Щит · оружие weapons · inv_shield_17"
+  },
+  {
+    "id": "inv_spear_01",
+    "label": "Копьё · оружие weapons · inv_spear_01"
+  },
+  {
+    "id": "inv_spear_02",
+    "label": "Копьё · оружие weapons · inv_spear_02"
+  },
+  {
+    "id": "inv_spear_03",
+    "label": "Копьё · оружие weapons · inv_spear_03"
+  },
+  {
+    "id": "inv_spear_04",
+    "label": "Копьё · оружие weapons · inv_spear_04"
+  },
+  {
+    "id": "inv_spear_06",
+    "label": "Копьё · оружие weapons · inv_spear_06"
+  },
+  {
+    "id": "inv_spear_07",
+    "label": "Копьё · оружие weapons · inv_spear_07"
+  },
+  {
+    "id": "inv_spear_08",
+    "label": "Копьё · оружие weapons · inv_spear_08"
+  },
+  {
+    "id": "inv_staff_01",
+    "label": "Посох · оружие weapons · inv_staff_01"
+  },
+  {
+    "id": "inv_staff_06",
+    "label": "Посох · оружие weapons · inv_staff_06"
+  },
+  {
+    "id": "inv_staff_07",
+    "label": "Посох · оружие weapons · inv_staff_07"
+  },
+  {
+    "id": "inv_staff_10",
+    "label": "Посох · оружие weapons · inv_staff_10"
+  },
+  {
+    "id": "inv_staff_11",
+    "label": "Посох · оружие weapons · inv_staff_11"
+  },
+  {
+    "id": "inv_staff_12",
+    "label": "Посох · оружие weapons · inv_staff_12"
+  },
+  {
+    "id": "inv_staff_13",
+    "label": "Посох · оружие weapons · inv_staff_13"
+  },
+  {
+    "id": "inv_staff_14",
+    "label": "Посох · оружие weapons · inv_staff_14"
+  },
+  {
+    "id": "inv_staff_15",
+    "label": "Посох · оружие weapons · inv_staff_15"
+  },
+  {
+    "id": "inv_staff_18",
+    "label": "Посох · оружие weapons · inv_staff_18"
+  },
+  {
+    "id": "inv_staff_20",
+    "label": "Посох · оружие weapons · inv_staff_20"
+  },
+  {
+    "id": "inv_staff_21",
+    "label": "Посох · оружие weapons · inv_staff_21"
+  },
+  {
+    "id": "inv_staff_23",
+    "label": "Посох · оружие weapons · inv_staff_23"
+  },
+  {
+    "id": "inv_staff_25",
+    "label": "Посох · оружие weapons · inv_staff_25"
+  },
+  {
+    "id": "inv_staff_28",
+    "label": "Посох · оружие weapons · inv_staff_28"
+  },
+  {
+    "id": "inv_staff_29",
+    "label": "Посох · оружие weapons · inv_staff_29"
+  },
+  {
+    "id": "inv_staff_30",
+    "label": "Посох · оружие weapons · inv_staff_30"
+  },
+  {
+    "id": "inv_staff_32",
+    "label": "Посох · оружие weapons · inv_staff_32"
+  },
+  {
+    "id": "inv_staff_33",
+    "label": "Посох · оружие weapons · inv_staff_33"
+  },
+  {
+    "id": "inv_staff_34",
+    "label": "Посох · оружие weapons · inv_staff_34"
+  },
+  {
+    "id": "inv_staff_goldfeathered_01",
+    "label": "Посох · оружие weapons · inv_staff_goldfeathered_01"
+  },
+  {
+    "id": "inv_sword_01",
+    "label": "Меч · оружие weapons · inv_sword_01"
+  },
+  {
+    "id": "inv_sword_04",
+    "label": "Меч · оружие weapons · inv_sword_04"
+  },
+  {
+    "id": "inv_sword_05",
+    "label": "Меч · оружие weapons · inv_sword_05"
+  },
+  {
+    "id": "inv_sword_07",
+    "label": "Меч · оружие weapons · inv_sword_07"
+  },
+  {
+    "id": "inv_sword_10",
+    "label": "Меч · оружие weapons · inv_sword_10"
+  },
+  {
+    "id": "inv_sword_11",
+    "label": "Меч · оружие weapons · inv_sword_11"
+  },
+  {
+    "id": "inv_sword_12",
+    "label": "Меч · оружие weapons · inv_sword_12"
+  },
+  {
+    "id": "inv_sword_13",
+    "label": "Меч · оружие weapons · inv_sword_13"
+  },
+  {
+    "id": "inv_sword_14",
+    "label": "Меч · оружие weapons · inv_sword_14"
+  },
+  {
+    "id": "inv_sword_15",
+    "label": "Меч · оружие weapons · inv_sword_15"
+  },
+  {
+    "id": "inv_sword_17",
+    "label": "Меч · оружие weapons · inv_sword_17"
+  },
+  {
+    "id": "inv_sword_18",
+    "label": "Меч · оружие weapons · inv_sword_18"
+  },
+  {
+    "id": "inv_sword_20",
+    "label": "Меч · оружие weapons · inv_sword_20"
+  },
+  {
+    "id": "inv_sword_21",
+    "label": "Меч · оружие weapons · inv_sword_21"
+  },
+  {
+    "id": "inv_sword_22",
+    "label": "Меч · оружие weapons · inv_sword_22"
+  },
+  {
+    "id": "inv_sword_23",
+    "label": "Меч · оружие weapons · inv_sword_23"
+  },
+  {
+    "id": "inv_sword_25",
+    "label": "Меч · оружие weapons · inv_sword_25"
+  },
+  {
+    "id": "inv_sword_27",
+    "label": "Меч · оружие weapons · inv_sword_27"
+  },
+  {
+    "id": "inv_sword_28",
+    "label": "Меч · оружие weapons · inv_sword_28"
+  },
+  {
+    "id": "inv_sword_29",
+    "label": "Меч · оружие weapons · inv_sword_29"
+  },
+  {
+    "id": "inv_sword_2h_ashbringercorrupt",
+    "label": "Меч · оружие weapons · inv_sword_2h_ashbringercorrupt"
+  },
+  {
+    "id": "inv_sword_31",
+    "label": "Меч · оружие weapons · inv_sword_31"
+  },
+  {
+    "id": "inv_sword_32",
+    "label": "Меч · оружие weapons · inv_sword_32"
+  },
+  {
+    "id": "inv_sword_34",
+    "label": "Меч · оружие weapons · inv_sword_34"
+  },
+  {
+    "id": "inv_sword_35",
+    "label": "Меч · оружие weapons · inv_sword_35"
+  },
+  {
+    "id": "inv_sword_36",
+    "label": "Меч · оружие weapons · inv_sword_36"
+  },
+  {
+    "id": "inv_sword_37",
+    "label": "Меч · оружие weapons · inv_sword_37"
+  },
+  {
+    "id": "inv_sword_38",
+    "label": "Меч · оружие weapons · inv_sword_38"
+  },
+  {
+    "id": "inv_sword_39",
+    "label": "Меч · оружие weapons · inv_sword_39"
+  },
+  {
+    "id": "inv_sword_40",
+    "label": "Меч · оружие weapons · inv_sword_40"
+  },
+  {
+    "id": "inv_sword_41",
+    "label": "Меч · оружие weapons · inv_sword_41"
+  },
+  {
+    "id": "inv_sword_42",
+    "label": "Меч · оружие weapons · inv_sword_42"
+  },
+  {
+    "id": "inv_sword_43",
+    "label": "Меч · оружие weapons · inv_sword_43"
+  },
+  {
+    "id": "inv_sword_44",
+    "label": "Меч · оружие weapons · inv_sword_44"
+  },
+  {
+    "id": "inv_sword_46",
+    "label": "Меч · оружие weapons · inv_sword_46"
+  },
+  {
+    "id": "inv_sword_47",
+    "label": "Меч · оружие weapons · inv_sword_47"
+  },
+  {
+    "id": "inv_sword_48",
+    "label": "Меч · оружие weapons · inv_sword_48"
+  },
+  {
+    "id": "inv_sword_49",
+    "label": "Меч · оружие weapons · inv_sword_49"
+  },
+  {
+    "id": "inv_sword_50",
+    "label": "Меч · оружие weapons · inv_sword_50"
+  },
+  {
+    "id": "inv_sword_51",
+    "label": "Меч · оружие weapons · inv_sword_51"
+  },
+  {
+    "id": "inv_sword_54",
+    "label": "Меч · оружие weapons · inv_sword_54"
+  },
+  {
+    "id": "inv_sword_55",
+    "label": "Меч · оружие weapons · inv_sword_55"
+  },
+  {
+    "id": "inv_sword_56",
+    "label": "Меч · оружие weapons · inv_sword_56"
+  },
+  {
+    "id": "inv_sword_57",
+    "label": "Меч · оружие weapons · inv_sword_57"
+  },
+  {
+    "id": "inv_sword_58",
+    "label": "Меч · оружие weapons · inv_sword_58"
+  },
+  {
+    "id": "inv_sword_60",
+    "label": "Меч · оружие weapons · inv_sword_60"
+  },
+  {
+    "id": "inv_sword_61",
+    "label": "Меч · оружие weapons · inv_sword_61"
+  },
+  {
+    "id": "inv_sword_62",
+    "label": "Меч · оружие weapons · inv_sword_62"
+  },
+  {
+    "id": "inv_sword_84",
+    "label": "Меч · оружие weapons · inv_sword_84"
+  },
+  {
+    "id": "inv_wand_01",
+    "label": "Жезл · оружие weapons · inv_wand_01"
+  },
+  {
+    "id": "inv_wand_02",
+    "label": "Жезл · оружие weapons · inv_wand_02"
+  },
+  {
+    "id": "inv_wand_04",
+    "label": "Жезл · оружие weapons · inv_wand_04"
+  },
+  {
+    "id": "inv_wand_05",
+    "label": "Жезл · оружие weapons · inv_wand_05"
+  },
+  {
+    "id": "inv_wand_06",
+    "label": "Жезл · оружие weapons · inv_wand_06"
+  },
+  {
+    "id": "inv_wand_07",
+    "label": "Жезл · оружие weapons · inv_wand_07"
+  },
+  {
+    "id": "inv_wand_09",
+    "label": "Жезл · оружие weapons · inv_wand_09"
+  },
+  {
+    "id": "inv_wand_10",
+    "label": "Жезл · оружие weapons · inv_wand_10"
+  },
+  {
+    "id": "inv_wand_11",
+    "label": "Жезл · оружие weapons · inv_wand_11"
+  },
+  {
+    "id": "inv_wand_12",
+    "label": "Жезл · оружие weapons · inv_wand_12"
+  },
+  {
+    "id": "inv_wand_1h_stratholme_d_01",
+    "label": "Жезл · оружие weapons · inv_wand_1h_stratholme_d_01"
+  },
+  {
+    "id": "inv_wand_1h_stratholme_d_02",
+    "label": "Жезл · оружие weapons · inv_wand_1h_stratholme_d_02"
+  },
+  {
+    "id": "inv_weapon_bow_01",
+    "label": "Лук · оружие weapons · inv_weapon_bow_01"
+  },
+  {
+    "id": "inv_weapon_bow_03",
+    "label": "Лук · оружие weapons · inv_weapon_bow_03"
+  },
+  {
+    "id": "inv_weapon_bow_04",
+    "label": "Лук · оружие weapons · inv_weapon_bow_04"
+  },
+  {
+    "id": "inv_weapon_bow_08",
+    "label": "Лук · оружие weapons · inv_weapon_bow_08"
+  },
+  {
+    "id": "inv_weapon_bow_09",
+    "label": "Лук · оружие weapons · inv_weapon_bow_09"
+  },
+  {
+    "id": "inv_weapon_bow_11",
+    "label": "Лук · оружие weapons · inv_weapon_bow_11"
+  },
+  {
+    "id": "inv_weapon_bow_12",
+    "label": "Лук · оружие weapons · inv_weapon_bow_12"
+  },
+  {
+    "id": "inv_weapon_bow_13",
+    "label": "Лук · оружие weapons · inv_weapon_bow_13"
+  },
+  {
+    "id": "inv_weapon_bow_14",
+    "label": "Лук · оружие weapons · inv_weapon_bow_14"
+  },
+  {
+    "id": "inv_weapon_crossbow_04",
+    "label": "Арбалет · оружие weapons · inv_weapon_crossbow_04"
+  },
+  {
+    "id": "inv_weapon_crossbow_06",
+    "label": "Арбалет · оружие weapons · inv_weapon_crossbow_06"
+  },
+  {
+    "id": "inv_weapon_crossbow_07",
+    "label": "Арбалет · оружие weapons · inv_weapon_crossbow_07"
+  },
+  {
+    "id": "inv_weapon_crossbow_08",
+    "label": "Арбалет · оружие weapons · inv_weapon_crossbow_08"
+  },
+  {
+    "id": "inv_weapon_crossbow_09",
+    "label": "Арбалет · оружие weapons · inv_weapon_crossbow_09"
+  },
+  {
+    "id": "inv_weapon_crossbow_10",
+    "label": "Арбалет · оружие weapons · inv_weapon_crossbow_10"
+  },
+  {
+    "id": "inv_weapon_crossbow_11",
+    "label": "Арбалет · оружие weapons · inv_weapon_crossbow_11"
+  },
+  {
+    "id": "inv_weapon_crossbow_12",
+    "label": "Арбалет · оружие weapons · inv_weapon_crossbow_12"
+  },
+  {
+    "id": "inv_weapon_halbard_01",
+    "label": "Оружие · оружие weapons · inv_weapon_halbard_01"
+  },
+  {
+    "id": "inv_weapon_halberd_04",
+    "label": "Алебарда · оружие weapons · inv_weapon_halberd_04"
+  },
+  {
+    "id": "inv_weapon_halberd_11",
+    "label": "Алебарда · оружие weapons · inv_weapon_halberd_11"
+  },
+  {
+    "id": "inv_weapon_halberd_12",
+    "label": "Алебарда · оружие weapons · inv_weapon_halberd_12"
+  },
+  {
+    "id": "inv_weapon_halberd_ahnqiraj",
+    "label": "Алебарда · оружие weapons · inv_weapon_halberd_ahnqiraj"
+  },
+  {
+    "id": "inv_weapon_hand_01",
+    "label": "Кистевое оружие · оружие weapons · inv_weapon_hand_01"
+  },
+  {
+    "id": "inv_weapon_hand_03",
+    "label": "Кистевое оружие · оружие weapons · inv_weapon_hand_03"
+  },
+  {
+    "id": "inv_weapon_rifle_02",
+    "label": "Ружьё · оружие weapons · inv_weapon_rifle_02"
+  },
+  {
+    "id": "inv_weapon_rifle_03",
+    "label": "Ружьё · оружие weapons · inv_weapon_rifle_03"
+  },
+  {
+    "id": "inv_weapon_rifle_05",
+    "label": "Ружьё · оружие weapons · inv_weapon_rifle_05"
+  },
+  {
+    "id": "inv_weapon_rifle_06",
+    "label": "Ружьё · оружие weapons · inv_weapon_rifle_06"
+  },
+  {
+    "id": "inv_weapon_rifle_08",
+    "label": "Ружьё · оружие weapons · inv_weapon_rifle_08"
+  },
+  {
+    "id": "inv_weapon_rifle_09",
+    "label": "Ружьё · оружие weapons · inv_weapon_rifle_09"
+  },
+  {
+    "id": "inv_weapon_rifle_10",
+    "label": "Ружьё · оружие weapons · inv_weapon_rifle_10"
+  },
+  {
+    "id": "inv_weapon_rifle_11",
+    "label": "Ружьё · оружие weapons · inv_weapon_rifle_11"
+  },
+  {
+    "id": "inv_weapon_shortblade_03",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_03"
+  },
+  {
+    "id": "inv_weapon_shortblade_04",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_04"
+  },
+  {
+    "id": "inv_weapon_shortblade_05",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_05"
+  },
+  {
+    "id": "inv_weapon_shortblade_06",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_06"
+  },
+  {
+    "id": "inv_weapon_shortblade_07",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_07"
+  },
+  {
+    "id": "inv_weapon_shortblade_11",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_11"
+  },
+  {
+    "id": "inv_weapon_shortblade_12",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_12"
+  },
+  {
+    "id": "inv_weapon_shortblade_16",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_16"
+  },
+  {
+    "id": "inv_weapon_shortblade_18",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_18"
+  },
+  {
+    "id": "inv_weapon_shortblade_22",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_22"
+  },
+  {
+    "id": "inv_weapon_shortblade_25",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_25"
+  },
+  {
+    "id": "inv_weapon_shortblade_27",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_27"
+  },
+  {
+    "id": "inv_weapon_shortblade_28",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_28"
+  },
+  {
+    "id": "inv_weapon_shortblade_29",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_29"
+  },
+  {
+    "id": "inv_weapon_shortblade_30",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_30"
+  },
+  {
+    "id": "inv_weapon_shortblade_31",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_31"
+  },
+  {
+    "id": "inv_weapon_shortblade_33",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_33"
+  },
+  {
+    "id": "inv_weapon_shortblade_35",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_35"
+  },
+  {
+    "id": "inv_weapon_shortblade_37",
+    "label": "Кинжал · оружие weapons · inv_weapon_shortblade_37"
+  }
+]

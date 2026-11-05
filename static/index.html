@@ -42,7 +42,7 @@
       <div class="editor-actions"><div class="history-actions"><button id="undo" title="Отменить · Ctrl+Z" disabled><span data-glyph="undo"></span><span>Отменить</span></button><button id="redo" title="Повторить · Ctrl+Y" disabled><span data-glyph="redo"></span><span>Повторить</span></button></div><div class="actions"><button id="share"><span data-glyph="share"></span>Зафиксировать и опубликовать</button><button id="export"><span data-glyph="upload"></span>Экспорт JSON</button><button id="import"><span data-glyph="download"></span>Импорт JSON</button><button id="save" class="primary"><span data-glyph="save"></span>Сохранить</button></div></div>
     </div>
     <div class="class-settings">
-      <div><label for="className">Название класса</label><input id="className" maxlength="100" value="Новый класс"></div>
+      <div><label for="className">Название класса</label><div class="class-name-control"><button type="button" id="classIcon" class="class-icon-button" aria-label="Выбрать иконку класса" title="Иконка класса"></button><input id="className" maxlength="100" value="Новый класс"></div></div>
       <div><label for="budget">Лимит очков</label><input id="budget" type="number" min="0" max="100000" value="41"></div>
       <div><label for="rowCost">Очков для нового ряда</label><input id="rowCost" type="number" min="0" max="100000" value="5"></div>
       <div class="point-summary"><strong id="points">0 / 41</strong><span class="muted">очков распределено</span><button id="reset" class="text-button"><span data-glyph="undo"></span>Сбросить очки</button></div>

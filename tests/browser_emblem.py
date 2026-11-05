@@ -1,0 +1,34 @@
+"""Optional integration check: python3 tests/browser_emblem.py (Playwright + Chromium)."""
+import sys,tempfile,threading,json
+from pathlib import Path
+from urllib.parse import urlparse,parse_qs
+from playwright.sync_api import sync_playwright
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]));import server
+with tempfile.TemporaryDirectory() as tmp:
+ server.DB=str(Path(tmp)/'emblem.sqlite');server.initialize();http=server.ThreadingHTTPServer(('127.0.0.1',0),server.Handler);threading.Thread(target=http.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{http.server_port}'
+ try:
+  with sync_playwright() as p:
+   browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);ctx=browser.new_context(viewport={'width':1440,'height':1000});ctx.route('https://**/*',lambda r:r.abort());ctx.request.post(base+'/api/register',data={'login':'emblem_author','password':'test-password-123'})
+   d={'version':1,'name':'Клинок рассвета','budget':41,'rowCost':5,'build':{'t':2},'abilities':[],'branches':[{'id':'one','name':'Клинки','rows':5,'talents':[{'id':'t','name':'Мастерство','row':0,'col':0,'icon':'inv_sword_04','maxRank':2,'descriptions':['Урон увеличен на 2%.','Урон увеличен на 4%.'],'requires':''}]}]}
+   pid=ctx.request.post(base+'/api/projects',data={'document':d}).json()['id'];page=ctx.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.on('dialog',lambda d:d.accept());page.goto(base);page.wait_for_function("document.querySelector('#user').textContent==='emblem_author'");page.locator('#projects').click();page.locator('[data-open]').first.click();page.wait_for_selector('[data-talent="t"]')
+   page.locator('[data-talent="t"]').hover();assert page.locator('#tooltip').is_visible();assert 'Урон увеличен на 2%.' in page.locator('#tooltip').inner_text();assert 'Ранг 1/2' in page.locator('#tooltip').inner_text()
+   page.locator('#playMode').click();page.locator('[data-talent="t"]').hover();assert 'Урон увеличен на 4%.' in page.locator('#tooltip').inner_text();assert page.locator('#points').inner_text()=='2 / 41';page.locator('#editMode').click()
+   page.locator('#classIcon').click();page.locator('#emblemBackground').fill('#123456');page.locator('#emblemOpacity1').fill('65');page.locator('#emblemSecond').check();page.locator('#emblemOpacity2').fill('35');assert page.locator('#emblemLivePreview img').count()==2
+   page.locator('[data-emblem-layer="1"]').click();page.wait_for_selector('#iconCategory');page.locator('#iconCategory').select_option('weapons');page.wait_for_selector('[data-icon="inv_axe_01"]');assert page.locator('[data-icon]').count()>=194;page.locator('[data-icon="inv_axe_01"]').click();page.locator('#submitModal').click();page.wait_for_selector('#emblemOpacity2');assert page.locator('#emblemOpacity1').input_value()=='65';assert page.locator('#emblemOpacity2').input_value()=='35';assert page.locator('#emblemBackground').input_value()=='#123456'
+   assert page.locator('#emblemLivePreview img').last.get_attribute('style')=='opacity:0.35';page.locator('#submitModal').click();assert page.locator('#classIcon img').count()==2
+   assert page.locator('#classIcon .class-emblem').evaluate('el=>getComputedStyle(el).borderRadius')=='50%'
+   page.locator('#save').click();page.wait_for_function("document.querySelector('#saveState').textContent==='Сохранено в аккаунте'")
+   saved=ctx.request.get(base+'/api/projects/'+pid).json()['document'];assert saved['classIcon']=={'background':'#123456','layers':[{'icon':'inv_sword_04','opacity':.65},{'icon':'inv_axe_01','opacity':.35}]}
+   with page.expect_download() as download:page.locator('#export').click()
+   exported=json.loads(Path(download.value.path()).read_text());assert exported['classIcon']==saved['classIcon']
+   page.locator('#share').click();page.locator('#publicationVisibility').select_option('private');page.locator('#submitModal').click();page.wait_for_selector('#shareURL');token=parse_qs(urlparse(page.locator('#shareURL').input_value()).query)['share'][0];assert 'Только мне' in page.locator('#modalBody').inner_text();page.locator('#closeModal').click()
+   page.locator('#publications').click();page.wait_for_selector('[data-visibility]');assert page.locator('[data-visibility]').input_value()=='private';assert page.locator('.publication-row .class-emblem img').count()==2;assert 'Только мне' in page.locator('.visibility-badge').inner_text();assert page.locator('.visibility-badge .ui-icon').count()==1
+   guest=browser.new_context();assert guest.request.get(base+'/api/shared/'+token).status==404;assert guest.request.post(base+'/api/shared/'+token+'/interact',data={}).status==404;assert guest.request.get(base+'/api/rankings').json()['publications']==[]
+   page.locator('[data-visibility]').select_option('unlisted');page.wait_for_function("document.querySelector('[data-visibility]')?.value==='unlisted' && document.querySelector('.visibility-badge.unlisted')");assert guest.request.get(base+'/api/shared/'+token).ok
+   page.locator('[data-visibility]').select_option('private');page.wait_for_selector('.visibility-badge.private');assert guest.request.get(base+'/api/shared/'+token).status==404
+   page.locator('[data-edit-project]').click();page.wait_for_selector('#classIcon');page.locator('#classIcon').click();page.set_viewport_size({'width':320,'height':900});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth');assert page.locator('#modal').evaluate('el=>el.scrollWidth<=el.clientWidth+1');page.locator('#closeModal').click()
+   page.set_viewport_size({'width':1440,'height':1000});page.locator('#publications').click();page.wait_for_selector('[data-open-publication]');page.locator('[data-open-publication]').first.click();page.wait_for_selector('#publicationBar');assert 'Только мне' in page.locator('#publicationBar').inner_text();page.locator('#accountMenu').click();page.locator('#logout').click();page.wait_for_function("document.querySelector('#user').textContent===''");assert page.locator('#className').input_value()=='Новый класс';assert '?share=' not in page.url
+   page.goto(base+'/?share='+token);page.locator('#auth').click();page.locator('#login').fill('emblem_author');page.locator('#password').fill('test-password-123');page.locator('#submitModal').click();page.wait_for_function("document.querySelector('#className').value==='Клинок рассвета' && !document.querySelector('#publicationBar').hidden");assert 'Только мне' in page.locator('#publicationBar').inner_text()
+   assert not errors,errors
+   print('PASS: private publish + revocation + guest denial; editor rank-one tips; two-layer emblem, weapon filter, live opacity, JSON export, server persistence, publication metadata, mobile modal.');browser.close()
+ finally:http.shutdown();http.server_close()

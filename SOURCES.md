@@ -27,3 +27,7 @@ World of Warcraft, игровые названия и изображения п�
 - Manrope: https://github.com/google/fonts/tree/main/ofl/manrope — SIL Open Font License 1.1, локальная копия лицензии `static/fonts/manrope-OFL.txt`.
 - Playfair Display: https://github.com/google/fonts/tree/main/ofl/playfairdisplay — SIL Open Font License 1.1, локальная копия лицензии `static/fonts/playfair-display-OFL.txt`.
 - `static/theme/design-tokens.json`, основа `talentforge-theme.css` и `talentforge-atmosphere.svg` предоставлены пользователем в архиве `talentforge_codex_starter_2026.zip`.
+
+## Дополнительный каталог оружия и щитов
+
+194 имени игровых иконок извлечены из списка ресурсов [ClassicSim/assets.qrc](https://github.com/timhul/ClassicSim/blob/master/assets.qrc), разделов предметов `QML/Assets/items`. В `static/weapon-icons.json` сохранены имена и русские поисковые метки; сами картинки из репозитория не копировались. Отображение использует прежний Wowhead CDN иконок. Из этих имён 173 отсутствовали в общем выборе TalentForge с учётом стартового набора.

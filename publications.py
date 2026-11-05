@@ -20,8 +20,9 @@ def info(db,token,user_id=None):
     row=db.execute('SELECT document,owner_id,publication_version,visibility,published_at,project_id FROM shares WHERE token=?',(token,)).fetchone()
     if not row:return None
     document=json.loads(row[0]);owner=row[1]
+    if row[3]=='private' and (user_id is None or user_id!=owner):return None
     author=db.execute('SELECT login,avatar FROM users WHERE id=?',(owner,)).fetchone() if owner else None
-    result={'token':token,'name':document['name'],'author':author[0] if author else None,'avatar':author[1] if author else 'inv_misc_questionmark','version':row[2],'visibility':row[3],'published':row[4], 'isOwner':user_id is not None and owner==user_id,
+    result={'token':token,'name':document['name'],'author':author[0] if author else None,'avatar':author[1] if author else 'inv_misc_questionmark','classIcon':document.get('classIcon'),'version':row[2],'visibility':row[3],'published':row[4], 'isOwner':user_id is not None and owner==user_id,
             'branches':[{'name':b['name'],'icon':b.get('icon') or (b['talents'][0].get('icon','inv_misc_questionmark') if b['talents'] else 'inv_misc_questionmark')} for b in document['branches']]}
     for key,table in [('views','share_views'),('allocated','share_allocations'),('saved','share_saves')]:
         result[key]=db.execute(f'SELECT COUNT(*) FROM {table} WHERE token=?',(token,)).fetchone()[0]
@@ -34,7 +35,8 @@ def info(db,token,user_id=None):
     return result
 
 def create(db,document,owner_id,project_id=None,visibility='unlisted'):
-    if visibility not in ('public','unlisted'):raise ValueError('Неверная видимость')
+    if visibility not in ('public','unlisted','private'):raise ValueError('Неверная видимость')
+    if visibility=='private' and owner_id is None:raise ValueError('Для личной публикации нужен автор')
     version=db.execute('SELECT COALESCE(MAX(publication_version),0)+1 FROM shares WHERE owner_id=? AND project_id=?',(owner_id,project_id)).fetchone()[0] if project_id else 1
     token=secrets.token_urlsafe(24);now=int(time.time())
     db.execute('INSERT INTO shares(token,document,created,owner_id,project_id,publication_version,visibility,published_at) VALUES(?,?,?,?,?,?,?,?)',(token,json.dumps(document),now,owner_id,project_id,version,visibility,now))
@@ -45,4 +47,5 @@ def listing(db,user_id=None,sort='views',page=0,owned=False):
     where,args=('owner_id=?',[user_id]) if owned else ("visibility='public'",[])
     order={'likes':'like_count DESC,published_at DESC,token','views':'view_count DESC,published_at DESC,token','usage':'usage_count DESC,published_at DESC,token','latest':'published_at DESC,rowid DESC'}[sort]
     rows=db.execute(f'SELECT token,published_at,(SELECT COUNT(*) FROM share_views v WHERE v.token=shares.token) view_count,(SELECT COUNT(*) FROM share_allocations a WHERE a.token=shares.token) usage_count,(SELECT COUNT(*) FROM share_votes l WHERE l.token=shares.token AND l.vote=1) like_count FROM shares WHERE {where} ORDER BY {order} LIMIT 21 OFFSET ?',(*args,page*20)).fetchall()
-    return {'publications':[info(db,r[0],user_id) for r in rows[:20]],'hasMore':len(rows)>20,'page':page}
+    items=[item for r in rows[:20] if (item:=info(db,r[0],user_id)) is not None and (owned or item['visibility']=='public')]
+    return {'publications':items,'hasMore':len(rows)>20,'page':page}
