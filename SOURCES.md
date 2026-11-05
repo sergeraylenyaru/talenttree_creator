@@ -21,3 +21,9 @@ World of Warcraft, игровые названия и изображения п�
 Импортированы 27 обычных веток с 51 очком и семью рядами. Три узла вне обычной сетки не импортированы. Единственная дополнительная обратная связь охотника, помеченная источником как некорректная, исключена; обычная зависимость сохранена. Исходные примечания доступны в `source.notes` JSON каждого класса. Число рангов, размещение, обычные зависимости проверены автоматически. Изображения Forever встроены как исходные JPEG data URI; код просмотрщика не включён. Данные и изображения игры принадлежат Blizzard; GPL-файл предыдущего набора не является лицензией на эти материалы.
 
 `static/icon-catalog.json` объединяет изображения всех 28 импортируемых классов с поисковыми названиями талантов, веток и классов. Это каталог используемых талантами изображений, а не полный архив всех иконок клиента.
+
+## Шрифты интерфейса 2026
+
+- Manrope: https://github.com/google/fonts/tree/main/ofl/manrope — SIL Open Font License 1.1, локальная копия лицензии `static/fonts/manrope-OFL.txt`.
+- Playfair Display: https://github.com/google/fonts/tree/main/ofl/playfairdisplay — SIL Open Font License 1.1, локальная копия лицензии `static/fonts/playfair-display-OFL.txt`.
+- `static/theme/design-tokens.json`, основа `talentforge-theme.css` и `talentforge-atmosphere.svg` предоставлены пользователем в архиве `talentforge_codex_starter_2026.zip`.

@@ -49,7 +49,7 @@ def run():
                     page.wait_for_selector('.publication-row')
                     page.locator('#projects').click()
                     page.wait_for_selector('[data-open]')
-                    assert page.locator('#modalTitle').inner_text() == 'Мои деревья'
+                    assert page.locator('#library h2').inner_text() == 'Мои деревья'
                     page.locator('[data-copy]' if copy else '[data-open]').first.click()
                     page.wait_for_function("document.querySelector('#community').hidden && !document.querySelector('.workspace').hidden")
                     assert page.locator('#className').input_value() == document['name'] + (' — копия' if copy else '')
@@ -63,10 +63,40 @@ def run():
                 assert not page.locator('#className').is_enabled()
                 assert '?share=' in page.url
                 page.locator('#projects').click()
-                page.locator('[data-open]').click()
+                page.locator('[data-open]').first.click()
                 page.wait_for_function("!document.querySelector('#className').disabled")
                 assert '?share=' not in page.url
                 assert not page.locator('#publicationBar').is_visible()
+                page.locator('#projects').click()
+                page.wait_for_selector('#librarySearch')
+                page.locator('#librarySearch').fill('нет такого дерева')
+                assert page.locator('.library-card').count() == 0
+                page.locator('#librarySearch').fill('')
+                page.locator('[data-open]').first.click()
+                page.wait_for_function("document.querySelector('#library').hidden")
+                page.locator('#zoomIn').click()
+                assert page.locator('#zoomReset').inner_text() == '110%'
+                page.locator('#zoomReset').click()
+                assert page.locator('#zoomReset').inner_text() == '100%'
+                page.locator('#save').click()
+                page.wait_for_function("document.querySelector('#saveState').textContent==='Сохранено в аккаунте'")
+                page.locator('#notifications').click()
+                assert page.locator('#noticeList li').count() > 0
+                page.locator('#clearNotices').click()
+                assert page.locator('#noticeList li').count() == 0
+                page.keyboard.press('Escape')
+                assert not page.locator('#noticeDropdown').is_visible()
+                for width in (1024, 768, 390, 320):
+                    page.set_viewport_size({'width': width, 'height': 900})
+                    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+                page.locator('#mobileMenu').click()
+                assert page.locator('#siteNav').is_visible()
+                page.locator('#rankings').click()
+                page.wait_for_selector('.publication-row')
+                assert page.locator('#mobileMenu').get_attribute('aria-expanded') == 'false'
+                assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+                page.emulate_media(reduced_motion='reduce')
+                assert page.locator('.publication-row').first.evaluate('(el)=>getComputedStyle(el).animationName') == 'none'
                 assert not errors, errors
                 browser.close()
                 print('PASS: saved tree and copy open from rankings; row opens calculator; switching back clears publication state.')

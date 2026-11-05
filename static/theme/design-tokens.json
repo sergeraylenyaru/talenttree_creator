@@ -1,0 +1,55 @@
+{
+  "name": "TalentForge 2026",
+  "mode": "dark",
+  "colors": {
+    "background": "#0B0D12",
+    "backgroundElevated": "#10141C",
+    "surface": "#151A23",
+    "surfaceRaised": "#1B222D",
+    "surfaceHover": "#222B38",
+    "border": "rgba(220,228,240,0.11)",
+    "gold": "#E9B65F",
+    "goldLight": "#FFD991",
+    "goldDeep": "#B77A2E",
+    "violet": "#9365F5",
+    "cyan": "#55C8E8",
+    "text": "#F5F3EF",
+    "textSecondary": "#A5ADBA",
+    "textMuted": "#737E8E",
+    "success": "#39C98A",
+    "danger": "#F06464"
+  },
+  "fonts": {
+    "ui": "Manrope",
+    "display": "Playfair Display",
+    "fallback": "system-ui, sans-serif"
+  },
+  "radii": {
+    "sm": 8,
+    "md": 12,
+    "lg": 18,
+    "xl": 24,
+    "pill": 999
+  },
+  "spacing": [
+    4,
+    8,
+    12,
+    16,
+    20,
+    24,
+    32,
+    40,
+    48
+  ],
+  "motion": {
+    "fastMs": 160,
+    "normalMs": 240,
+    "easing": "cubic-bezier(.2,.75,.25,1)"
+  },
+  "layout": {
+    "maxContentWidth": 1440,
+    "desktopGrid": 12,
+    "baseUnit": 8
+  }
+}

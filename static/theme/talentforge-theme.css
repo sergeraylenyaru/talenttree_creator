@@ -1,0 +1,238 @@
+@font-face{font-family:Manrope;src:url('../fonts/manrope.ttf') format('truetype');font-weight:200 800;font-display:swap}
+@font-face{font-family:'Playfair Display';src:url('../fonts/playfair-display.ttf') format('truetype');font-weight:400 900;font-display:swap}
+/* TALENTFORGE — 2026 visual foundation
+   Import this file after your app's reset/base styles.
+   These are design tokens and optional component primitives, not a replacement
+   for your existing application styles or component logic.
+*/
+
+
+:root {
+  color-scheme: dark;
+
+  /* Brand */
+  --tf-bg: #0B0D12;
+  --tf-bg-elevated: #10141C;
+  --tf-surface: #151A23;
+  --tf-surface-raised: #1B222D;
+  --tf-surface-hover: #222B38;
+  --tf-border: rgba(220, 228, 240, 0.11);
+  --tf-border-strong: rgba(233, 182, 95, 0.34);
+
+  /* Accent */
+  --tf-gold: #E9B65F;
+  --tf-gold-light: #FFD991;
+  --tf-gold-deep: #B77A2E;
+  --tf-violet: #9365F5;
+  --tf-cyan: #55C8E8;
+
+  /* Text */
+  --tf-text: #F5F3EF;
+  --tf-text-secondary: #A5ADBA;
+  --tf-text-muted: #737E8E;
+  --tf-success: #39C98A;
+  --tf-danger: #F06464;
+  --tf-warning: #F3B65B;
+
+  /* Layout */
+  --tf-content-width: 1440px;
+  --tf-page-gutter: clamp(20px, 4vw, 64px);
+  --tf-space-1: 4px;
+  --tf-space-2: 8px;
+  --tf-space-3: 12px;
+  --tf-space-4: 16px;
+  --tf-space-5: 20px;
+  --tf-space-6: 24px;
+  --tf-space-8: 32px;
+  --tf-space-10: 40px;
+  --tf-space-12: 48px;
+
+  /* Shape */
+  --tf-radius-sm: 8px;
+  --tf-radius-md: 12px;
+  --tf-radius-lg: 18px;
+  --tf-radius-xl: 24px;
+  --tf-radius-pill: 999px;
+
+  /* Depth */
+  --tf-shadow-card: 0 16px 48px rgba(0, 0, 0, .24);
+  --tf-shadow-gold: 0 0 28px rgba(233, 182, 95, .16);
+  --tf-glass: rgba(21, 26, 35, .78);
+
+  /* Motion */
+  --tf-ease: cubic-bezier(.2, .75, .25, 1);
+  --tf-fast: 160ms;
+  --tf-normal: 240ms;
+
+  font-family: "Manrope", "Inter", system-ui, sans-serif;
+  color: var(--tf-text);
+  background: var(--tf-bg);
+}
+
+html {
+  min-width: 320px;
+  background: var(--tf-bg);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--tf-text);
+  background:
+    radial-gradient(ellipse at 50% -12%, rgba(233,182,95,.13), transparent 48%),
+    radial-gradient(ellipse at 94% 42%, rgba(147,101,245,.075), transparent 38%),
+    var(--tf-bg);
+  background-attachment: fixed;
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.tf-app-background {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  background-image: url("./talentforge-atmosphere.svg");
+  background-position: top center;
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+}
+
+.tf-container {
+  width: min(calc(100% - 2 * var(--tf-page-gutter)), var(--tf-content-width));
+  margin-inline: auto;
+}
+
+.tf-panel {
+  background: linear-gradient(145deg, rgba(27,34,45,.88), rgba(17,21,29,.92));
+  border: 1px solid var(--tf-border);
+  border-radius: var(--tf-radius-lg);
+  box-shadow: var(--tf-shadow-card);
+  backdrop-filter: blur(18px);
+}
+
+.tf-card {
+  background: rgba(27,34,45,.76);
+  border: 1px solid var(--tf-border);
+  border-radius: var(--tf-radius-md);
+  transition:
+    border-color var(--tf-normal) var(--tf-ease),
+    background var(--tf-normal) var(--tf-ease),
+    transform var(--tf-normal) var(--tf-ease),
+    box-shadow var(--tf-normal) var(--tf-ease);
+}
+
+.tf-card:hover {
+  border-color: rgba(233,182,95,.28);
+  background: rgba(34,43,56,.84);
+}
+
+.tf-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid var(--tf-border);
+  border-radius: var(--tf-radius-sm);
+  color: var(--tf-text);
+  background: var(--tf-surface-raised);
+  font-weight: 700;
+  transition: all var(--tf-fast) var(--tf-ease);
+}
+
+.tf-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(233,182,95,.35);
+  background: var(--tf-surface-hover);
+}
+
+.tf-button--primary {
+  color: #17130D;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--tf-gold-light), var(--tf-gold));
+  box-shadow: 0 6px 22px rgba(233,182,95,.16);
+}
+
+.tf-button--primary:hover {
+  background: linear-gradient(135deg, #FFE3AC, #E9B65F);
+  box-shadow: 0 8px 28px rgba(233,182,95,.26);
+}
+
+.tf-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 13px;
+  color: var(--tf-text);
+  background: rgba(11,13,18,.72);
+  border: 1px solid rgba(165,173,186,.22);
+  border-radius: var(--tf-radius-sm);
+  outline: none;
+  transition: border-color var(--tf-fast), box-shadow var(--tf-fast);
+}
+
+.tf-input:focus {
+  border-color: var(--tf-gold);
+  box-shadow: 0 0 0 3px rgba(233,182,95,.12);
+}
+
+.tf-tab {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: var(--tf-radius-sm);
+  color: var(--tf-text-secondary);
+  background: transparent;
+  transition: all var(--tf-fast) var(--tf-ease);
+}
+
+.tf-tab[aria-selected="true"],
+.tf-tab.is-active {
+  color: var(--tf-gold-light);
+  border-color: rgba(233,182,95,.36);
+  background: rgba(233,182,95,.10);
+  box-shadow: inset 0 0 0 1px rgba(233,182,95,.05);
+}
+
+.tf-eyebrow {
+  color: var(--tf-gold);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.tf-display {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -.035em;
+}
+
+.tf-muted {
+  color: var(--tf-text-secondary);
+}
+
+.tf-gold-glow {
+  box-shadow: 0 0 32px rgba(233,182,95,.18);
+}
+
+@media (max-width: 900px) {
+  .tf-app-background {
+    background-size: auto 560px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}

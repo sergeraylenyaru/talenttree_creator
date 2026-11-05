@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" fill="none">
+  <defs>
+    <linearGradient id="goldLine" x1="120" y1="80" x2="1450" y2="500" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8B5B2A" stop-opacity="0"/>
+      <stop offset=".42" stop-color="#E9B65F" stop-opacity=".68"/>
+      <stop offset=".68" stop-color="#FFD991" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#8B5B2A" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="goldGlow" cx="0" cy="0" r="1" gradientTransform="matrix(560 0 0 260 820 110)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D99A48" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#D99A48" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="violetGlow" cx="0" cy="0" r="1" gradientTransform="matrix(430 0 0 240 1380 580)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8057D8" stop-opacity=".11"/>
+      <stop offset="1" stop-color="#8057D8" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur" x="-20%" y="-30%" width="140%" height="160%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="900" fill="url(#goldGlow)"/>
+  <rect width="1600" height="900" fill="url(#violetGlow)"/>
+  <path d="M-90 280C180 40 330 50 560 160C810 280 1000 245 1190 95C1350-30 1490-10 1690 90" stroke="url(#goldLine)" stroke-width="2"/>
+  <path d="M-80 300C180 60 340 80 565 184C815 300 1015 265 1200 115C1370-10 1500 10 1680 110" stroke="#E9B65F" stroke-opacity=".12" stroke-width="18" filter="url(#blur)"/>
+  <path d="M-100 700C160 560 330 570 520 660C760 770 1000 770 1190 650C1370 535 1510 540 1690 650" stroke="url(#goldLine)" stroke-opacity=".38" stroke-width="1.5"/>
+  <circle cx="1260" cy="180" r="2" fill="#FFD991" fill-opacity=".65"/>
+  <circle cx="1260" cy="180" r="18" stroke="#E9B65F" stroke-opacity=".12"/>
+  <circle cx="340" cy="610" r="2" fill="#FFD991" fill-opacity=".35"/>
+</svg>

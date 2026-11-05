@@ -1,18 +1,61 @@
 <!doctype html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Talent Forge — конструктор талантов</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="forge.css"></head>
-<body>
-<header><a class="brand" href="/">✦ <span>TALENT<span class="gold">FORGE</span><small>МАСТЕРСКАЯ ВЫМЫШЛЕННЫХ КЛАССОВ</small></span></a><div class="account"><button id="profileAvatar" class="profile-avatar-button" aria-label="Выбрать аватар" hidden></button><span id="user"></span><button id="rankings">Рейтинг деревьев</button><button id="publications">Мои публикации</button><button id="favorites">★ Избранное</button><button id="projects">Мои деревья</button><button id="auth">Войти / Регистрация</button><button id="logout" hidden>Выйти</button></div></header>
-<main>
-<section class="intro"><div class="intro-copy"><p class="eyebrow">ТВОЙ КЛАСС. ТВОИ ПРАВИЛА.</p><h1>Создай свою легенду</h1><p class="muted">Придумывай таланты, строй ветки и находи идеальный билд.</p></div><div class="actions hero-actions"><button id="preset">Загрузить стандартный класс</button><button id="new" class="primary">＋ Создать класс</button></div></section>
-<section id="community" hidden></section><section id="publicationBar" hidden></section><p id="shareStats" class="muted" hidden></p><section class="workspace"><div class="toolbar"><div class="tabs"><button id="editMode" class="selected">✎ Редактор</button><button id="playMode">✦ Калькулятор</button></div><div class="actions"><span id="saveState" class="muted">Локальный черновик</span><button id="undo" title="Отменить · Ctrl+Z" disabled>↶ Отменить</button><button id="redo" title="Повторить · Ctrl+Y" disabled>↷ Повторить</button><button id="share">Зафиксировать и опубликовать</button><button id="export">Экспорт JSON</button><button id="import">Импорт JSON</button><button id="save" class="primary">Сохранить</button></div></div>
-<div class="class-settings"><div><label for="className">НАЗВАНИЕ КЛАССА</label><input id="className" maxlength="100" value="Новый класс"></div><div><label for="budget">ЛИМИТ ОЧКОВ</label><input id="budget" type="number" min="0" max="100000" value="41"></div><div><label for="rowCost">ОЧКОВ ДЛЯ НОВОГО РЯДА</label><input id="rowCost" type="number" min="0" max="100000" value="5"></div><div class="point-summary"><strong id="points">0 / 41</strong><span class="muted">очков распределено</span><button id="reset">Сбросить очки</button></div><div class="budget-track" role="progressbar" aria-label="Распределение очков" aria-valuemin="0"><span></span></div></div>
-<div class="section-title"><div><button id="characterSettings">Ресурсы и персонаж</button><h2>Деревья талантов</h2><p id="hint" class="muted">Нажми на пустую ячейку, чтобы создать талант.</p></div><button id="addBranch">＋ Добавить ветку</button></div>
-<div class="calc-layout"><div id="trees" class="trees"></div><aside id="characterPanel" hidden></aside></div>
-<section class="abilities"><div class="section-title"><div><p class="eyebrow">АРСЕНАЛ КЛАССА</p><h2>Способности</h2><p class="muted">Базовые умения и способности, открываемые талантами.</p></div><button id="addAbility">＋ Добавить способность</button></div><div id="abilityViewControls" class="ability-view-controls" hidden><button type="button" data-ability-view="icons" class="selected">Иконки</button><button type="button" data-ability-view="details">Подробно</button></div><div id="abilities"></div></section>
-</section>
-<footer><span>✦ TALENT FORGE · первая версия</span><span>Неофициальный фанатский проект.</span></footer>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0B0D12">
+  <title>TalentForge — мастерская талантов</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="theme/talentforge-theme.css">
+  <link rel="stylesheet" href="forge.css">
+</head>
+<body class="tf-app-background" data-view="editor">
+<a href="#content" class="skip-link">К содержимому</a>
+<header class="site-header">
+  <a class="brand" href="/" aria-label="TalentForge — главная"><span class="brand-mark" data-glyph="spark"></span><span>TALENT<span class="gold">FORGE</span><small>МАСТЕРСКАЯ ВЫМЫШЛЕННЫХ КЛАССОВ</small></span></a>
+  <button id="mobileMenu" class="icon-button mobile-menu" aria-label="Открыть навигацию" aria-controls="siteNav" aria-expanded="false"><span data-glyph="menu"></span></button>
+  <nav id="siteNav" class="site-nav" aria-label="Основная навигация">
+    <button id="rankings"><span data-glyph="trophy"></span>Рейтинг деревьев</button>
+    <button id="publications"><span data-glyph="layers"></span>Мои публикации</button>
+    <button id="favorites"><span data-glyph="star"></span>Избранное</button>
+    <button id="projects"><span data-glyph="spark"></span>Мои деревья</button>
+  </nav>
+  <div class="header-tools">
+    <button id="notifications" class="icon-button" aria-label="Уведомления сеанса" aria-controls="noticeDropdown" aria-expanded="false"><span data-glyph="bell"></span><span id="noticeDot" class="notice-dot" hidden></span></button>
+    <button id="auth"><span class="auth-label-full">Войти / Регистрация</span><span class="auth-label-short">Войти</span></button>
+    <button id="profileAvatar" class="profile-avatar-button" aria-label="Выбрать аватар" hidden></button>
+    <button id="accountMenu" class="account-trigger" aria-label="Меню аккаунта" aria-controls="accountDropdown" aria-expanded="false" hidden><span id="user"></span><span data-glyph="chevron"></span></button>
+    <div id="accountDropdown" class="dropdown account-dropdown" hidden><p class="dropdown-label">ТВОЙ АККАУНТ</p><button id="chooseAvatar"><span data-glyph="user"></span>Изменить аватар</button><button id="logout" hidden><span data-glyph="logout"></span>Выйти из аккаунта</button></div>
+    <section id="noticeDropdown" class="dropdown notice-dropdown" aria-label="Уведомления" hidden><div class="dropdown-heading"><strong>Уведомления</strong><button id="clearNotices" class="text-button">Очистить</button></div><p class="muted">Действия в этом сеансе браузера</p><ul id="noticeList"></ul></section>
+  </div>
+</header>
+<main id="content" tabindex="-1">
+  <section class="intro" aria-labelledby="welcomeTitle">
+    <div class="intro-copy"><p class="eyebrow">ТВОЙ КЛАСС. ТВОИ ПРАВИЛА.</p><h1 id="welcomeTitle">Создай свою легенду</h1><p class="muted">Придумывай таланты, строй ветки и находи идеальный билд.</p></div>
+    <div class="actions hero-actions"><button id="preset"><span data-glyph="download"></span>Загрузить стандартный класс</button><button id="new" class="primary"><span data-glyph="plus"></span>Создать класс</button></div>
+  </section>
+  <section id="community" class="page-panel" aria-label="Сообщество" hidden></section>
+  <section id="library" class="page-panel" aria-label="Твоя мастерская" hidden></section>
+  <section id="publicationBar" hidden></section><p id="shareStats" class="muted" hidden></p>
+  <section class="workspace" aria-label="Редактор и калькулятор">
+    <div class="toolbar">
+      <div class="editor-mode-row"><div class="tabs" aria-label="Режим работы"><button id="editMode" class="selected"><span data-glyph="edit"></span>Редактор</button><button id="playMode"><span data-glyph="calculator"></span>Калькулятор</button></div><span id="saveState" class="muted" role="status">Локальный черновик</span></div>
+      <div class="editor-actions"><div class="history-actions"><button id="undo" title="Отменить · Ctrl+Z" disabled><span data-glyph="undo"></span><span>Отменить</span></button><button id="redo" title="Повторить · Ctrl+Y" disabled><span data-glyph="redo"></span><span>Повторить</span></button></div><div class="actions"><button id="share"><span data-glyph="share"></span>Зафиксировать и опубликовать</button><button id="export"><span data-glyph="upload"></span>Экспорт JSON</button><button id="import"><span data-glyph="download"></span>Импорт JSON</button><button id="save" class="primary"><span data-glyph="save"></span>Сохранить</button></div></div>
+    </div>
+    <div class="class-settings">
+      <div><label for="className">Название класса</label><input id="className" maxlength="100" value="Новый класс"></div>
+      <div><label for="budget">Лимит очков</label><input id="budget" type="number" min="0" max="100000" value="41"></div>
+      <div><label for="rowCost">Очков для нового ряда</label><input id="rowCost" type="number" min="0" max="100000" value="5"></div>
+      <div class="point-summary"><strong id="points">0 / 41</strong><span class="muted">очков распределено</span><button id="reset" class="text-button"><span data-glyph="undo"></span>Сбросить очки</button></div>
+      <div class="budget-track" role="progressbar" aria-label="Распределение очков" aria-valuemin="0"><span></span></div>
+    </div>
+    <div class="tree-tools"><button id="characterSettings"><span data-glyph="layers"></span>Ресурсы и персонаж</button><div class="tree-viewport-controls"><label class="sr-only" for="focusBranch">Перейти к ветке</label><select id="focusBranch"><option value="">Все ветки</option></select><div class="zoom-controls" aria-label="Масштаб дерева"><button id="zoomOut" class="icon-button" aria-label="Уменьшить дерево"><span data-glyph="minus"></span></button><button id="zoomReset" title="Сбросить масштаб">100%</button><button id="zoomIn" class="icon-button" aria-label="Увеличить дерево"><span data-glyph="plus"></span></button></div></div></div>
+    <div class="section-title tree-section-title"><div><p class="eyebrow">ТВОЙ ПУТЬ РАЗВИТИЯ</p><h2>Деревья талантов</h2><p id="hint" class="muted">Нажми на пустую ячейку, чтобы создать талант.</p></div><button id="addBranch"><span data-glyph="plus"></span>Добавить ветку</button></div>
+    <div class="calc-layout"><div id="trees" class="trees"></div><aside id="characterPanel" hidden></aside></div>
+    <section class="abilities"><div class="section-title"><div><p class="eyebrow">АРСЕНАЛ КЛАССА</p><h2>Способности</h2><p class="muted">Базовые умения и способности, открываемые талантами.</p></div><button id="addAbility"><span data-glyph="plus"></span>Добавить способность</button></div><div id="abilityViewControls" class="ability-view-controls" hidden><button type="button" data-ability-view="icons" class="selected">Иконки</button><button type="button" data-ability-view="details">Подробно</button></div><div id="abilities"></div></section>
+  </section>
+  <footer><a class="footer-brand" href="/">✦ TALENTFORGE</a><span>Твоя идея. Твоё дерево. Твоя легенда.</span><span>Неофициальный фанатский проект.</span></footer>
 </main>
-<dialog id="modal"><form id="modalForm"><div class="modal-top"><h2 id="modalTitle"></h2><button type="button" id="closeModal" aria-label="Закрыть">✕</button></div><div id="modalBody"></div><p id="formError" role="alert"></p><div id="modalActions" class="modal-actions"><button type="button" id="deleteItem" class="danger" hidden>Удалить</button><button type="button" id="favoriteItem" hidden>★ В избранное</button><button type="submit" id="submitModal" class="primary">Сохранить</button></div></form></dialog>
+<dialog id="modal" aria-labelledby="modalTitle"><form id="modalForm"><div class="modal-top"><h2 id="modalTitle"></h2><button type="button" id="closeModal" class="icon-button" aria-label="Закрыть"><span data-glyph="close"></span></button></div><div id="modalBody"></div><p id="formError" role="alert"></p><div id="modalActions" class="modal-actions"><button type="button" id="deleteItem" class="danger" hidden>Удалить</button><button type="button" id="favoriteItem" hidden>В избранное</button><button type="submit" id="submitModal" class="primary">Сохранить</button></div></form></dialog>
 <input id="file" type="file" accept="application/json,.json" hidden><div id="toast" role="status" hidden></div>
 <div id="tooltip" class="wow-tooltip" role="tooltip" hidden></div><script type="module" src="app.js"></script>
 </body></html>
