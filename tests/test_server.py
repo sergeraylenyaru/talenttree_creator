@@ -189,6 +189,18 @@ class API(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'пересекаются'):
             server.validate(document)
 
+    def test_ability_kind_and_branch_membership(self):
+        document=copy.deepcopy(DOCUMENT)
+        document['branches'][0]['icon']='spell_fire_flamebolt'
+        document['abilities']=[{'id':'passive','name':'Armor','icon':'inv_shield_04','description':'More armor','kind':'passive','branchId':'a'}]
+        server.validate(document)
+        document['abilities'][0]['branchId']='missing'
+        with self.assertRaisesRegex(ValueError,'Ветка'):
+            server.validate(document)
+        document['abilities'][0]['branchId']='auto';document['abilities'][0]['kind']='wrong'
+        with self.assertRaisesRegex(ValueError,'тип'):
+            server.validate(document)
+
     def test_presets_validate_on_server(self):
         files = list((server.ROOT / 'static' / 'presets').glob('*.json'))
         self.assertEqual(len(files), 29)

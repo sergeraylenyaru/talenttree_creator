@@ -22,7 +22,7 @@ def info(db,token,user_id=None):
     document=json.loads(row[0]);owner=row[1]
     author=db.execute('SELECT login FROM users WHERE id=?',(owner,)).fetchone() if owner else None
     result={'token':token,'name':document['name'],'author':author[0] if author else None,'version':row[2],'visibility':row[3],'published':row[4], 'isOwner':user_id is not None and owner==user_id,
-            'branches':[{'name':b['name'],'icon':b['talents'][0].get('icon','inv_misc_questionmark') if b['talents'] else 'inv_misc_questionmark'} for b in document['branches']]}
+            'branches':[{'name':b['name'],'icon':b.get('icon') or (b['talents'][0].get('icon','inv_misc_questionmark') if b['talents'] else 'inv_misc_questionmark')} for b in document['branches']]}
     for key,table in [('views','share_views'),('allocated','share_allocations'),('saved','share_saves')]:
         result[key]=db.execute(f'SELECT COUNT(*) FROM {table} WHERE token=?',(token,)).fetchone()[0]
     result['likes']=db.execute('SELECT COUNT(*) FROM share_votes WHERE token=? AND vote=1',(token,)).fetchone()[0]
@@ -41,8 +41,8 @@ def create(db,document,owner_id,project_id=None,visibility='unlisted'):
     return token
 
 def listing(db,user_id=None,sort='views',page=0,owned=False):
-    if sort not in ('views','usage','latest') or type(page) is not int or not 0<=page<=100000:raise ValueError('Неверная сортировка или страница')
+    if sort not in ('likes','views','usage','latest') or type(page) is not int or not 0<=page<=100000:raise ValueError('Неверная сортировка или страница')
     where,args=('owner_id=?',[user_id]) if owned else ("visibility='public'",[])
-    order={'views':'view_count DESC,published_at DESC,token','usage':'usage_count DESC,published_at DESC,token','latest':'published_at DESC,rowid DESC'}[sort]
-    rows=db.execute(f'SELECT token,published_at,(SELECT COUNT(*) FROM share_views v WHERE v.token=shares.token) view_count,(SELECT COUNT(*) FROM share_allocations a WHERE a.token=shares.token) usage_count FROM shares WHERE {where} ORDER BY {order} LIMIT 13 OFFSET ?',(*args,page*12)).fetchall()
+    order={'likes':'like_count DESC,published_at DESC,token','views':'view_count DESC,published_at DESC,token','usage':'usage_count DESC,published_at DESC,token','latest':'published_at DESC,rowid DESC'}[sort]
+    rows=db.execute(f'SELECT token,published_at,(SELECT COUNT(*) FROM share_views v WHERE v.token=shares.token) view_count,(SELECT COUNT(*) FROM share_allocations a WHERE a.token=shares.token) usage_count,(SELECT COUNT(*) FROM share_votes l WHERE l.token=shares.token AND l.vote=1) like_count FROM shares WHERE {where} ORDER BY {order} LIMIT 13 OFFSET ?',(*args,page*12)).fetchall()
     return {'publications':[info(db,r[0],user_id) for r in rows[:12]],'hasMore':len(rows)>12,'page':page}

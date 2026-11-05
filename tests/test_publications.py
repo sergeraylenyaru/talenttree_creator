@@ -80,6 +80,23 @@ class PublicationAPI(unittest.TestCase):
         next=self.request(guest,'/api/rankings?sort=latest&page=1')[1];self.assertEqual(len(next['publications']),2);self.assertFalse(next['hasMore'])
         self.assertEqual(self.request(guest,'/api/rankings?sort=invalid')[0],400)
 
+    def test_likes_sort_and_branch_icons(self):
+        owner,pid,first,document=self.publish('First')
+        document['branches'][0]['icon']='spell_fire_flamebolt'
+        self.request(owner,'/api/projects',{'id':pid,'document':document})
+        second=self.request(owner,'/api/publish',{'projectId':pid,'visibility':'public'})[1]['token']
+        hidden=self.request(owner,'/api/publish',{'projectId':pid,'visibility':'unlisted'})[1]['token']
+        one,two,three=self.client(),self.client(),self.client()
+        self.register(one,'like_one');self.register(two,'like_two');self.register(three,'like_three')
+        for token in [first,second,hidden]:self.request(one,'/api/shared/'+token+'/vote',{'vote':1})
+        self.request(two,'/api/shared/'+second+'/vote',{'vote':1})
+        self.request(three,'/api/shared/'+first+'/vote',{'vote':-1})
+        cards=self.request(self.client(),'/api/rankings?sort=likes')[1]['publications']
+        self.assertEqual([card['token'] for card in cards],[second,first])
+        self.assertEqual([card['likes'] for card in cards],[2,1])
+        self.assertEqual(cards[0]['branches'][0]['icon'],'spell_fire_flamebolt')
+        self.assertNotIn('dislikes',cards[1])
+
 class PublicationMigration(unittest.TestCase):
     def test_existing_shares_stay_unlisted_without_claimed_owner(self):
         with tempfile.TemporaryDirectory() as tmp:

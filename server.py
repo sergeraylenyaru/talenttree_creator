@@ -99,6 +99,10 @@ def validate(document):
         if not isinstance(branch, dict) or not isinstance(branch.get('id'), str) or branch['id'] in branch_ids or not isinstance(branch.get('name'), str):
             raise ValueError('Неверная ветка')
         branch_ids.add(branch['id'])
+        if 'icon' in branch:
+            if not isinstance(branch['icon'], str):
+                raise ValueError('Неверная иконка ветки')
+            validate_icon(branch['icon'])
         rows = branch.get('rows')
         if type(rows) is not int or not 1 <= rows <= 1000:
             raise ValueError('Допустимо от 1 до 1000 рядов')
@@ -140,6 +144,10 @@ def validate(document):
     if document.get('version') != 1 or not isinstance(abilities, list) or any(not isinstance(a, dict) or any(not isinstance(a.get(k), str) for k in ('id', 'name', 'description', 'icon')) for a in abilities):
         raise ValueError('Неверный формат класса или способностей')
     for ability in abilities:
+        if 'kind' in ability and ability['kind'] not in ('active', 'passive'):
+            raise ValueError('Неверный тип способности')
+        if 'branchId' in ability and ability['branchId'] not in ('', 'auto') and ability['branchId'] not in branch_ids:
+            raise ValueError('Ветка способности не найдена')
         validate_icon(ability.get('icon'))
         if 'resourceType' in ability:
             if not isinstance(ability['resourceType'], str) or not 1 <= len(ability['resourceType']) <= 100:
@@ -330,6 +338,7 @@ class Handler(SimpleHTTPRequestHandler):
                         check['branches'][0]['talents'] = [item]
                     else:
                         item['talentId'] = ''
+                        item['branchId'] = ''
                         check['abilities'] = [item]
                     validate(check)
                     fid = secrets.token_hex(12)

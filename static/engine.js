@@ -33,7 +33,7 @@ export function normalize(doc,{allowLegacy=false}={}) {
   const ids=new Set(),branchIds=new Set();
   for(const b of doc.branches) {
     if(typeof b.id!=='string'||!b.id||branchIds.has(b.id)||typeof b.name!=='string'||!Number.isInteger(b.rows)||b.rows<1||b.rows>1000||!Array.isArray(b.talents)) throw Error('Неверный формат ветки');
-    branchIds.add(b.id);
+    branchIds.add(b.id);if(b.icon!==undefined&&typeof b.icon!=='string')throw Error('Неверная иконка ветки');
     const positions=new Set();
     for(const t of b.talents) {
       const pos=`${t.row}:${t.col}`;
@@ -52,6 +52,7 @@ export function normalize(doc,{allowLegacy=false}={}) {
   }
   if(!allowLegacy)for(const b of doc.branches)if([...dependencyRoutes(b).values()].some(path=>!path))throw Error('Стрелки зависимостей пересекаются или нет свободного пути. Убери или измени зависимость.');
   if(!Array.isArray(doc.abilities)||doc.abilities.some(a=>!a||typeof a.id!=='string'||typeof a.name!=='string'||typeof a.description!=='string')) throw Error('Неверный список способностей');
+  for(const a of doc.abilities){if(a.kind!==undefined&&!['active','passive'].includes(a.kind))throw Error('Неверный тип способности');if(a.branchId!==undefined&&!['','auto'].includes(a.branchId)&&!branchIds.has(a.branchId))throw Error('Ветка способности не найдена');}
   for(const a of doc.abilities)if(a.resourceType!==undefined){if(typeof a.resourceType!=='string'||!a.resourceType||a.resourceType.length>100||['resource','cast','cooldown','range'].some(k=>!Number.isFinite(a[k])||a[k]<0||a[k]>1e9))throw Error('Неверные числовые параметры способности');}
   if(doc.character){
     const c=doc.character;
@@ -138,3 +139,14 @@ export function synchronizeAbilityTalents(doc){
 }
 export function abilityUnlocked(doc,ability){const ids=new Set(doc.branches.flatMap(b=>b.talents).filter(t=>t.grantedAbilityId===ability.id).map(t=>t.id));if(ability.talentId)ids.add(ability.talentId);return !ids.size||[...ids].some(id=>(doc.build[id]||0)>0);}
 export function removeAbility(document,id){const next=structuredClone(document),removed=new Set();next.abilities=next.abilities.filter(a=>a.id!==id);for(const b of next.branches){for(const t of b.talents)if(t.grantedAbilityId===id)removed.add(t.id);b.talents=b.talents.filter(t=>!removed.has(t.id));}for(const b of next.branches)for(const t of b.talents)if(removed.has(t.requires))t.requires='';for(const a of next.abilities)if(removed.has(a.talentId))a.talentId='';next.build={};return next;}
+
+export function branchIcon(branch){return branch.icon||branch.talents[0]?.icon||'inv_misc_questionmark';}
+export function abilityBranchIds(doc,ability){
+ if(ability.branchId!==undefined&&ability.branchId!=='auto')return ability.branchId?[ability.branchId]:[];
+ return doc.branches.filter(b=>b.talents.some(t=>t.grantedAbilityId===ability.id||t.id===ability.talentId)).map(b=>b.id);
+}
+export function groupedAbilities(doc){
+ const rows=doc.branches.map(b=>({id:b.id,name:b.name,icon:branchIcon(b),abilities:doc.abilities.filter(a=>abilityBranchIds(doc,a).includes(b.id))}));
+ const general=doc.abilities.filter(a=>!abilityBranchIds(doc,a).length);if(general.length)rows.push({id:'general',name:'Общие способности',icon:'inv_misc_questionmark',abilities:general});
+ return rows.map(row=>({...row,active:row.abilities.filter(a=>a.kind!=='passive'),passive:row.abilities.filter(a=>a.kind==='passive')}));
+}
