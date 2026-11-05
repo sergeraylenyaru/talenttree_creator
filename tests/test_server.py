@@ -181,6 +181,14 @@ class API(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'не найдена'):
             server.validate(document)
 
+    def test_crossing_dependencies_are_rejected(self):
+        document = copy.deepcopy(DOCUMENT)
+        positions = [('a', 0, 0, ''), ('b', 0, 3, ''), ('c', 2, 3, 'a'), ('d', 2, 0, 'b')]
+        document['branches'][0]['rows'] = 3
+        document['branches'][0]['talents'] = [{'id': id, 'row': row, 'col': col, 'requires': parent, 'name': id, 'icon': 'inv_misc_questionmark', 'maxRank': 1, 'descriptions': ['x']} for id,row,col,parent in positions]
+        with self.assertRaisesRegex(ValueError, 'пересекаются'):
+            server.validate(document)
+
     def test_presets_validate_on_server(self):
         files = list((server.ROOT / 'static' / 'presets').glob('*.json'))
         self.assertEqual(len(files), 29)

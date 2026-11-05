@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import json
 import math
+from routing import dependency_routes
 from functools import lru_cache
 import os
 import re
@@ -127,6 +128,8 @@ def validate(document):
                     raise ValueError('Зависимость должна вести к таланту в этом или предыдущем ряду, без циклов')
                 seen.add(parent['id'])
                 current = parent
+        if any(path is None for path in dependency_routes(branch).values()):
+            raise ValueError('Стрелки зависимостей пересекаются или нет свободного пути. Измени зависимость.')
     for field in ('budget', 'rowCost'):
         if type(document.get(field)) is not int or not 0 <= document[field] <= 100000:
             raise ValueError('Неверные правила очков')

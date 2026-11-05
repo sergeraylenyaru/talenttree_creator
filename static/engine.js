@@ -50,6 +50,7 @@ export function normalize(doc,{allowLegacy=false}={}) {
       }
     }
   }
+  if(!allowLegacy)for(const b of doc.branches)if([...dependencyRoutes(b).values()].some(path=>!path))throw Error('Стрелки зависимостей пересекаются или нет свободного пути. Убери или измени зависимость.');
   if(!Array.isArray(doc.abilities)||doc.abilities.some(a=>!a||typeof a.id!=='string'||typeof a.name!=='string'||typeof a.description!=='string')) throw Error('Неверный список способностей');
   for(const a of doc.abilities)if(a.resourceType!==undefined){if(typeof a.resourceType!=='string'||!a.resourceType||a.resourceType.length>100||['resource','cast','cooldown','range'].some(k=>!Number.isFinite(a[k])||a[k]<0||a[k]>1e9))throw Error('Неверные числовые параметры способности');}
   if(doc.character){
@@ -62,23 +63,38 @@ export function normalize(doc,{allowLegacy=false}={}) {
   return doc;
 }
 
-// Orthogonal routes use empty cells; occupied talent cells cannot be crossed.
-export function route(branch, parent, child) {
+// Plan all dependencies together: no shared cells or segments outside talent icons.
+function findRoute(branch,parent,child,usedCells,usedEdges){
  if(!parent||!child||parent.id===child.id)return null;
- const occupied=new Set(branch.talents.filter(t=>t.id!==parent.id&&t.id!==child.id).map(t=>`${t.row},${t.col}`));
- const start=[parent.row,parent.col],queue=[[start]],seen=new Set([start.join(',')]);
+ const key=(r,c)=>`${r},${c}`,edge=(a,b)=>[a,b].sort().join('|');
+ const occupied=new Set(branch.talents.filter(t=>t.id!==parent.id&&t.id!==child.id).map(t=>key(t.row,t.col)));
+ const start=key(parent.row,parent.col),target=key(child.row,child.col),queue=[[parent.row,parent.col]],previous=new Map([[start,null]]);
  for(let i=0;i<queue.length;i++){
-  const path=queue[i], [r,c]=path.at(-1);
-  if(r===child.row&&c===child.col)return path;
+  const [r,c]=queue[i],current=key(r,c);
+  if(current===target){const path=[];for(let at=current;at!==null;at=previous.get(at))path.push(at.split(',').map(Number));return path.reverse();}
   for(const [nr,nc] of [[r+1,c],[r,c+1],[r,c-1],[r-1,c]]){
-   const key=`${nr},${nc}`;
-   if(nr<0||nr>=branch.rows||nc<0||nc>=4||occupied.has(key)||seen.has(key))continue;
-   seen.add(key);queue.push([...path,[nr,nc]]);
+   const next=key(nr,nc);if(nr<0||nr>=branch.rows||nc<0||nc>=4||occupied.has(next)||previous.has(next)||usedCells.has(next)||usedEdges.has(edge(current,next)))continue;
+   previous.set(next,current);queue.push([nr,nc]);
   }
  }
  return null;
 }
-export function reserved(branch,row,col){return branch.talents.some(t=>t.requires&&route(branch,branch.talents.find(p=>p.id===t.requires),t)?.slice(1,-1).some(([r,c])=>r===row&&c===col));}
+function planRoutes(branch,order=0){
+ const byId=new Map(branch.talents.map(t=>[t.id,t]));
+ const children=branch.talents.filter(t=>t.requires).sort((a,b)=>a.row-b.row||a.col-b.col||a.id.localeCompare(b.id));
+ if(order===1)children.reverse();if(order===2)children.sort((a,b)=>{const pa=byId.get(a.requires),pb=byId.get(b.requires);return (Math.abs(a.row-pa.row)+Math.abs(a.col-pa.col))-(Math.abs(b.row-pb.row)+Math.abs(b.col-pb.col))||a.id.localeCompare(b.id);});if(order===3)children.sort((a,b)=>{const pa=byId.get(a.requires),pb=byId.get(b.requires);return (Math.abs(b.row-pb.row)+Math.abs(b.col-pb.col))-(Math.abs(a.row-pa.row)+Math.abs(a.col-pa.col))||a.id.localeCompare(b.id);});
+ const planned=new Map(),cells=new Set(),edges=new Set();
+ for(const child of children){const path=findRoute(branch,byId.get(child.requires),child,cells,edges);planned.set(child.id,path);if(!path)continue;for(const [r,c] of path.slice(1,-1))cells.add(`${r},${c}`);for(let i=1;i<path.length;i++)edges.add([path[i-1].join(','),path[i].join(',')].sort().join('|'));}
+ return planned;
+}
+export function dependencyRoutes(branch){let best=null,missing=Infinity;for(let order=0;order<4;order++){const planned=planRoutes(branch,order),count=[...planned.values()].filter(p=>!p).length;if(count<missing){best=planned;missing=count;}if(!count)break;}return best;}
+export function route(branch,parent,child){
+ if(!parent||!child)return null;
+ const candidate={...child,requires:parent.id},copy={...branch,talents:branch.talents.filter(t=>t.id!==child.id).concat(candidate)};
+ const planned=dependencyRoutes(copy);return [...planned.values()].every(Boolean)?planned.get(child.id)||null:null;
+}
+export function reserved(branch,row,col){return [...dependencyRoutes(branch).values()].some(path=>path?.slice(1,-1).some(([r,c])=>r===row&&c===col));}
+export function talentState(doc,talent){const rank=doc.build[talent.id]||0;if(rank===talent.maxRank)return 'maxed';if(rank>0)return 'partial';return validBuild(doc,{...doc.build,[talent.id]:1})?'available':'locked';}
 
 export function moveTalent(document,id,branchId,row,col){
  const next=structuredClone(document),source=next.branches.find(b=>b.talents.some(t=>t.id===id)),dest=next.branches.find(b=>b.id===branchId);

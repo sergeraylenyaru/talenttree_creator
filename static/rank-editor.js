@@ -13,6 +13,7 @@ export function createRankEditor(root,countInput,talent,live={}){
  function highlight(){const button=root.querySelector('#addRankNumber');if(!button)return;const found=availableNumber();button.classList.toggle('number-ready',!!found);button.setAttribute('aria-label',found?`Сделать число ${found.value} изменяемым`:'Добавить меняющееся число');}
  function updatePreview(){
   const output=root.querySelector('#rankPreview');if(!output)return;
+  const button=root.querySelector('#liveRankIcon');button.classList.toggle('maxed',previewRank===count);button.classList.toggle('available',previewRank===0);button.classList.toggle('partial',previewRank>0&&previewRank<count);
   root.querySelector('#previewRankBadge').textContent=`${previewRank}/${count}`;
   root.querySelector('#previewTalentName').textContent=live.name?.()||talent.name||'Новый талант';
   const image=root.querySelector('#liveRankIcon img');image.src=iconURL(live.icon?.()||talent.icon)||'missing-icon';image.style.visibility='visible';

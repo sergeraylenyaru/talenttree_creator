@@ -1,5 +1,5 @@
 import {createRankEditor} from './rank-editor.js';
-import {blank,branch,total,validBuild,changeRank,normalize,route,reserved,moveTalent,defaultBudget,abilityTalentDraft,placeAbilityTalent,synchronizeAbilityTalents,abilityUnlocked,removeAbility} from './engine.js';
+import {blank,branch,total,validBuild,changeRank,normalize,route,reserved,moveTalent,defaultBudget,abilityTalentDraft,placeAbilityTalent,synchronizeAbilityTalents,abilityUnlocked,removeAbility,dependencyRoutes,talentState} from './engine.js';
 import {icons,iconURL} from './icons.js';
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -28,8 +28,8 @@ function render() {
  const row=Math.floor(i/4),col=i%4,t=b.talents.find(t=>t.row===row&&t.col===col);
  if(!t) return `<button class="slot ${mode==='play'?'empty-slot':''}" data-row="${row}" data-col="${col}" aria-label="Создать талант: ряд ${row+1}, столбец ${col+1}" ${mode!=='edit'?'disabled':''}>${mode==='edit'?'+':'·'}</button>`;
  const rank=doc.build[t.id]||0, next={...doc.build,[t.id]:rank+1};
- const available=validBuild(doc,next), desc=t.descriptions[Math.max(0,rank-1)]||'Описание не задано';
- return `<button class="slot filled ${rank===t.maxRank?'maxed':available?'available':rank?'':'locked'}" data-talent="${esc(t.id)}" data-row="${row}" data-col="${col}" draggable="${mode==='edit'}" data-tip="${esc(t.name)} (${rank}/${t.maxRank})\n${esc(desc)}${t.requires?'\nТребуется полностью изучить: '+esc(b.talents.find(x=>x.id===t.requires)?.name):''}" aria-label="${esc(t.name)}, ранг ${rank} из ${t.maxRank}"><span class="fallback">✦</span>${image(t.icon)}<span class="rank">${mode==='edit'?'0':rank}/${t.maxRank}</span></button>`;
+ const state=mode==='edit'?'editable':talentState(doc,t), desc=t.descriptions[Math.max(0,rank-1)]||'Описание не задано';
+ return `<button class="slot filled ${state} ${t.grantedAbilityId?'ability-talent':''}" data-state="${state}" data-talent="${esc(t.id)}" data-row="${row}" data-col="${col}" draggable="${mode==='edit'}" data-tip="${esc(t.name)} (${rank}/${t.maxRank})\n${esc(desc)}${t.requires?'\nТребуется полностью изучить: '+esc(b.talents.find(x=>x.id===t.requires)?.name):''}" aria-label="${esc(t.name)}, ранг ${rank} из ${t.maxRank}"><span class="fallback">✦</span>${image(t.icon)}<span class="rank">${mode==='edit'?'0':rank}/${t.maxRank}</span></button>`;
  }).join('')}</div>${mode==='edit'?'<div class="tree-footer"><button data-action="add-row">＋ Добавить ряд</button><button data-action="remove-row" title="Удалить последний ряд">− Ряд</button></div>':''}</article>`).join('');
  $('#abilities').innerHTML=doc.abilities.length?doc.abilities.map(a=>{const unlocked=abilityUnlocked(doc,a);return `<button class="ability-card ${mode==='play'&&!unlocked?'locked':''}" data-ability="${esc(a.id)}" draggable="${mode==='edit'}">${image(a.icon)}<div><strong>${esc(a.name)}</strong><p>${esc(a.description)}</p><p>${abilityStats(a).map(esc).join(' · ')}</p>${a.talentId?`<small class="gold">${unlocked?'✦':'🔒'} ${esc(doc.branches.flatMap(b=>b.talents).find(t=>t.id===a.talentId)?.name||'Талант удалён')}</small>`:''}</div></button>`;}).join(''):'<div class="empty"><strong>Здесь начинается арсенал твоего класса</strong>Добавь первую способность — активную или пассивную.</div>';
  requestAnimationFrame(drawDependencies);
@@ -38,18 +38,18 @@ function drawDependencies(){
  for(const tree of document.querySelectorAll('.tree')){
   const b=doc.branches.find(b=>b.id===tree.dataset.branch), grid=tree.querySelector('.talent-grid');
   grid.querySelector('svg')?.remove();
+  const planned=dependencyRoutes(b);
+  tree.querySelector('.route-warning')?.remove();if([...planned.values()].some(path=>!path))tree.insertAdjacentHTML('beforeend','<p class="route-warning">Нет свободного пути для всех стрелок. Измени зависимости.</p>');
   const lines=b.talents.filter(t=>t.requires).map(t=>{
-   const child=[...grid.querySelectorAll('[data-talent]')].find(el=>el.dataset.talent===t.id), parent=[...grid.querySelectorAll('[data-talent]')].find(el=>el.dataset.talent===t.requires);
-   if(!child||!parent)return '';
-   const path=route(b,b.talents.find(p=>p.id===t.requires),t);
-   if(!path)return '';
-   const cells=[...grid.querySelectorAll('.slot')];
-   const points=path.map(([r,c])=>{const el=cells[r*4+c];return [el.offsetLeft+el.offsetWidth/2,el.offsetTop+el.offsetHeight/2];});
-   const trim=(a,z)=>{const dx=z[0]-a[0],dy=z[1]-a[1],len=Math.hypot(dx,dy);return [a[0]+dx/len*(child.offsetWidth/2+2),a[1]+dy/len*(child.offsetHeight/2+2)];};
-   points[0]=trim(points[0],points[1]);points[points.length-1]=trim(points.at(-1),points.at(-2));
-   return `<polyline points="${points.map(p=>p.join(',')).join(' ')}" fill="none" stroke="#a28a54" stroke-width="2" marker-end="url(#arrow-${b.id})"/>`;
+   const child=[...grid.querySelectorAll('[data-talent]')].find(el=>el.dataset.talent===t.id),parentTalent=b.talents.find(p=>p.id===t.requires),parent=[...grid.querySelectorAll('[data-talent]')].find(el=>el.dataset.talent===t.requires),path=planned.get(t.id);
+   if(!child||!parent||!path)return '';
+   const cells=[...grid.querySelectorAll('.slot')],points=path.map(([r,c])=>{const el=cells[r*4+c];return [el.offsetLeft+el.offsetWidth/2,el.offsetTop+el.offsetHeight/2];});
+   const trim=(a,z,size)=>{const dx=z[0]-a[0],dy=z[1]-a[1],len=Math.hypot(dx,dy);return [a[0]+dx/len*size,a[1]+dy/len*size];};
+   points[0]=trim(points[0],points[1],parent.offsetWidth/2+2);points[points.length-1]=trim(points.at(-1),points.at(-2),child.offsetWidth/2+3);
+   const earlier=b.talents.filter(p=>p.row<t.row).reduce((sum,p)=>sum+(doc.build[p.id]||0),0),active=mode==='edit'||((doc.build[parentTalent.id]||0)===parentTalent.maxRank&&earlier>=t.row*doc.rowCost),status=active?'active':'inactive',coordinates=points.map(p=>p.join(',')).join(' ');
+   return `<g class="dependency-arrow ${status}" data-dependency="${esc(t.id)}"><polyline class="arrow-shadow" points="${coordinates}"/><polyline class="arrow-body" points="${coordinates}"/><polyline class="arrow-highlight" points="${coordinates}" marker-end="url(#arrow-${status}-${b.id})"/></g>`;
   }).join('');
-  grid.insertAdjacentHTML('afterbegin',`<svg class="dependency" aria-hidden="true"><defs><marker id="arrow-${esc(b.id)}" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#a28a54"/></marker></defs>${lines}</svg>`);
+  grid.insertAdjacentHTML('afterbegin',`<svg class="dependency" aria-hidden="true"><defs>${['active','inactive'].map(state=>`<marker id="arrow-${state}-${esc(b.id)}" markerWidth="12" markerHeight="12" viewBox="0 0 12 12" refX="10" refY="6" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1 L11 6 L1 11 L3 6 Z" fill="${state==='active'?'#ffda35':'#929292'}" stroke="${state==='active'?'#362500':'#191919'}" stroke-width="1.2"/></marker>`).join('')}</defs>${lines}</svg>`);
  }
 }
 window.addEventListener('resize',drawDependencies);
@@ -79,11 +79,12 @@ function editTalent(b,row,col,existing,draft){
  if(t.grantedAbilityId){editAbilityPlacement(b,t,existing);return;}
  let rankEditor;
  function eligible(p){const candidate=p;if(p.id===t.id||p.row>t.row)return false;const seen=new Set();while(p.requires){if(p.requires===t.id||seen.has(p.id))return false;seen.add(p.id);p=b.talents.find(x=>x.id===p.requires);if(!p)return false;}return !!route(b,candidate,t);}
- modal(existing?'Редактировать талант':'Новый талант',field('talentName','НАЗВАНИЕ',t.name,'text','required maxlength="100"')+iconPicker(t.icon)+`<div class="two-cols"><div>${field('maxRank','КОЛИЧЕСТВО РАНГОВ',t.maxRank,'number','min="1" max="100" required')}</div><div><label for="requires">ТРЕБУЕТ ТАЛАНТ (ПОЛНЫЙ РАНГ)</label><select id="requires"><option value="">Без зависимости</option>${b.talents.filter(eligible).map(p=>`<option value="${esc(p.id)}" ${t.requires===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div></div><div id="rankFields" class="rank-editor"></div>`,()=>{
+ modal(existing?'Редактировать талант':'Новый талант',field('talentName','НАЗВАНИЕ',t.name,'text','required maxlength="100"')+iconPicker(t.icon)+`<div class="two-cols"><div>${field('maxRank','КОЛИЧЕСТВО РАНГОВ',t.maxRank,'number','min="1" max="100" required')}</div><div><label for="requires">ТРЕБУЕТ ТАЛАНТ (ПОЛНЫЙ РАНГ)</label><select id="requires"><option value="">Без зависимости</option>${t.requires&&!b.talents.filter(eligible).some(p=>p.id===t.requires)?`<option value="${esc(t.requires)}" selected>Текущая зависимость: нужно изменить маршрут</option>`:''}${b.talents.filter(eligible).map(p=>`<option value="${esc(p.id)}" ${t.requires===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div></div><div id="rankFields" class="rank-editor"></div>`,()=>{
   const maxRank=Number($('#maxRank').value),rankResult=rankEditor.result();
   const updated={...t,name:$('#talentName').value.trim(),icon:readIcon(),maxRank,requires:$('#requires').value,descriptions:rankResult.descriptions};
   if(rankResult.rankTemplate)updated.rankTemplate=rankResult.rankTemplate;else delete updated.rankTemplate;
   if(!updated.name)throw Error('Введи название');
+  if([...dependencyRoutes({...b,talents:b.talents.filter(x=>x.id!==updated.id).concat(updated)}).values()].some(p=>!p))throw Error('Стрелки пересекаются или нет свободного пути. Измени зависимость.');
   if(existing)b.talents[b.talents.indexOf(existing)]=updated;else b.talents.push(updated);
   if(!validBuild(doc,doc.build)) doc.build={};changed();render();$('#modal').close();
  },existing?()=>{
@@ -98,7 +99,7 @@ function editTalent(b,row,col,existing,draft){
 function editAbilityPlacement(b,t,existing){
  const ability=doc.abilities.find(a=>a.id===t.grantedAbilityId);if(!ability){toast('Способность не найдена');return;}
  function eligible(p){if(p.id===t.id||p.row>t.row)return false;let current=p;const seen=new Set();while(current.requires){if(current.requires===t.id||seen.has(current.id))return false;seen.add(current.id);current=b.talents.find(x=>x.id===current.requires);if(!current)return false;}return !!route(b,p,t);}
- modal('Зависимость: '+ability.name,`<label for="requires">ТРЕБУЕТ ТАЛАНТ (ПОЛНЫЙ РАНГ)</label><select id="requires"><option value="">Без зависимости</option>${b.talents.filter(eligible).map(p=>`<option value="${esc(p.id)}" ${t.requires===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select><p class="muted">Название, иконка и описание берутся из способности и изменяются в списке способностей.</p>`,()=>{const updated=abilityTalentDraft(ability,{...t,requires:$('#requires').value});if(existing)b.talents[b.talents.indexOf(existing)]=updated;else b.talents.push(updated);if(!validBuild(doc,doc.build))doc.build={};changed();render();$('#modal').close();},existing?()=>{if(!confirm('Убрать способность из этой ячейки?'))return;b.talents=b.talents.filter(x=>x.id!==t.id);for(const p of b.talents)if(p.requires===t.id)p.requires='';for(const a of doc.abilities)if(a.talentId===t.id)a.talentId='';doc.build={};changed();render();$('#modal').close();}:null);
+ modal('Зависимость: '+ability.name,`<label for="requires">ТРЕБУЕТ ТАЛАНТ (ПОЛНЫЙ РАНГ)</label><select id="requires"><option value="">Без зависимости</option>${t.requires&&!b.talents.filter(eligible).some(p=>p.id===t.requires)?`<option value="${esc(t.requires)}" selected>Текущая зависимость: нужно изменить маршрут</option>`:''}${b.talents.filter(eligible).map(p=>`<option value="${esc(p.id)}" ${t.requires===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select><p class="muted">Название, иконка и описание берутся из способности и изменяются в списке способностей.</p>`,()=>{const updated=abilityTalentDraft(ability,{...t,requires:$('#requires').value});if([...dependencyRoutes({...b,talents:b.talents.filter(x=>x.id!==updated.id).concat(updated)}).values()].some(p=>!p))throw Error('Стрелки пересекаются или нет свободного пути. Измени зависимость.');if(existing)b.talents[b.talents.indexOf(existing)]=updated;else b.talents.push(updated);if(!validBuild(doc,doc.build))doc.build={};changed();render();$('#modal').close();},existing?()=>{if(!confirm('Убрать способность из этой ячейки?'))return;b.talents=b.talents.filter(x=>x.id!==t.id);for(const p of b.talents)if(p.requires===t.id)p.requires='';for(const a of doc.abilities)if(a.talentId===t.id)a.talentId='';doc.build={};changed();render();$('#modal').close();}:null);
 }
 function editAbility(existing,onSaved=null,onCancel=null){
  const a=existing||{id:crypto.randomUUID(),name:'',description:'',icon:'inv_misc_questionmark',resource:'',cast:'',cooldown:'',range:'',talentId:''};
