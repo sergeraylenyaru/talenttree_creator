@@ -30,6 +30,29 @@ class PublicationAPI(unittest.TestCase):
         self.assertEqual(status,200,result)
         return owner,pid,result['token'],document
 
+    def test_builds_stay_out_of_server_documents_and_legacy_links(self):
+        owner,pid,token,document=self.publish(visibility='unlisted')
+        document['branches'][0]['talents']=[{'id':'talent','name':'Сила','row':0,'col':0,'icon':'inv_misc_questionmark','maxRank':5,'descriptions':['1','2','3','4','5'],'requires':''}]
+        document['build']={'talent':3}
+        self.assertEqual(self.request(owner,'/api/projects',{'id':pid,'document':document})[0],200)
+        self.assertEqual(self.request(owner,'/api/projects/'+pid)[1]['document']['build'],{})
+        for endpoint,payload in [('/api/publish',{'projectId':pid}),('/api/share',{'document':document})]:
+            status,result,_=self.request(owner,endpoint,payload)
+            self.assertEqual(status,200,result)
+            new_token=result['token']
+            self.assertEqual(self.request(self.client(),'/api/shared/'+new_token)[1]['document']['build'],{})
+            with server.connect() as db:
+                self.assertEqual(json.loads(db.execute('SELECT document FROM shares WHERE token=?',(new_token,)).fetchone()[0])['build'],{})
+        # Old database rows must also open empty without republishing or rewriting the snapshot.
+        with server.connect() as db:
+            db.execute('UPDATE shares SET document=? WHERE token=?',(json.dumps(document),token))
+            db.execute('UPDATE projects SET document=? WHERE id=?',(json.dumps(document),pid))
+        self.assertEqual(self.request(self.client(),'/api/shared/'+token)[1]['document']['build'],{})
+        self.assertEqual(self.request(owner,'/api/projects/'+pid)[1]['document']['build'],{})
+        with server.connect() as db:
+            self.assertEqual(json.loads(db.execute('SELECT document FROM projects WHERE id=?',(pid,)).fetchone()[0])['build'],{'talent':3})
+        self.assertEqual(document['build'],{'talent':3})
+
     def test_visibility_ownership_and_immutable_versions(self):
         owner,pid,token,document=self.publish(visibility='unlisted');guest=self.client()
         self.assertEqual(self.request(guest,'/api/rankings')[1]['publications'],[])

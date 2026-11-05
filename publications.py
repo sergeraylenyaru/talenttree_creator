@@ -3,6 +3,10 @@ import json
 import time
 import secrets
 
+def without_build(document):
+    """Keep allocations in the visitor browser, including for legacy documents."""
+    return {**document, "build": {}}
+
 def migrate(db):
     columns={r[1] for r in db.execute('PRAGMA table_info(shares)')}
     for name, declaration in {'owner_id':'INTEGER','project_id':'TEXT','publication_version':'INTEGER NOT NULL DEFAULT 1','visibility':"TEXT NOT NULL DEFAULT 'unlisted'",'published_at':'INTEGER','archived_at':'INTEGER'}.items():
@@ -54,7 +58,7 @@ def create(db,document,owner_id,project_id=None,visibility='unlisted'):
         db.execute('INSERT INTO publication_sequences VALUES(?,?,1) ON CONFLICT(owner_id,project_id) DO UPDATE SET latest=latest+1',(owner_id,project_id))
         version=db.execute('SELECT latest FROM publication_sequences WHERE owner_id=? AND project_id=?',(owner_id,project_id)).fetchone()[0]
     token=secrets.token_urlsafe(24);now=int(time.time())
-    db.execute('INSERT INTO shares(token,document,created,owner_id,project_id,publication_version,visibility,published_at) VALUES(?,?,?,?,?,?,?,?)',(token,json.dumps(document),now,owner_id,project_id,version,visibility,now))
+    db.execute('INSERT INTO shares(token,document,created,owner_id,project_id,publication_version,visibility,published_at) VALUES(?,?,?,?,?,?,?,?)',(token,json.dumps(without_build(document)),now,owner_id,project_id,version,visibility,now))
     return token
 
 def listing(db,user_id=None,sort='views',page=0,owned=False,archived=False):

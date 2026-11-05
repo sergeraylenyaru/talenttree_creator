@@ -197,7 +197,7 @@ def validate(document):
                 value = ability.get(field)
                 if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1000000000:
                     raise ValueError('Параметры способности должны быть неотрицательными числами')
-    return document
+    return publications.without_build(document)
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -286,7 +286,7 @@ class Handler(SimpleHTTPRequestHandler):
                     if len(parts) == 1 and method == 'GET':
                         db.execute('INSERT OR IGNORE INTO share_views VALUES(?,?)', (token, hashlib.sha256(visitor.encode()).hexdigest()))
                         db.commit()
-                        return self.reply(200, {'document': json.loads(row[0]), 'stats': share_stats(db, token), 'publication': publications.info(db, token, uid)}, cookie)
+                        return self.reply(200, {'document': publications.without_build(json.loads(row[0])), 'stats': share_stats(db, token), 'publication': publications.info(db, token, uid)}, cookie)
                     if len(parts) == 2 and parts[1] == 'interact' and method == 'POST':
                         db.execute('INSERT OR IGNORE INTO share_allocations VALUES(?,?)', (token, hashlib.sha256(visitor.encode()).hexdigest()))
                         db.commit()
@@ -452,7 +452,7 @@ class Handler(SimpleHTTPRequestHandler):
                     if not row:
                         return self.reply(404, {'error': 'Проект не найден'})
                     if method == 'GET':
-                        return self.reply(200, {'document': json.loads(row[0]), 'id': pid})
+                        return self.reply(200, {'document': publications.without_build(json.loads(row[0])), 'id': pid})
                     if method == 'DELETE':
                         db.execute('DELETE FROM projects WHERE id=? AND user_id=?', (pid,user[0]))
                         db.commit()

@@ -1,3 +1,4 @@
+import {withoutBuild,restoreBrowserBuild,saveBrowserBuild} from './browser-build.js';
 import {classEmblem,defaultClassIcon} from './class-emblem.js';
 import {glyph,initUI,notify,notificationUser,closeMenus} from './ui.js';
 import {publicationRow} from './publication-view.js';
@@ -9,7 +10,8 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 let doc=blank(), projectId=null, user=null, mode='play', modalSave=null, modalDelete=null, dirty=false,modalCancel=null,abilityView='icons',favoritePick=false;
 try { const draft=JSON.parse(localStorage.getItem('talentforge-draft')); if(draft) doc=normalize(draft,{allowLegacy:true}); } catch {}
 function toast(message) { notify(message); $('#toast').textContent=message;$('#toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').hidden=true,4200); }
-function changed() { synchronizeAbilityTalents(doc);remember();dirty=true;$('#saveState').textContent='Есть несохранённые изменения';try{localStorage.setItem('talentforge-draft',JSON.stringify(doc));}catch{toast('Браузер не сохранил черновик. Экспортируй класс в JSON.');} }
+function persistBrowserBuild(){try{if(activeShare)saveBrowserBuild(doc,'share:'+activeShare);if(projectId)saveBrowserBuild(doc,'project:'+projectId);}catch{toast('Браузер не сохранил распределение очков.');}}
+function changed() { synchronizeAbilityTalents(doc);persistBrowserBuild();remember();dirty=true;$('#saveState').textContent='Есть несохранённые изменения';try{localStorage.setItem('talentforge-draft',JSON.stringify(doc));}catch{toast('Браузер не сохранил черновик. Экспортируй класс в JSON.');} }
 async function api(path, data, method) {
  const options={method:method||(data?'POST':'GET'),headers:{'Content-Type':'application/json'}};
  if(data) options.body=JSON.stringify(data);
@@ -224,7 +226,7 @@ $('#preset').onclick=async()=>{
   for(const b of document.querySelectorAll('[data-version]'))b.onclick=()=>{version=b.dataset.version;drawClasses();};drawClasses();$('#submitModal').textContent=user?'Загрузить класс':'Открыть калькулятор';
  }catch(err){toast(err.message);}
 };
-$('#export').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(doc,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`${doc.name.replace(/[^\p{L}\p{N}_-]/gu,'_')}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+$('#export').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(withoutBuild(doc),null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`${doc.name.replace(/[^\p{L}\p{N}_-]/gu,'_')}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 $('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{
  try{const file=e.target.files[0];if(!file)return;if(file.size>2_000_000)throw Error('Файл больше 2 МБ');const incoming=normalize(JSON.parse(await file.text()));if(dirty&&!confirm('Заменить текущий черновик импортированным классом?'))return;doc=incoming;projectId=null;activeShare=null;changed();render();toast('Класс импортирован');}catch(err){toast(err.message);}finally{e.target.value='';}
 };
@@ -246,13 +248,13 @@ $('#auth').onclick=()=>auth();
 $('#logout').onclick=async()=>{try{await api('/logout',{});const privateView=activeShare&&(activePublication?.visibility==='private'||activePublication?.archived);if(privateView){try{if(localStorage.getItem('talentforge-draft')===JSON.stringify(doc))localStorage.removeItem('talentforge-draft');}catch{}doc=blank();activeShare=null;activePublication=null;dirty=false;history.replaceState(null,'',location.pathname);showWorkspace();}user=null;projectId=null;mode='play';resetHistory();renderUser();render();toast(privateView?'Выход выполнен. Просмотр закрытой публикации завершён.':'Выход выполнен. Локальный черновик остаётся в этом браузере.');}catch(err){toast(err.message);}};
 $('#save').onclick=async()=>{
  if(!user){auth();return;}const button=$('#save');button.disabled=true;button.setAttribute('aria-busy','true');
- try{const result=await api('/projects',{id:projectId,document:normalize(doc),sourceShare:activeShare});projectId=result.id;dirty=false;refreshShareStats();$('#saveState').textContent='Сохранено в аккаунте';toast('Класс и текущий билд сохранены');}catch(err){toast(err.message);}finally{button.disabled=false;button.setAttribute('aria-busy','false');}
+ try{const result=await api('/projects',{id:projectId,document:withoutBuild(normalize(doc)),sourceShare:activeShare});projectId=result.id;persistBrowserBuild();dirty=false;refreshShareStats();$('#saveState').textContent='Сохранено в аккаунте';toast('Класс сохранён в аккаунте. Очки калькулятора — только в этом браузере.');}catch(err){toast(err.message);}finally{button.disabled=false;button.setAttribute('aria-busy','false');}
 };
 $('#share').onclick=()=>{
  if(!user){auth();return;}
- modal('Зафиксировать версию',`<p>Будет сохранён и опубликован неизменяемый снимок класса с текущим билдом. Последующие правки рабочего класса не изменят эту версию.</p><label for="publicationVisibility">ВИДИМОСТЬ</label><select id="publicationVisibility"><option value="private">Только мне — доступно только автору</option><option value="unlisted" selected>Только по ссылке</option><option value="public">Общедоступное — участвует в рейтингах</option></select><p class="muted">Общедоступную версию смогут найти в рейтинге. Версию по ссылке увидят только те, кому передана ссылка.</p>`,async()=>{
+ modal('Зафиксировать версию',`<p>Будет сохранён и опубликован неизменяемый снимок класса без распределённых очков. Личный билд сохраняется только в браузере посетителя. Последующие правки рабочего класса не изменят эту версию.</p><label for="publicationVisibility">ВИДИМОСТЬ</label><select id="publicationVisibility"><option value="private">Только мне — доступно только автору</option><option value="unlisted" selected>Только по ссылке</option><option value="public">Общедоступное — участвует в рейтингах</option></select><p class="muted">Общедоступную версию смогут найти в рейтинге. Версию по ссылке увидят только те, кому передана ссылка.</p>`,async()=>{
   const visibility=$('#publicationVisibility').value;
-  const saved=await api('/projects',{id:projectId,document:normalize(doc),sourceShare:activeShare});projectId=saved.id;
+  const saved=await api('/projects',{id:projectId,document:withoutBuild(normalize(doc)),sourceShare:activeShare});projectId=saved.id;persistBrowserBuild();
   const result=await api('/publish',{projectId,visibility});dirty=false;$('#saveState').textContent='Сохранено в аккаунте';
   const url=new URL(location.href);url.search='';url.searchParams.set('share',result.token);url.hash='';
   $('#modal').close();modal('Версия '+result.publication.version+' зафиксирована',field('shareURL','ССЫЛКА НА ПУБЛИКАЦИЮ',url.href,'text','readonly')+`<p>${visibility==='public'?'Публикация появилась в рейтинге.':visibility==='private'?'Только мне — открыть эту версию можешь только ты из своего аккаунта.':'Только по ссылке — в рейтинге не показывается.'}</p><p class="muted">Статистика и управление видимостью — в «Мои публикации».</p>`,null);$('#shareURL').select();
@@ -261,7 +263,7 @@ $('#share').onclick=()=>{
 $('#projects').onclick=()=>openLibrary('projects');
 async function loadWorkingProject(pid,copy=false){
  if(dirty&&!confirm('Заменить текущий черновик выбранным деревом?'))return;
- const result=await api('/projects/'+encodeURIComponent(pid));doc=normalize(result.document,{allowLegacy:true});activeShare=null;activePublication=null;allocationSent=false;projectId=copy?null:pid;mode='edit';if(copy)doc.name+=' — копия';showWorkspace();if(copy)changed();else{dirty=false;try{localStorage.setItem('talentforge-draft',JSON.stringify(doc));}catch{}$('#saveState').textContent='Сохранено в аккаунте';}resetHistory();render();history.replaceState(null,'',location.pathname);if($('#modal').open)$('#modal').close();
+ const result=await api('/projects/'+encodeURIComponent(pid));doc=restoreBrowserBuild(normalize(result.document,{allowLegacy:true}),'project:'+pid);activeShare=null;activePublication=null;allocationSent=false;projectId=copy?null:pid;mode='edit';if(copy)doc.name+=' — копия';showWorkspace();if(copy)changed();else{dirty=false;try{localStorage.setItem('talentforge-draft',JSON.stringify(doc));}catch{}$('#saveState').textContent='Сохранено в аккаунте';}resetHistory();render();history.replaceState(null,'',location.pathname);if($('#modal').open)$('#modal').close();
 }
 let libraryRequest=0;
 async function openLibrary(scope){
@@ -383,7 +385,7 @@ function snapshot(){return JSON.stringify({document:doc,projectId,share:activeSh
 function remember(){const next=snapshot();if(historyCurrent&&next!==historyCurrent){undoStates.push(historyCurrent);if(undoStates.length>100)undoStates.shift();redoStates.length=0;}historyCurrent=next;updateHistoryButtons();}
 function resetHistory(){undoStates.length=0;redoStates.length=0;historyCurrent=snapshot();updateHistoryButtons();}
 function updateHistoryButtons(){$('#undo').disabled=!undoStates.length;$('#redo').disabled=!redoStates.length;}
-function restoreHistory(redo=false){const from=redo?redoStates:undoStates,to=redo?undoStates:redoStates;if(!from.length)return;to.push(snapshot());const state=JSON.parse(from.pop());doc=normalize(state.document,{allowLegacy:true});projectId=state.projectId;activeShare=state.share;historyCurrent=snapshot();dirty=true;try{localStorage.setItem('talentforge-draft',JSON.stringify(doc));}catch{}render();$('#saveState').textContent='Есть несохранённые изменения';refreshShareStats();}
+function restoreHistory(redo=false){const from=redo?redoStates:undoStates,to=redo?undoStates:redoStates;if(!from.length)return;to.push(snapshot());const state=JSON.parse(from.pop());doc=normalize(state.document,{allowLegacy:true});projectId=state.projectId;activeShare=state.share;persistBrowserBuild();historyCurrent=snapshot();dirty=true;try{localStorage.setItem('talentforge-draft',JSON.stringify(doc));}catch{}render();$('#saveState').textContent='Есть несохранённые изменения';refreshShareStats();}
 $('#undo').onclick=()=>restoreHistory();$('#redo').onclick=()=>restoreHistory(true);
 document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&!e.target.closest('input,textarea,select')&&['z','y'].includes(e.key.toLowerCase())){e.preventDefault();restoreHistory(e.key.toLowerCase()==='y'||e.shiftKey);}});
 document.addEventListener('click',e=>{if(!user&&e.target.closest('#new,#editMode,#export,#import,#characterSettings,#addBranch,#addAbility')){e.preventDefault();e.stopImmediatePropagation();auth();}},true);
@@ -399,7 +401,7 @@ function showPublication(info){
 }
 async function openPublication(token){
  if(dirty&&!confirm('Открыть опубликованную версию и заменить текущий черновик?'))return;
- const result=await api('/shared/'+encodeURIComponent(token));doc=normalize(result.document,{allowLegacy:true});projectId=null;activeShare=token;allocationSent=false;dirty=false;mode='play';resetHistory();showWorkspace();showShareStats(result.stats);showPublication(result.publication);render();$('#saveState').textContent='Копия опубликованной версии';const url=new URL(location.href);url.search='';url.searchParams.set('share',token);history.replaceState(null,'',url);
+ const result=await api('/shared/'+encodeURIComponent(token));doc=restoreBrowserBuild(normalize(result.document,{allowLegacy:true}),'share:'+token);projectId=null;activeShare=token;allocationSent=false;dirty=false;mode='play';resetHistory();showWorkspace();showShareStats(result.stats);showPublication(result.publication);render();$('#saveState').textContent='Копия опубликованной версии';const url=new URL(location.href);url.search='';url.searchParams.set('share',token);history.replaceState(null,'',url);
 }
 $('#rankings').onclick=()=>openCommunity('rankings');$('#publications').onclick=()=>{if(!user){auth();return;}openCommunity('mine');};
 async function openCommunity(scope='rankings'){
@@ -434,5 +436,5 @@ render();api('/me').then(result=>{user=result.user;if(user&&!activeShare)mode='e
 const sharedToken=new URLSearchParams(location.search).get('share');
 if(sharedToken) api('/shared/'+encodeURIComponent(sharedToken)).then(result=>{
  if(dirty&&!confirm('Открыть класс по ссылке и заменить черновик?'))return;
- doc=normalize(result.document,{allowLegacy:true});projectId=null;activeShare=sharedToken;showShareStats(result.stats);showPublication(result.publication);mode='play';resetHistory();render();$('#saveState').textContent='Копия класса по ссылке';toast('Открыта копия класса. Изменения не затрагивают оригинал.');
+ doc=restoreBrowserBuild(normalize(result.document,{allowLegacy:true}),'share:'+sharedToken);projectId=null;activeShare=sharedToken;showShareStats(result.stats);showPublication(result.publication);mode='play';resetHistory();render();$('#saveState').textContent='Копия класса по ссылке';toast('Открыта копия класса. Изменения не затрагивают оригинал.');
 }).catch(err=>toast(err.message));
