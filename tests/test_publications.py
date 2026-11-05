@@ -205,11 +205,11 @@ class PublicationAPI(unittest.TestCase):
     def test_emblem_transform_and_glow_validation(self):
         owner=self.client();self.register(owner,'transform_owner')
         document=copy.deepcopy(base.DOCUMENT)
-        model={'background':'#123456','glow':{'color':'#fedcba','radius':100,'strength':80},'layers':[{'icon':'inv_sword_04','opacity':.8,'x':25,'y':-20,'scale':1.25,'rotation':90}]}
+        model={'glow':{'color':'#fedcba','radius':100,'strength':80},'layers':[{'icon':'inv_sword_04','opacity':.8,'x':25,'y':-20,'scale':1.5,'rotation':90}]}
         document['classIcon']=model
         status,result,_=self.request(owner,'/api/projects',{'document':document});self.assertEqual(status,200)
         self.assertEqual(self.request(owner,'/api/projects/'+result['id'])[1]['document']['classIcon'],model)
-        for field,value in [('x',101),('y',-101),('scale',.74),('scale',1.26),('rotation',181)]:
+        for field,value in [('x',101),('y',-101),('scale',.74),('scale',1.51),('rotation',181)]:
             bad=copy.deepcopy(model);bad['layers'][0][field]=value;document['classIcon']=bad
             self.assertEqual(self.request(owner,'/api/projects',{'document':document})[0],400)
         for field,value in [('radius',-1),('strength',101),('color','url(x)')]:

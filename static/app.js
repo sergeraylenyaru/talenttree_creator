@@ -75,7 +75,7 @@ $('#zoomOut').onclick=()=>setTreeZoom(treeZoom-.1);$('#zoomIn').onclick=()=>setT
 $('#focusBranch').onchange=e=>{const tree=[...document.querySelectorAll('.tree')].find(t=>t.dataset.branch===e.target.value);if(tree)tree.scrollIntoView({block:'nearest',inline:'start',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});else $('#trees').scrollLeft=0;};
 window.addEventListener('resize',drawDependencies);
 function modal(title, body, save, remove) {
- $('#modal').classList.remove('avatar-picker');modalCancel=null;$('#favoriteItem').hidden=true;
+ $('#modal').classList.remove('avatar-picker','compact-emblem-dialog');modalCancel=null;$('#favoriteItem').hidden=true;
  $('#modalTitle').textContent=title;$('#modalBody').innerHTML=body;$('#formError').textContent='';modalSave=save;modalDelete=remove;
  $('#submitModal').hidden=!save;$('#deleteItem').hidden=!remove;$('#modal').showModal();
 }
@@ -171,36 +171,39 @@ for(const id of ['className','budget','rowCost'])$('#'+id).onchange=()=>{
 $('#classIcon').onclick=()=>{if(!user){auth();return;}if(mode==='edit')editClassIcon();};
 function editClassIcon(input=null,selectedLayer=0){
  const draft=structuredClone(input||doc.classIcon||defaultClassIcon(branchIcon(doc.branches[0])));
+ delete draft.background;
  let second=draft.layers.length===2,active=selectedLayer;
  if(!second)draft.layers.push({icon:'inv_sword_04',opacity:.55});
- draft.glow??={color:'#e9b65f',radius:5,strength:0};
+ draft.glow??={color:'#e9b65f',radius:25,strength:55};
  for(const layer of draft.layers)Object.assign(layer,{x:layer.x??0,y:layer.y??0,scale:layer.scale??1,rotation:layer.rotation??0});
- function readDraft(){
-  draft.background=$('#emblemBackground').value;second=$('#emblemSecond').checked;
-  draft.glow={color:$('#emblemGlowColor').value,radius:Number($('#emblemGlowRadius').value),strength:Number($('#emblemGlowStrength').value)};
-  for(let i=0;i<2;i++){const n=i+1;Object.assign(draft.layers[i],{opacity:Number($('#emblemOpacity'+n).value)/100,x:Number($('#emblemX'+n).value),y:Number($('#emblemY'+n).value),scale:Number($('#emblemScale'+n).value)/100,rotation:Number($('#emblemRotation'+n).value)});}
-  return {background:draft.background,glow:draft.glow,layers:draft.layers.slice(0,second?2:1)};
- }
+ const settings=[['Opacity','Непрозр.',0,100,'%'],['Scale','Размер',75,150,'%'],['Rotation','Поворот',-180,180,'°'],['X','Сдвиг X',-100,100,'%'],['Y','Сдвиг Y',-100,100,'%']];
+ function model(){return {glow:structuredClone(draft.glow),layers:structuredClone(draft.layers.slice(0,second?2:1))};}
+ function controls(){const l=draft.layers[active];for(const [key] of settings)$('#emblem'+key).value=key==='Opacity'?Math.round(l.opacity*100):key==='Scale'?Math.round(l.scale*100):key==='Rotation'?l.rotation:l[key.toLowerCase()];}
  function preview(){
-  const model=readDraft();if(!second)active=0;
-  $('#emblemLivePreview').innerHTML=classEmblem(model);$('#emblemSmallPreview').innerHTML=classEmblem(model);
-  $('#emblemLayer2').hidden=!second;$('#emblemActive option[value="1"]').disabled=!second;$('#emblemActive').value=String(active);
-  for(const el of document.querySelectorAll('[data-emblem-output]')){const control=$('#'+el.dataset.emblemOutput);el.textContent=control.value+(control.id.includes('Rotation')?'°':'%');}
+  if(!second)active=0;
+  const m=model();$('#emblemLivePreview').innerHTML=classEmblem(m);$('#emblemSmallPreview').innerHTML=classEmblem(m);
+  $('#emblemChoice2').hidden=!second;$('#toggleEmblemLayer').textContent=second?'−':'＋';$('#toggleEmblemLayer').setAttribute('aria-label',second?'Убрать вторую иконку':'Добавить вторую иконку');
+  for(const button of document.querySelectorAll('[data-active-emblem]')){const selected=Number(button.dataset.activeEmblem)===active;button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));}
+  for(const [key,, , ,unit] of settings)$('#emblem'+key+'Value').textContent=$('#emblem'+key).value+unit;
+  $('#emblemGlowRadiusValue').textContent=draft.glow.radius+'%';$('#emblemGlowStrengthValue').textContent=draft.glow.strength+'%';
  }
- const slider=(id,label,value,min,max)=>`<label for="${id}">${label}<output data-emblem-output="${id}"></output></label><input type="range" id="${id}" min="${min}" max="${max}" step="1" value="${value}">`;
- const layerForm=(layer,i)=>{const n=i+1;return `<section id="emblemLayer${n}" class="emblem-layer"><div><strong>${i?'Верхний':'Нижний'} слой</strong><button type="button" data-emblem-layer="${i}">${image(layer.icon)}Выбрать иконку</button></div>${slider('emblemOpacity'+n,'Непрозрачность',Math.round(layer.opacity*100),0,100)}${slider('emblemScale'+n,'Размер · от 75% до 125%',Math.round(layer.scale*100),75,125)}${slider('emblemRotation'+n,'Вращение вокруг центра круга',layer.rotation,-180,180)}<div class="emblem-position-controls"><div>${slider('emblemX'+n,'Сдвиг по X',layer.x,-100,100)}</div><div>${slider('emblemY'+n,'Сдвиг по Y',layer.y,-100,100)}</div></div><button type="button" data-reset-emblem="${i}" class="text-button">Сбросить положение, размер и поворот</button></section>`;};
- modal('Иконка класса',`<p class="muted">Перетаскивай выбранный слой мышью или пальцем. Ползунки позволяют точно настроить положение, размер и поворот.</p><div class="emblem-preview-row"><div id="emblemLivePreview" tabindex="0" role="img" aria-label="Предпросмотр эмблемы. Стрелки двигают выбранный слой."></div><div><strong>${esc(doc.name)}</strong><p class="muted">В списках: <span id="emblemSmallPreview"></span></p><label for="emblemActive">Двигать слой</label><select id="emblemActive"><option value="0">Нижний</option><option value="1">Верхний</option></select></div></div><label for="emblemBackground">ЦВЕТ ФОНА</label><input type="color" id="emblemBackground" value="${esc(draft.background)}"><section class="emblem-layer"><strong>Свечение из центра</strong><p class="muted">Радиус — от точки до всего круга со светлым краем. Чтобы видеть фон, уменьши непрозрачность иконок.</p><label for="emblemGlowColor">Цвет свечения</label><input type="color" id="emblemGlowColor" value="${draft.glow.color}">${slider('emblemGlowRadius','Радиус свечения',draft.glow.radius,0,100)}${slider('emblemGlowStrength','Яркость свечения',draft.glow.strength,0,100)}</section>${layerForm(draft.layers[0],0)}<label class="emblem-toggle"><input type="checkbox" id="emblemSecond" ${second?'checked':''}> Наложить вторую иконку</label>${layerForm(draft.layers[1],1)}`,()=>{doc.classIcon=structuredClone(readDraft());changed();render();$('#modal').close();});
- for(const el of document.querySelectorAll('#modalBody input'))el.oninput=preview;
- $('#emblemActive').onchange=e=>active=Number(e.target.value);
- for(const button of document.querySelectorAll('[data-reset-emblem]'))button.onclick=()=>{const n=Number(button.dataset.resetEmblem)+1;for(const [key,value] of [['X',0],['Y',0],['Scale',100],['Rotation',0]])$('#emblem'+key+n).value=value;preview();};
- for(const button of document.querySelectorAll('[data-emblem-layer]'))button.onclick=()=>{const model=structuredClone(readDraft()),index=Number(button.dataset.emblemLayer);if(index===1&&model.layers.length===1)model.layers.push(draft.layers[1]);$('#modal').close();setTimeout(()=>{modal(index?'Верхняя иконка класса':'Нижняя иконка класса',iconPicker(model.layers[index].icon),()=>{model.layers[index].icon=readIcon();$('#modal').close();setTimeout(()=>editClassIcon(model,index),0);});modalCancel=()=>editClassIcon(model,index);bindPicker();},0);};
+ const choice=(layer,i)=>`<div id="emblemChoice${i+1}" class="emblem-icon-choice"><button type="button" data-active-emblem="${i}" aria-label="Двигать иконку ${i+1}" title="Выбрать эту иконку для перемещения">${image(layer.icon)}</button><button type="button" class="emblem-replace" data-emblem-layer="${i}" aria-label="Заменить иконку ${i+1}" title="Выбрать другую иконку">${glyph('edit')}</button></div>`;
+ const sliders=settings.map(([key,label,min,max])=>`<label class="emblem-vslider" for="emblem${key}"><output id="emblem${key}Value"></output><input type="range" id="emblem${key}" min="${min}" max="${max}" step="1" aria-label="${label}"><span>${label}</span></label>`).join('');
+ modal('Иконка класса',`<div class="compact-emblem"><div class="compact-emblem-main"><div class="emblem-preview-column"><div id="emblemLivePreview" tabindex="0" role="img" aria-label="Предпросмотр. Перетаскивай выбранную иконку; стрелки двигают её."></div><span id="emblemSmallPreview"></span><div class="emblem-icon-choices">${draft.layers.map(choice).join('')}<button type="button" id="toggleEmblemLayer" class="icon-button"></button></div></div><div class="emblem-slider-bank">${sliders}<button type="button" id="resetEmblemTransform" class="text-button" title="Сбросить положение, размер и поворот выбранной иконки">${glyph('undo')}Сбросить</button></div></div><div class="emblem-star-controls"><label class="emblem-star-color">Свечение<input type="color" id="emblemGlowColor" value="${draft.glow.color}" aria-label="Цвет звезды"></label><label for="emblemGlowRadius">Размер звезды <output id="emblemGlowRadiusValue"></output><input type="range" id="emblemGlowRadius" min="0" max="100" step="1" value="${draft.glow.radius}"></label><label for="emblemGlowStrength">Яркость <output id="emblemGlowStrengthValue"></output><input type="range" id="emblemGlowStrength" min="0" max="100" step="1" value="${draft.glow.strength}"></label></div><p class="muted emblem-help">Нажми на нужную иконку снизу и двигай её в круге. Карандаш меняет изображение. Фон — только звезда; её видно сквозь полупрозрачные слои.</p></div>`,()=>{doc.classIcon=model();changed();render();$('#modal').close();});
+ $('#modal').classList.add('compact-emblem-dialog');
+ for(const [key] of settings)$('#emblem'+key).oninput=e=>{const field=key==='Opacity'?'opacity':key==='Scale'?'scale':key==='Rotation'?'rotation':key.toLowerCase();draft.layers[active][field]=Number(e.target.value)/(key==='Opacity'||key==='Scale'?100:1);preview();};
+ for(const [id,key] of [['emblemGlowRadius','radius'],['emblemGlowStrength','strength'],['emblemGlowColor','color']])$('#'+id).oninput=e=>{draft.glow[key]=key==='color'?e.target.value:Number(e.target.value);preview();};
+ for(const button of document.querySelectorAll('[data-active-emblem]'))button.onclick=()=>{active=Number(button.dataset.activeEmblem);controls();preview();};
+ $('#toggleEmblemLayer').onclick=()=>{second=!second;active=second?1:0;controls();preview();};
+ $('#resetEmblemTransform').onclick=()=>{Object.assign(draft.layers[active],{x:0,y:0,scale:1,rotation:0});controls();preview();};
+ for(const button of document.querySelectorAll('[data-emblem-layer]'))button.onclick=()=>{const m=model(),index=Number(button.dataset.emblemLayer);$('#modal').close();setTimeout(()=>{modal('Выбрать иконку класса',iconPicker(m.layers[index].icon),()=>{m.layers[index].icon=readIcon();$('#modal').close();setTimeout(()=>editClassIcon(m,index),0);});modalCancel=()=>editClassIcon(m,index);bindPicker();},0);};
  const pad=$('#emblemLivePreview');let drag=null;
- const moveLayer=(x,y)=>{const n=active+1;$('#emblemX'+n).value=Math.round(Math.max(-100,Math.min(100,x)));$('#emblemY'+n).value=Math.round(Math.max(-100,Math.min(100,y)));preview();};
- pad.onpointerdown=e=>{if(e.button!==0)return;e.preventDefault();pad.focus({preventScroll:true});readDraft();pad.setPointerCapture(e.pointerId);const layer=draft.layers[active];drag={x:e.clientX,y:e.clientY,baseX:layer.x,baseY:layer.y,rotation:layer.rotation,size:pad.querySelector('.class-emblem').getBoundingClientRect().width};};
- pad.onpointermove=e=>{if(!drag)return;const dx=(e.clientX-drag.x)/drag.size*100,dy=(e.clientY-drag.y)/drag.size*100,angle=drag.rotation*Math.PI/180;moveLayer(drag.baseX+dx*Math.cos(angle)+dy*Math.sin(angle),drag.baseY-dx*Math.sin(angle)+dy*Math.cos(angle));};
+ const move=(x,y)=>{draft.layers[active].x=Math.round(Math.max(-100,Math.min(100,x)));draft.layers[active].y=Math.round(Math.max(-100,Math.min(100,y)));controls();preview();};
+ pad.onpointerdown=e=>{if(e.button!==0)return;e.preventDefault();pad.focus({preventScroll:true});pad.setPointerCapture(e.pointerId);const l=draft.layers[active];drag={x:e.clientX,y:e.clientY,baseX:l.x,baseY:l.y,rotation:l.rotation,size:pad.querySelector('.class-emblem').getBoundingClientRect().width};};
+ pad.onpointermove=e=>{if(!drag)return;const dx=(e.clientX-drag.x)/drag.size*100,dy=(e.clientY-drag.y)/drag.size*100,a=drag.rotation*Math.PI/180;move(drag.baseX+dx*Math.cos(a)+dy*Math.sin(a),drag.baseY-dx*Math.sin(a)+dy*Math.cos(a));};
  pad.onpointerup=pad.onpointercancel=pad.onlostpointercapture=()=>drag=null;
- pad.onkeydown=e=>{const directions={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};if(!directions[e.key])return;e.preventDefault();readDraft();const [x,y]=directions[e.key],step=e.shiftKey?5:1,angle=draft.layers[active].rotation*Math.PI/180;moveLayer(draft.layers[active].x+step*(x*Math.cos(angle)+y*Math.sin(angle)),draft.layers[active].y+step*(-x*Math.sin(angle)+y*Math.cos(angle)));};
- preview();
+ pad.onkeydown=e=>{const delta={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];if(!delta)return;e.preventDefault();const [x,y]=delta,step=e.shiftKey?5:1,l=draft.layers[active],a=l.rotation*Math.PI/180;move(l.x+step*(x*Math.cos(a)+y*Math.sin(a)),l.y+step*(-x*Math.sin(a)+y*Math.cos(a)));};
+ controls();preview();
 }
 $('#new').onclick=()=>{if(dirty&&!confirm('Создать новый класс? Текущий черновик будет заменён. Сначала можно сохранить или экспортировать его.'))return;showWorkspace();doc=blank();projectId=null;activeShare=null;activePublication=null;mode='edit';changed();render();};
 $('#preset').onclick=async()=>{

@@ -89,7 +89,7 @@ def project_summary(row):
 def validate_class_icon(value):
     color=lambda c:isinstance(c,str) and re.fullmatch(r'#[0-9a-fA-F]{6}',c)
     number=lambda v,lo,hi:type(v) in (int,float) and math.isfinite(v) and lo<=v<=hi
-    if not isinstance(value,dict) or not {'background','layers'}<=set(value) or set(value)-{'background','layers','glow'} or not color(value['background']):
+    if not isinstance(value,dict) or 'layers' not in value or set(value)-{'background','layers','glow'} or ('background' in value and not color(value['background'])):
         raise ValueError('Проверь фон иконки класса')
     if 'glow' in value:
         g=value['glow']
@@ -101,8 +101,8 @@ def validate_class_icon(value):
     for layer in layers:
         if not isinstance(layer,dict) or not {'icon','opacity'}<=set(layer) or set(layer)-{'icon','opacity','x','y','scale','rotation'} or not isinstance(layer['icon'],str) or not 1<=len(layer['icon'])<=350000 or not number(layer['opacity'],0,1):
             raise ValueError('Проверь слой и его непрозрачность')
-        for key,lo,hi in [('x',-100,100),('y',-100,100),('scale',.75,1.25),('rotation',-180,180)]:
-            if key in layer and not number(layer[key],lo,hi):raise ValueError('Проверь положение, масштаб 75–125% и угол слоя')
+        for key,lo,hi in [('x',-100,100),('y',-100,100),('scale',.75,1.5),('rotation',-180,180)]:
+            if key in layer and not number(layer[key],lo,hi):raise ValueError('Проверь положение, масштаб 75–150% и угол слоя')
         icon=layer['icon']
         if not (re.fullmatch(r'[A-Za-z0-9_]{1,100}',icon) or icon.startswith('wotlk:') or icon in builtin_images()):raise ValueError('Выбери иконку из каталога')
         if icon.startswith('wotlk:') and not re.fullmatch(r"wotlk:shared/global/talents/[a-z]+/images/[a-z]+/[a-z0-9'_,.\-]+\.jpg",icon):raise ValueError('Неверная иконка класса')
