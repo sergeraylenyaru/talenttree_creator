@@ -1,4 +1,6 @@
 import copy
+import time
+from unittest.mock import patch
 import json
 import sqlite3
 import tempfile
@@ -158,6 +160,62 @@ class PublicationAPI(unittest.TestCase):
             document['classIcon']=bad
             self.assertEqual(self.request(owner,'/api/projects',{'document':document})[0],400,bad)
 
+    def test_archive_restore_preserves_access_policy_stats_and_deadline(self):
+        owner,pid,token,document=self.publish()
+        guest=self.client();other=self.client();self.register(other,'archive_other')
+        self.request(guest,'/api/shared/'+token)
+        self.request(other,'/api/shared/'+token+'/vote',{'vote':1})
+        self.assertEqual(self.request(other,'/api/publications/'+token+'/archive',{})[0],404)
+        archived=self.request(owner,'/api/publications/'+token+'/archive',{})
+        self.assertEqual(archived[0],200);info=archived[1]['publication']
+        self.assertTrue(info['archived']);self.assertEqual(info['expiresAt']-info['archivedAt'],30*86400)
+        with patch('server.time.time',return_value=info['archivedAt']+100):
+            again=self.request(owner,'/api/publications/'+token+'/archive',{})[1]['publication']
+            self.assertEqual(again['archivedAt'],info['archivedAt'])
+        for path,data in [('/api/shared/'+token,None),('/api/shared/'+token+'/interact',{}),('/api/shared/'+token+'/vote',{'vote':1})]:
+            self.assertEqual(self.request(other,path,data)[0],404)
+        self.assertEqual(self.request(other,'/api/projects',{'document':document,'sourceShare':token})[0],404)
+        self.assertEqual(self.request(guest,'/api/rankings')[1]['publications'],[])
+        self.assertEqual(self.request(owner,'/api/publications')[1]['publications'],[])
+        self.assertEqual(len(self.request(owner,'/api/publications?archived=1')[1]['publications']),1)
+        self.assertEqual(self.request(owner,'/api/publications/'+token+'/visibility',{'visibility':'private'})[0],409)
+        restored=self.request(owner,'/api/publications/'+token+'/restore',{})[1]['publication']
+        self.assertFalse(restored['archived']);self.assertIsNone(restored['expiresAt']);self.assertEqual(restored['visibility'],'public');self.assertEqual(restored['likes'],1)
+        self.assertEqual(self.request(guest,'/api/shared/'+token)[0],200)
+        self.assertEqual(len(self.request(guest,'/api/rankings')[1]['publications']),1)
+
+    def test_archive_expires_at_thirty_days_and_keeps_working_project_and_versions(self):
+        owner,pid,token,document=self.publish()
+        self.request(self.client(),'/api/shared/'+token)
+        self.request(owner,'/api/shared/'+token+'/interact',{})
+        self.request(owner,'/api/projects',{'document':document,'sourceShare':token})
+        clock=int(time.time())
+        with server.connect() as db:db.execute('UPDATE shares SET archived_at=? WHERE token=?',(clock-30*86400+1,token))
+        with patch('server.time.time',return_value=clock):
+            self.assertEqual(self.request(owner,'/api/shared/'+token)[0],200)
+            with server.connect() as db:db.execute('UPDATE shares SET archived_at=? WHERE token=?',(clock-30*86400,token))
+            self.assertEqual(self.request(owner,'/api/publications/'+token+'/restore',{})[0],404)
+        with server.connect() as db:
+            for table in ('shares','share_views','share_allocations','share_saves','share_votes'):
+                self.assertEqual(db.execute(f'SELECT COUNT(*) FROM {table} WHERE token=?',(token,)).fetchone()[0],0)
+            self.assertIsNotNone(db.execute('SELECT id FROM projects WHERE id=?',(pid,)).fetchone())
+        created=self.request(owner,'/api/publish',{'projectId':pid,'visibility':'public'})
+        self.assertEqual(created[0],200);self.assertEqual(created[1]['publication']['version'],2)
+
+    def test_emblem_transform_and_glow_validation(self):
+        owner=self.client();self.register(owner,'transform_owner')
+        document=copy.deepcopy(base.DOCUMENT)
+        model={'background':'#123456','glow':{'color':'#fedcba','radius':100,'strength':80},'layers':[{'icon':'inv_sword_04','opacity':.8,'x':25,'y':-20,'scale':1.25,'rotation':90}]}
+        document['classIcon']=model
+        status,result,_=self.request(owner,'/api/projects',{'document':document});self.assertEqual(status,200)
+        self.assertEqual(self.request(owner,'/api/projects/'+result['id'])[1]['document']['classIcon'],model)
+        for field,value in [('x',101),('y',-101),('scale',.74),('scale',1.26),('rotation',181)]:
+            bad=copy.deepcopy(model);bad['layers'][0][field]=value;document['classIcon']=bad
+            self.assertEqual(self.request(owner,'/api/projects',{'document':document})[0],400)
+        for field,value in [('radius',-1),('strength',101),('color','url(x)')]:
+            bad=copy.deepcopy(model);bad['glow'][field]=value;document['classIcon']=bad
+            self.assertEqual(self.request(owner,'/api/projects',{'document':document})[0],400)
+
 class PublicationMigration(unittest.TestCase):
     def test_existing_shares_stay_unlisted_without_claimed_owner(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -183,3 +241,21 @@ class AvatarMigration(unittest.TestCase):
                     self.assertEqual(db.execute('SELECT login,salt,password,avatar FROM users').fetchone(),('old_author','old_salt','old_hash','inv_misc_questionmark'))
             finally:
                 server.DB=previous
+
+class ArchiveMaintenance(unittest.TestCase):
+    def test_idle_server_purges_expired_snapshots_without_an_api_request(self):
+        previous=server.DB
+        with tempfile.TemporaryDirectory() as tmp:
+            try:
+                server.DB=str(Path(tmp)/'maintenance.sqlite');server.initialize()
+                with server.connect() as db:
+                    token=publications.create(db,copy.deepcopy(base.DOCUMENT),None)
+                    db.execute('UPDATE shares SET archived_at=? WHERE token=?',(int(time.time())-30*86400-10,token))
+                    db.execute('INSERT INTO share_views VALUES(?,?)',(token,'visitor'))
+                http=server.ArchiveHTTPServer.__new__(server.ArchiveHTTPServer)
+                with patch('server.time.monotonic',return_value=1000):http.service_actions()
+                self.assertEqual(http._next_archive_cleanup,1060)
+                with server.connect() as db:
+                    self.assertIsNone(db.execute('SELECT token FROM shares WHERE token=?',(token,)).fetchone())
+                    self.assertEqual(db.execute('SELECT COUNT(*) FROM share_views').fetchone()[0],0)
+            finally:server.DB=previous

@@ -20,3 +20,12 @@ test('weapon catalog has unique valid weapon names compatible with every icon pi
  assert.equal(entries.length,194);assert.equal(new Set(entries.map(e=>e.id)).size,entries.length);
  for(const entry of entries){assert.ok(/^inv_/.test(entry.id));assert.ok(iconURL(entry.id).startsWith('https://wow.zamimg.com/'));assert.ok(entry.label.includes('оружие'));}
 });
+
+test('transformed layers rotate about the circle center and old emblems remain valid',()=>{
+ const model={background:'#123456',glow:{color:'#ffaa00',radius:100,strength:80},layers:[{icon:'inv_sword_04',opacity:.4,x:20,y:-10,rotation:90,scale:1.25}]};
+ assert.equal(validateClassIcon(model),model);const html=classEmblem(model);
+ assert.ok(html.includes('rotate(90deg) translate(20%,-10%) scale(1.25)'));
+ assert.ok(html.includes('width:100%;height:100%;opacity:0.8'));
+ for(const [key,value] of [['scale',1.26],['x',101],['rotation',181]]){const bad=structuredClone(model);bad.layers[0][key]=value;assert.throws(()=>validateClassIcon(bad));}
+ const bad=structuredClone(model);bad.glow.radius=-1;assert.throws(()=>validateClassIcon(bad));
+});

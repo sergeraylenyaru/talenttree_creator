@@ -10,6 +10,7 @@ from functools import lru_cache
 import os
 import re
 import secrets
+import sys
 import sqlite3
 import time
 from http import cookies
@@ -40,6 +41,7 @@ def initialize():
         if 'avatar' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
             db.execute("ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT 'inv_misc_questionmark'")
         publications.migrate(db)
+        publications.purge_archived(db)
 
 def password_hash(password, salt):
     return hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), n=16384, r=8, p=1).hex()
@@ -85,19 +87,25 @@ def project_summary(row):
 
 
 def validate_class_icon(value):
-    if not isinstance(value, dict) or set(value) != {'background', 'layers'} or not isinstance(value['background'], str) or not re.fullmatch(r'#[0-9a-fA-F]{6}', value['background']):
+    color=lambda c:isinstance(c,str) and re.fullmatch(r'#[0-9a-fA-F]{6}',c)
+    number=lambda v,lo,hi:type(v) in (int,float) and math.isfinite(v) and lo<=v<=hi
+    if not isinstance(value,dict) or not {'background','layers'}<=set(value) or set(value)-{'background','layers','glow'} or not color(value['background']):
         raise ValueError('Проверь фон иконки класса')
-    layers = value['layers']
-    if not isinstance(layers, list) or not 1 <= len(layers) <= 2:
+    if 'glow' in value:
+        g=value['glow']
+        if not isinstance(g,dict) or set(g)!={'color','radius','strength'} or not color(g['color']) or not number(g['radius'],0,100) or not number(g['strength'],0,100):
+            raise ValueError('Проверь свечение фона')
+    layers=value['layers']
+    if not isinstance(layers,list) or not 1<=len(layers)<=2:
         raise ValueError('Иконка класса: один или два слоя')
     for layer in layers:
-        if not isinstance(layer, dict) or set(layer) != {'icon', 'opacity'} or not isinstance(layer['icon'], str) or len(layer['icon']) > 350000 or not layer['icon'] or type(layer['opacity']) not in (int, float) or not math.isfinite(layer['opacity']) or not 0 <= layer['opacity'] <= 1:
-            raise ValueError('Проверь слой иконки класса и прозрачность от 0 до 100%')
-        icon = layer['icon']
-        if not (re.fullmatch(r'[A-Za-z0-9_]{1,100}', icon) or icon.startswith('wotlk:') or icon in builtin_images()):
-            raise ValueError('Выбери иконку класса из каталога')
-        if icon.startswith('wotlk:') and not re.fullmatch(r"wotlk:shared/global/talents/[a-z]+/images/[a-z]+/[a-z0-9'_,.\-]+\.jpg", icon):
-            raise ValueError('Неверная иконка класса')
+        if not isinstance(layer,dict) or not {'icon','opacity'}<=set(layer) or set(layer)-{'icon','opacity','x','y','scale','rotation'} or not isinstance(layer['icon'],str) or not 1<=len(layer['icon'])<=350000 or not number(layer['opacity'],0,1):
+            raise ValueError('Проверь слой и его непрозрачность')
+        for key,lo,hi in [('x',-100,100),('y',-100,100),('scale',.75,1.25),('rotation',-180,180)]:
+            if key in layer and not number(layer[key],lo,hi):raise ValueError('Проверь положение, масштаб 75–125% и угол слоя')
+        icon=layer['icon']
+        if not (re.fullmatch(r'[A-Za-z0-9_]{1,100}',icon) or icon.startswith('wotlk:') or icon in builtin_images()):raise ValueError('Выбери иконку из каталога')
+        if icon.startswith('wotlk:') and not re.fullmatch(r"wotlk:shared/global/talents/[a-z]+/images/[a-z]+/[a-z0-9'_,.\-]+\.jpg",icon):raise ValueError('Неверная иконка класса')
         validate_icon(icon)
     return value
 
@@ -249,6 +257,8 @@ class Handler(SimpleHTTPRequestHandler):
                 if not isinstance(data, dict):
                     raise ValueError('Ожидается JSON-объект')
             with connect() as db:
+                publications.purge_archived(db)
+                db.commit()
                 user = self.session(db)
                 uid = user[0] if user else None
                 parsed = urlsplit(self.path)
@@ -260,8 +270,8 @@ class Handler(SimpleHTTPRequestHandler):
                 if self.path.startswith('/api/shared/'):
                     parts = self.path.removeprefix('/api/shared/').split('/')
                     token = parts[0]
-                    row = db.execute('SELECT document,owner_id,visibility FROM shares WHERE token=?', (token,)).fetchone()
-                    if not row or row[2]=='private' and (uid is None or row[1]!=uid):
+                    row = db.execute('SELECT document,owner_id,visibility,archived_at FROM shares WHERE token=?', (token,)).fetchone()
+                    if not row or (row[2]=='private' or row[3] is not None) and (uid is None or row[1]!=uid):
                         return self.reply(404, {'error': 'Ссылка не найдена или доступна только автору'})
                     jar = cookies.SimpleCookie()
                     try:
@@ -340,7 +350,7 @@ class Handler(SimpleHTTPRequestHandler):
                     return self.reply(200, {'user': {'login': user[1], 'avatar': avatar}})
                 if parsed.path == '/api/publications' and method == 'GET':
                     query = parse_qs(parsed.query)
-                    return self.reply(200, publications.listing(db, uid, 'latest', int(query.get('page', ['0'])[0]), owned=True))
+                    return self.reply(200, publications.listing(db, uid, 'latest', int(query.get('page', ['0'])[0]), owned=True, archived=query.get('archived',['0'])[0]=='1'))
                 if self.path == '/api/publish' and method == 'POST':
                     pid, visibility = data.get('projectId'), data.get('visibility', 'unlisted')
                     if not isinstance(pid, str):
@@ -353,11 +363,20 @@ class Handler(SimpleHTTPRequestHandler):
                     token = publications.create(db, document, uid, pid, visibility)
                     db.commit()
                     return self.reply(200, {'token': token, 'publication': publications.info(db, token, uid)})
+                if parsed.path.startswith('/api/publications/') and method=='POST' and parsed.path.rsplit('/',1)[-1] in ('archive','restore'):
+                    token,action=parsed.path.removeprefix('/api/publications/').rsplit('/',1)
+                    owner=db.execute('SELECT owner_id FROM shares WHERE token=?',(token,)).fetchone()
+                    if not owner or owner[0]!=uid:return self.reply(404,{'error':'Публикация не найдена'})
+                    if action=='archive':db.execute('UPDATE shares SET archived_at=COALESCE(archived_at,?) WHERE token=?',(int(time.time()),token))
+                    else:db.execute('UPDATE shares SET archived_at=NULL WHERE token=?',(token,))
+                    db.commit()
+                    return self.reply(200,{'publication':publications.info(db,token,uid)})
                 if self.path.startswith('/api/publications/') and self.path.endswith('/visibility') and method == 'POST':
                     token = self.path.removeprefix('/api/publications/').removesuffix('/visibility')
-                    owner = db.execute('SELECT owner_id FROM shares WHERE token=?', (token,)).fetchone()
+                    owner = db.execute('SELECT owner_id,archived_at FROM shares WHERE token=?', (token,)).fetchone()
                     if not owner or owner[0] != uid:
                         return self.reply(404, {'error': 'Публикация не найдена'})
+                    if owner[1] is not None:return self.reply(409, {'error':'Сначала восстанови публикацию из архива'})
                     visibility = data.get('visibility')
                     if visibility not in ('public', 'unlisted', 'private'):
                         raise ValueError('Неверная видимость')
@@ -415,8 +434,8 @@ class Handler(SimpleHTTPRequestHandler):
                         raise ValueError('Неверный идентификатор проекта')
                     shared_from = data.get('sourceShare')
                     if isinstance(shared_from, str):
-                        source = db.execute('SELECT owner_id,visibility FROM shares WHERE token=?', (shared_from,)).fetchone()
-                        if source and source[1]=='private' and source[0]!=uid:
+                        source = db.execute('SELECT owner_id,visibility,archived_at FROM shares WHERE token=?', (shared_from,)).fetchone()
+                        if source and (source[1]=='private' or source[2] is not None) and source[0]!=uid:
                             return self.reply(404, {'error': 'Публикация доступна только автору'})
                     existing = db.execute('SELECT user_id FROM projects WHERE id=?', (pid,)).fetchone()
                     if existing and existing[0] != user[0]:
@@ -442,8 +461,17 @@ class Handler(SimpleHTTPRequestHandler):
         except (ValueError, KeyError, TypeError, AttributeError) as error:
             self.reply(400, {'error': str(error) or 'Неверный запрос'})
 
+class ArchiveHTTPServer(ThreadingHTTPServer):
+    def service_actions(self):
+        if time.monotonic()>=getattr(self,'_next_archive_cleanup',0):
+            self._next_archive_cleanup=time.monotonic()+60
+            try:
+                with connect() as db:publications.purge_archived(db)
+            except sqlite3.Error as error:
+                print(f'Archive cleanup: {error}',file=sys.stderr)
+
 if __name__ == '__main__':
     initialize()
     port = int(os.environ.get('PORT', '8000'))
     print(f'Talent Forge: http://localhost:{port}', flush=True)
-    ThreadingHTTPServer((os.environ.get('HOST', '127.0.0.1'), port), Handler).serve_forever()
+    ArchiveHTTPServer((os.environ.get('HOST', '127.0.0.1'), port), Handler).serve_forever()

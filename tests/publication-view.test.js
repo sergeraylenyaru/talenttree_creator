@@ -19,3 +19,9 @@ test('user-controlled publication metadata is escaped in text and attributes',()
  assert.ok(html.includes('&lt;img src=x onerror=evil()&gt;'));
  assert.ok(html.includes('&quot; onclick=&quot;evil()'));
 });
+
+test('archived publication shows a deadline and restore action without visibility changes',()=>{
+ const html=publicationRow({...publication,archived:true,expiresAt:Date.now()/1000+86400},{...options,mine:true});
+ assert.ok(html.includes('data-restore-publication="safe"'));assert.ok(html.includes('Удалится'));
+ assert.ok(!html.includes('data-visibility='));assert.ok(!html.includes('data-archive-publication='));
+});
