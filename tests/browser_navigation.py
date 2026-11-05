@@ -33,7 +33,7 @@ def run():
                     'login': 'navigation_author', 'password': 'navigation-password'}).ok
                 document = {'version': 1, 'name': 'Дерево для проверки', 'budget': 41,
                             'rowCost': 5, 'build': {}, 'abilities': [], 'branches': [
-                                {'id': 'one', 'name': 'Ветка', 'rows': 5, 'talents': []}]}
+                                {'id': 'one', 'name': 'Ветка', 'rows': 25, 'talents': []}]}
                 project_id = context.request.post(base + '/api/projects', data={
                     'document': document}).json()['id']
                 assert context.request.post(base + '/api/publish', data={
@@ -89,6 +89,7 @@ def run():
                 for width in (1024, 768, 390, 320):
                     page.set_viewport_size({'width': width, 'height': 900})
                     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+                    assert page.locator('#trees').evaluate("el=>el.scrollHeight<=el.clientHeight+1 && el.scrollWidth<=el.clientWidth+1 && getComputedStyle(el).overflow==='visible'")
                 page.locator('#mobileMenu').click()
                 assert page.locator('#siteNav').is_visible()
                 page.locator('#rankings').click()

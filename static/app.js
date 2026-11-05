@@ -66,7 +66,7 @@ function drawDependencies(){
 }
 let treeZoom=1;
 function updateTreeControls(){const focus=$('#focusBranch'),previous=focus.value;focus.innerHTML='<option value="">Все ветки</option>'+doc.branches.map(b=>`<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('');focus.value=doc.branches.some(b=>b.id===previous)?previous:'';}
-function setTreeZoom(value){treeZoom=Math.max(.7,Math.min(1.5,Math.round(value*10)/10));$('#trees').style.setProperty('--tree-zoom',treeZoom);$('#zoomReset').textContent=Math.round(treeZoom*100)+'%';$('#zoomOut').disabled=treeZoom<=.7;$('#zoomIn').disabled=treeZoom>=1.5;requestAnimationFrame(drawDependencies);}
+function setTreeZoom(value){treeZoom=Math.max(.7,Math.min(1.5,Math.round(value*10)/10));$('#trees').style.setProperty('--tree-zoom',treeZoom);$('#trees').dataset.enlarged=String(treeZoom>1);$('#zoomReset').textContent=Math.round(treeZoom*100)+'%';$('#zoomOut').disabled=treeZoom<=.7;$('#zoomIn').disabled=treeZoom>=1.5;requestAnimationFrame(drawDependencies);}
 $('#zoomOut').onclick=()=>setTreeZoom(treeZoom-.1);$('#zoomIn').onclick=()=>setTreeZoom(treeZoom+.1);$('#zoomReset').onclick=()=>setTreeZoom(1);
 $('#focusBranch').onchange=e=>{const tree=[...document.querySelectorAll('.tree')].find(t=>t.dataset.branch===e.target.value);if(tree)tree.scrollIntoView({block:'nearest',inline:'start',behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});else $('#trees').scrollLeft=0;};
 window.addEventListener('resize',drawDependencies);

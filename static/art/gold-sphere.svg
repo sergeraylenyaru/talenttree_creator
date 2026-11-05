@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="360" viewBox="0 0 420 360" fill="none">
+  <defs>
+    <radialGradient id="ambient"><stop stop-color="#E9B65F" stop-opacity=".12"/><stop offset="1" stop-color="#E9B65F" stop-opacity="0"/></radialGradient>
+    <radialGradient id="gold" cx=".33" cy=".25" r=".78"><stop stop-color="#FFF0C4"/><stop offset=".19" stop-color="#FFE0A0"/><stop offset=".5" stop-color="#D8A248"/><stop offset=".78" stop-color="#8B5B22"/><stop offset="1" stop-color="#3F2B16"/></radialGradient>
+    <radialGradient id="glint"><stop stop-color="#FFF9E3" stop-opacity=".7"/><stop offset="1" stop-color="#FFF9E3" stop-opacity="0"/></radialGradient>
+    <radialGradient id="shadow"><stop stop-color="#E9B65F" stop-opacity=".12"/><stop offset="1" stop-color="#E9B65F" stop-opacity="0"/></radialGradient>
+  </defs>
+  <ellipse cx="210" cy="160" rx="164" ry="154" fill="url(#ambient)"/>
+  <ellipse cx="210" cy="294" rx="99" ry="15" fill="url(#shadow)"/>
+  <circle cx="210" cy="155" r="83" fill="url(#gold)" stroke="#FFD991" stroke-opacity=".25"/>
+  <ellipse cx="180" cy="119" rx="39" ry="32" fill="url(#glint)"/>
+</svg>
