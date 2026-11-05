@@ -37,6 +37,8 @@ def initialize():
         CREATE TABLE IF NOT EXISTS share_saves(token TEXT REFERENCES shares(token), user_id INTEGER REFERENCES users(id), PRIMARY KEY(token,user_id));
         CREATE TABLE IF NOT EXISTS shares(token TEXT PRIMARY KEY, document TEXT, created INTEGER);
         ''')
+        if 'avatar' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
+            db.execute("ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT 'inv_misc_questionmark'")
         publications.migrate(db)
 
 def password_hash(password, salt):
@@ -50,6 +52,10 @@ def share_stats(db, token):
 @lru_cache(maxsize=1)
 def builtin_images():
     return {t['icon'] for path in (ROOT / 'static' / 'presets').glob('forever-*.json') for b in json.loads(path.read_text(encoding='utf-8'))['branches'] for t in b['talents']}
+
+@lru_cache(maxsize=1)
+def avatar_catalog():
+    return {item['id'] for item in json.loads((ROOT / 'static' / 'icon-catalog.json').read_text(encoding='utf-8'))}
 
 def validate_icon(value):
     if isinstance(value, str) and value.startswith('data:') and value not in builtin_images():
@@ -186,7 +192,7 @@ class Handler(SimpleHTTPRequestHandler):
             token = jar['session'].value if 'session' in jar else ''
         except cookies.CookieError:
             token = ''
-        return db.execute('SELECT users.id, users.login FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?', (hashlib.sha256(token.encode()).hexdigest(), time.time())).fetchone()
+        return db.execute('SELECT users.id, users.login, users.avatar FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?', (hashlib.sha256(token.encode()).hexdigest(), time.time())).fetchone()
 
     def do_GET(self):
         if self.path.startswith('/api/'):
@@ -223,7 +229,7 @@ class Handler(SimpleHTTPRequestHandler):
                     query = parse_qs(parsed.query)
                     return self.reply(200, publications.listing(db, uid, query.get('sort', ['views'])[0], int(query.get('page', ['0'])[0])))
                 if self.path == '/api/me' and method == 'GET':
-                    return self.reply(200, {'user': {'login': user[1]} if user else None})
+                    return self.reply(200, {'user': {'login': user[1], 'avatar': user[2]} if user else None})
                 if self.path.startswith('/api/shared/'):
                     parts = self.path.removeprefix('/api/shared/').split('/')
                     token = parts[0]
@@ -293,9 +299,18 @@ class Handler(SimpleHTTPRequestHandler):
                     db.execute('INSERT INTO sessions VALUES(?,?,?)', (hashlib.sha256(token.encode()).hexdigest(), uid, time.time()+604800))
                     db.commit()
                     secure = '; Secure' if os.environ.get('COOKIE_SECURE') == '1' else ''
-                    return self.reply(200, {'user': {'login': login}}, f'session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800{secure}')
+                    profile = db.execute('SELECT login,avatar FROM users WHERE id=?', (uid,)).fetchone()
+                    return self.reply(200, {'user': {'login': profile[0], 'avatar': profile[1]}}, f'session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800{secure}')
                 if not user:
                     return self.reply(401, {'error': 'Войдите в аккаунт'})
+                if self.path == '/api/profile/avatar' and method == 'POST':
+                    avatar = data.get('avatar')
+                    if not isinstance(avatar, str) or len(avatar) > 350000 or not (re.fullmatch(r'[A-Za-z0-9_]{1,100}', avatar) or avatar in avatar_catalog()):
+                        raise ValueError('Выбери аватар из каталога иконок')
+                    validate_icon(avatar)
+                    db.execute('UPDATE users SET avatar=? WHERE id=?', (avatar, uid))
+                    db.commit()
+                    return self.reply(200, {'user': {'login': user[1], 'avatar': avatar}})
                 if parsed.path == '/api/publications' and method == 'GET':
                     query = parse_qs(parsed.query)
                     return self.reply(200, publications.listing(db, uid, 'latest', int(query.get('page', ['0'])[0]), owned=True))

@@ -75,8 +75,8 @@ class PublicationAPI(unittest.TestCase):
         self.assertEqual(self.request(guest,'/api/rankings?sort=usage')[1]['publications'][0]['token'],second)
         self.assertEqual(self.request(guest,'/api/rankings?sort=latest')[1]['publications'][0]['token'],second)
         self.assertNotIn(hidden,[r['token'] for r in self.request(guest,'/api/rankings')[1]['publications']])
-        for _ in range(12):self.request(owner,'/api/publish',{'projectId':pid,'visibility':'public'})
-        first=self.request(guest,'/api/rankings?sort=latest')[1];self.assertEqual(len(first['publications']),12);self.assertTrue(first['hasMore'])
+        for _ in range(20):self.request(owner,'/api/publish',{'projectId':pid,'visibility':'public'})
+        first=self.request(guest,'/api/rankings?sort=latest')[1];self.assertEqual(len(first['publications']),20);self.assertTrue(first['hasMore'])
         next=self.request(guest,'/api/rankings?sort=latest&page=1')[1];self.assertEqual(len(next['publications']),2);self.assertFalse(next['hasMore'])
         self.assertEqual(self.request(guest,'/api/rankings?sort=invalid')[0],400)
 
@@ -97,6 +97,20 @@ class PublicationAPI(unittest.TestCase):
         self.assertEqual(cards[0]['branches'][0]['icon'],'spell_fire_flamebolt')
         self.assertNotIn('dislikes',cards[1])
 
+    def test_avatar_profile_is_author_owned_and_updates_publications(self):
+        owner,pid,token,_=self.publish()
+        guest=self.client();other=self.client();self.register(other,'avatar_other')
+        self.assertEqual(self.request(guest,'/api/profile/avatar',{'avatar':'spell_fire_flamebolt'})[0],401)
+        self.assertEqual(self.request(owner,'/api/profile/avatar',{'avatar':'https://example.com/avatar.png'})[0],400)
+        profile=self.request(owner,'/api/profile/avatar',{'avatar':'spell_fire_flamebolt'})
+        self.assertEqual(profile[0],200)
+        self.assertEqual(self.request(owner,'/api/me')[1]['user']['avatar'],'spell_fire_flamebolt')
+        self.assertEqual(self.request(other,'/api/me')[1]['user']['avatar'],'inv_misc_questionmark')
+        publication=self.request(guest,'/api/shared/'+token)[1]
+        self.assertEqual(publication['publication']['avatar'],'spell_fire_flamebolt')
+        self.assertNotIn('avatar',publication['document'])
+        self.assertEqual(self.request(guest,'/api/rankings')[1]['publications'][0]['avatar'],'spell_fire_flamebolt')
+
 class PublicationMigration(unittest.TestCase):
     def test_existing_shares_stay_unlisted_without_claimed_owner(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -107,3 +121,18 @@ class PublicationMigration(unittest.TestCase):
             row=db.execute('SELECT visibility,owner_id,published_at,document FROM shares').fetchone()
             self.assertEqual(row[:3],('unlisted',None,123));self.assertEqual(json.loads(row[3]),base.DOCUMENT)
             db.close()
+
+class AvatarMigration(unittest.TestCase):
+    def test_existing_users_get_default_avatar_without_password_changes(self):
+        previous=server.DB
+        with tempfile.TemporaryDirectory() as tmp:
+            try:
+                server.DB=str(Path(tmp)/'old-users.sqlite')
+                db=sqlite3.connect(server.DB)
+                db.execute('CREATE TABLE users(id INTEGER PRIMARY KEY,login TEXT UNIQUE COLLATE NOCASE,salt TEXT,password TEXT)')
+                db.execute('INSERT INTO users VALUES(1,?,?,?)',('old_author','old_salt','old_hash'));db.commit();db.close()
+                server.initialize();server.initialize()
+                with server.connect() as db:
+                    self.assertEqual(db.execute('SELECT login,salt,password,avatar FROM users').fetchone(),('old_author','old_salt','old_hash','inv_misc_questionmark'))
+            finally:
+                server.DB=previous
