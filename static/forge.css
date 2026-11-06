@@ -558,3 +558,18 @@ button[aria-busy="true"]::after{content:"";width:12px;height:12px;flex:0 0 12px;
 .profile-toggle input{width:18px;height:18px;margin:0;accent-color:var(--gold)}
 .tabs .tree-favorite{padding:8px 10px;color:var(--gold)}
 @media(max-width:600px){.abilities-heading{flex-wrap:nowrap;gap:8px}.abilities-heading .ability-view-controls{gap:4px}.abilities-heading .ability-view-controls button{font-size:10px;padding:7px}.tree-hero textarea.class-title-input{box-sizing:border-box;width:100%;min-height:2.4em;height:auto}.abilities-heading #addAbility{font-size:9px}}
+#treeHero #publicationBar{display:block;padding:0;margin:0 0 5px;border:0;border-radius:0;background:none;box-shadow:none}
+#treeHero #publicationBar p{margin:0;font-size:11px;overflow-wrap:anywhere}
+#treeHero #shareStats{font-size:11px;margin:0 0 12px;overflow-wrap:anywhere}
+.tree-hero-emblem{gap:10px;align-self:start;justify-items:center}
+#publicationVotes{display:flex;align-items:center;justify-content:center;gap:7px;width:100%}
+#publicationVotes button{padding:6px 10px;min-height:34px;white-space:nowrap}
+#publicationVotes button:disabled{opacity:1;cursor:default}
+#publicationVotes button[aria-pressed="true"]{border-color:var(--gold);background:#e9b65f18}
+.ability-band{--ability-size:48px;grid-template-columns:165px minmax(0,1fr);gap:20px}
+.ability-band-label{display:flex;align-items:center;justify-content:center;border-right:1px solid #ffffff26;padding-right:20px;min-width:0}
+.ability-band-label img{width:calc(3 * var(--ability-size));height:calc(3 * var(--ability-size));flex:0 0 calc(3 * var(--ability-size));object-fit:cover;border-radius:8px}
+.ability-items.details .ability-card img{width:var(--ability-size);height:var(--ability-size);flex:0 0 var(--ability-size)}
+.ability-items.icons .ability-card{width:var(--ability-size);height:var(--ability-size);flex-basis:var(--ability-size)}
+@media(max-width:760px){#treeHero #publicationBar,#treeHero #shareStats{padding-right:100px;font-size:10px}#treeHero #publicationBar p{font-size:10px}#publicationVotes{gap:4px}#publicationVotes button{padding:5px 7px;min-height:30px;font-size:11px}}
+@media(max-width:600px){.ability-band{grid-template-columns:minmax(0,1fr);gap:16px}.ability-band-label{border-right:0;border-bottom:1px solid #ffffff26;padding:0 0 16px}}

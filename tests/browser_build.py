@@ -35,7 +35,7 @@ with tempfile.TemporaryDirectory() as tmp:
 
             def open_tree(page, token, points):
                 page.goto(base + '/?share=' + token)
-                page.wait_for_function("document.querySelector('#publicationBar').textContent.includes('Личный калькулятор')")
+                page.wait_for_function("document.querySelector('#publicationBar').textContent.includes('Версия')")
                 page.wait_for_function("expected=>document.querySelector('#points').textContent===expected", arg=f'{points} / 41')
 
             open_tree(first, tokens[0], 0)

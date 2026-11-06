@@ -24,7 +24,7 @@ with tempfile.TemporaryDirectory() as tmp:
             pid=owner.request.post(base+'/api/projects',data={'document':d}).json()['id']
             token=owner.request.post(base+'/api/publish',data={'projectId':pid,'visibility':'public'}).json()['token']
             page=owner.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.on('dialog',lambda dialog:dialog.accept())
-            page.goto(base+'/?share='+token);page.wait_for_function("document.querySelector('#publicationBar').textContent.includes('Повелитель')")
+            page.goto(base+'/?share='+token);page.wait_for_function("document.querySelector('#publicationBar').textContent.includes('Версия')")
             page.wait_for_function("document.querySelector('#user').textContent==='layout_author'")
             for selector in ['#treeActions','#characterSettings','#undo','#redo','#share','#export','#import','#save','#hint','.tree-section-title']:
                 assert not page.locator(selector).is_visible(),selector
