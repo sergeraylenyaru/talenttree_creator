@@ -1,0 +1,181 @@
+"""Email accounts and isolated administrator sessions. No credentials in source."""
+import base64,hashlib,hmac,io,json,os,re,secrets,smtplib,sqlite3,ssl,time
+from email.message import EmailMessage
+from http import cookies
+from urllib.parse import urlsplit,parse_qs
+
+class Error(ValueError):
+    def __init__(self,status,message):self.status=status;super().__init__(message)
+
+def migrate(db):
+    columns={r[1] for r in db.execute('PRAGMA table_info(users)')}
+    for name,sql in {'email':'TEXT COLLATE NOCASE','email_verified':'INTEGER NOT NULL DEFAULT 0','is_admin':'INTEGER NOT NULL DEFAULT 0','blocked':'INTEGER NOT NULL DEFAULT 0','created_at':'INTEGER NOT NULL DEFAULT 0'}.items():
+        if name not in columns:db.execute(f'ALTER TABLE users ADD COLUMN {name} {sql}')
+    db.executescript('''CREATE UNIQUE INDEX IF NOT EXISTS user_email_unique ON users(email) WHERE email IS NOT NULL;
+    CREATE TABLE IF NOT EXISTS admin_sessions(token TEXT PRIMARY KEY,user_id INTEGER REFERENCES users(id),expires INTEGER);
+    CREATE TABLE IF NOT EXISTS email_tokens(token TEXT PRIMARY KEY,user_id INTEGER REFERENCES users(id),purpose TEXT,expires INTEGER);
+    CREATE TABLE IF NOT EXISTS icon_assets(id TEXT PRIMARY KEY,name TEXT NOT NULL,category TEXT NOT NULL,png BLOB NOT NULL,enabled INTEGER NOT NULL DEFAULT 1,created_at INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS admin_events(id INTEGER PRIMARY KEY,actor INTEGER,action TEXT,target TEXT,created_at INTEGER);''')
+
+def email(value):
+    if not isinstance(value,str) or len(value)>254 or not re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?\.[A-Za-z]{2,63}",value.strip()):raise Error(400,'Enter a valid email address')
+    return value.strip().lower()
+
+def rate_limit(db,key,limit=20):
+    now=time.time();row=db.execute('SELECT count,until FROM attempts WHERE key=?',(key,)).fetchone()
+    if row and row[1]>now and row[0]>=limit:raise Error(429,'Too many attempts. Try again in 15 minutes.')
+    db.execute('INSERT INTO attempts VALUES(?,1,?) ON CONFLICT(key) DO UPDATE SET count=CASE WHEN until<? THEN 1 ELSE count+1 END,until=CASE WHEN until<? THEN excluded.until ELSE until END',(key,now+900,now,now));db.commit()
+
+def credential(db,data,password_hash,admin=False):
+    identity=data.get('login') or data.get('email') or '';password=data.get('password','')
+    if not isinstance(identity,str) or len(identity)>254 or not isinstance(password,str) or not 8<=len(password)<=128:raise Error(401,'Incorrect email or password')
+    row=db.execute('SELECT id,salt,password,blocked,is_admin,email_verified,email FROM users WHERE login=? OR email=?',(identity.strip(),identity.strip().lower())).fetchone()
+    hashed=password_hash(password,row[1] if row else '00'*16)
+    if not row or not hmac.compare_digest(row[2],hashed) or row[3] or (admin and not row[4]):raise Error(401,'Incorrect email or password')
+    if not admin and verification_required() and row[6] and not row[5]:raise Error(403,'Please verify your email before logging in')
+    return row[0]
+
+def new_session(db,uid,admin=False):
+    table='admin_sessions' if admin else 'sessions';name='admin_session' if admin else 'session';ttl=7200 if admin else 604800
+    raw=secrets.token_urlsafe(32);db.execute(f'DELETE FROM {table} WHERE expires<?',(time.time(),));db.execute(f'INSERT INTO {table} VALUES(?,?,?)',(hashlib.sha256(raw.encode()).hexdigest(),uid,time.time()+ttl));db.commit()
+    return f"{name}={raw}; HttpOnly; SameSite={'Strict' if admin else 'Lax'}; Path=/; Max-Age={ttl}"+('; Secure' if os.environ.get('COOKIE_SECURE')=='1' else '')
+
+def cookie_token(handler,name):
+    jar=cookies.SimpleCookie()
+    try:jar.load(handler.headers.get('Cookie',''));return jar[name].value if name in jar else ''
+    except cookies.CookieError:return ''
+
+def admin_id(handler,db):
+    raw=cookie_token(handler,'admin_session')
+    row=db.execute('SELECT users.id FROM admin_sessions JOIN users ON users.id=admin_sessions.user_id WHERE token=? AND expires>? AND users.is_admin=1 AND users.blocked=0',(hashlib.sha256(raw.encode()).hexdigest(),time.time())).fetchone()
+    return row[0] if row else None
+
+def mail_enabled():return bool(os.environ.get('SMTP_HOST') and os.environ.get('SMTP_FROM') and os.environ.get('APP_URL'))
+def verification_required():return os.environ.get('REQUIRE_EMAIL_VERIFICATION')=='1'
+
+def send_mail(to,subject,body):
+    if not mail_enabled():raise Error(503,'Email delivery is not configured. Contact the administrator.')
+    message=EmailMessage();message['From']=os.environ['SMTP_FROM'];message['To']=to;message['Subject']=subject;message.set_content(body)
+    use_ssl=os.environ.get('SMTP_SSL')=='1';cls=smtplib.SMTP_SSL if use_ssl else smtplib.SMTP
+    try:
+        with cls(os.environ['SMTP_HOST'],int(os.environ.get('SMTP_PORT','465' if use_ssl else '587')),timeout=15,**({'context':ssl.create_default_context()} if use_ssl else {})) as smtp:
+            if not use_ssl:smtp.starttls(context=ssl.create_default_context())
+            if os.environ.get('SMTP_USER'):smtp.login(os.environ['SMTP_USER'],os.environ.get('SMTP_PASSWORD',''))
+            smtp.send_message(message)
+    except (OSError,smtplib.SMTPException):raise Error(503,'Email could not be sent. Please try again later.') from None
+
+def issue_mail(db,uid,purpose):
+    origin=os.environ.get('APP_URL','').rstrip('/');url=urlsplit(origin)
+    if not mail_enabled() or not url.hostname or url.username or url.password or url.path not in ('','/') or url.query or url.fragment or url.scheme not in ('https','http') or (url.scheme=='http' and url.hostname not in ('localhost','127.0.0.1')):raise Error(503,'Email delivery is not configured. Contact the administrator.')
+    row=db.execute('SELECT email,blocked FROM users WHERE id=?',(uid,)).fetchone()
+    if not row or not row[0] or row[1]:return
+    raw=secrets.token_urlsafe(32);hashed=hashlib.sha256(raw.encode()).hexdigest()
+    db.execute('DELETE FROM email_tokens WHERE user_id=? AND purpose=?',(uid,purpose));db.execute('INSERT INTO email_tokens VALUES(?,?,?,?)',(hashed,uid,purpose,time.time()+(1800 if purpose=='reset' else 86400)));db.commit()
+    try:send_mail(row[0],'TalentForge — '+('Reset password' if purpose=='reset' else 'Verify email'),f"Open this link to {'reset your password' if purpose=='reset' else 'verify your email'}:\n{origin}/account.html#{purpose}={raw}\n\nIf you did not request this, ignore this email.")
+    except Error:db.execute('DELETE FROM email_tokens WHERE token=?',(hashed,));db.commit();raise
+
+def register(db,data,password_hash,bootstrap=False):
+    address=email(data.get('email'));login=data.get('login','');password=data.get('password','')
+    if not isinstance(login,str) or not re.fullmatch(r'[A-Za-z0-9_\-]{3,32}',login) or not isinstance(password,str) or not 8<=len(password)<=128:raise Error(400,'Use a 3–32 character nickname and an 8–128 character password')
+    if not bootstrap and verification_required() and not mail_enabled():raise Error(503,'Email delivery is not configured. Contact the administrator.')
+    salt=secrets.token_hex(16)
+    try:uid=db.execute('INSERT INTO users(login,email,salt,password,created_at,is_admin,email_verified) VALUES(?,?,?,?,?,?,?)',(login,address,salt,password_hash(password,salt),int(time.time()),int(bootstrap),int(bootstrap))).lastrowid
+    except sqlite3.IntegrityError:raise Error(409,'Email or nickname is already in use') from None
+    db.commit()
+    if not bootstrap and mail_enabled():
+        try:issue_mail(db,uid,'verify')
+        except Error:
+            # An existing unverified account can request another message; never claim it was sent.
+            if verification_required():raise
+    return uid
+
+def public_icons(db):return [{'id':'custom:'+r[0],'label':r[1],'category':r[2]} for r in db.execute('SELECT id,name,category FROM icon_assets WHERE enabled=1 ORDER BY created_at DESC,id')]
+
+def upload_icon(db,data):
+    from PIL import Image,ImageOps,UnidentifiedImageError
+    name=data.get('name','');category=data.get('category','general');encoded=data.get('image','')
+    if not isinstance(name,str) or not 1<=len(name.strip())<=80 or category not in ('general','weapon','armor') or not isinstance(encoded,str):raise Error(400,'Check the icon name and category')
+    try:
+        raw=base64.b64decode(encoded.split(',',1)[-1],validate=True)
+        if not 1<=len(raw)<=1_000_000:raise Error(400,'Images must be no larger than 1 MB')
+        with Image.open(io.BytesIO(raw)) as image:
+            if image.format not in ('PNG','JPEG','WEBP') or image.width>1024 or image.height>1024 or min(image.size)<16 or getattr(image,'is_animated',False):raise Error(400,'Use a static PNG, JPEG or WebP image, 16–1024 pixels')
+            cleaned=ImageOps.fit(image.convert('RGBA'),(128,128));output=io.BytesIO();cleaned.save(output,format='PNG');png=output.getvalue()
+    except Error:raise
+    except (ValueError,OSError,UnidentifiedImageError,Image.DecompressionBombError):raise Error(400,'Invalid image file') from None
+    ident=secrets.token_hex(16);db.execute('INSERT INTO icon_assets VALUES(?,?,?,?,1,?)',(ident,name.strip(),category,png,int(time.time())));return ident
+
+def audit(db,actor,action,target):db.execute('INSERT INTO admin_events(actor,action,target,created_at) VALUES(?,?,?,?)',(actor,action,str(target),int(time.time())))
+
+def admin_route(handler,db,method,path,data,password_hash,profile):
+    if not path.startswith('/api/admin/'):return False
+    actor=admin_id(handler,db)
+    if path=='/api/admin/login' and method=='POST':
+        rate_limit(db,'admin:'+handler.client_address[0],10);actor=credential(db,data,password_hash,True);handler.reply(200,{'admin':profile(db,actor)},new_session(db,actor,True));return True
+    if path=='/api/admin/me' and method=='GET':handler.reply(200,{'admin':profile(db,actor) if actor else None});return True
+    if not actor:raise Error(403,'Administrator login required')
+    if path=='/api/admin/logout' and method=='POST':
+        db.execute('DELETE FROM admin_sessions WHERE token=?',(hashlib.sha256(cookie_token(handler,'admin_session').encode()).hexdigest(),));db.commit();handler.reply(200,{'ok':True},'admin_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');return True
+    if path=='/api/admin/users' and method=='GET':
+        query=parse_qs(urlsplit(handler.path).query);page=max(0,min(100000,int(query.get('page',['0'])[0])));term=query.get('q',[''])[0][:100];rows=db.execute('SELECT id,login,email,email_verified,is_admin,blocked,created_at FROM users WHERE login LIKE ? OR email LIKE ? ORDER BY id DESC LIMIT 21 OFFSET ?',('%'+term+'%','%'+term+'%',page*20)).fetchall();handler.reply(200,{'users':[dict(zip(('id','login','email','emailVerified','isAdmin','blocked','created'),r)) for r in rows[:20]],'hasMore':len(rows)>20,'page':page});return True
+    match=re.fullmatch(r'/api/admin/users/(\d+)',path)
+    if match and method=='POST':
+        db.execute('BEGIN IMMEDIATE');uid=int(match[1]);row=db.execute('SELECT is_admin,blocked,login FROM users WHERE id=?',(uid,)).fetchone()
+        if not row:raise Error(404,'User not found')
+        action=data.get('action')
+        if action in ('block','demote','delete') and (uid==actor or (row[0] and not row[1] and db.execute('SELECT COUNT(*) FROM users WHERE is_admin=1 AND blocked=0').fetchone()[0]<=1)):raise Error(409,'You cannot disable yourself or the last administrator')
+        if action in ('block','unblock'):db.execute('UPDATE users SET blocked=? WHERE id=?',(int(action=='block'),uid))
+        elif action in ('promote','demote'):db.execute('UPDATE users SET is_admin=? WHERE id=?',(int(action=='promote'),uid))
+        elif action=='nickname':
+            name=data.get('login','')
+            if not isinstance(name,str) or not re.fullmatch(r'[A-Za-z0-9_\-]{3,32}',name):raise Error(400,'Use a 3–32 character nickname')
+            try:db.execute('UPDATE users SET login=? WHERE id=?',(name,uid))
+            except sqlite3.IntegrityError:raise Error(409,'Nickname is already in use') from None
+        elif action=='email':
+            address=email(data.get('email'))
+            try:db.execute('UPDATE users SET email=?,email_verified=0 WHERE id=?',(address,uid))
+            except sqlite3.IntegrityError:raise Error(409,'Email is already in use') from None
+        elif action=='delete':
+            if data.get('confirm')!=row[2]:raise Error(400,'Type the nickname to confirm deletion')
+            for table in ('share_views','share_votes','share_saves','share_allocations'):db.execute(f'DELETE FROM {table} WHERE token IN (SELECT token FROM shares WHERE owner_id=?)',(uid,))
+            for table in ('share_votes','share_saves'):db.execute(f'DELETE FROM {table} WHERE user_id=?',(uid,))
+            db.execute('DELETE FROM shares WHERE owner_id=?',(uid,));db.execute('DELETE FROM publication_sequences WHERE owner_id=?',(uid,))
+            for table in ('projects','favorites','sessions','admin_sessions','email_tokens'):db.execute(f'DELETE FROM {table} WHERE user_id=?',(uid,))
+            db.execute('DELETE FROM users WHERE id=?',(uid,))
+        elif action!='revoke':raise Error(400,'Unknown user action')
+        for table in ('sessions','admin_sessions','email_tokens'):db.execute(f'DELETE FROM {table} WHERE user_id=?',(uid,))
+        audit(db,actor,action,uid);db.commit();handler.reply(200,{'ok':True});return True
+    if path=='/api/admin/icons' and method=='GET':
+        rows=db.execute('SELECT id,name,category,enabled,created_at FROM icon_assets ORDER BY created_at DESC,id').fetchall();handler.reply(200,{'icons':[{'id':'custom:'+r[0],'name':r[1],'category':r[2],'enabled':bool(r[3]),'created':r[4]} for r in rows]});return True
+    if path=='/api/admin/icons' and method=='POST':
+        try:ident=upload_icon(db,data)
+        except ImportError:raise Error(503,'Install the image dependencies from requirements.txt') from None
+        audit(db,actor,'upload_icon',ident);db.commit();handler.reply(201,{'id':'custom:'+ident});return True
+    match=re.fullmatch(r'/api/admin/icons/([a-f0-9]{32})',path)
+    if match and method in ('POST','DELETE'):
+        if not db.execute('SELECT 1 FROM icon_assets WHERE id=?',(match[1],)).fetchone():raise Error(404,'Icon not found')
+        enabled=method=='POST';db.execute('UPDATE icon_assets SET enabled=? WHERE id=?',(int(enabled),match[1]));audit(db,actor,'restore_icon' if enabled else 'remove_icon',match[1]);db.commit();handler.reply(200,{'ok':True});return True
+    raise Error(404,'Not found')
+
+def email_route(handler,db,method,path,data,password_hash,uid):
+    if path=='/api/auth/config' and method=='GET':handler.reply(200,{'emailEnabled':mail_enabled(),'verificationRequired':verification_required()});return True
+    if method!='POST' or path not in ('/api/auth/forgot','/api/auth/resend','/api/auth/verify','/api/auth/reset'):return False
+    rate_limit(db,'email:'+handler.client_address[0],10)
+    if path in ('/api/auth/forgot','/api/auth/resend'):
+        if not mail_enabled():raise Error(503,'Email delivery is not configured. Contact the administrator.')
+        address=email(data.get('email'));row=db.execute('SELECT id,email_verified FROM users WHERE email=? AND blocked=0',(address,)).fetchone()
+        if row and (path.endswith('forgot') or not row[1]):issue_mail(db,row[0],'reset' if path.endswith('forgot') else 'verify')
+        handler.reply(202,{'ok':True});return True
+    raw=data.get('token','')
+    if not isinstance(raw,str) or not 32<=len(raw)<=100:raise Error(400,'Invalid or expired link')
+    purpose='reset' if path.endswith('reset') else 'verify';hashed=hashlib.sha256(raw.encode()).hexdigest()
+    db.execute('BEGIN IMMEDIATE')
+    row=db.execute('SELECT email_tokens.user_id FROM email_tokens JOIN users ON users.id=email_tokens.user_id WHERE token=? AND purpose=? AND expires>? AND users.blocked=0',(hashed,purpose,time.time())).fetchone()
+    if not row:raise Error(400,'Invalid or expired link')
+    if purpose=='reset':
+        password=data.get('password','')
+        if not isinstance(password,str) or not 8<=len(password)<=128:raise Error(400,'Use an 8–128 character password')
+        salt=secrets.token_hex(16);db.execute('UPDATE users SET password=?,salt=?,email_verified=1 WHERE id=?',(password_hash(password,salt),salt,row[0]))
+        for table in ('sessions','admin_sessions','email_tokens'):db.execute(f'DELETE FROM {table} WHERE user_id=?',(row[0],))
+    else:db.execute('UPDATE users SET email_verified=1 WHERE id=?',(row[0],));db.execute('DELETE FROM email_tokens WHERE token=?',(hashed,))
+    db.commit();handler.reply(200,{'ok':True});return True

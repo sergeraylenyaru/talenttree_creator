@@ -34,3 +34,5 @@ test('legacy glow is ignored and 150 percent scale works without a background',(
  const model={glow:{color:'#ffcc88',radius:80,strength:70},layers:[{icon:'inv_sword_04',opacity:.5,scale:1.5}]};
  assert.equal(validateClassIcon(model),model);const html=classEmblem(model);assert.ok(html.includes('scale(1.5)'));assert.ok(!html.includes('emblem-glow'));assert.ok(!html.includes('background-color'));
 });
+
+test('administrator icons resolve only to safe same-origin media paths',()=>{const id='custom:'+'a'.repeat(32);assert.equal(iconURL(id),'/media/icons/'+'a'.repeat(32)+'.png');assert.equal(iconURL('custom:../secret'),'');const html=classEmblem({layers:[{icon:id,opacity:.5}]});assert.ok(html.includes('/media/icons/'));assert.ok(html.includes('opacity:0.5'));});

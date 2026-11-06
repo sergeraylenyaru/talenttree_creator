@@ -47,7 +47,7 @@ class API(unittest.TestCase):
             return error.code, json.load(error), error.headers
 
     def register(self, client, name):
-        status, _, headers = self.request(client, '/api/register', {'login': name, 'password': 'test-password-123'})
+        status, _, headers = self.request(client, '/api/register', {'login': name, 'email': name+'@example.test', 'password': 'test-password-123'})
         self.assertEqual(status, 200)
         self.assertIn('HttpOnly', headers['Set-Cookie'])
         self.assertIn('SameSite=Lax', headers['Set-Cookie'])
@@ -67,8 +67,8 @@ class API(unittest.TestCase):
         self.assertEqual(self.request(bob, '/api/projects/'+pid, {}, 'DELETE')[0], 404)
         self.assertEqual(self.request(alice, '/api/logout', {})[0], 200)
         self.assertEqual(self.request(alice, '/api/projects')[0], 401)
-        self.assertEqual(self.request(alice, '/api/login', {'login': 'alice', 'password': 'wrong-password'})[0], 401)
-        self.assertEqual(self.request(alice, '/api/login', {'login': 'ALICE', 'password': 'test-password-123'})[0], 200)
+        self.assertEqual(self.request(alice, '/api/login', {'login': 'alice', 'email': 'alice@example.test', 'password': 'wrong-password'})[0], 401)
+        self.assertEqual(self.request(alice, '/api/login', {'login': 'ALICE', 'email': 'alice@example.test', 'password': 'test-password-123'})[0], 200)
         self.assertEqual(self.request(alice, '/api/projects/'+pid)[0], 200)
         with server.connect() as db:
             salt, hashed = db.execute('SELECT salt,password FROM users WHERE login=?', ('alice',)).fetchone()
@@ -89,7 +89,7 @@ class API(unittest.TestCase):
     def test_cross_origin_requests_and_invalid_inputs(self):
         client = self.client()
         self.assertEqual(self.request(client, '/api/register', {'login': 'xx', 'password': 'x'})[0], 400)
-        self.assertEqual(self.request(client, '/api/login', {'login': 'valid', 'password': 'password'}, origin='https://other.example')[0], 403)
+        self.assertEqual(self.request(client, '/api/login', {'login': 'valid', 'email': 'valid@example.test', 'password': 'password'}, origin='https://other.example')[0], 403)
         self.register(client, 'validator')
         bad = copy.deepcopy(DOCUMENT)
         bad['branches'] *= 6

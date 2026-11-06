@@ -18,7 +18,7 @@ with tempfile.TemporaryDirectory() as tmp:
             browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
             owner=browser.new_context(viewport={'width':1440,'height':1100})
             owner.route('https://**/*',lambda route:route.abort())
-            owner.request.post(base+'/api/register',data={'login':'layout_author','password':'test-password-123'});owner.request.post(base+'/api/profile/settings',data={'language':'ru'})
+            owner.request.post(base+'/api/register',data={'login':'layout_author', 'email': 'layout_author@example.test','password':'test-password-123'});owner.request.post(base+'/api/profile/settings',data={'language':'ru'})
             name='Повелитель звёздных клинков'
             d={'version':1,'name':name,'budget':41,'rowCost':5,'build':{},'branches':[{'id':'b','name':'Звёзды','rows':5,'talents':[{'id':'t','name':'Сила','row':0,'col':0,'icon':'inv_sword_04','maxRank':2,'descriptions':['2','4'],'requires':''}]}],'abilities':[{'id':'a','name':'Искра','description':'Наносит урон.','icon':'inv_sword_04','branchId':'b'}]}
             pid=owner.request.post(base+'/api/projects',data={'document':d}).json()['id']

@@ -17,7 +17,7 @@ with tempfile.TemporaryDirectory() as tmp:
         with sync_playwright() as p:
             browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
             owner=browser.new_context(viewport={'width':1440,'height':1100})
-            owner.request.post(base+'/api/register',data={'login':'header_owner','password':'test-password-123'});owner.request.post(base+'/api/profile/settings',data={'language':'ru'})
+            owner.request.post(base+'/api/register',data={'login':'header_owner', 'email': 'header_owner@example.test','password':'test-password-123'});owner.request.post(base+'/api/profile/settings',data={'language':'ru'})
             images=[i for i in server.builtin_images() if i.startswith('data:')][:2]
             d={'version':1,'name':'Хранитель небесного огня','budget':41,'rowCost':5,'build':{},
                'classIcon':{'layers':[{'icon':images[0],'opacity':1}]},
@@ -26,7 +26,7 @@ with tempfile.TemporaryDirectory() as tmp:
             pid=owner.request.post(base+'/api/projects',data={'document':d}).json()['id']
             token=owner.request.post(base+'/api/publish',data={'projectId':pid,'visibility':'public'}).json()['token']
             reviewer=browser.new_context(viewport={'width':1440,'height':1100})
-            reviewer.request.post(base+'/api/register',data={'login':'header_reviewer','password':'test-password-123'});reviewer.request.post(base+'/api/profile/settings',data={'language':'ru'})
+            reviewer.request.post(base+'/api/register',data={'login':'header_reviewer', 'email': 'header_reviewer@example.test','password':'test-password-123'});reviewer.request.post(base+'/api/profile/settings',data={'language':'ru'})
             reviewer.request.post(base+'/api/shared/'+token+'/vote',data={'vote':-1})
             page=owner.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
             page.goto(base+'/?share='+token);page.wait_for_function("document.querySelector('#dislikePublication')?.textContent.includes('1')")

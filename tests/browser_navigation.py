@@ -30,7 +30,7 @@ def run():
                 context = browser.new_context(viewport={'width': 1440, 'height': 1000})
                 base = f'http://127.0.0.1:{http.server_port}'
                 assert context.request.post(base + '/api/register', data={
-                    'login': 'navigation_author', 'password': 'navigation-password'}).ok
+                    'login': 'navigation_author', 'email': 'navigation_author@example.test', 'password': 'navigation-password'}).ok
                 context.request.post(base + '/api/profile/settings', data={'language':'ru'})
                 document = {'version': 1, 'name': 'Дерево для проверки', 'budget': 41,
                             'rowCost': 5, 'build': {}, 'abilities': [], 'branches': [

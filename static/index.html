@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="theme/talentforge-theme.css">
   <link rel="stylesheet" href="forge.css">
-</head>
+<link rel="stylesheet" href="admin.css"></head>
 <body class="tf-app-background" data-view="editor">
 <a href="#content" class="skip-link">К содержимому</a>
 <header class="site-header">
@@ -24,7 +24,7 @@
     <button id="auth"><span class="auth-label-full">Войти / Регистрация</span><span class="auth-label-short">Войти</span></button>
     <button id="profileAvatar" class="profile-avatar-button" aria-label="Выбрать аватар" hidden></button>
     <button id="accountMenu" class="account-trigger" aria-label="Меню аккаунта" aria-controls="accountDropdown" aria-expanded="false" hidden><span id="user"></span><span data-glyph="chevron"></span></button>
-    <div id="accountDropdown" class="dropdown account-dropdown" hidden><p class="dropdown-label">ТВОЙ АККАУНТ</p><button id="chooseAvatar"><span data-glyph="user"></span>Изменить аватар</button><button id="profileSettings"><span data-glyph="user"></span>Настройки профиля</button><button id="logout" hidden><span data-glyph="logout"></span>Выйти из аккаунта</button></div>
+    <div id="accountDropdown" class="dropdown account-dropdown" hidden><p class="dropdown-label">ТВОЙ АККАУНТ</p><button id="chooseAvatar"><span data-glyph="user"></span>Изменить аватар</button><button id="profileSettings"><span data-glyph="user"></span>Настройки профиля</button><a id="adminLink" href="/admin" hidden>Администрирование</a><button id="logout" hidden><span data-glyph="logout"></span>Выйти из аккаунта</button></div>
     <section id="noticeDropdown" class="dropdown notice-dropdown" aria-label="Уведомления" hidden><div class="dropdown-heading"><strong>Уведомления</strong><button id="clearNotices" class="text-button">Очистить</button></div><p class="muted">Действия в этом сеансе браузера</p><ul id="noticeList"></ul></section>
   </div>
 </header>

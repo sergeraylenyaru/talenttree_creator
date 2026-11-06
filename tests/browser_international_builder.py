@@ -7,7 +7,7 @@ with tempfile.TemporaryDirectory() as tmp:
  server.DB=str(Path(tmp)/'international.sqlite');server.initialize();http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);threading.Thread(target=http.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{http.server_port}'
  try:
   with sync_playwright() as p:
-   browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);ctx=browser.new_context(viewport={'width':1440,'height':1000});ctx.route('https://**/*',lambda route:route.abort());ctx.request.post(base+'/api/register',data={'login':'international','password':'test-password-123'})
+   browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);ctx=browser.new_context(viewport={'width':1440,'height':1000});ctx.route('https://**/*',lambda route:route.abort());ctx.request.post(base+'/api/register',data={'login':'international', 'email': 'international@example.test','password':'test-password-123'})
    page=ctx.new_page();errors=[];page.on('pageerror',lambda error:errors.append(str(error)));page.goto(base);expect(page.locator('#user')).to_have_text('international');expect(page.locator('#editMode')).to_have_text('Editor');assert page.locator('html').get_attribute('lang')=='en'
    page.locator('#className').fill('Русское имя автора');page.locator('#className').blur();page.locator('#characterSettings').click();expect(page.locator('#modalTitle')).to_have_text('Resources & character')
    page.locator('#builderHp').fill('24000');page.locator('[data-resource-index="0"]').click();page.locator('#resourceMax').fill('100');page.locator('#resourceCurrent').fill('85');page.locator('#resourceUnit').select_option('percent')

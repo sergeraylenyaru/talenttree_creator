@@ -19,7 +19,7 @@ with tempfile.TemporaryDirectory() as tmp:
         with sync_playwright() as p:
             browser = p.chromium.launch(executable_path='/usr/bin/chromium', args=['--no-sandbox'])
             owner = browser.new_context()
-            owner.request.post(base + '/api/register', data={'login':'build_author', 'password':'test-password-123'})
+            owner.request.post(base + '/api/register', data={'login':'build_author', 'email': 'build_author@example.test', 'password':'test-password-123'})
             d = {'version':1,'name':'Личный калькулятор','budget':41,'rowCost':5,'build':{'t':3},'abilities':[],
                  'branches':[{'id':'b','name':'Сила','rows':5,'talents':[{'id':'t','name':'Сила','icon':'inv_misc_questionmark','row':0,'col':0,'maxRank':5,'descriptions':['1','2','3','4','5'],'requires':''}]}]}
             tokens = [owner.request.post(base + '/api/share', data={'document':d,'visibility':'public'}).json()['token'] for _ in range(2)]

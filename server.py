@@ -1,4 +1,5 @@
-"""Talent Forge development server. Python 3.12+, no dependencies."""
+"""TalentForge HTTP server. Python 3.12+, SQLite; Pillow for admin icon uploads."""
+import accounts
 import hashlib
 import hmac
 import json
@@ -44,12 +45,13 @@ def initialize():
             db.execute('ALTER TABLE users ADD COLUMN show_3d INTEGER NOT NULL DEFAULT 0')
         if 'language' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
             db.execute("ALTER TABLE users ADD COLUMN language TEXT NOT NULL DEFAULT 'en'")
+        accounts.migrate(db)
         publications.migrate(db)
         publications.purge_archived(db)
 
 def profile_info(db, uid):
-    row=db.execute('SELECT login,avatar,show_3d,language FROM users WHERE id=?',(uid,)).fetchone()
-    return {'login':row[0],'avatar':publications.avatar_value(row[1]),'show3d':bool(row[2]),'language':row[3]}
+    row=db.execute('SELECT login,avatar,show_3d,language,email,email_verified,is_admin FROM users WHERE id=?',(uid,)).fetchone()
+    return {'login':row[0],'avatar':publications.avatar_value(row[1]),'show3d':bool(row[2]),'language':row[3],'email':row[4],'emailVerified':bool(row[5]),'isAdmin':bool(row[6])}
 
 def password_hash(password, salt):
     return hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), n=16384, r=8, p=1).hex()
@@ -68,6 +70,10 @@ def avatar_catalog():
     return {item['id'] for item in json.loads((ROOT / 'static' / 'icon-catalog.json').read_text(encoding='utf-8'))}
 
 def validate_icon(value):
+    if isinstance(value,str) and value.startswith('custom:'):
+        if not re.fullmatch(r'custom:[a-f0-9]{32}',value):raise ValueError('Invalid icon')
+        with connect() as db:
+            if not db.execute('SELECT 1 FROM icon_assets WHERE id=?',(value[7:],)).fetchone():raise ValueError('Icon not found')
     if isinstance(value, str) and value.startswith('data:') and value not in builtin_images():
         raise ValueError('Загрузка собственных иконок отключена. Выбери иконку из каталога.')
 
@@ -112,7 +118,7 @@ def validate_class_icon(value):
         for key,lo,hi in [('x',-100,100),('y',-100,100),('scale',.75,1.5),('rotation',-180,180)]:
             if key in layer and not number(layer[key],lo,hi):raise ValueError('Проверь положение, масштаб 75–150% и угол слоя')
         icon=layer['icon']
-        if not (re.fullmatch(r'[A-Za-z0-9_]{1,100}',icon) or icon.startswith('wotlk:') or icon in builtin_images()):raise ValueError('Выбери иконку из каталога')
+        if not (re.fullmatch(r'[A-Za-z0-9_]{1,100}',icon) or icon.startswith(('wotlk:','custom:')) or icon in builtin_images()):raise ValueError('Выбери иконку из каталога')
         if icon.startswith('wotlk:') and not re.fullmatch(r"wotlk:shared/global/talents/[a-z]+/images/[a-z]+/[a-z0-9'_,.\-]+\.jpg",icon):raise ValueError('Неверная иконка класса')
         validate_icon(icon)
     return value
@@ -253,9 +259,17 @@ class Handler(SimpleHTTPRequestHandler):
             token = jar['session'].value if 'session' in jar else ''
         except cookies.CookieError:
             token = ''
-        return db.execute('SELECT users.id, users.login, users.avatar FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>?', (hashlib.sha256(token.encode()).hexdigest(), time.time())).fetchone()
+        return db.execute('SELECT users.id, users.login, users.avatar FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>? AND users.blocked=0 AND (users.email IS NULL OR users.email_verified=1 OR ?=0)', (hashlib.sha256(token.encode()).hexdigest(), time.time(),int(accounts.verification_required()))).fetchone()
 
     def do_GET(self):
+        parsed=urlsplit(self.path)
+        if parsed.path in ('/admin','/admin/'):
+            self.path='/admin.html';return super().do_GET()
+        match=re.fullmatch(r'/media/icons/([a-f0-9]{32})\.png',parsed.path)
+        if match:
+            with connect() as db:row=db.execute('SELECT png FROM icon_assets WHERE id=?',(match[1],)).fetchone()
+            if not row:return self.send_error(404)
+            self.send_response(200);self.send_header('Content-Type','image/png');self.send_header('Content-Length',str(len(row[0])));self.send_header('Cache-Control','public, max-age=86400, immutable');self.end_headers();self.wfile.write(row[0]);return
         if self.path.startswith('/api/'):
             self.api('GET')
         else:
@@ -288,6 +302,9 @@ class Handler(SimpleHTTPRequestHandler):
                 user = self.session(db)
                 uid = user[0] if user else None
                 parsed = urlsplit(self.path)
+                if accounts.admin_route(self,db,method,parsed.path,data,password_hash,profile_info):return
+                if accounts.email_route(self,db,method,parsed.path,data,password_hash,uid):return
+                if parsed.path=='/api/icons' and method=='GET':return self.reply(200,{'icons':accounts.public_icons(db)})
                 if parsed.path == '/api/rankings' and method == 'GET':
                     query = parse_qs(parsed.query)
                     return self.reply(200, publications.listing(db, uid, query.get('sort', ['views'])[0], int(query.get('page', ['0'])[0])))
@@ -335,36 +352,30 @@ class Handler(SimpleHTTPRequestHandler):
                         return self.reply(200, {'publication': publications.info(db, token, uid)})
                     return self.reply(404, {'error': 'Не найдено'})
                 if self.path in ('/api/register', '/api/login') and method == 'POST':
-                    login, password = data.get('login', ''), data.get('password', '')
-                    if not isinstance(login, str) or not isinstance(password, str) or not re.fullmatch(r'[A-Za-z0-9_\-]{3,32}', login) or not 8 <= len(password) <= 128:
-                        raise ValueError('Логин: 3–32 латинские буквы, цифры, _ или -. Пароль: 8–128 символов.')
-                    key = self.client_address[0]
-                    attempt = db.execute('SELECT count, until FROM attempts WHERE key=?', (key,)).fetchone()
-                    if attempt and attempt[1] > time.time() and attempt[0] >= 20:
-                        return self.reply(429, {'error': 'Слишком много попыток. Повторите через 15 минут.'})
-                    db.execute('INSERT INTO attempts VALUES (?,1,?) ON CONFLICT(key) DO UPDATE SET count=CASE WHEN until<? THEN 1 ELSE count+1 END, until=CASE WHEN until<? THEN excluded.until ELSE until END', (key, time.time()+900, time.time(), time.time()))
-                    db.commit()
-                    if self.path == '/api/register':
-                        salt = secrets.token_hex(16)
-                        try:
-                            cursor = db.execute('INSERT INTO users(login,salt,password) VALUES(?,?,?)', (login, salt, password_hash(password, salt)))
-                        except sqlite3.IntegrityError:
-                            return self.reply(409, {'error': 'Логин уже занят'})
-                        uid = cursor.lastrowid
-                    else:
-                        row = db.execute('SELECT id,salt,password FROM users WHERE login=?', (login,)).fetchone()
-                        actual = password_hash(password, row[1] if row else '00'*16)
-                        if not row or not hmac.compare_digest(row[2], actual):
-                            return self.reply(401, {'error': 'Неверный логин или пароль'})
-                        uid = row[0]
-                    token = secrets.token_urlsafe(32)
-                    db.execute('DELETE FROM sessions WHERE expires<?', (time.time(),))
-                    db.execute('INSERT INTO sessions VALUES(?,?,?)', (hashlib.sha256(token.encode()).hexdigest(), uid, time.time()+604800))
-                    db.commit()
-                    secure = '; Secure' if os.environ.get('COOKIE_SECURE') == '1' else ''
-                    return self.reply(200, {'user': profile_info(db,uid)}, f'session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800{secure}')
+                    accounts.rate_limit(db,'login:'+self.client_address[0])
+                    if self.path=='/api/register':
+                        uid=accounts.register(db,data,password_hash)
+                        if accounts.verification_required():return self.reply(201,{'user':None,'verificationPending':True})
+                    else:uid=accounts.credential(db,data,password_hash)
+                    return self.reply(200,{'user':profile_info(db,uid)},accounts.new_session(db,uid))
                 if not user:
                     return self.reply(401, {'error': 'Войдите в аккаунт'})
+                if parsed.path=='/api/auth/email' and method=='POST':
+                    accounts.rate_limit(db,'email-change:'+str(uid),10)
+                    row=db.execute('SELECT salt,password FROM users WHERE id=?',(uid,)).fetchone()
+                    password=data.get('password','')
+                    if not isinstance(password,str) or not 8<=len(password)<=128 or not hmac.compare_digest(row[1],password_hash(password,row[0])):raise accounts.Error(401,'Incorrect password')
+                    address=accounts.email(data.get('email'))
+                    try:db.execute('UPDATE users SET email=?,email_verified=0 WHERE id=?',(address,uid))
+                    except sqlite3.IntegrityError:raise accounts.Error(409,'Email is already in use') from None
+                    for table in ('sessions','admin_sessions','email_tokens'):db.execute(f'DELETE FROM {table} WHERE user_id=?',(uid,))
+                    db.commit()
+                    sent=False
+                    if accounts.mail_enabled():
+                        try:accounts.issue_mail(db,uid,'verify');sent=True
+                        except accounts.Error:pass
+                    if accounts.verification_required():return self.reply(200,{'user':None,'verificationSent':sent,'verificationPending':True},'session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0')
+                    return self.reply(200,{'user':profile_info(db,uid),'verificationSent':sent},accounts.new_session(db,uid))
                 if self.path == '/api/profile/settings' and method == 'POST':
                     if not data or set(data)-{'show3d','language'} or ('show3d' in data and type(data['show3d']) is not bool) or ('language' in data and data['language'] not in ('en','ru')):
                         raise ValueError('Проверь настройку 3D-просмотра')
@@ -379,7 +390,7 @@ class Handler(SimpleHTTPRequestHandler):
                         avatar={"layers":avatar["layers"]}
                         stored_avatar=json.dumps(avatar)
                     else:
-                        if not isinstance(avatar, str) or len(avatar) > 350000 or not (re.fullmatch(r'[A-Za-z0-9_]{1,100}', avatar) or avatar in avatar_catalog()):
+                        if not isinstance(avatar, str) or len(avatar) > 350000 or not (re.fullmatch(r'[A-Za-z0-9_]{1,100}', avatar) or avatar in avatar_catalog() or avatar.startswith('custom:')):
                             raise ValueError('Выбери аватар из каталога иконок')
                         validate_icon(avatar)
                         stored_avatar=avatar
@@ -515,6 +526,8 @@ class Handler(SimpleHTTPRequestHandler):
                         db.commit()
                         return self.reply(200, {})
                 self.reply(404, {'error': 'Не найдено'})
+        except accounts.Error as error:
+            self.reply(error.status,{'error':str(error)})
         except (ValueError, KeyError, TypeError, AttributeError) as error:
             self.reply(400, {'error': str(error) or 'Неверный запрос'})
 
@@ -529,6 +542,13 @@ class ArchiveHTTPServer(ThreadingHTTPServer):
 
 if __name__ == '__main__':
     initialize()
+    if '--create-admin' in sys.argv:
+        import getpass
+        address=accounts.email(input('Admin email: '));login=input('Public nickname: ').strip();password=getpass.getpass('Admin password: ');repeat=getpass.getpass('Repeat password: ')
+        if password!=repeat:raise SystemExit('Passwords do not match')
+        with connect() as db:
+            accounts.register(db,{'email':address,'login':login,'password':password},password_hash,bootstrap=True)
+        print('Administrator created. Open /admin');raise SystemExit(0)
     port = int(os.environ.get('PORT', '8000'))
     print(f'Talent Forge: http://localhost:{port}', flush=True)
     ArchiveHTTPServer((os.environ.get('HOST', '127.0.0.1'), port), Handler).serve_forever()

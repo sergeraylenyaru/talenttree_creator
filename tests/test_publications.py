@@ -143,7 +143,7 @@ class PublicationAPI(unittest.TestCase):
         self.assertEqual(self.request(owner,'/api/me')[1]['user']['avatar'],avatar)
         self.assertEqual(self.request(self.client(),'/api/rankings')[1]['publications'][0]['avatar'],avatar)
         self.assertEqual(self.request(self.client(),'/api/shared/'+token)[1]['publication']['avatar'],avatar)
-        login=self.request(self.client(),'/api/login',{'login':'author','password':'test-password-123'})
+        login=self.request(self.client(),'/api/login',{'login':'author', 'email': 'author@example.test','password':'test-password-123'})
         self.assertEqual(login[1]['user']['avatar'],avatar)
         bad=copy.deepcopy(avatar);bad['layers'][0]['icon']='https://example.com/unsafe.png'
         self.assertEqual(self.request(owner,'/api/profile/avatar',{'avatar':bad})[0],400)
@@ -167,7 +167,7 @@ class PublicationAPI(unittest.TestCase):
         self.assertTrue(self.request(owner,'/api/profile/settings',{'show3d':True})[1]['user']['show3d'])
         self.assertFalse(self.request(other,'/api/me')[1]['user']['show3d'])
         self.assertTrue(self.request(owner,'/api/profile/avatar',{'avatar':'inv_sword_04'})[1]['user']['show3d'])
-        login=self.request(self.client(),'/api/login',{'login':'author','password':'test-password-123'})
+        login=self.request(self.client(),'/api/login',{'login':'author', 'email': 'author@example.test','password':'test-password-123'})
         self.assertTrue(login[1]['user']['show3d'])
         for bad in [1,'true',None]:
             self.assertEqual(self.request(owner,'/api/profile/settings',{'show3d':bad})[0],400)
@@ -199,7 +199,7 @@ class PublicationAPI(unittest.TestCase):
         profile=self.request(owner,'/api/profile/settings',{'language':'ru','show3d':True})[1]['user']
         self.assertEqual(profile['language'],'ru');self.assertTrue(profile['show3d'])
         self.assertEqual(self.request(owner,'/api/profile/avatar',{'avatar':'inv_sword_04'})[1]['user']['language'],'ru')
-        login=self.request(self.client(),'/api/login',{'login':'author','password':'test-password-123'})
+        login=self.request(self.client(),'/api/login',{'login':'author', 'email': 'author@example.test','password':'test-password-123'})
         self.assertEqual(login[1]['user']['language'],'ru')
         for bad in ['de',None,42]:self.assertEqual(self.request(owner,'/api/profile/settings',{'language':bad})[0],400)
         self.assertEqual(self.request(owner,'/api/profile/settings',{'language':'en'})[1]['user']['language'],'en')
