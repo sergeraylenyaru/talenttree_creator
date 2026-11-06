@@ -221,7 +221,8 @@ def validate(document):
                     if not isinstance(item,dict) or not isinstance(item.get('id'),str) or item['id'] in ids or not isinstance(item.get('name'),str) or not 1<=len(item['name'].strip())<=60 or type(item.get('enabled')) is not bool:raise ValueError('Неверная экипировка')
                     ids.add(item['id']);validate_class_icon({'layers':[{'icon':item.get('icon'),'opacity':1}]})
         for r in c['resources']:
-            if not isinstance(r,dict) or not isinstance(r.get('name'),str) or not r['name'].strip() or type(r.get('max')) is not int or not 1<=r['max']<=100000000 or type(r.get('current')) is not int or not 0<=r['current']<=r['max'] or r.get('unit','points') not in ('points','percent','count') or r.get('display') not in ('bar','icons') or r.get('shape') not in ('circle','diamond','triangle','crystal','gem','orb','flame','star') or not isinstance(r.get('color'),str) or not re.fullmatch('#[0-9a-fA-F]{6}',r['color']) or (r['display']=='icons' and r['max']>100):raise ValueError('Неверный ресурс')
+            if isinstance(r,dict) and r.get('display')=='icons' and type(r.get('max')) is int and r['max']>20:raise ValueError('Для фигур допустимо не более 20')
+            if not isinstance(r,dict) or not isinstance(r.get('name'),str) or not r['name'].strip() or type(r.get('max')) is not int or not 1<=r['max']<=100000000 or type(r.get('current')) is not int or not 0<=r['current']<=r['max'] or r.get('unit','points') not in ('points','percent','count') or r.get('display') not in ('bar','icons') or r.get('shape') not in ('circle','diamond','triangle','crystal','gem','orb','flame','star') or not isinstance(r.get('color'),str) or not re.fullmatch('#[0-9a-fA-F]{6}',r['color']) or (r['display']=='icons' and r['max']>20):raise ValueError('Неверный ресурс')
     return publications.without_build(document)
 
 class Handler(SimpleHTTPRequestHandler):

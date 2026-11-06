@@ -214,6 +214,15 @@ class PublicationAPI(unittest.TestCase):
         for mutate in [lambda c:c['resources'][0].update(unit='bad'),lambda c:c.update(armorTypes=['unknown']),lambda c:c['customArmorTypes'][0].update(icon='https://example.com/upload.png'),lambda c:c['customArmorTypes'][0].update(name='')]:
             bad=copy.deepcopy(d);mutate(bad['character']);self.assertEqual(self.request(owner,'/api/projects',{'id':pid,'document':bad})[0],400)
 
+    def test_symbol_resource_limit_is_twenty(self):
+        owner,pid,token,d=self.publish()
+        d['character']={'hp':100,'race':'Human','gender':'Male','armory':'','resources':[{'name':'Crystals','max':20,'current':20,'unit':'percent','display':'icons','shape':'crystal','color':'#9365f5'}]}
+        self.assertEqual(self.request(owner,'/api/projects',{'id':pid,'document':d})[0],200)
+        d['character']['resources'][0]['max']=21
+        self.assertEqual(self.request(owner,'/api/projects',{'id':pid,'document':d})[0],400)
+        d['character']['resources'][0]['display']='bar'
+        self.assertEqual(self.request(owner,'/api/projects',{'id':pid,'document':d})[0],200)
+
     def test_private_publications_deny_every_non_owner_access(self):
         owner,pid,token,document=self.publish(visibility='private')
         guest=self.client();other=self.client();self.register(other,'private_other')
