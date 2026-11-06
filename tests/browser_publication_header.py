@@ -30,7 +30,7 @@ with tempfile.TemporaryDirectory() as tmp:
             reviewer.request.post(base+'/api/shared/'+token+'/vote',data={'vote':-1})
             page=owner.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
             page.goto(base+'/?share='+token);page.wait_for_function("document.querySelector('#dislikePublication')?.textContent.includes('1')")
-            assert page.locator('#publicationBar').evaluate("el=>el.parentElement.classList.contains('tree-hero-content')")
+            assert page.locator('#publicationBar').evaluate("el=>el.closest('.tree-hero-content')!==null")
             assert page.locator('#publicationVotes').evaluate("el=>el.previousElementSibling.id==='classIcon'")
             assert d['name'] not in page.locator('#publicationBar').inner_text()
             assert d['name'] not in page.locator('#characterPanel').inner_text()

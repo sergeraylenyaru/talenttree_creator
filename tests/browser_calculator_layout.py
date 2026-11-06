@@ -41,7 +41,7 @@ with tempfile.TemporaryDirectory() as tmp:
             for width in [1440,1024,768,390,320]:
                 page.set_viewport_size({'width':width,'height':1100})
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
-                assert page.locator('#treeTitle').evaluate('el=>el.clientHeight>=parseFloat(getComputedStyle(el).lineHeight)*2-1')
+                assert page.locator('#treeTitle').evaluate('el=>el.clientHeight>=parseFloat(getComputedStyle(el).lineHeight)-1')
                 assert page.locator('.abilities-heading').evaluate("el=>{const a=el.querySelector('h2').getBoundingClientRect(),b=el.querySelector('#abilityViewControls').getBoundingClientRect();return Math.abs((a.top+a.bottom)/2-(b.top+b.bottom)/2)<4}")
             page.set_viewport_size({'width':1440,'height':1100})
             page.locator('#accountMenu').click();page.locator('#profileSettings').click();assert not page.locator('#show3d').is_checked()
@@ -58,7 +58,7 @@ with tempfile.TemporaryDirectory() as tmp:
             assert page.locator('#points').inner_text()=='1 / 41'
             assert '?share=' not in page.url
             page.locator('#editMode').click();assert page.locator('#save').is_visible();assert page.locator('#characterSettings').is_visible()
-            assert page.locator('#className').evaluate('el=>el.tagName==="TEXTAREA" && el.rows===2')
+            assert page.locator('#className').evaluate('el=>el.tagName==="TEXTAREA" && el.rows===1')
             page.locator('#rankings').click();page.wait_for_selector('.publication-title')
             assert page.locator('.publication-title').evaluate('el=>{const s=getComputedStyle(el);return s.whiteSpace!=="nowrap"&&s.webkitLineClamp==="2"&&el.clientHeight>=parseFloat(s.lineHeight)*2-1}')
             guest=browser.new_context(viewport={'width':390,'height':900});g=guest.new_page();g.goto(base+'/?share='+token);g.wait_for_function("document.querySelector('#treeTitle').textContent.includes('Повелитель')")

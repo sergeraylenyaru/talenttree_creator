@@ -20,7 +20,7 @@ async function api(path, data, method) {
 }
 function image(id,extra='') { return `<img src="${esc(iconURL(id))||'missing-icon'}" alt="" loading="lazy" draggable="false" ${extra}>`; }
 document.addEventListener('error',e=>{if(e.target.tagName==='IMG'){e.target.style.visibility='hidden';e.target.alt='Иконка недоступна';}},true);
-function syncHero(){const inTree=!$('.workspace').hidden;$('.intro').hidden=inTree;$('#treeHero').hidden=!inTree;}
+function syncHero(){const inTree=!$('.workspace').hidden;$('.intro').hidden=inTree;$('#treeHero').hidden=!inTree;$('#modeBar').hidden=!inTree;}
 function showWorkspace(){closeMenus();$('#library').hidden=true;$('#community').hidden=true;$('.workspace').hidden=false;document.body.dataset.view='editor';syncHero();}
 function branchTint(b){return /^#[0-9a-f]{6}$/i.test(b?.color||'')?`style="background:linear-gradient(135deg,${b.color}66,#0b0d12e6)"`:'';}
 function render() {hoverTarget=null;$('#tooltip').hidden=true;
@@ -31,7 +31,7 @@ function render() {hoverTarget=null;$('#tooltip').hidden=true;
  $('#className').value=doc.name;$('#budget').value=doc.budget;$('#rowCost').value=doc.rowCost;
  $('#points').textContent=`${total(doc)} / ${doc.budget}`;
  const track=$('.budget-track');track.setAttribute('aria-valuemax',doc.budget);track.setAttribute('aria-valuenow',total(doc));track.firstElementChild.style.width=`${doc.budget?Math.min(100,total(doc)/doc.budget*100):0}%`;
- updateNavigation();$('.workspace').dataset.mode=mode;$('#chooseFavorite').hidden=mode!=='play'||!user;
+ updateNavigation();$('.workspace').dataset.mode=mode;$('#modeBar').dataset.mode=mode;$('#chooseFavorite').hidden=mode!=='play'||!user;
  for(const id of ['className','budget','rowCost']) $('#'+id).disabled=mode!=='edit';
  $('#editMode').classList.toggle('selected',mode==='edit');$('#playMode').classList.toggle('selected',mode==='play');$('#editMode').setAttribute('aria-pressed',String(mode==='edit'));$('#playMode').setAttribute('aria-pressed',String(mode==='play'));
  $('#addBranch').hidden=mode!=='edit';$('#addBranch').disabled=doc.branches.length>=4;$('#addAbility').hidden=mode!=='edit';
