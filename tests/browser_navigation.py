@@ -31,6 +31,7 @@ def run():
                 base = f'http://127.0.0.1:{http.server_port}'
                 assert context.request.post(base + '/api/register', data={
                     'login': 'navigation_author', 'password': 'navigation-password'}).ok
+                context.request.post(base + '/api/profile/settings', data={'language':'ru'})
                 document = {'version': 1, 'name': 'Дерево для проверки', 'budget': 41,
                             'rowCost': 5, 'build': {}, 'abilities': [], 'branches': [
                                 {'id': 'one', 'name': 'Ветка', 'rows': 25, 'talents': []}]}
@@ -58,6 +59,8 @@ def run():
                 page.locator('#rankings').click()
                 page.wait_for_selector('.publication-row')
                 page.locator('.publication-row-bottom').click()
+                page.wait_for_selector('#draftDialog[open]')
+                page.locator('#discardDraft').click()
                 page.wait_for_selector('#likePublication')
                 assert page.locator('.workspace').is_visible()
                 assert not page.locator('#className').is_enabled()
@@ -74,10 +77,7 @@ def run():
                 page.locator('#librarySearch').fill('')
                 page.locator('[data-open]').first.click()
                 page.wait_for_function("document.querySelector('#library').hidden")
-                page.locator('#zoomIn').click()
-                assert page.locator('#zoomReset').inner_text() == '110%'
-                page.locator('#zoomReset').click()
-                assert page.locator('#zoomReset').inner_text() == '100%'
+                assert page.locator('#zoomIn,#zoomReset,#focusBranch').count()==0
                 page.locator('#save').click()
                 page.wait_for_function("document.querySelector('#saveState').textContent==='Сохранено в аккаунте'")
                 page.locator('#notifications').click()

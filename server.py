@@ -42,12 +42,14 @@ def initialize():
             db.execute("ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT 'inv_misc_questionmark'")
         if 'show_3d' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
             db.execute('ALTER TABLE users ADD COLUMN show_3d INTEGER NOT NULL DEFAULT 0')
+        if 'language' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
+            db.execute("ALTER TABLE users ADD COLUMN language TEXT NOT NULL DEFAULT 'en'")
         publications.migrate(db)
         publications.purge_archived(db)
 
 def profile_info(db, uid):
-    row=db.execute('SELECT login,avatar,show_3d FROM users WHERE id=?',(uid,)).fetchone()
-    return {'login':row[0],'avatar':publications.avatar_value(row[1]),'show3d':bool(row[2])}
+    row=db.execute('SELECT login,avatar,show_3d,language FROM users WHERE id=?',(uid,)).fetchone()
+    return {'login':row[0],'avatar':publications.avatar_value(row[1]),'show3d':bool(row[2]),'language':row[3]}
 
 def password_hash(password, salt):
     return hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), n=16384, r=8, p=1).hex()
@@ -193,6 +195,7 @@ def validate(document):
     if document.get('version') != 1 or not isinstance(abilities, list) or any(not isinstance(a, dict) or any(not isinstance(a.get(k), str) for k in ('id', 'name', 'description', 'icon')) for a in abilities):
         raise ValueError('Неверный формат класса или способностей')
     for ability in abilities:
+        if 'resourceUnit' in ability and ability['resourceUnit'] not in ('points','percent','count'):raise ValueError('Неверные единицы ресурса')
         if 'kind' in ability and ability['kind'] not in ('active', 'passive'):
             raise ValueError('Неверный тип способности')
         if 'branchId' in ability and ability['branchId'] not in ('', 'auto') and ability['branchId'] not in branch_ids:
@@ -205,6 +208,20 @@ def validate(document):
                 value = ability.get(field)
                 if type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 1000000000:
                     raise ValueError('Параметры способности должны быть неотрицательными числами')
+    if 'character' in document:
+        c=document['character']
+        if not isinstance(c,dict) or type(c.get('hp')) is not int or not 1<=c['hp']<=100000000 or any(not isinstance(c.get(k),str) for k in ('race','gender','armory')) or not isinstance(c.get('resources'),list):raise ValueError('Неверные настройки персонажа')
+        for key,allowed in [('armorTypes',['cloth','leather','mail','plate','shield']),('weaponTypes',['sword1','sword2','axe1','axe2','mace1','mace2','dagger','staff','polearm','fist','bow','crossbow','gun','wand','thrown','offhand'])]:
+            if key in c and (not isinstance(c[key],list) or any(not isinstance(v,str) or v not in allowed for v in c[key]) or len(set(c[key]))!=len(c[key])):raise ValueError('Неверная экипировка')
+        for key in ('customArmorTypes','customWeaponTypes'):
+            if key in c:
+                if not isinstance(c[key],list):raise ValueError('Неверная экипировка')
+                ids=set()
+                for item in c[key]:
+                    if not isinstance(item,dict) or not isinstance(item.get('id'),str) or item['id'] in ids or not isinstance(item.get('name'),str) or not 1<=len(item['name'].strip())<=60 or type(item.get('enabled')) is not bool:raise ValueError('Неверная экипировка')
+                    ids.add(item['id']);validate_class_icon({'layers':[{'icon':item.get('icon'),'opacity':1}]})
+        for r in c['resources']:
+            if not isinstance(r,dict) or not isinstance(r.get('name'),str) or not r['name'].strip() or type(r.get('max')) is not int or not 1<=r['max']<=100000000 or type(r.get('current')) is not int or not 0<=r['current']<=r['max'] or r.get('unit','points') not in ('points','percent','count') or r.get('display') not in ('bar','icons') or r.get('shape') not in ('circle','diamond','triangle','crystal','gem','orb','flame','star') or not isinstance(r.get('color'),str) or not re.fullmatch('#[0-9a-fA-F]{6}',r['color']) or (r['display']=='icons' and r['max']>100):raise ValueError('Неверный ресурс')
     return publications.without_build(document)
 
 class Handler(SimpleHTTPRequestHandler):
@@ -348,9 +365,10 @@ class Handler(SimpleHTTPRequestHandler):
                 if not user:
                     return self.reply(401, {'error': 'Войдите в аккаунт'})
                 if self.path == '/api/profile/settings' and method == 'POST':
-                    if set(data)!={'show3d'} or type(data['show3d']) is not bool:
+                    if not data or set(data)-{'show3d','language'} or ('show3d' in data and type(data['show3d']) is not bool) or ('language' in data and data['language'] not in ('en','ru')):
                         raise ValueError('Проверь настройку 3D-просмотра')
-                    db.execute('UPDATE users SET show_3d=? WHERE id=?',(int(data['show3d']),uid))
+                    if 'show3d' in data:db.execute('UPDATE users SET show_3d=? WHERE id=?',(int(data['show3d']),uid))
+                    if 'language' in data:db.execute('UPDATE users SET language=? WHERE id=?',(data['language'],uid))
                     db.commit()
                     return self.reply(200,{'user':profile_info(db,uid)})
                 if self.path == '/api/profile/avatar' and method == 'POST':

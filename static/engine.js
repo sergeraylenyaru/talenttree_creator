@@ -56,10 +56,14 @@ export function normalize(doc,{allowLegacy=false}={}) {
   if(!allowLegacy)for(const b of doc.branches)if([...dependencyRoutes(b).values()].some(path=>!path))throw Error('Стрелки зависимостей пересекаются или нет свободного пути. Убери или измени зависимость.');
   if(!Array.isArray(doc.abilities)||doc.abilities.some(a=>!a||typeof a.id!=='string'||typeof a.name!=='string'||typeof a.description!=='string')) throw Error('Неверный список способностей');
   for(const a of doc.abilities){if(a.kind!==undefined&&!['active','passive'].includes(a.kind))throw Error('Неверный тип способности');if(a.branchId!==undefined&&!['','auto'].includes(a.branchId)&&!branchIds.has(a.branchId))throw Error('Ветка способности не найдена');}
+  for(const a of doc.abilities)if(a.resourceUnit!==undefined&&!['points','percent','count'].includes(a.resourceUnit))throw Error('Неверные единицы ресурса');
   for(const a of doc.abilities)if(a.resourceType!==undefined){if(typeof a.resourceType!=='string'||!a.resourceType||a.resourceType.length>100||['resource','cast','cooldown','range'].some(k=>!Number.isFinite(a[k])||a[k]<0||a[k]>1e9))throw Error('Неверные числовые параметры способности');}
   if(doc.character){
     const c=doc.character;
     if(!Number.isInteger(c.hp)||c.hp<1||c.hp>100000000||typeof c.race!=='string'||typeof c.gender!=='string'||typeof c.armory!=='string'||!Array.isArray(c.resources))throw Error('Неверные настройки персонажа');
+    for(const [key,allowed] of [['armorTypes',['cloth','leather','mail','plate','shield']],['weaponTypes',['sword1','sword2','axe1','axe2','mace1','mace2','dagger','staff','polearm','fist','bow','crossbow','gun','wand','thrown','offhand']]])if(c[key]!==undefined&&(!Array.isArray(c[key])||new Set(c[key]).size!==c[key].length||c[key].some(v=>!allowed.includes(v))))throw Error('Неверная экипировка');
+    for(const key of ['customArmorTypes','customWeaponTypes'])if(c[key]!==undefined){if(!Array.isArray(c[key]))throw Error('Неверная экипировка');const ids=new Set();for(const item of c[key]){if(!item||typeof item.id!=='string'||ids.has(item.id)||typeof item.name!=='string'||!item.name.trim()||item.name.length>60||typeof item.enabled!=='boolean')throw Error('Неверная экипировка');ids.add(item.id);validateClassIcon({layers:[{icon:item.icon,opacity:1}]});}}
+    for(const r of c.resources)if(r.unit!==undefined&&!['points','percent','count'].includes(r.unit))throw Error('Неверные единицы ресурса');
     for(const r of c.resources)if(typeof r.name!=='string'||!r.name.trim()||!Number.isInteger(r.max)||r.max<1||r.max>100000000||!Number.isInteger(r.current)||r.current<0||r.current>r.max||!['bar','icons'].includes(r.display)||!['circle','diamond','triangle','crystal','gem','orb','flame','star'].includes(r.shape)||!/^#[0-9a-f]{6}$/i.test(r.color)||(r.display==='icons'&&r.max>100))throw Error('Неверный ресурс');
   }
   doc.build=doc.build&&typeof doc.build==='object'&&!Array.isArray(doc.build)?doc.build:{};

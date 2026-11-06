@@ -192,6 +192,28 @@ class PublicationAPI(unittest.TestCase):
         self.assertEqual(self.request(viewer,'/api/favorites',{'kind':'tree','item':{'document':snapshot}})[0],200)
         self.assertTrue(all(f['item']['document']['build']=={} for f in self.request(viewer,'/api/favorites')[1]['favorites']))
 
+    def test_language_defaults_and_persists_without_changing_other_preferences(self):
+        owner,pid,token,_=self.publish()
+        self.assertEqual(self.request(owner,'/api/me')[1]['user']['language'],'en')
+        self.assertEqual(self.request(self.client(),'/api/profile/settings',{'language':'ru'})[0],401)
+        profile=self.request(owner,'/api/profile/settings',{'language':'ru','show3d':True})[1]['user']
+        self.assertEqual(profile['language'],'ru');self.assertTrue(profile['show3d'])
+        self.assertEqual(self.request(owner,'/api/profile/avatar',{'avatar':'inv_sword_04'})[1]['user']['language'],'ru')
+        login=self.request(self.client(),'/api/login',{'login':'author','password':'test-password-123'})
+        self.assertEqual(login[1]['user']['language'],'ru')
+        for bad in ['de',None,42]:self.assertEqual(self.request(owner,'/api/profile/settings',{'language':bad})[0],400)
+        self.assertEqual(self.request(owner,'/api/profile/settings',{'language':'en'})[1]['user']['language'],'en')
+
+    def test_character_units_equipment_and_custom_icons_round_trip(self):
+        owner,pid,token,d=self.publish()
+        d['character']={'hp':24000,'race':'Человек','gender':'Мужской','armory':'','resources':[{'name':'Кристаллы','max':5,'current':4,'unit':'count','display':'icons','shape':'crystal','color':'#9365f5'}],'armorTypes':['cloth','plate'],'weaponTypes':['sword1','dagger'],'customArmorTypes':[{'id':'custom','name':'Звёздная ткань','icon':'inv_sword_04','enabled':True}],'customWeaponTypes':[]}
+        self.assertEqual(self.request(owner,'/api/projects',{'id':pid,'document':d})[0],200)
+        self.assertEqual(self.request(owner,'/api/projects/'+pid)[1]['document']['character'],d['character'])
+        token=self.request(owner,'/api/publish',{'projectId':pid,'visibility':'public'})[1]['token']
+        self.assertEqual(self.request(self.client(),'/api/shared/'+token)[1]['document']['character'],d['character'])
+        for mutate in [lambda c:c['resources'][0].update(unit='bad'),lambda c:c.update(armorTypes=['unknown']),lambda c:c['customArmorTypes'][0].update(icon='https://example.com/upload.png'),lambda c:c['customArmorTypes'][0].update(name='')]:
+            bad=copy.deepcopy(d);mutate(bad['character']);self.assertEqual(self.request(owner,'/api/projects',{'id':pid,'document':bad})[0],400)
+
     def test_private_publications_deny_every_non_owner_access(self):
         owner,pid,token,document=self.publish(visibility='private')
         guest=self.client();other=self.client();self.register(other,'private_other')

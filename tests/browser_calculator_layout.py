@@ -18,13 +18,13 @@ with tempfile.TemporaryDirectory() as tmp:
             browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
             owner=browser.new_context(viewport={'width':1440,'height':1100})
             owner.route('https://**/*',lambda route:route.abort())
-            owner.request.post(base+'/api/register',data={'login':'layout_author','password':'test-password-123'})
+            owner.request.post(base+'/api/register',data={'login':'layout_author','password':'test-password-123'});owner.request.post(base+'/api/profile/settings',data={'language':'ru'})
             name='Повелитель звёздных клинков'
             d={'version':1,'name':name,'budget':41,'rowCost':5,'build':{},'branches':[{'id':'b','name':'Звёзды','rows':5,'talents':[{'id':'t','name':'Сила','row':0,'col':0,'icon':'inv_sword_04','maxRank':2,'descriptions':['2','4'],'requires':''}]}],'abilities':[{'id':'a','name':'Искра','description':'Наносит урон.','icon':'inv_sword_04','branchId':'b'}]}
             pid=owner.request.post(base+'/api/projects',data={'document':d}).json()['id']
             token=owner.request.post(base+'/api/publish',data={'projectId':pid,'visibility':'public'}).json()['token']
             page=owner.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.on('dialog',lambda dialog:dialog.accept())
-            page.goto(base+'/?share='+token);page.wait_for_function("document.querySelector('#publicationBar').textContent.includes('Версия')")
+            page.goto(base+'/?share='+token);page.wait_for_function("/Версия|Version/.test(document.querySelector('#publicationBar').textContent)")
             page.wait_for_function("document.querySelector('#user').textContent==='layout_author'")
             for selector in ['#treeActions','#characterSettings','#undo','#redo','#share','#export','#import','#save','#hint','.tree-section-title']:
                 assert not page.locator(selector).is_visible(),selector

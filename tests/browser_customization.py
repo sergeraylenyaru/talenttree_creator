@@ -19,7 +19,7 @@ with tempfile.TemporaryDirectory() as tmp:
             browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
             ctx=browser.new_context(viewport={'width':1440,'height':1100})
             ctx.route('https://**/*',lambda r:r.abort())
-            ctx.request.post(base+'/api/register',data={'login':'custom_author','password':'test-password-123'})
+            ctx.request.post(base+'/api/register',data={'login':'custom_author','password':'test-password-123'});ctx.request.post(base+'/api/profile/settings',data={'language':'ru'})
             images=[i for i in server.builtin_images() if i.startswith('data:')][:2]
             ctx.request.post(base+'/api/profile/avatar',data={'avatar':images[0]})
             d={'version':1,'name':'Звёздный страж','budget':41,'rowCost':5,'build':{},'abilities':[{'id':'a','name':'Щит','description':'Поглощает урон.','icon':images[1],'branchId':'b0'}],

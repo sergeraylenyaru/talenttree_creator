@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0B0D12">
@@ -54,6 +54,7 @@
   <footer><a class="footer-brand" href="/">✦ TALENTFORGE</a><span>Твоя идея. Твоё дерево. Твоя легенда.</span><span>Неофициальный фанатский проект.</span></footer>
 </main>
 <dialog id="modal" aria-labelledby="modalTitle"><form id="modalForm"><div class="modal-top"><h2 id="modalTitle"></h2><button type="button" id="closeModal" class="icon-button" aria-label="Закрыть"><span data-glyph="close"></span></button></div><div id="modalBody"></div><p id="formError" role="alert"></p><div id="modalActions" class="modal-actions"><button type="button" id="deleteItem" class="danger" hidden>Удалить</button><button type="button" id="favoriteItem" hidden>В избранное</button><button type="submit" id="submitModal" class="primary">Сохранить</button></div></form></dialog>
+<dialog id="draftDialog" aria-labelledby="draftTitle"><div class="modal-top"><h2 id="draftTitle">Несохранённый черновик</h2></div><p><span id="draftIntro">У вас есть несохранённый черновик</span> <strong id="draftName" data-user-content></strong>.</p><p>Сохранить перед открытием другого дерева?</p><p id="draftError" role="alert"></p><div class="draft-actions"><button id="saveDraft" class="primary">Сохранить</button><button id="discardDraft">Не сохранять</button><button id="stayDraft">Вернуться к редактору</button></div></dialog>
 <input id="file" type="file" accept="application/json,.json" hidden><div id="toast" role="status" hidden></div>
 <div id="tooltip" class="wow-tooltip" role="tooltip" hidden></div><script type="module" src="app.js"></script>
 </body></html>
