@@ -40,8 +40,14 @@ def initialize():
         ''')
         if 'avatar' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
             db.execute("ALTER TABLE users ADD COLUMN avatar TEXT NOT NULL DEFAULT 'inv_misc_questionmark'")
+        if 'show_3d' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
+            db.execute('ALTER TABLE users ADD COLUMN show_3d INTEGER NOT NULL DEFAULT 0')
         publications.migrate(db)
         publications.purge_archived(db)
+
+def profile_info(db, uid):
+    row=db.execute('SELECT login,avatar,show_3d FROM users WHERE id=?',(uid,)).fetchone()
+    return {'login':row[0],'avatar':publications.avatar_value(row[1]),'show3d':bool(row[2])}
 
 def password_hash(password, salt):
     return hashlib.scrypt(password.encode(), salt=bytes.fromhex(salt), n=16384, r=8, p=1).hex()
@@ -268,7 +274,7 @@ class Handler(SimpleHTTPRequestHandler):
                     query = parse_qs(parsed.query)
                     return self.reply(200, publications.listing(db, uid, query.get('sort', ['views'])[0], int(query.get('page', ['0'])[0])))
                 if self.path == '/api/me' and method == 'GET':
-                    return self.reply(200, {'user': {'login': user[1], 'avatar': publications.avatar_value(user[2])} if user else None})
+                    return self.reply(200, {'user': profile_info(db,user[0]) if user else None})
                 if self.path.startswith('/api/shared/'):
                     parts = self.path.removeprefix('/api/shared/').split('/')
                     token = parts[0]
@@ -338,10 +344,15 @@ class Handler(SimpleHTTPRequestHandler):
                     db.execute('INSERT INTO sessions VALUES(?,?,?)', (hashlib.sha256(token.encode()).hexdigest(), uid, time.time()+604800))
                     db.commit()
                     secure = '; Secure' if os.environ.get('COOKIE_SECURE') == '1' else ''
-                    profile = db.execute('SELECT login,avatar FROM users WHERE id=?', (uid,)).fetchone()
-                    return self.reply(200, {'user': {'login': profile[0], 'avatar': publications.avatar_value(profile[1])}}, f'session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800{secure}')
+                    return self.reply(200, {'user': profile_info(db,uid)}, f'session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800{secure}')
                 if not user:
                     return self.reply(401, {'error': 'Войдите в аккаунт'})
+                if self.path == '/api/profile/settings' and method == 'POST':
+                    if set(data)!={'show3d'} or type(data['show3d']) is not bool:
+                        raise ValueError('Проверь настройку 3D-просмотра')
+                    db.execute('UPDATE users SET show_3d=? WHERE id=?',(int(data['show3d']),uid))
+                    db.commit()
+                    return self.reply(200,{'user':profile_info(db,uid)})
                 if self.path == '/api/profile/avatar' and method == 'POST':
                     avatar = data.get('avatar')
                     if isinstance(avatar,dict):
@@ -355,7 +366,7 @@ class Handler(SimpleHTTPRequestHandler):
                         stored_avatar=avatar
                     db.execute('UPDATE users SET avatar=? WHERE id=?', (stored_avatar, uid))
                     db.commit()
-                    return self.reply(200, {'user': {'login': user[1], 'avatar': avatar}})
+                    return self.reply(200, {'user': profile_info(db,uid)})
                 if parsed.path == '/api/publications' and method == 'GET':
                     query = parse_qs(parsed.query)
                     return self.reply(200, publications.listing(db, uid, 'latest', int(query.get('page', ['0'])[0]), owned=True, archived=query.get('archived',['0'])[0]=='1'))
@@ -396,8 +407,27 @@ class Handler(SimpleHTTPRequestHandler):
                     return self.reply(200, {'favorites': [{'id': r[0], 'kind': r[1], 'item': json.loads(r[2])} for r in rows]})
                 if self.path == '/api/favorites' and method == 'POST':
                     kind, item = data.get('kind'), data.get('item')
-                    if kind not in ('talent', 'ability') or not isinstance(item, dict):
+                    if kind not in ('talent', 'ability', 'tree') or not isinstance(item, dict):
                         raise ValueError('Неверный элемент избранного')
+                    if kind == 'tree':
+                        source=item.get('sourceShare')
+                        if source is not None:
+                            if not isinstance(source,str):raise ValueError('Неверная ссылка на дерево')
+                            original=db.execute('SELECT document,owner_id,visibility,archived_at FROM shares WHERE token=?',(source,)).fetchone()
+                            if not original or ((original[2]=='private' or original[3] is not None) and original[1]!=uid):
+                                return self.reply(404,{'error':'Публикация не найдена'})
+                            document=publications.without_build(json.loads(original[0]))
+                        else:
+                            document=validate(item.get('document'))
+                        favorite={'name':document['name'],'document':document,'sourceShare':source}
+                        for existing in db.execute("SELECT id,item FROM favorites WHERE user_id=? AND kind='tree'",(uid,)):
+                            previous=json.loads(existing[1])
+                            if (source and previous.get('sourceShare')==source) or previous==favorite:
+                                return self.reply(200,{'id':existing[0]})
+                        fid=secrets.token_hex(12)
+                        db.execute('INSERT INTO favorites VALUES(?,?,?,?,?)',(fid,uid,kind,json.dumps(favorite),int(time.time())))
+                        db.commit()
+                        return self.reply(200,{'id':fid})
                     check = {'version': 1, 'name': 'Избранное', 'budget': 71, 'rowCost': 5, 'build': {}, 'branches': [{'id': 'favorite', 'name': 'Избранное', 'rows': 1, 'talents': []}], 'abilities': []}
                     item = dict(item)
                     item['id'] = secrets.token_hex(12)

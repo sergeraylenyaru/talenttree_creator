@@ -159,6 +159,39 @@ class PublicationAPI(unittest.TestCase):
             document['branches'][0]['color']=color
             self.assertEqual(self.request(owner,'/api/projects',{'id':pid,'document':document})[0],400)
 
+    def test_profile_3d_defaults_and_account_isolation(self):
+        owner,pid,token,_=self.publish()
+        other=self.client();self.register(other,'settings_other')
+        self.assertFalse(self.request(owner,'/api/me')[1]['user']['show3d'])
+        self.assertEqual(self.request(self.client(),'/api/profile/settings',{'show3d':True})[0],401)
+        self.assertTrue(self.request(owner,'/api/profile/settings',{'show3d':True})[1]['user']['show3d'])
+        self.assertFalse(self.request(other,'/api/me')[1]['user']['show3d'])
+        self.assertTrue(self.request(owner,'/api/profile/avatar',{'avatar':'inv_sword_04'})[1]['user']['show3d'])
+        login=self.request(self.client(),'/api/login',{'login':'author','password':'test-password-123'})
+        self.assertTrue(login[1]['user']['show3d'])
+        for bad in [1,'true',None]:
+            self.assertEqual(self.request(owner,'/api/profile/settings',{'show3d':bad})[0],400)
+        self.assertFalse(self.request(owner,'/api/profile/settings',{'show3d':False})[1]['user']['show3d'])
+
+    def test_favorite_tree_requires_login_deduplicates_and_uses_canonical_snapshot(self):
+        owner,pid,token,document=self.publish(visibility='unlisted')
+        guest=self.client();viewer=self.client();self.register(viewer,'tree_favorite_user')
+        payload={'kind':'tree','item':{'sourceShare':token,'document':{'name':'tampered'}}}
+        self.assertEqual(self.request(guest,'/api/favorites',payload)[0],401)
+        first=self.request(viewer,'/api/favorites',payload)
+        self.assertEqual(first[0],200)
+        self.assertEqual(self.request(viewer,'/api/favorites',payload)[1]['id'],first[1]['id'])
+        favorite=self.request(viewer,'/api/favorites')[1]['favorites'][0]
+        self.assertEqual(favorite['kind'],'tree')
+        self.assertEqual(favorite['item']['document'],document)
+        self.assertEqual(favorite['item']['sourceShare'],token)
+        self.assertEqual(self.request(owner,'/api/favorites')[1]['favorites'],[])
+        self.request(owner,'/api/publications/'+token+'/visibility',{'visibility':'private'})
+        self.assertEqual(self.request(viewer,'/api/favorites',payload)[0],404)
+        snapshot=dict(document,build={'old':3})
+        self.assertEqual(self.request(viewer,'/api/favorites',{'kind':'tree','item':{'document':snapshot}})[0],200)
+        self.assertTrue(all(f['item']['document']['build']=={} for f in self.request(viewer,'/api/favorites')[1]['favorites']))
+
     def test_private_publications_deny_every_non_owner_access(self):
         owner,pid,token,document=self.publish(visibility='private')
         guest=self.client();other=self.client();self.register(other,'private_other')

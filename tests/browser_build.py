@@ -53,7 +53,7 @@ with tempfile.TemporaryDirectory() as tmp:
             first.locator('[data-open-publication="' + tokens[0] + '"]').click()
             first.wait_for_function("document.querySelector('#points').textContent==='2 / 41'")
             first.locator('#reset').click()
-            first.locator('#undo').click()
+            first.keyboard.press('Control+z')
             open_tree(first, tokens[0], 2)
             first.locator('#reset').click()
             open_tree(first, tokens[0], 0)

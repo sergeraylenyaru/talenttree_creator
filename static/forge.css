@@ -543,3 +543,18 @@ button[aria-busy="true"]::after{content:"";width:12px;height:12px;flex:0 0 12px;
 .branch-color-swatches button:hover{border-color:var(--gold)}
 .branch-color-preview{min-height:110px;padding:20px;border:1px solid #ffffff20;border-radius:10px;margin:14px 0;color:var(--text)}
 #branchColor{width:72px;height:40px;padding:4px}
+.workspace[data-mode="play"] .editor-actions,.workspace[data-mode="play"] .tree-tools,.workspace[data-mode="play"] .tree-section-title,.workspace[data-mode="play"] #saveState{display:none}
+.workspace[data-mode="play"] .calc-layout{padding-top:20px}
+.workspace[data-mode="play"] .toolbar{padding-bottom:0}
+.abilities-heading{display:flex;align-items:center;gap:16px}
+.abilities-heading h2{margin:0}
+.abilities-heading .ability-view-controls{margin:0 0 0 auto;justify-content:flex-end}
+.abilities-heading #addAbility{margin-left:auto}
+.tree-hero #treeTitle,.tree-hero .class-title-input{min-height:2.4em;overflow-wrap:anywhere}
+.tree-hero textarea.class-title-input{height:2.4em;resize:none;field-sizing:content;line-height:1.2;box-sizing:content-box;overflow:hidden}
+.publication-class .publication-class-label{align-items:start;min-height:2.6em}
+.publication-card .publication-class .publication-title{white-space:normal;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.3;min-height:2.6em;text-align:left}
+.profile-toggle{display:flex;align-items:center;gap:12px;font-size:14px;text-transform:none;letter-spacing:normal}
+.profile-toggle input{width:18px;height:18px;margin:0;accent-color:var(--gold)}
+.tabs .tree-favorite{padding:8px 10px;color:var(--gold)}
+@media(max-width:600px){.abilities-heading{flex-wrap:nowrap;gap:8px}.abilities-heading .ability-view-controls{gap:4px}.abilities-heading .ability-view-controls button{font-size:10px;padding:7px}.tree-hero textarea.class-title-input{box-sizing:border-box;width:100%;min-height:2.4em;height:auto}.abilities-heading #addAbility{font-size:9px}}
