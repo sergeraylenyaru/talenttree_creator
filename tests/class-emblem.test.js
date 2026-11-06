@@ -25,12 +25,12 @@ test('transformed layers rotate about the circle center and old emblems remain v
  const model={background:'#123456',glow:{color:'#ffaa00',radius:100,strength:80},layers:[{icon:'inv_sword_04',opacity:.4,x:20,y:-10,rotation:90,scale:1.25}]};
  assert.equal(validateClassIcon(model),model);const html=classEmblem(model);
  assert.ok(html.includes('rotate(90deg) translate(20%,-10%) scale(1.25)'));
- assert.ok(html.includes('width:100%;height:100%;opacity:0.8'));
+ assert.ok(!html.includes('emblem-glow'));
  for(const [key,value] of [['scale',1.51],['x',101],['rotation',181]]){const bad=structuredClone(model);bad.layers[0][key]=value;assert.throws(()=>validateClassIcon(bad));}
  const bad=structuredClone(model);bad.glow.radius=-1;assert.throws(()=>validateClassIcon(bad));
 });
 
-test('transparent star backdrop and 150 percent scale are accepted without a legacy background',()=>{
+test('legacy glow is ignored and 150 percent scale works without a background',()=>{
  const model={glow:{color:'#ffcc88',radius:80,strength:70},layers:[{icon:'inv_sword_04',opacity:.5,scale:1.5}]};
- assert.equal(validateClassIcon(model),model);const html=classEmblem(model);assert.ok(html.includes('scale(1.5)'));assert.ok(html.includes('emblem-glow'));assert.ok(!html.includes('background-color'));
+ assert.equal(validateClassIcon(model),model);const html=classEmblem(model);assert.ok(html.includes('scale(1.5)'));assert.ok(!html.includes('emblem-glow'));assert.ok(!html.includes('background-color'));
 });

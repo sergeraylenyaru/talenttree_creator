@@ -139,6 +139,8 @@ def validate(document):
     for branch in branches:
         if not isinstance(branch, dict) or not isinstance(branch.get('id'), str) or branch['id'] in branch_ids or not isinstance(branch.get('name'), str):
             raise ValueError('Неверная ветка')
+        if 'color' in branch and (not isinstance(branch['color'],str) or not re.fullmatch(r'#[0-9a-fA-F]{6}',branch['color'])):
+            raise ValueError('Неверный цвет фона ветки')
         branch_ids.add(branch['id'])
         if 'icon' in branch:
             if not isinstance(branch['icon'], str):
@@ -266,7 +268,7 @@ class Handler(SimpleHTTPRequestHandler):
                     query = parse_qs(parsed.query)
                     return self.reply(200, publications.listing(db, uid, query.get('sort', ['views'])[0], int(query.get('page', ['0'])[0])))
                 if self.path == '/api/me' and method == 'GET':
-                    return self.reply(200, {'user': {'login': user[1], 'avatar': user[2]} if user else None})
+                    return self.reply(200, {'user': {'login': user[1], 'avatar': publications.avatar_value(user[2])} if user else None})
                 if self.path.startswith('/api/shared/'):
                     parts = self.path.removeprefix('/api/shared/').split('/')
                     token = parts[0]
@@ -337,15 +339,21 @@ class Handler(SimpleHTTPRequestHandler):
                     db.commit()
                     secure = '; Secure' if os.environ.get('COOKIE_SECURE') == '1' else ''
                     profile = db.execute('SELECT login,avatar FROM users WHERE id=?', (uid,)).fetchone()
-                    return self.reply(200, {'user': {'login': profile[0], 'avatar': profile[1]}}, f'session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800{secure}')
+                    return self.reply(200, {'user': {'login': profile[0], 'avatar': publications.avatar_value(profile[1])}}, f'session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800{secure}')
                 if not user:
                     return self.reply(401, {'error': 'Войдите в аккаунт'})
                 if self.path == '/api/profile/avatar' and method == 'POST':
                     avatar = data.get('avatar')
-                    if not isinstance(avatar, str) or len(avatar) > 350000 or not (re.fullmatch(r'[A-Za-z0-9_]{1,100}', avatar) or avatar in avatar_catalog()):
-                        raise ValueError('Выбери аватар из каталога иконок')
-                    validate_icon(avatar)
-                    db.execute('UPDATE users SET avatar=? WHERE id=?', (avatar, uid))
+                    if isinstance(avatar,dict):
+                        validate_class_icon(avatar)
+                        avatar={"layers":avatar["layers"]}
+                        stored_avatar=json.dumps(avatar)
+                    else:
+                        if not isinstance(avatar, str) or len(avatar) > 350000 or not (re.fullmatch(r'[A-Za-z0-9_]{1,100}', avatar) or avatar in avatar_catalog()):
+                            raise ValueError('Выбери аватар из каталога иконок')
+                        validate_icon(avatar)
+                        stored_avatar=avatar
+                    db.execute('UPDATE users SET avatar=? WHERE id=?', (stored_avatar, uid))
                     db.commit()
                     return self.reply(200, {'user': {'login': user[1], 'avatar': avatar}})
                 if parsed.path == '/api/publications' and method == 'GET':

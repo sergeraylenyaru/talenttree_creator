@@ -35,6 +35,7 @@ export function normalize(doc,{allowLegacy=false}={}) {
   const ids=new Set(),branchIds=new Set();
   for(const b of doc.branches) {
     if(typeof b.id!=='string'||!b.id||branchIds.has(b.id)||typeof b.name!=='string'||!Number.isInteger(b.rows)||b.rows<1||b.rows>1000||!Array.isArray(b.talents)) throw Error('Неверный формат ветки');
+    if(b.color!==undefined&&(typeof b.color!=='string'||!/^#[0-9a-f]{6}$/i.test(b.color)))throw Error('Неверный цвет фона ветки');
     branchIds.add(b.id);if(b.icon!==undefined&&typeof b.icon!=='string')throw Error('Неверная иконка ветки');
     const positions=new Set();
     for(const t of b.talents) {

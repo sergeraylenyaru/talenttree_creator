@@ -136,6 +136,29 @@ class PublicationAPI(unittest.TestCase):
         self.assertNotIn('avatar',publication['document'])
         self.assertEqual(self.request(guest,'/api/rankings')[1]['publications'][0]['avatar'],'spell_fire_flamebolt')
 
+    def test_layered_avatar_persists_in_profile_login_and_rankings(self):
+        owner,pid,token,_=self.publish()
+        avatar={'layers':[{'icon':'inv_sword_04','opacity':.7,'x':10,'y':-5,'scale':1.5,'rotation':30},{'icon':'inv_shield_04','opacity':.4}]}
+        self.assertEqual(self.request(owner,'/api/profile/avatar',{'avatar':avatar})[1]['user']['avatar'],avatar)
+        self.assertEqual(self.request(owner,'/api/me')[1]['user']['avatar'],avatar)
+        self.assertEqual(self.request(self.client(),'/api/rankings')[1]['publications'][0]['avatar'],avatar)
+        self.assertEqual(self.request(self.client(),'/api/shared/'+token)[1]['publication']['avatar'],avatar)
+        login=self.request(self.client(),'/api/login',{'login':'author','password':'test-password-123'})
+        self.assertEqual(login[1]['user']['avatar'],avatar)
+        bad=copy.deepcopy(avatar);bad['layers'][0]['icon']='https://example.com/unsafe.png'
+        self.assertEqual(self.request(owner,'/api/profile/avatar',{'avatar':bad})[0],400)
+        self.assertEqual(self.request(owner,'/api/me')[1]['user']['avatar'],avatar)
+
+    def test_branch_tint_is_validated_and_published(self):
+        owner,pid,token,document=self.publish()
+        document['branches'][0]['color']='#427b69'
+        self.assertEqual(self.request(owner,'/api/projects',{'id':pid,'document':document})[0],200)
+        token=self.request(owner,'/api/publish',{'projectId':pid})[1]['token']
+        self.assertEqual(self.request(self.client(),'/api/shared/'+token)[1]['document']['branches'][0]['color'],'#427b69')
+        for color in ['red','url(evil)',42,None]:
+            document['branches'][0]['color']=color
+            self.assertEqual(self.request(owner,'/api/projects',{'id':pid,'document':document})[0],400)
+
     def test_private_publications_deny_every_non_owner_access(self):
         owner,pid,token,document=self.publish(visibility='private')
         guest=self.client();other=self.client();self.register(other,'private_other')
