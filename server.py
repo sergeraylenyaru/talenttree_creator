@@ -97,7 +97,7 @@ def project_summary(row):
     document = json.loads(row[3])
     branch = document['branches'][0]
     icon = branch.get('icon') or next(iter(branch.get('talents', [])), {}).get('icon', 'inv_misc_questionmark')
-    return {'id': row[0], 'name': row[1], 'updated': row[2], 'classIcon': document.get('classIcon'), 'icon': icon}
+    return {'id': row[0], 'name': row[1], 'updated': row[2], 'classIcon': document.get('classIcon'), 'icon': icon,'archived':row[4] is not None,'archivedAt':row[4],'expiresAt':row[4]+30*86400 if row[4] is not None else None,'published':bool(row[5])}
 
 
 def validate_class_icon(value):
@@ -304,7 +304,7 @@ class Handler(SimpleHTTPRequestHandler):
                 parsed = urlsplit(self.path)
                 if accounts.admin_route(self,db,method,parsed.path,data,password_hash,profile_info):return
                 if accounts.email_route(self,db,method,parsed.path,data,password_hash,uid):return
-                if parsed.path=='/api/icons' and method=='GET':return self.reply(200,{'icons':accounts.public_icons(db)})
+                if parsed.path=='/api/icons' and method=='GET':return self.reply(200,{'icons':accounts.public_icons(db),'categories':accounts.categories(db)})
                 if parsed.path == '/api/rankings' and method == 'GET':
                     query = parse_qs(parsed.query)
                     return self.reply(200, publications.listing(db, uid, query.get('sort', ['views'])[0], int(query.get('page', ['0'])[0])))
@@ -405,7 +405,7 @@ class Handler(SimpleHTTPRequestHandler):
                     if not isinstance(pid, str):
                         raise ValueError('Сначала сохраните класс')
                     db.execute('BEGIN IMMEDIATE')
-                    saved = db.execute('SELECT document FROM projects WHERE id=? AND user_id=?', (pid, uid)).fetchone()
+                    saved = db.execute('SELECT document FROM projects WHERE id=? AND user_id=? AND archived_at IS NULL', (pid, uid)).fetchone()
                     if not saved:
                         return self.reply(404, {'error': 'Сохранённый класс не найден'})
                     document = validate(json.loads(saved[0]))
@@ -417,7 +417,9 @@ class Handler(SimpleHTTPRequestHandler):
                     owner=db.execute('SELECT owner_id FROM shares WHERE token=?',(token,)).fetchone()
                     if not owner or owner[0]!=uid:return self.reply(404,{'error':'Публикация не найдена'})
                     if action=='archive':db.execute('UPDATE shares SET archived_at=COALESCE(archived_at,?) WHERE token=?',(int(time.time()),token))
-                    else:db.execute('UPDATE shares SET archived_at=NULL WHERE token=?',(token,))
+                    else:
+                        if db.execute('SELECT 1 FROM shares s JOIN projects p ON p.id=s.project_id AND p.user_id=s.owner_id WHERE s.token=? AND p.archived_at IS NOT NULL',(token,)).fetchone():return self.reply(409,{'error':'Restore the working tree first'})
+                        db.execute('UPDATE shares SET archived_at=NULL,archived_by_project=0 WHERE token=?',(token,))
                     db.commit()
                     return self.reply(200,{'publication':publications.info(db,token,uid)})
                 if self.path.startswith('/api/publications/') and self.path.endswith('/visibility') and method == 'POST':
@@ -490,9 +492,16 @@ class Handler(SimpleHTTPRequestHandler):
                         db.execute('DELETE FROM sessions WHERE token=?', (hashlib.sha256(jar['session'].value.encode()).hexdigest(),))
                     db.commit()
                     return self.reply(200, {}, 'session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0')
-                if self.path == '/api/projects' and method == 'GET':
-                    rows = db.execute('SELECT id,name,updated,document FROM projects WHERE user_id=? ORDER BY updated DESC', (user[0],)).fetchall()
-                    return self.reply(200, {'projects': [project_summary(r) for r in rows]})
+                if parsed.path=='/api/projects' and method=='GET':
+                    archived=parse_qs(parsed.query).get('archived',['0'])[0]=='1'
+                    rows=db.execute('SELECT p.id,p.name,p.updated,p.document,p.archived_at,EXISTS(SELECT 1 FROM shares s WHERE s.project_id=p.id AND s.owner_id=p.user_id AND s.archived_at IS NULL) FROM projects p WHERE p.user_id=? AND p.archived_at IS '+('NOT NULL' if archived else 'NULL')+' ORDER BY p.updated DESC,p.id',(uid,)).fetchall()
+                    return self.reply(200,{'projects':[project_summary(r) for r in rows]})
+                match=re.fullmatch(r'/api/projects/([A-Za-z0-9_-]+)/restore',parsed.path)
+                if match and method=='POST':
+                    pid=match[1];db.execute('BEGIN IMMEDIATE')
+                    if not db.execute('SELECT 1 FROM projects WHERE id=? AND user_id=?',(pid,uid)).fetchone():return self.reply(404,{'error':'Проект не найден'})
+                    db.execute('UPDATE projects SET archived_at=NULL WHERE id=? AND user_id=?',(pid,uid))
+                    db.execute('UPDATE shares SET archived_at=NULL,archived_by_project=0 WHERE project_id=? AND owner_id=? AND archived_by_project=1',(pid,uid));db.commit();return self.reply(200,{'ok':True})
                 if self.path == '/api/projects' and method == 'POST':
                     document = validate(data['document'])
                     pid = data.get('id')
@@ -505,10 +514,11 @@ class Handler(SimpleHTTPRequestHandler):
                         source = db.execute('SELECT owner_id,visibility,archived_at FROM shares WHERE token=?', (shared_from,)).fetchone()
                         if source and (source[1]=='private' or source[2] is not None) and source[0]!=uid:
                             return self.reply(404, {'error': 'Публикация доступна только автору'})
-                    existing = db.execute('SELECT user_id FROM projects WHERE id=?', (pid,)).fetchone()
+                    existing = db.execute('SELECT user_id,archived_at FROM projects WHERE id=?', (pid,)).fetchone()
                     if existing and existing[0] != user[0]:
                         return self.reply(404, {'error': 'Проект не найден'})
-                    db.execute('INSERT INTO projects VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,document=excluded.document,updated=excluded.updated', (pid,user[0],document['name'],json.dumps(document),int(time.time())))
+                    if existing and existing[1] is not None:return self.reply(409,{'error':'Restore the tree before editing it'})
+                    db.execute('INSERT INTO projects(id,user_id,name,document,updated) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,document=excluded.document,updated=excluded.updated', (pid,user[0],document['name'],json.dumps(document),int(time.time())))
                     shared_from = data.get('sourceShare')
                     if isinstance(shared_from, str) and db.execute('SELECT 1 FROM shares WHERE token=?', (shared_from,)).fetchone():
                         db.execute('INSERT OR IGNORE INTO share_saves VALUES(?,?)', (shared_from, user[0]))
@@ -516,13 +526,14 @@ class Handler(SimpleHTTPRequestHandler):
                     return self.reply(200, {'id': pid})
                 if self.path.startswith('/api/projects/'):
                     pid = self.path.removeprefix('/api/projects/')
-                    row = db.execute('SELECT document FROM projects WHERE id=? AND user_id=?', (pid,user[0])).fetchone()
+                    row = db.execute('SELECT document FROM projects WHERE id=? AND user_id=? AND archived_at IS NULL', (pid,user[0])).fetchone()
                     if not row:
                         return self.reply(404, {'error': 'Проект не найден'})
                     if method == 'GET':
                         return self.reply(200, {'document': publications.without_build(json.loads(row[0])), 'id': pid})
                     if method == 'DELETE':
-                        db.execute('DELETE FROM projects WHERE id=? AND user_id=?', (pid,user[0]))
+                        db.execute('UPDATE projects SET archived_at=COALESCE(archived_at,?) WHERE id=? AND user_id=?',(int(time.time()),pid,uid))
+                        db.execute('UPDATE shares SET archived_at=?,archived_by_project=1 WHERE project_id=? AND owner_id=? AND archived_at IS NULL',(db.execute('SELECT archived_at FROM projects WHERE id=? AND user_id=?',(pid,uid)).fetchone()[0],pid,uid))
                         db.commit()
                         return self.reply(200, {})
                 self.reply(404, {'error': 'Не найдено'})

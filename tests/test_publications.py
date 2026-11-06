@@ -270,6 +270,52 @@ class PublicationAPI(unittest.TestCase):
             document['classIcon']=bad
             self.assertEqual(self.request(owner,'/api/projects',{'document':document})[0],400,bad)
 
+    def test_working_tree_archive_closes_links_and_restore_keeps_manual_archives(self):
+        owner,pid,token,document=self.publish()
+        manual=self.request(owner,'/api/publish',{'projectId':pid,'visibility':'unlisted'})[1]['token']
+        self.request(owner,'/api/publications/'+manual+'/archive',{})
+        guest=self.client();other=self.client();self.register(other,'archive_copy')
+        copyid=self.request(other,'/api/projects',{'document':document,'sourceShare':token})[1]['id']
+        self.assertTrue(self.request(owner,'/api/projects')[1]['projects'][0]['published'])
+        self.assertEqual(self.request(other,'/api/projects/'+pid,{},'DELETE')[0],404)
+        self.assertEqual(self.request(owner,'/api/projects/'+pid,{},'DELETE')[0],200)
+        self.assertEqual(self.request(owner,'/api/projects')[1]['projects'],[])
+        archived=self.request(owner,'/api/projects?archived=1')[1]['projects'][0]
+        self.assertTrue(archived['archived']);self.assertEqual(archived['expiresAt']-archived['archivedAt'],30*86400)
+        self.assertEqual(self.request(guest,'/api/shared/'+token)[0],404)
+        self.assertEqual(self.request(guest,'/api/rankings')[1]['publications'],[])
+        self.assertEqual(self.request(owner,'/api/projects/'+pid)[0],404)
+        self.assertEqual(self.request(owner,'/api/publish',{'projectId':pid})[0],404)
+        self.assertEqual(self.request(owner,'/api/projects',{'id':pid,'document':document})[0],409)
+        self.assertEqual(self.request(owner,'/api/publications/'+token+'/restore',{})[0],409)
+        self.assertEqual(self.request(owner,'/api/shared/'+token)[1]['publication']['archivedProjectId'],pid)
+        self.assertEqual(self.request(other,'/api/projects?archived=1')[1]['projects'],[])
+        self.assertEqual(self.request(other,'/api/projects/'+pid+'/restore',{})[0],404)
+        self.assertEqual(self.request(owner,'/api/projects/'+pid,{},'DELETE')[0],404)
+        self.assertEqual(self.request(owner,'/api/projects?archived=1')[1]['projects'][0]['archivedAt'],archived['archivedAt'])
+        self.assertEqual(self.request(owner,'/api/projects/'+pid+'/restore',{})[0],200)
+        self.assertEqual(self.request(owner,'/api/projects?archived=1')[1]['projects'],[])
+        self.assertEqual(self.request(owner,'/api/projects/'+pid)[0],200)
+        self.assertEqual(self.request(guest,'/api/shared/'+token)[0],200)
+        self.assertEqual(self.request(guest,'/api/shared/'+manual)[0],404)
+        self.assertEqual(self.request(other,'/api/projects/'+copyid)[0],200)
+
+    def test_archived_draft_expires_at_deadline_and_preserves_independent_copies(self):
+        owner,pid,token,document=self.publish()
+        other=self.client();self.register(other,'expiry_copy')
+        copyid=self.request(other,'/api/projects',{'document':document,'sourceShare':token})[1]['id']
+        self.request(owner,'/api/projects/'+pid,{},'DELETE')
+        stamp=self.request(owner,'/api/projects?archived=1')[1]['projects'][0]['archivedAt']
+        with server.connect() as db:
+            self.assertEqual(db.execute('SELECT archived_at FROM shares WHERE token=?',(token,)).fetchone()[0],stamp)
+            publications.purge_archived(db,stamp+30*86400-1)
+            self.assertIsNotNone(db.execute('SELECT 1 FROM projects WHERE id=?',(pid,)).fetchone())
+            publications.purge_archived(db,stamp+30*86400)
+            self.assertIsNone(db.execute('SELECT 1 FROM projects WHERE id=?',(pid,)).fetchone())
+            self.assertIsNone(db.execute('SELECT 1 FROM shares WHERE token=?',(token,)).fetchone())
+        self.assertEqual(self.request(owner,'/api/projects/'+pid+'/restore',{})[0],404)
+        self.assertEqual(self.request(other,'/api/projects/'+copyid)[0],200)
+
     def test_archive_restore_preserves_access_policy_stats_and_deadline(self):
         owner,pid,token,document=self.publish()
         guest=self.client();other=self.client();self.register(other,'archive_other')

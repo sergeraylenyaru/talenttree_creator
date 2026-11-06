@@ -71,6 +71,35 @@ class AccountsAdminAPI(unittest.TestCase):
         self.assertEqual(self.request(admin,'/api/admin/icons/'+ident[7:],{})[0],200)
         bad=dict(data,image=base64.b64encode(b'<svg><script>alert(1)</script></svg>').decode());self.assertEqual(self.request(admin,'/api/admin/icons',bad)[0],400)
         self.assertEqual(self.request(admin,'/api/admin/icons',data,origin='https://other.example')[0],403)
+    def test_icon_category_management_reassignment_and_access(self):
+        normal,admin=self.admin()
+        self.assertEqual(self.request(normal,'/api/admin/categories',{'name':'Denied'})[0],403)
+        self.assertEqual(self.request(normal,'/api/admin/categories')[0],403)
+        self.assertEqual(self.request(admin,'/api/admin/categories',{'name':'   '})[0],400)
+        status,result,_=self.request(admin,'/api/admin/categories',{'name':'Astral blades','kind':'weapon'})
+        self.assertEqual(status,201,result);category=result['id']
+        self.assertEqual(self.request(admin,'/api/admin/categories',{'name':'astral blades'})[0],409)
+        output=io.BytesIO();Image.new('RGB',(32,32),'gold').save(output,'PNG')
+        payload={'name':'Astral blade','category':category,'image':base64.b64encode(output.getvalue()).decode()}
+        status,result,_=self.request(admin,'/api/admin/icons',payload);self.assertEqual(status,201,result);icon=result['id']
+        catalog=self.request(normal,'/api/icons')[1];item=next(i for i in catalog['icons'] if i['id']==icon)
+        self.assertEqual(item['category'],category);self.assertEqual(item['categoryKind'],'weapon')
+        self.assertIn({'id':category,'name':'Astral blades','kind':'weapon'},catalog['categories'])
+        self.assertEqual(self.request(admin,'/api/admin/categories/'+category,{},'DELETE')[0],409)
+        self.assertEqual(self.request(admin,'/api/admin/categories/'+category,{'name':'Astral armor','kind':'armor'})[0],200)
+        self.assertEqual(self.request(normal,'/api/icons')[1]['icons'][0]['categoryKind'],'armor')
+        self.assertEqual(self.request(admin,'/api/admin/icons/'+icon[7:],{'category':'missing'})[0],400)
+        self.assertEqual(self.request(normal,'/api/admin/icons/'+icon[7:],{'category':'armor'})[0],403)
+        self.assertEqual(self.request(admin,'/api/admin/icons/'+icon[7:],{},'DELETE')[0],200)
+        self.assertEqual(self.request(admin,'/api/admin/icons/'+icon[7:],{'category':'general'})[0],200)
+        self.assertEqual(self.request(normal,'/api/icons')[1]['icons'],[]) # Editing never restores a removed icon.
+        self.assertEqual(self.request(admin,'/api/admin/categories/'+category,{},'DELETE')[0],200)
+        self.assertEqual(self.request(admin,'/api/admin/icons/'+icon[7:],{})[0],200)
+        self.assertEqual(self.request(normal,'/api/icons')[1]['icons'][0]['category'],'general')
+        self.assertEqual(self.request(admin,'/api/admin/categories/general',{},'DELETE')[0],409)
+        self.assertEqual(self.request(admin,'/api/admin/categories/weapon',{'name':'Weapons','kind':'armor'})[0],409)
+        self.assertEqual(self.request(admin,'/api/admin/icons',payload)[0],400) # Deleted category rejected on upload.
+
     def test_email_verification_and_reset_are_single_use_and_revoke_sessions(self):
         mail=[]
         with patch.dict(os.environ,{'SMTP_HOST':'smtp.example.test','SMTP_FROM':'noreply@example.test','APP_URL':'https://talent.example.test','REQUIRE_EMAIL_VERIFICATION':'1'}),patch('accounts.send_mail',side_effect=lambda *args:mail.append(args)):

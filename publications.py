@@ -15,8 +15,9 @@ def without_build(document):
     return {**document, "build": {}}
 
 def migrate(db):
+    if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='projects'").fetchone() and 'archived_at' not in {r[1] for r in db.execute('PRAGMA table_info(projects)')}:db.execute('ALTER TABLE projects ADD COLUMN archived_at INTEGER')
     columns={r[1] for r in db.execute('PRAGMA table_info(shares)')}
-    for name, declaration in {'owner_id':'INTEGER','project_id':'TEXT','publication_version':'INTEGER NOT NULL DEFAULT 1','visibility':"TEXT NOT NULL DEFAULT 'unlisted'",'published_at':'INTEGER','archived_at':'INTEGER'}.items():
+    for name, declaration in {'owner_id':'INTEGER','project_id':'TEXT','publication_version':'INTEGER NOT NULL DEFAULT 1','visibility':"TEXT NOT NULL DEFAULT 'unlisted'",'published_at':'INTEGER','archived_at':'INTEGER','archived_by_project':'INTEGER NOT NULL DEFAULT 0'}.items():
         if name not in columns:
             db.execute(f'ALTER TABLE shares ADD COLUMN {name} {declaration}')
     db.execute('UPDATE shares SET published_at=created WHERE published_at IS NULL')
@@ -37,6 +38,7 @@ def purge_archived(db,now=None):
         for table in ('share_votes','share_views','share_allocations','share_saves'):
             db.execute(f'DELETE FROM {table} WHERE token=?',(token,))
         db.execute('DELETE FROM shares WHERE token=?',(token,))
+    db.execute('DELETE FROM projects WHERE archived_at IS NOT NULL AND archived_at<=?',(cutoff,))
     return len(tokens)
 
 def info(db,token,user_id=None):
@@ -53,7 +55,8 @@ def info(db,token,user_id=None):
     own=db.execute('SELECT vote FROM share_votes WHERE token=? AND user_id=?',(token,user_id)).fetchone() if user_id else None
     result['myVote']=own[0] if own else 0
     if result['isOwner']:
-        result['projectId']=row[5] if row[5] and db.execute('SELECT 1 FROM projects WHERE id=? AND user_id=?',(row[5],owner)).fetchone() else None
+        result['projectId']=row[5] if row[5] and db.execute('SELECT 1 FROM projects WHERE id=? AND user_id=? AND archived_at IS NULL',(row[5],owner)).fetchone() else None
+        result['archivedProjectId']=row[5] if row[5] and db.execute('SELECT 1 FROM projects WHERE id=? AND user_id=? AND archived_at IS NOT NULL',(row[5],owner)).fetchone() else None
         result['dislikes']=db.execute('SELECT COUNT(*) FROM share_votes WHERE token=? AND vote=-1',(token,)).fetchone()[0]
     return result
 

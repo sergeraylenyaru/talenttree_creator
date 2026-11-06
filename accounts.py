@@ -16,6 +16,11 @@ def migrate(db):
     CREATE TABLE IF NOT EXISTS email_tokens(token TEXT PRIMARY KEY,user_id INTEGER REFERENCES users(id),purpose TEXT,expires INTEGER);
     CREATE TABLE IF NOT EXISTS icon_assets(id TEXT PRIMARY KEY,name TEXT NOT NULL,category TEXT NOT NULL,png BLOB NOT NULL,enabled INTEGER NOT NULL DEFAULT 1,created_at INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS admin_events(id INTEGER PRIMARY KEY,actor INTEGER,action TEXT,target TEXT,created_at INTEGER);''')
+    db.execute('CREATE TABLE IF NOT EXISTS icon_categories(id TEXT PRIMARY KEY,name TEXT UNIQUE COLLATE NOCASE NOT NULL,kind TEXT NOT NULL)')
+    db.executemany('INSERT OR IGNORE INTO icon_categories VALUES(?,?,?)',[('general','General','general'),('weapon','Weapons','weapon'),('armor','Armor','armor')])
+    db.executescript("""CREATE TRIGGER IF NOT EXISTS icon_category_insert BEFORE INSERT ON icon_assets WHEN NOT EXISTS(SELECT 1 FROM icon_categories WHERE id=NEW.category) BEGIN SELECT RAISE(ABORT,'Unknown icon category');END;
+    CREATE TRIGGER IF NOT EXISTS icon_category_update BEFORE UPDATE OF category ON icon_assets WHEN NOT EXISTS(SELECT 1 FROM icon_categories WHERE id=NEW.category) BEGIN SELECT RAISE(ABORT,'Unknown icon category');END;""")
+
 
 def email(value):
     if not isinstance(value,str) or len(value)>254 or not re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?\.[A-Za-z]{2,63}",value.strip()):raise Error(400,'Enter a valid email address')
@@ -89,12 +94,14 @@ def register(db,data,password_hash,bootstrap=False):
             if verification_required():raise
     return uid
 
-def public_icons(db):return [{'id':'custom:'+r[0],'label':r[1],'category':r[2]} for r in db.execute('SELECT id,name,category FROM icon_assets WHERE enabled=1 ORDER BY created_at DESC,id')]
+def categories(db):return [{'id':r[0],'name':r[1],'kind':r[2]} for r in db.execute('SELECT id,name,kind FROM icon_categories ORDER BY name COLLATE NOCASE,id')]
+
+def public_icons(db):return [{'id':'custom:'+r[0],'label':r[1],'category':r[2],'categoryKind':r[3]} for r in db.execute('SELECT a.id,a.name,a.category,c.kind FROM icon_assets a JOIN icon_categories c ON c.id=a.category WHERE a.enabled=1 ORDER BY a.created_at DESC,a.id')]
 
 def upload_icon(db,data):
     from PIL import Image,ImageOps,UnidentifiedImageError
     name=data.get('name','');category=data.get('category','general');encoded=data.get('image','')
-    if not isinstance(name,str) or not 1<=len(name.strip())<=80 or category not in ('general','weapon','armor') or not isinstance(encoded,str):raise Error(400,'Check the icon name and category')
+    if not isinstance(name,str) or not 1<=len(name.strip())<=80 or not isinstance(category,str) or not db.execute('SELECT 1 FROM icon_categories WHERE id=?',(category,)).fetchone() or not isinstance(encoded,str):raise Error(400,'Check the icon name and category')
     try:
         raw=base64.b64decode(encoded.split(',',1)[-1],validate=True)
         if not 1<=len(raw)<=1_000_000:raise Error(400,'Images must be no larger than 1 MB')
@@ -145,6 +152,29 @@ def admin_route(handler,db,method,path,data,password_hash,profile):
         elif action!='revoke':raise Error(400,'Unknown user action')
         for table in ('sessions','admin_sessions','email_tokens'):db.execute(f'DELETE FROM {table} WHERE user_id=?',(uid,))
         audit(db,actor,action,uid);db.commit();handler.reply(200,{'ok':True});return True
+    if path=='/api/admin/categories' and method=='GET':handler.reply(200,{'categories':categories(db)});return True
+    if path=='/api/admin/categories' and method=='POST':
+        name=data.get('name','');kind=data.get('kind','general')
+        if not isinstance(name,str) or not 1<=len(name.strip())<=60 or kind not in ('general','weapon','armor'):raise Error(400,'Check the category name and type')
+        ident='cat_'+secrets.token_hex(8)
+        try:db.execute('INSERT INTO icon_categories VALUES(?,?,?)',(ident,name.strip(),kind))
+        except sqlite3.IntegrityError:raise Error(409,'Category name is already in use') from None
+        audit(db,actor,'create_category',ident);db.commit();handler.reply(201,{'id':ident});return True
+    match=re.fullmatch(r'/api/admin/categories/([a-z0-9_]+)',path)
+    if match and method in ('POST','DELETE'):
+        ident=match[1];db.execute('BEGIN IMMEDIATE')
+        if not db.execute('SELECT 1 FROM icon_categories WHERE id=?',(ident,)).fetchone():raise Error(404,'Category not found')
+        if method=='DELETE':
+            if ident in ('general','weapon','armor'):raise Error(409,'Default categories cannot be deleted')
+            if db.execute('SELECT 1 FROM icon_assets WHERE category=?',(ident,)).fetchone():raise Error(409,'Reassign the icons before deleting this category')
+            db.execute('DELETE FROM icon_categories WHERE id=?',(ident,))
+        else:
+            name=data.get('name','');kind=data.get('kind','general')
+            if not isinstance(name,str) or not 1<=len(name.strip())<=60 or kind not in ('general','weapon','armor'):raise Error(400,'Check the category name and type')
+            if ident in ('general','weapon','armor') and kind!=ident:raise Error(409,'Default category types cannot be changed')
+            try:db.execute('UPDATE icon_categories SET name=?,kind=? WHERE id=?',(name.strip(),kind,ident))
+            except sqlite3.IntegrityError:raise Error(409,'Category name is already in use') from None
+        audit(db,actor,'delete_category' if method=='DELETE' else 'edit_category',ident);db.commit();handler.reply(200,{'ok':True});return True
     if path=='/api/admin/icons' and method=='GET':
         rows=db.execute('SELECT id,name,category,enabled,created_at FROM icon_assets ORDER BY created_at DESC,id').fetchall();handler.reply(200,{'icons':[{'id':'custom:'+r[0],'name':r[1],'category':r[2],'enabled':bool(r[3]),'created':r[4]} for r in rows]});return True
     if path=='/api/admin/icons' and method=='POST':
@@ -154,6 +184,10 @@ def admin_route(handler,db,method,path,data,password_hash,profile):
     match=re.fullmatch(r'/api/admin/icons/([a-f0-9]{32})',path)
     if match and method in ('POST','DELETE'):
         if not db.execute('SELECT 1 FROM icon_assets WHERE id=?',(match[1],)).fetchone():raise Error(404,'Icon not found')
+        if method=='POST' and 'category' in data:
+            category=data['category']
+            if not isinstance(category,str) or not db.execute('SELECT 1 FROM icon_categories WHERE id=?',(category,)).fetchone():raise Error(400,'Unknown icon category')
+            db.execute('UPDATE icon_assets SET category=? WHERE id=?',(category,match[1]));audit(db,actor,'edit_icon_category',match[1]);db.commit();handler.reply(200,{'ok':True});return True
         enabled=method=='POST';db.execute('UPDATE icon_assets SET enabled=? WHERE id=?',(int(enabled),match[1]));audit(db,actor,'restore_icon' if enabled else 'remove_icon',match[1]);db.commit();handler.reply(200,{'ok':True});return True
     raise Error(404,'Not found')
 
