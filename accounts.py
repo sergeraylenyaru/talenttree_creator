@@ -5,7 +5,7 @@ from http import cookies
 from urllib.parse import urlsplit,parse_qs
 
 class Error(ValueError):
-    def __init__(self,status,message):self.status=status;super().__init__(message)
+    def __init__(self,status,message,**details):self.status=status;self.details=details;super().__init__(message)
 
 def migrate(db):
     columns={r[1] for r in db.execute('PRAGMA table_info(users)')}
@@ -20,6 +20,9 @@ def migrate(db):
     db.executemany('INSERT OR IGNORE INTO icon_categories VALUES(?,?,?)',[('general','General','general'),('weapon','Weapons','weapon'),('armor','Armor','armor')])
     db.executescript("""CREATE TRIGGER IF NOT EXISTS icon_category_insert BEFORE INSERT ON icon_assets WHEN NOT EXISTS(SELECT 1 FROM icon_categories WHERE id=NEW.category) BEGIN SELECT RAISE(ABORT,'Unknown icon category');END;
     CREATE TRIGGER IF NOT EXISTS icon_category_update BEFORE UPDATE OF category ON icon_assets WHEN NOT EXISTS(SELECT 1 FROM icon_categories WHERE id=NEW.category) BEGIN SELECT RAISE(ABORT,'Unknown icon category');END;""")
+    db.execute('CREATE TABLE IF NOT EXISTS icon_fingerprints(fingerprint TEXT PRIMARY KEY,icon_id TEXT REFERENCES icon_assets(id) ON DELETE CASCADE)')
+    for ident,png in db.execute('SELECT id,png FROM icon_assets WHERE id NOT IN(SELECT icon_id FROM icon_fingerprints) ORDER BY created_at,id'):
+        db.execute('INSERT OR IGNORE INTO icon_fingerprints VALUES(?,?)',(image_fingerprint(png),ident))
 
 
 def email(value):
@@ -98,19 +101,40 @@ def categories(db):return [{'id':r[0],'name':r[1],'kind':r[2]} for r in db.execu
 
 def public_icons(db):return [{'id':'custom:'+r[0],'label':r[1],'category':r[2],'categoryKind':r[3]} for r in db.execute('SELECT a.id,a.name,a.category,c.kind FROM icon_assets a JOIN icon_categories c ON c.id=a.category WHERE a.enabled=1 ORDER BY a.created_at DESC,a.id')]
 
-def upload_icon(db,data):
+def image_fingerprint(png):
+    from PIL import Image
+    with Image.open(io.BytesIO(png)) as image:return hashlib.sha256(image.convert('RGBA').tobytes()).hexdigest()
+
+def sanitize_image(encoded,icon=True):
     from PIL import Image,ImageOps,UnidentifiedImageError
-    name=data.get('name','');category=data.get('category','general');encoded=data.get('image','')
-    if not isinstance(name,str) or not 1<=len(name.strip())<=80 or not isinstance(category,str) or not db.execute('SELECT 1 FROM icon_categories WHERE id=?',(category,)).fetchone() or not isinstance(encoded,str):raise Error(400,'Check the icon name and category')
+    if not isinstance(encoded,str):raise Error(400,'Invalid image file')
     try:
         raw=base64.b64decode(encoded.split(',',1)[-1],validate=True)
         if not 1<=len(raw)<=1_000_000:raise Error(400,'Images must be no larger than 1 MB')
         with Image.open(io.BytesIO(raw)) as image:
-            if image.format not in ('PNG','JPEG','WEBP') or image.width>1024 or image.height>1024 or min(image.size)<16 or getattr(image,'is_animated',False):raise Error(400,'Use a static PNG, JPEG or WebP image, 16–1024 pixels')
-            cleaned=ImageOps.fit(image.convert('RGBA'),(128,128));output=io.BytesIO();cleaned.save(output,format='PNG');png=output.getvalue()
+            limit=1024 if icon else 2048
+            if image.format not in ('PNG','JPEG','WEBP') or max(image.size)>limit or min(image.size)<(16 if icon else 1) or getattr(image,'is_animated',False):raise Error(400,f'Use a static PNG, JPEG or WebP image, {16 if icon else 1}–{limit} pixels')
+            cleaned=ImageOps.exif_transpose(image).convert('RGBA')
+            if icon:cleaned=ImageOps.fit(cleaned,(128,128))
+            else:cleaned.thumbnail((1600,1600))
+            output=io.BytesIO();cleaned.save(output,format='PNG');png=output.getvalue()
     except Error:raise
     except (ValueError,OSError,UnidentifiedImageError,Image.DecompressionBombError):raise Error(400,'Invalid image file') from None
-    ident=secrets.token_hex(16);db.execute('INSERT INTO icon_assets VALUES(?,?,?,?,1,?)',(ident,name.strip(),category,png,int(time.time())));return ident
+    return png
+
+def duplicate_icon(db,fingerprint):
+    row=db.execute('SELECT a.id,a.name,a.enabled FROM icon_fingerprints f JOIN icon_assets a ON a.id=f.icon_id WHERE f.fingerprint=?',(fingerprint,)).fetchone()
+    return {'id':'custom:'+row[0],'name':row[1],'enabled':bool(row[2])} if row else None
+
+def upload_icon(db,data):
+    name=data.get('name','');category=data.get('category','general')
+    if not isinstance(name,str) or not 1<=len(name.strip())<=80 or not isinstance(category,str) or not db.execute('SELECT 1 FROM icon_categories WHERE id=?',(category,)).fetchone():raise Error(400,'Check the icon name and category')
+    png=sanitize_image(data.get('image'));fingerprint=image_fingerprint(png)
+    db.execute('BEGIN IMMEDIATE')
+    duplicate=duplicate_icon(db,fingerprint)
+    if duplicate:raise Error(409,'This image is already in the icon library',duplicate=duplicate)
+    ident=secrets.token_hex(16);db.execute('INSERT INTO icon_assets VALUES(?,?,?,?,1,?)',(ident,name.strip(),category,png,int(time.time())))
+    db.execute('INSERT INTO icon_fingerprints VALUES(?,?)',(fingerprint,ident));return ident
 
 def audit(db,actor,action,target):db.execute('INSERT INTO admin_events(actor,action,target,created_at) VALUES(?,?,?,?)',(actor,action,str(target),int(time.time())))
 
@@ -121,6 +145,9 @@ def admin_route(handler,db,method,path,data,password_hash,profile):
         rate_limit(db,'admin:'+handler.client_address[0],10);actor=credential(db,data,password_hash,True);handler.reply(200,{'admin':profile(db,actor)},new_session(db,actor,True));return True
     if path=='/api/admin/me' and method=='GET':handler.reply(200,{'admin':profile(db,actor) if actor else None});return True
     if not actor:raise Error(403,'Administrator login required')
+    if path.startswith('/api/admin/project'):
+        import site_content
+        return site_content.admin_route(handler,db,actor,method,path,data)
     if path=='/api/admin/logout' and method=='POST':
         db.execute('DELETE FROM admin_sessions WHERE token=?',(hashlib.sha256(cookie_token(handler,'admin_session').encode()).hexdigest(),));db.commit();handler.reply(200,{'ok':True},'admin_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');return True
     if path=='/api/admin/users' and method=='GET':
@@ -177,6 +204,9 @@ def admin_route(handler,db,method,path,data,password_hash,profile):
         audit(db,actor,'delete_category' if method=='DELETE' else 'edit_category',ident);db.commit();handler.reply(200,{'ok':True});return True
     if path=='/api/admin/icons' and method=='GET':
         rows=db.execute('SELECT id,name,category,enabled,created_at FROM icon_assets ORDER BY created_at DESC,id').fetchall();handler.reply(200,{'icons':[{'id':'custom:'+r[0],'name':r[1],'category':r[2],'enabled':bool(r[3]),'created':r[4]} for r in rows]});return True
+    if path=='/api/admin/icons/check' and method=='POST':
+        png=sanitize_image(data.get('image'));fingerprint=image_fingerprint(png)
+        handler.reply(200,{'fingerprint':fingerprint,'duplicate':duplicate_icon(db,fingerprint)});return True
     if path=='/api/admin/icons' and method=='POST':
         try:ident=upload_icon(db,data)
         except ImportError:raise Error(503,'Install the image dependencies from requirements.txt') from None

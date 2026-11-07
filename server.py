@@ -1,5 +1,6 @@
 """TalentForge HTTP server. Python 3.12+, SQLite; Pillow for admin icon uploads."""
 import accounts
+import site_content
 import hashlib
 import hmac
 import json
@@ -46,6 +47,7 @@ def initialize():
         if 'language' not in {row[1] for row in db.execute('PRAGMA table_info(users)')}:
             db.execute("ALTER TABLE users ADD COLUMN language TEXT NOT NULL DEFAULT 'en'")
         accounts.migrate(db)
+        site_content.migrate(db)
         publications.migrate(db)
         publications.purge_archived(db)
 
@@ -265,6 +267,11 @@ class Handler(SimpleHTTPRequestHandler):
         parsed=urlsplit(self.path)
         if parsed.path in ('/admin','/admin/'):
             self.path='/admin.html';return super().do_GET()
+        match=re.fullmatch(r'/media/project/([a-f0-9]{32})\.png',parsed.path)
+        if match:
+            with connect() as db:row=db.execute('SELECT png FROM project_images WHERE id=?',(match[1],)).fetchone()
+            if not row:return self.send_error(404)
+            self.send_response(200);self.send_header('Content-Type','image/png');self.send_header('Content-Length',str(len(row[0])));self.send_header('Cache-Control','public, max-age=86400, immutable');self.end_headers();self.wfile.write(row[0]);return
         match=re.fullmatch(r'/media/icons/([a-f0-9]{32})\.png',parsed.path)
         if match:
             with connect() as db:row=db.execute('SELECT png FROM icon_assets WHERE id=?',(match[1],)).fetchone()
@@ -304,6 +311,7 @@ class Handler(SimpleHTTPRequestHandler):
                 parsed = urlsplit(self.path)
                 if accounts.admin_route(self,db,method,parsed.path,data,password_hash,profile_info):return
                 if accounts.email_route(self,db,method,parsed.path,data,password_hash,uid):return
+                if parsed.path=='/api/about' and method=='GET':return self.reply(200,site_content.content(db))
                 if parsed.path=='/api/icons' and method=='GET':return self.reply(200,{'icons':accounts.public_icons(db),'categories':accounts.categories(db)})
                 if parsed.path == '/api/rankings' and method == 'GET':
                     query = parse_qs(parsed.query)
@@ -538,7 +546,7 @@ class Handler(SimpleHTTPRequestHandler):
                         return self.reply(200, {})
                 self.reply(404, {'error': 'Не найдено'})
         except accounts.Error as error:
-            self.reply(error.status,{'error':str(error)})
+            self.reply(error.status,{'error':str(error),**error.details})
         except (ValueError, KeyError, TypeError, AttributeError) as error:
             self.reply(400, {'error': str(error) or 'Неверный запрос'})
 

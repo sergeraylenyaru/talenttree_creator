@@ -1,3 +1,4 @@
+import {aboutMarkup} from './about.js';
 import {characterBuilder} from './character-builder.js';
 import './translations.js';
 import {t,getLanguage,setLanguage,initLanguage} from './i18n.js';
@@ -11,6 +12,7 @@ import {icons,iconURL} from './icons.js';
 const $=s=>document.querySelector(s);
 const confirm=message=>window.confirm(t(message));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let aboutContent=null,aboutRequest=0;
 let doc=blank(), projectId=null, user=null, mode='play', modalSave=null, modalDelete=null, dirty=false,modalCancel=null,abilityView='icons',favoriteTreeId=null;
 doc.name=t('Новый класс');doc.branches.forEach((b,i)=>b.name=t('Ветка')+' '+(i+1));
 try { const draft=JSON.parse(localStorage.getItem('talentforge-draft')); if(draft){doc=normalize(draft,{allowLegacy:true});dirty=localStorage.getItem('talentforge-draft-dirty')==='1';} } catch {}
@@ -26,10 +28,10 @@ async function api(path, data, method) {
 }
 function image(id,extra='') { return `<img src="${esc(iconURL(id))||'missing-icon'}" alt="" loading="lazy" draggable="false" ${extra}>`; }
 document.addEventListener('error',e=>{if(e.target.tagName==='IMG'){e.target.style.visibility='hidden';e.target.alt='Иконка недоступна';}},true);
-function syncHero(){const inTree=!$('.workspace').hidden;$('.intro').hidden=inTree;$('#treeHero').hidden=!inTree;$('#modeBar').hidden=!inTree;}
-function showWorkspace(){closeMenus();$('#library').hidden=true;$('#community').hidden=true;$('.workspace').hidden=false;document.body.dataset.view='editor';syncHero();}
+function syncHero(){const inTree=!$('.workspace').hidden;$('.intro').hidden=inTree||!$('#aboutPage').hidden;$('#treeHero').hidden=!inTree;$('#modeBar').hidden=!inTree;}
+function showWorkspace(){closeMenus();$('#aboutPage').hidden=true;if(location.hash==='#about')history.replaceState(null,'',location.pathname+location.search);$('#library').hidden=true;$('#community').hidden=true;$('.workspace').hidden=false;document.body.dataset.view='editor';syncHero();}
 function branchTint(b){return /^#[0-9a-f]{6}$/i.test(b?.color||'')?`style="background:linear-gradient(135deg,${b.color}66,#0b0d12e6)"`:'';}
-function render() {hoverTarget=null;$('#tooltip').hidden=true;
+function render() {if(!$('#aboutPage').hidden&&aboutContent)$('#aboutContent').innerHTML=aboutMarkup(aboutContent,getLanguage());hoverTarget=null;$('#tooltip').hidden=true;
  synchronizeAbilityTalents(doc);renderCharacter();updateHistoryButtons();if(!activeShare){$('#shareStats').hidden=true;$('#publicationBar').hidden=true;$('#publicationVotes').hidden=true;}
  $('#trees').style.setProperty('--tree-count',Math.min(4,doc.branches.length));
  $('#classIcon').innerHTML=classEmblem(doc.classIcon,branchIcon(doc.branches[0]));$('#classIcon').disabled=mode!=='edit';
@@ -262,12 +264,12 @@ function avatarMarkup(icon,name){return `<span class="user-avatar" aria-label="�
 $('#profileAvatar').onclick=()=>{if(!user){auth();return;}editClassIcon(null,0,'avatar');};
 $('#returnEditor').onclick=()=>{showWorkspace();render();if(activeShare)refreshShareStats();};
 function updateNavigation(){
- const view=!$('#library').hidden?$('#library').dataset.scope:!$('#community').hidden?(communityState.scope==='mine'?'publications':'rankings'):'projects';
+ const view=!$('#aboutPage').hidden?'about':!$('#library').hidden?$('#library').dataset.scope:!$('#community').hidden?(communityState.scope==='mine'?'publications':'rankings'):'projects';
  document.body.dataset.view=view;syncHero();
- for(const id of ['rankings','publications','projects','favorites']){const selected=id===view;$('#'+id).classList.toggle('nav-active',selected);if(selected)$('#'+id).setAttribute('aria-current','page');else $('#'+id).removeAttribute('aria-current');}
+ for(const id of ['rankings','publications','projects','favorites','about']){const selected=id===view;$('#'+id).classList.toggle('nav-active',selected);if(selected)$('#'+id).setAttribute('aria-current','page');else $('#'+id).removeAttribute('aria-current');}
 }
 
-function renderUser(){if(!user)mode='play';$('#adminLink').hidden=!user?.isAdmin;if(user)setLanguage(user.language||'en');$('#publicationVotes').hidden=true;$('#chooseFavorite').hidden=mode!=='play'||!user;notificationUser(user?.login);$('#accountMenu').hidden=!user;closeMenus();if(!user&&!$('#library').hidden)showWorkspace();$('#profileAvatar').hidden=!user;$('#profileAvatar').innerHTML=user?avatarMarkup(user.avatar,user.login):'';if(!user){activePublication=null;$('#publicationBar').hidden=true;if(communityState.scope==='mine'){communityState.scope='rankings';$('#community').hidden=true;$('#community').innerHTML='';$('.workspace').hidden=false;}}if(activeShare)refreshShareStats();$('#user').textContent=user?.login||'';$('#auth').hidden=!!user;$('#logout').hidden=!user;}
+function renderUser(){if(!user)mode='play';$('#adminLink').hidden=!user?.isAdmin;if(user)setLanguage(user.language||'en');if(!$('#aboutPage').hidden&&aboutContent)$('#aboutContent').innerHTML=aboutMarkup(aboutContent,getLanguage());$('#publicationVotes').hidden=true;$('#chooseFavorite').hidden=mode!=='play'||!user;notificationUser(user?.login);$('#accountMenu').hidden=!user;closeMenus();if(!user&&!$('#library').hidden)showWorkspace();$('#profileAvatar').hidden=!user;$('#profileAvatar').innerHTML=user?avatarMarkup(user.avatar,user.login):'';if(!user){activePublication=null;$('#publicationBar').hidden=true;if(communityState.scope==='mine'){communityState.scope='rankings';$('#community').hidden=true;$('#community').innerHTML='';if($('#aboutPage').hidden)$('.workspace').hidden=false;}}if(activeShare)refreshShareStats();$('#user').textContent=user?.login||'';$('#auth').hidden=!!user;$('#logout').hidden=!user;}
 function auth(register=false,onSuccess=null){
  modal(register?'Создать аккаунт':'Войти в мастерскую',`<div class="auth-intro"><span>✦</span><p>${register?'Создай аккаунт, чтобы сохранять и публиковать свои деревья.':'С возвращением в мастерскую.'}</p></div>${register?field('email','Электронная почта','','email','required maxlength="254" autocomplete="email"'):''}${field('login',register?'Публичный ник':'Почта или прежний логин','','text',register?'required pattern="[A-Za-z0-9_\\-]{3,32}" minlength="3" maxlength="32" autocomplete="nickname"':'required maxlength="254" autocomplete="username"')}${field('password','ПАРОЛЬ','','password',`required minlength="8" maxlength="128" autocomplete="${register?'new-password':'current-password'}"`)}${register?field('repeatPassword','Повторите пароль','','password','required minlength="8" maxlength="128" autocomplete="new-password"'):''}<div class="auth-options"><label><input type="checkbox" id="showPassword">Показать пароль</label>${register?'':'<span class="auth-help-links"><a href="account.html">Забыли пароль?</a><a href="account.html?mode=resend">Повторить подтверждение</a></span>'}</div><p class="muted">${register?'Пароль — от 8 символов. Ник виден другим пользователям, почта — нет.':'Существующие аккаунты также могут входить по прежнему логину.'}</p><button type="button" id="switchAuth">${register?'Уже есть аккаунт? Войти':'Нет аккаунта? Зарегистрироваться'}</button>`,async()=>{
   if(register&&$('#password').value!==$('#repeatPassword').value)throw Error(t('Пароли не совпадают'));
@@ -312,7 +314,7 @@ async function confirmArchive(name){
 function updateArchiveTimers(){for(const timer of document.querySelectorAll('[data-archive-expires]')){const left=Math.max(0,Number(timer.dataset.archiveExpires)*1000-Date.now()),totalMinutes=Math.ceil(left/60000),days=Math.floor(totalMinutes/1440),hours=Math.floor(totalMinutes%1440/60),minutes=totalMinutes%60;timer.textContent=t('До удаления:')+' '+days+' '+t('дн.')+' '+hours+' '+t('ч.')+' '+minutes+' '+t('мин.');}}
 setInterval(updateArchiveTimers,60000);
 async function openLibrary(scope,archived=false){
- if(!user){auth();return;}closeMenus();const request=++libraryRequest,viewer=user.login;
+ if(!user){auth();return;}closeMenus();$('#aboutPage').hidden=true;if(location.hash==='#about')history.replaceState(null,'',location.pathname+location.search);const request=++libraryRequest,viewer=user.login;
  $('#library').dataset.scope=scope;$('#library').dataset.archived=String(archived);$('#library').hidden=false;$('#community').hidden=true;$('.workspace').hidden=true;$('#publicationBar').hidden=true;$('#shareStats').hidden=true;updateNavigation();
  const favorites=scope==='favorites';
  $('#library').innerHTML=`<div class="community-heading"><div><p class="eyebrow">ТВОЯ МАСТЕРСКАЯ</p><h2>${favorites?'Избранное':archived?'Архив деревьев':'Мои деревья'}</h2><p class="muted">${favorites?'Деревья, таланты и способности, которые всегда под рукой.':archived?'Восстановите дерево до истечения срока, чтобы сохранить его.':'Сохраняй идеи в черновиках и возвращайся к своим деревьям.'}</p></div></div><div class="list-tools"><label class="search-field">${glyph('search')}<input id="librarySearch" type="search" placeholder="${favorites?'Найти дерево, талант или способность':'Найти дерево'}" aria-label="Поиск в сохранениях"></label>${favorites?'':`<button id="toggleTreeArchive">${glyph(archived?'arrow':'layers')}${archived?'Вернуться в активные':'Архив'}</button>`}<span id="libraryCount" class="muted"></span></div>${favorites?'<div class="library-filters" aria-label="Тип избранного"><button data-kind="all" class="selected">Все</button><button data-kind="talent">Таланты</button><button data-kind="ability">Способности</button><button data-kind="tree">Деревья</button></div>':''}<div id="libraryItems" class="library-items" aria-busy="true"><div class="loading-state"><span class="spinner"></span>Загружаем твою мастерскую…</div></div>`;
@@ -450,11 +452,18 @@ async function openPublication(token){
  if(!await askToLeave())return;
  const result=await api('/shared/'+encodeURIComponent(token));doc=restoreBrowserBuild(normalize(result.document,{allowLegacy:true}),'share:'+token);projectId=null;activeShare=token;favoriteTreeId=null;allocationSent=false;setDirty(false);mode='play';resetHistory();showWorkspace();showShareStats(result.stats);showPublication(result.publication);render();$('#saveState').textContent='Копия опубликованной версии';const url=new URL(location.href);url.search='';url.searchParams.set('share',token);history.replaceState(null,'',url);
 }
+async function openAbout(){
+ closeMenus();const request=++aboutRequest;$('#aboutPage').hidden=false;$('#library').hidden=true;$('#community').hidden=true;$('.workspace').hidden=true;$('#publicationBar').hidden=true;$('#shareStats').hidden=true;updateNavigation();
+ if(location.hash!=='#about')history.replaceState(null,'',location.pathname+location.search+'#about');
+ $('#aboutContent').setAttribute('aria-busy','true');if(aboutContent)$('#aboutContent').innerHTML=aboutMarkup(aboutContent,getLanguage());else $('#aboutContent').innerHTML='<p class="muted">Загрузка…</p>';
+ try{const result=await api('/about');if(request!==aboutRequest||$('#aboutPage').hidden)return;aboutContent=result.content;$('#aboutContent').innerHTML=aboutMarkup(aboutContent,getLanguage());}catch(error){if(!$('#aboutPage').hidden)$('#aboutContent').textContent=error.message;}finally{if(request===aboutRequest)$('#aboutContent').setAttribute('aria-busy','false');}
+}
+$('#about').onclick=openAbout;$('#aboutReturnEditor').onclick=()=>{$('#returnEditor').click();};
 $('#rankings').onclick=()=>openCommunity('rankings');$('#publications').onclick=()=>{if(!user){auth();return;}openCommunity('mine');};
 async function openCommunity(scope='rankings'){
  if(scope!==communityState.scope)communityState.page=0;communityState.scope=scope;
  const mine=scope==='mine';if(!mine)communityState.archived=false;if(mine&&!user){auth();return;}
- closeMenus();$('#library').hidden=true;$('#community').hidden=false;$('.workspace').hidden=true;$('#publicationBar').hidden=true;$('#shareStats').hidden=true;updateNavigation();
+ closeMenus();$('#aboutPage').hidden=true;if(location.hash==='#about')history.replaceState(null,'',location.pathname+location.search);$('#library').hidden=true;$('#community').hidden=false;$('.workspace').hidden=true;$('#publicationBar').hidden=true;$('#shareStats').hidden=true;updateNavigation();
  $('#community').innerHTML=`<div class="community-heading"><div><p class="eyebrow">${mine?'ТВОЯ МАСТЕРСКАЯ':'СООБЩЕСТВО'}</p><h2>${mine?'Мои публикации':'Рейтинг деревьев'}</h2></div></div>${mine?`<div class="library-filters"><button id="activePublications" aria-pressed="${!communityState.archived}" class="${!communityState.archived?'selected':''}">Публикации</button><button id="archivedPublications" aria-pressed="${communityState.archived}" class="${communityState.archived?'selected':''}">Архив</button></div>${communityState.archived?'<p class="muted">Публикации в архиве доступны только тебе. Удалённые публикации и деревья хранятся 30 дней. Восстанови их до истечения срока.</p>':''}`:`<div class="ranking-tabs">${[['likes','По рейтингу'],['views','Самые просматриваемые'],['usage','Чаще используют калькулятор'],['latest','Последние опубликованные']].map(([sort,name])=>`<button data-sort="${sort}" aria-label="${name}" aria-pressed="${sort===communityState.sort}" class="${sort===communityState.sort?'selected':''}"><span class="ranking-symbol">${glyph(({likes:'trophy',views:'eye',usage:'calculator',latest:'clock'})[sort])}</span><span class="tab-label-full">${name}</span><span class="tab-label-short">${({likes:'Рейтинг',views:'Просмотры',usage:'Калькулятор',latest:'Новые'})[sort]}</span></button>`).join('')}</div>`}<div class="list-tools"><label class="search-field">${glyph('search')}<input id="publicationSearch" type="search" placeholder="Поиск на этой странице" aria-label="Поиск публикаций на текущей странице"></label><span id="searchResultCount" class="muted" role="status"></span></div><div id="publicationCards" class="publication-cards" aria-busy="true"><div class="loading-state"><span class="spinner"></span>Загружаем деревья…</div></div><div id="publicationPagination" class="publication-pagination"></div>`;
  for(const b of document.querySelectorAll('[data-sort]'))b.onclick=()=>{communityState.sort=b.dataset.sort;communityState.page=0;openCommunity('rankings');};
  if(mine)for(const [id,archived] of [['activePublications',false],['archivedPublications',true]])$('#'+id).onclick=()=>{communityState.archived=archived;communityState.page=0;openCommunity('mine');};
@@ -485,3 +494,5 @@ if(sharedToken) api('/shared/'+encodeURIComponent(sharedToken)).then(async resul
  if(!await askToLeave())return;
  doc=restoreBrowserBuild(normalize(result.document,{allowLegacy:true}),'share:'+sharedToken);projectId=null;activeShare=sharedToken;favoriteTreeId=null;showShareStats(result.stats);showPublication(result.publication);mode='play';resetHistory();render();$('#saveState').textContent='Копия класса по ссылке';toast('Открыта копия класса. Изменения не затрагивают оригинал.');
 }).catch(err=>toast(err.message));
+
+if(location.hash==='#about')openAbout();

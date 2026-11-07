@@ -1,0 +1,11 @@
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export function translatedText(value,language='en'){return value?.[language]||value?.[language==='en'?'ru':'en']||'';}
+function safeURL(value,image=false){if(typeof value!=='string'||/[\s\u0000-\u001f]/.test(value))return '';if(image&&/^\/media\/project\/[a-f0-9]{32}\.png$/.test(value))return value;try{const url=new URL(value);return ['http:','https:'].includes(url.protocol)&&!url.username&&!url.password?value:'';}catch{return '';}}
+export function aboutMarkup(content,language='en'){
+ const text=value=>esc(translatedText(value,language));
+ return `<div class="about-description" data-user-content>${text(content.description)}</div><section class="project-support" aria-labelledby="supportTitle"><div class="support-heading"><span class="support-mark" aria-hidden="true">✦</span><div><p class="eyebrow">${language==='ru'?'СОЗДАЁМ ВМЕСТЕ':'BUILT TOGETHER'}</p><h2 id="supportTitle">${language==='ru'?'Помощь проекту':'Support the project'}</h2></div></div><div class="support-grid">${(content.methods||[]).map((card,index)=>{
+  const image=safeURL(card.imageUrl,true),link=safeURL(card.linkUrl),imageLink=safeURL(card.imageLink);
+  const picture=image?`<img src="${esc(image)}" alt="${text(card.imageAlt)||text(card.title)}" loading="lazy" referrerpolicy="no-referrer">`:'';
+  return `<article class="support-card"><span class="support-number" aria-hidden="true">${String(index+1).padStart(2,'0')}</span><h3 data-user-content>${text(card.title)}</h3>${card.text?`<p data-user-content>${text(card.text)}</p>`:''}${image?`<div class="support-image">${imageLink?`<a href="${esc(imageLink)}" target="_blank" rel="noopener noreferrer" aria-label="${text(card.imageAlt)||text(card.title)}">${picture}</a>`:picture}</div>`:''}${link?`<a class="support-link" href="${esc(link)}" target="_blank" rel="noopener noreferrer" data-user-content>${text(card.linkLabel)||esc(language==='ru'?'Перейти':'Open link')} <span aria-hidden="true">↗</span></a>`:''}</article>`;
+ }).join('')}</div>${content.methods?.length?'':`<p class="muted">${language==='ru'?'Способы помощи появятся здесь.':'Ways to help will appear here.'}</p>`}</section>`;
+}
