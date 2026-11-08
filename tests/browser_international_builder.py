@@ -1,4 +1,5 @@
 """English/Russian profile, draft decisions and compact character constructor."""
+from browser_helpers import open_icons
 import sys,tempfile,threading,json
 from pathlib import Path
 from playwright.sync_api import sync_playwright,expect
@@ -12,7 +13,7 @@ with tempfile.TemporaryDirectory() as tmp:
    page.locator('#className').fill('Русское имя автора');page.locator('#className').blur();page.locator('#characterSettings').click();expect(page.locator('#modalTitle')).to_have_text('Resources & character')
    page.locator('#builderHp').fill('24000');page.locator('[data-resource-index="0"]').click();page.locator('#resourceMax').fill('100');page.locator('#resourceCurrent').fill('85');page.locator('#resourceUnit').select_option('percent')
    page.locator('#addResource').click();page.locator('#resourceName').fill('Авторский кристалл');page.locator('#resourceShape').select_option('crystal');page.locator('#resourceUnit').select_option('count')
-   page.locator('[data-builder-tab="equipment"]').click();page.locator('[data-equipment="armorTypes"][value="plate"]').check();page.locator('[data-equipment="weaponTypes"][value="dagger"]').check();page.locator('[data-new-custom="customArmorTypes"]').click();page.locator('#customEquipmentName').fill('Звёздная ткань');page.locator('#customEquipmentIcon').click();page.wait_for_selector('[data-icon="inv_sword_04"]');page.locator('[data-icon="inv_sword_04"]').click();page.locator('#submitModal').click();page.wait_for_selector('#customEquipmentName');assert page.locator('#customEquipmentName').input_value()=='Звёздная ткань'
+   page.locator('[data-builder-tab="equipment"]').click();page.locator('[data-equipment="armorTypes"][value="plate"]').check();page.locator('[data-equipment="weaponTypes"][value="dagger"]').check();page.locator('[data-new-custom="customArmorTypes"]').click();page.locator('#customEquipmentName').fill('Звёздная ткань');page.locator('#customEquipmentIcon').click();open_icons(page);page.wait_for_selector('[data-icon="inv_sword_04"]');page.locator('[data-icon="inv_sword_04"]').click();page.locator('#submitModal').click();page.wait_for_selector('#customEquipmentName');assert page.locator('#customEquipmentName').input_value()=='Звёздная ткань'
    for width,height in [(1440,1000),(1024,768),(768,600),(390,844),(320,700)]:
     page.set_viewport_size({'width':width,'height':height})
     for tab in ['resource','general','equipment']:

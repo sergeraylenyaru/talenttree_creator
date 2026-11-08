@@ -29,6 +29,7 @@ export function changeRank(doc, id, delta) {
 }
 export function normalize(doc,{allowLegacy=false}={}) {
   if(!doc || doc.version!==1 || typeof doc.name!=='string' || !doc.name.trim() || doc.name.length>100 || !Array.isArray(doc.branches) || doc.branches.length<1 || doc.branches.length>(allowLegacy?5:4)) throw Error('Неверный формат класса Talent Forge v1');
+  for(const [key,limit] of [['subtitle',120],['description',10000]])if(doc[key]!==undefined&&(typeof doc[key]!=='string'||doc[key].length>limit))throw Error('Проверь дополнительную строку и описание класса');
   if(doc.classIcon!==undefined)validateClassIcon(doc.classIcon);
   for(const key of ['budget','rowCost']) if(!Number.isInteger(doc[key])||doc[key]<0||doc[key]>100000) throw Error('Неверные правила очков');
   synchronizeAbilityTalents(doc);
@@ -55,11 +56,15 @@ export function normalize(doc,{allowLegacy=false}={}) {
   }
   if(!allowLegacy)for(const b of doc.branches)if([...dependencyRoutes(b).values()].some(path=>!path))throw Error('Стрелки зависимостей пересекаются или нет свободного пути. Убери или измени зависимость.');
   if(!Array.isArray(doc.abilities)||doc.abilities.some(a=>!a||typeof a.id!=='string'||typeof a.name!=='string'||typeof a.description!=='string')) throw Error('Неверный список способностей');
+  for(const a of doc.abilities)if(a.requirements!==undefined&&(!Array.isArray(a.requirements)||a.requirements.length>40||a.requirements.some(v=>typeof v!=='string'||!v.trim()||v.length>100)||new Set(a.requirements).size!==a.requirements.length))throw Error('Проверь требования способности');
+  for(const a of doc.abilities)if(a.learningMode!==undefined&&!['base','talent'].includes(a.learningMode))throw Error('Неверный способ изучения способности');
   for(const a of doc.abilities){if(a.kind!==undefined&&!['active','passive'].includes(a.kind))throw Error('Неверный тип способности');if(a.branchId!==undefined&&!['','auto'].includes(a.branchId)&&!branchIds.has(a.branchId))throw Error('Ветка способности не найдена');}
   for(const a of doc.abilities)if(a.resourceUnit!==undefined&&!['points','percent','count'].includes(a.resourceUnit))throw Error('Неверные единицы ресурса');
   for(const a of doc.abilities)if(a.resourceType!==undefined){if(typeof a.resourceType!=='string'||!a.resourceType||a.resourceType.length>100||['resource','cast','cooldown','range'].some(k=>!Number.isFinite(a[k])||a[k]<0||a[k]>1e9))throw Error('Неверные числовые параметры способности');}
   if(doc.character){
     const c=doc.character;
+    if(c.hpDescription!==undefined&&(typeof c.hpDescription!=='string'||c.hpDescription.length>3000))throw Error('Описание ресурса: до 3000 символов');
+    for(const r of c.resources||[])if(r.description!==undefined&&(typeof r.description!=='string'||r.description.length>3000))throw Error('Описание ресурса: до 3000 символов');
     if(!Number.isInteger(c.hp)||c.hp<1||c.hp>100000000||typeof c.race!=='string'||typeof c.gender!=='string'||typeof c.armory!=='string'||!Array.isArray(c.resources))throw Error('Неверные настройки персонажа');
     for(const [key,allowed] of [['armorTypes',['cloth','leather','mail','plate','shield']],['weaponTypes',['sword1','sword2','axe1','axe2','mace1','mace2','dagger','staff','polearm','fist','bow','crossbow','gun','wand','thrown','offhand']]])if(c[key]!==undefined&&(!Array.isArray(c[key])||new Set(c[key]).size!==c[key].length||c[key].some(v=>!allowed.includes(v))))throw Error('Неверная экипировка');
     for(const key of ['customArmorTypes','customWeaponTypes'])if(c[key]!==undefined){if(!Array.isArray(c[key]))throw Error('Неверная экипировка');const ids=new Set();for(const item of c[key]){if(!item||typeof item.id!=='string'||ids.has(item.id)||typeof item.name!=='string'||!item.name.trim()||item.name.length>60||typeof item.enabled!=='boolean')throw Error('Неверная экипировка');ids.add(item.id);validateClassIcon({layers:[{icon:item.icon,opacity:1}]});}}
@@ -131,6 +136,7 @@ export function placeAbilityTalent(document,abilityId,branchId,row,col,replace=f
  if(!branch||!ability||!Number.isInteger(row)||row<0||row>=branch.rows||!Number.isInteger(col)||col<0||col>3)throw Error('Неверная ячейка или способность');
  const existing=branch.talents.find(t=>t.row===row&&t.col===col);
  if(existing&&!replace)throw Error('Ячейка занята талантом');if(!existing&&reserved(branch,row,col))throw Error('Здесь проходит стрелка. Сначала убери зависимость.');
+ ability.learningMode='talent';ability.talentId='';
  const talent=abilityTalentDraft(ability,{...(existing||{}),row,col,requires:existing?.requires||''});
 
  if(existing)branch.talents[branch.talents.indexOf(existing)]=talent;else branch.talents.push(talent);
@@ -146,7 +152,7 @@ export function synchronizeAbilityTalents(doc){
  for(const t of nodes)if(t.grantedAbilityId){const a=doc.abilities.find(a=>a.id===t.grantedAbilityId);if(!a)throw Error('Способность таланта не найдена');Object.assign(t,{name:a.name,icon:a.icon,maxRank:1,descriptions:[a.description]});delete t.rankTemplate;}
  return doc;
 }
-export function abilityUnlocked(doc,ability){const ids=new Set(doc.branches.flatMap(b=>b.talents).filter(t=>t.grantedAbilityId===ability.id).map(t=>t.id));if(ability.talentId)ids.add(ability.talentId);return !ids.size||[...ids].some(id=>(doc.build[id]||0)>0);}
+export function abilityUnlocked(doc,ability){if(ability.learningMode==='base')return true;if(ability.learningMode==='talent'&&ability.talentId)return (doc.build[ability.talentId]||0)>0;const ids=new Set(doc.branches.flatMap(b=>b.talents).filter(t=>t.grantedAbilityId===ability.id).map(t=>t.id));if(ability.talentId)ids.add(ability.talentId);return (!ids.size&&ability.learningMode!=='talent')||[...ids].some(id=>(doc.build[id]||0)>0);}
 export function removeAbility(document,id){const next=structuredClone(document),removed=new Set();next.abilities=next.abilities.filter(a=>a.id!==id);for(const b of next.branches){for(const t of b.talents)if(t.grantedAbilityId===id)removed.add(t.id);b.talents=b.talents.filter(t=>!removed.has(t.id));}for(const b of next.branches)for(const t of b.talents)if(removed.has(t.requires))t.requires='';for(const a of next.abilities)if(removed.has(a.talentId))a.talentId='';next.build={};return next;}
 
 export function branchIcon(branch){return branch.icon||branch.talents[0]?.icon||'inv_misc_questionmark';}
@@ -156,6 +162,6 @@ export function abilityBranchIds(doc,ability){
 }
 export function groupedAbilities(doc){
  const rows=doc.branches.map(b=>({id:b.id,name:b.name,icon:branchIcon(b),abilities:doc.abilities.filter(a=>abilityBranchIds(doc,a).includes(b.id))}));
- const general=doc.abilities.filter(a=>!abilityBranchIds(doc,a).length);if(general.length)rows.push({id:'general',name:'Общие способности',icon:'inv_misc_questionmark',abilities:general});
+ const general=doc.abilities.filter(a=>!abilityBranchIds(doc,a).length);if(general.length)rows.push({id:'general',name:'Общие способности',icon:'inv_misc_book_09',abilities:general});
  return rows.map(row=>({...row,active:row.abilities.filter(a=>a.kind!=='passive'),passive:row.abilities.filter(a=>a.kind==='passive')}));
 }

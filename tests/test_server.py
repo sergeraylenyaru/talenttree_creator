@@ -123,10 +123,10 @@ class API(unittest.TestCase):
         self.assertEqual(self.request(visitor, path)[1]['stats']['allocated'], 1)
         self.request(second, path)
         self.assertEqual(self.request(second, path+'/interact', {})[1]['stats']['allocated'], 2)
-        self.assertEqual(self.request(visitor, '/api/projects', {'document': DOCUMENT, 'sourceShare': token})[0], 401)
+        self.assertEqual(self.request(visitor, '/api/projects', {'document': DOCUMENT, 'sourceShare': token, 'copy': True})[0], 401)
         self.register(saver, 'counter_saver')
         for _ in range(2):
-            self.assertEqual(self.request(saver, '/api/projects', {'document': DOCUMENT, 'sourceShare': token})[0], 200)
+            self.assertEqual(self.request(saver, '/api/projects', {'document': DOCUMENT, 'sourceShare': token, 'copy': True})[0], 200)
         self.assertEqual(self.request(visitor, path)[1]['stats'], {'allocated': 2, 'saved': 1})
 
     def test_custom_icon_upload_is_rejected(self):

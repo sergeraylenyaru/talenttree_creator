@@ -47,7 +47,7 @@ def info(db,token,user_id=None):
     document=json.loads(row[0]);owner=row[1]
     if (row[3]=='private' or row[6] is not None) and (user_id is None or user_id!=owner):return None
     author=db.execute('SELECT login,avatar FROM users WHERE id=?',(owner,)).fetchone() if owner else None
-    result={'token':token,'name':document['name'],'author':author[0] if author else None,'avatar':avatar_value(author[1]) if author else 'inv_misc_questionmark','classIcon':document.get('classIcon'),'archived':row[6] is not None,'archivedAt':row[6],'expiresAt':row[6]+30*86400 if row[6] is not None else None,'version':row[2],'visibility':row[3],'published':row[4], 'isOwner':user_id is not None and owner==user_id,
+    result={'token':token,'name':document['name'],'subtitle':document.get('subtitle',''),'description':document.get('description',''),'author':author[0] if author else None,'avatar':avatar_value(author[1]) if author else 'inv_misc_questionmark','classIcon':document.get('classIcon'),'archived':row[6] is not None,'archivedAt':row[6],'expiresAt':row[6]+30*86400 if row[6] is not None else None,'version':row[2],'visibility':row[3],'published':row[4], 'isOwner':user_id is not None and owner==user_id,
             'branches':[{'name':b['name'],'icon':b.get('icon') or (b['talents'][0].get('icon','inv_misc_questionmark') if b['talents'] else 'inv_misc_questionmark')} for b in document['branches']]}
     for key,table in [('views','share_views'),('allocated','share_allocations'),('saved','share_saves')]:
         result[key]=db.execute(f'SELECT COUNT(*) FROM {table} WHERE token=?',(token,)).fetchone()[0]

@@ -13,6 +13,7 @@ import os
 import re
 import secrets
 import sys
+import unicodedata
 import sqlite3
 import time
 from http import cookies
@@ -99,7 +100,16 @@ def project_summary(row):
     document = json.loads(row[3])
     branch = document['branches'][0]
     icon = branch.get('icon') or next(iter(branch.get('talents', [])), {}).get('icon', 'inv_misc_questionmark')
-    return {'id': row[0], 'name': row[1], 'updated': row[2], 'classIcon': document.get('classIcon'), 'icon': icon,'archived':row[4] is not None,'archivedAt':row[4],'expiresAt':row[4]+30*86400 if row[4] is not None else None,'published':bool(row[5])}
+    return {'id': row[0], 'name': row[1],'subtitle':document.get('subtitle',''), 'updated': row[2], 'classIcon': document.get('classIcon'), 'icon': icon,'archived':row[4] is not None,'archivedAt':row[4],'expiresAt':row[4]+30*86400 if row[4] is not None else None,'published':bool(row[5])}
+
+def draft_title_key(document):
+    return ' '.join(unicodedata.normalize('NFKC',document['name']+' '+document.get('subtitle','')).casefold().split())
+
+def duplicate_draft(db,uid,document,exclude=None):
+    key=draft_title_key(document)
+    for pid,raw in db.execute('SELECT id,document FROM projects WHERE user_id=? AND archived_at IS NULL AND id<>?',(uid,exclude or '')):
+        if draft_title_key(json.loads(raw))==key:return pid
+    return None
 
 
 def validate_class_icon(value):
@@ -131,6 +141,8 @@ def validate(document):
         raise ValueError('Неверный документ')
     if not isinstance(document.get('name'), str) or not 1 <= len(document['name'].strip()) <= 100:
         raise ValueError('Название: от 1 до 100 символов')
+    for field,limit in (('subtitle',120),('description',10000)):
+        if field in document and (not isinstance(document[field],str) or len(document[field])>limit):raise ValueError('Проверь дополнительную строку и описание класса')
     if 'classIcon' in document:
         validate_class_icon(document['classIcon'])
     branches = document.get('branches')
@@ -203,6 +215,8 @@ def validate(document):
     if document.get('version') != 1 or not isinstance(abilities, list) or any(not isinstance(a, dict) or any(not isinstance(a.get(k), str) for k in ('id', 'name', 'description', 'icon')) for a in abilities):
         raise ValueError('Неверный формат класса или способностей')
     for ability in abilities:
+        if 'learningMode' in ability and ability['learningMode'] not in ('base','talent'):raise ValueError('Неверный способ изучения способности')
+        if 'requirements' in ability and (not isinstance(ability['requirements'],list) or len(ability['requirements'])>40 or any(not isinstance(item,str) or not item.strip() or len(item)>100 for item in ability['requirements']) or len(set(ability['requirements']))!=len(ability['requirements'])):raise ValueError('Проверь требования способности')
         if 'resourceUnit' in ability and ability['resourceUnit'] not in ('points','percent','count'):raise ValueError('Неверные единицы ресурса')
         if 'kind' in ability and ability['kind'] not in ('active', 'passive'):
             raise ValueError('Неверный тип способности')
@@ -218,6 +232,7 @@ def validate(document):
                     raise ValueError('Параметры способности должны быть неотрицательными числами')
     if 'character' in document:
         c=document['character']
+        if isinstance(c,dict) and 'hpDescription' in c and (not isinstance(c['hpDescription'],str) or len(c['hpDescription'])>3000):raise ValueError('Описание ресурса: до 3000 символов')
         if not isinstance(c,dict) or type(c.get('hp')) is not int or not 1<=c['hp']<=100000000 or any(not isinstance(c.get(k),str) for k in ('race','gender','armory')) or not isinstance(c.get('resources'),list):raise ValueError('Неверные настройки персонажа')
         for key,allowed in [('armorTypes',['cloth','leather','mail','plate','shield']),('weaponTypes',['sword1','sword2','axe1','axe2','mace1','mace2','dagger','staff','polearm','fist','bow','crossbow','gun','wand','thrown','offhand'])]:
             if key in c and (not isinstance(c[key],list) or any(not isinstance(v,str) or v not in allowed for v in c[key]) or len(set(c[key]))!=len(c[key])):raise ValueError('Неверная экипировка')
@@ -229,6 +244,7 @@ def validate(document):
                     if not isinstance(item,dict) or not isinstance(item.get('id'),str) or item['id'] in ids or not isinstance(item.get('name'),str) or not 1<=len(item['name'].strip())<=60 or type(item.get('enabled')) is not bool:raise ValueError('Неверная экипировка')
                     ids.add(item['id']);validate_class_icon({'layers':[{'icon':item.get('icon'),'opacity':1}]})
         for r in c['resources']:
+            if isinstance(r,dict) and 'description' in r and (not isinstance(r['description'],str) or len(r['description'])>3000):raise ValueError('Описание ресурса: до 3000 символов')
             if isinstance(r,dict) and r.get('display')=='icons' and type(r.get('max')) is int and r['max']>20:raise ValueError('Для фигур допустимо не более 20')
             if not isinstance(r,dict) or not isinstance(r.get('name'),str) or not r['name'].strip() or type(r.get('max')) is not int or not 1<=r['max']<=100000000 or type(r.get('current')) is not int or not 0<=r['current']<=r['max'] or r.get('unit','points') not in ('points','percent','count') or r.get('display') not in ('bar','icons') or r.get('shape') not in ('circle','diamond','triangle','crystal','gem','orb','flame','star') or not isinstance(r.get('color'),str) or not re.fullmatch('#[0-9a-fA-F]{6}',r['color']) or (r['display']=='icons' and r['max']>20):raise ValueError('Неверный ресурс')
     return publications.without_build(document)
@@ -507,11 +523,14 @@ class Handler(SimpleHTTPRequestHandler):
                 match=re.fullmatch(r'/api/projects/([A-Za-z0-9_-]+)/restore',parsed.path)
                 if match and method=='POST':
                     pid=match[1];db.execute('BEGIN IMMEDIATE')
-                    if not db.execute('SELECT 1 FROM projects WHERE id=? AND user_id=?',(pid,uid)).fetchone():return self.reply(404,{'error':'Проект не найден'})
+                    saved=db.execute('SELECT document FROM projects WHERE id=? AND user_id=?',(pid,uid)).fetchone()
+                    if not saved:return self.reply(404,{'error':'Проект не найден'})
+                    if duplicate_draft(db,uid,json.loads(saved[0]),pid):return self.reply(409,{'error':'Уже есть активный черновик с таким полным названием. Переименуй его перед восстановлением.'})
                     db.execute('UPDATE projects SET archived_at=NULL WHERE id=? AND user_id=?',(pid,uid))
                     db.execute('UPDATE shares SET archived_at=NULL,archived_by_project=0 WHERE project_id=? AND owner_id=? AND archived_by_project=1',(pid,uid));db.commit();return self.reply(200,{'ok':True})
                 if self.path == '/api/projects' and method == 'POST':
                     document = validate(data['document'])
+                    db.execute('BEGIN IMMEDIATE')
                     pid = data.get('id')
                     if pid is None:
                         pid = secrets.token_hex(12)
@@ -526,12 +545,19 @@ class Handler(SimpleHTTPRequestHandler):
                     if existing and existing[0] != user[0]:
                         return self.reply(404, {'error': 'Проект не найден'})
                     if existing and existing[1] is not None:return self.reply(409,{'error':'Restore the tree before editing it'})
+                    duplicate=duplicate_draft(db,uid,document,pid)
+                    if duplicate and data.get('copy') is True and data.get('id') is None:
+                        base=document['name'];index=2
+                        while duplicate:
+                            suffix=' ('+str(index)+')';document['name']=base[:100-len(suffix)]+suffix;index+=1
+                            duplicate=duplicate_draft(db,uid,document,pid)
+                    if duplicate:return self.reply(409,{'error':'У тебя уже есть черновик с таким названием и дополнительной строкой. Измени название или дополнительную строку.','existingProjectId':duplicate})
                     db.execute('INSERT INTO projects(id,user_id,name,document,updated) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,document=excluded.document,updated=excluded.updated', (pid,user[0],document['name'],json.dumps(document),int(time.time())))
                     shared_from = data.get('sourceShare')
                     if isinstance(shared_from, str) and db.execute('SELECT 1 FROM shares WHERE token=?', (shared_from,)).fetchone():
                         db.execute('INSERT OR IGNORE INTO share_saves VALUES(?,?)', (shared_from, user[0]))
                     db.commit()
-                    return self.reply(200, {'id': pid})
+                    return self.reply(200, {'id': pid,'name':document['name']})
                 if self.path.startswith('/api/projects/'):
                     pid = self.path.removeprefix('/api/projects/')
                     row = db.execute('SELECT document FROM projects WHERE id=? AND user_id=? AND archived_at IS NULL', (pid,user[0])).fetchone()

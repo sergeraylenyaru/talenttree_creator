@@ -1,4 +1,5 @@
 """Avatar composer, branch tints and navigation; temporary database only."""
+from browser_helpers import open_icons
 import json
 import sys
 import tempfile
@@ -40,7 +41,7 @@ with tempfile.TemporaryDirectory() as tmp:
             page.locator('#profileAvatar').click();assert page.locator('#modalTitle').inner_text()=='Аватар профиля'
             page.locator('#emblemOpacity').fill('70');page.locator('#emblemScale').fill('150');page.locator('#emblemX').fill('12')
             page.locator('#toggleEmblemLayer').click();page.locator('#emblemOpacity').fill('40');page.locator('#emblemRotation').fill('45')
-            page.locator('[data-emblem-layer="1"]').click();page.wait_for_selector('#iconCategory');page.locator('#iconCategory').select_option('weapons');page.locator('[data-icon="inv_axe_01"]').click();page.locator('#submitModal').click()
+            page.locator('[data-emblem-layer="1"]').click();open_icons(page);page.wait_for_selector('#iconCategory');page.locator('#iconCategory').select_option('weapons');page.locator('[data-icon="inv_axe_01"]').click();page.locator('#submitModal').click()
             page.wait_for_selector('#emblemRotation');assert page.locator('#emblemRotation').input_value()=='45'
             page.locator('[data-active-emblem="0"]').click();assert page.locator('#emblemX').input_value()=='12'
             page.set_viewport_size({'width':320,'height':900});assert page.locator('#modal').evaluate('el=>el.scrollWidth<=el.clientWidth+1')

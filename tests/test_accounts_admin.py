@@ -62,12 +62,12 @@ class AccountsAdminAPI(unittest.TestCase):
         self.assertEqual(self.request(normal,'/api/admin/icons',data)[0],403)
         status,result,_=self.request(admin,'/api/admin/icons',data);self.assertEqual(status,201,result);ident=result['id']
         self.assertEqual(self.request(normal,'/api/icons')[1]['icons'][0]['id'],ident)
-        doc=copy.deepcopy(base.DOCUMENT);doc['classIcon']={'layers':[{'icon':ident,'opacity':1}]};self.assertEqual(self.request(normal,'/api/projects',{'document':doc})[0],200)
+        doc=copy.deepcopy(base.DOCUMENT);doc['classIcon']={'layers':[{'icon':ident,'opacity':1}]};saved=self.request(normal,'/api/projects',{'document':doc});self.assertEqual(saved[0],200);pid=saved[1]['id']
         self.assertEqual(self.request(normal,'/api/profile/avatar',{'avatar':ident})[0],200)
         with normal.open(self.url+'/media/icons/'+ident[7:]+'.png') as response:
             self.assertEqual(response.headers['Content-Type'],'image/png');self.assertEqual(Image.open(io.BytesIO(response.read())).size,(128,128))
         self.assertEqual(self.request(admin,'/api/admin/icons/'+ident[7:],{},'DELETE')[0],200);self.assertEqual(self.request(normal,'/api/icons')[1]['icons'],[])
-        self.assertEqual(self.request(normal,'/api/projects',{'document':doc})[0],200)
+        self.assertEqual(self.request(normal,'/api/projects',{'id':pid,'document':doc})[0],200)
         self.assertEqual(self.request(admin,'/api/admin/icons/'+ident[7:],{})[0],200)
         bad=dict(data,image=base64.b64encode(b'<svg><script>alert(1)</script></svg>').decode());self.assertEqual(self.request(admin,'/api/admin/icons',bad)[0],400)
         self.assertEqual(self.request(admin,'/api/admin/icons',data,origin='https://other.example')[0],403)
