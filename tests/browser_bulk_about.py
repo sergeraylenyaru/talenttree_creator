@@ -25,11 +25,13 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
             admin=browser.new_context(viewport={'width':1440,'height':1100});admin.route('https://**/*',lambda route:route.abort())
             a=admin.new_page();errors=[];a.on('pageerror',lambda e:errors.append(str(e)));a.goto(base+'/admin')
             a.locator('#adminEmail').fill('admin@example.test');a.locator('#adminPassword').fill('admin-password-123');a.locator('#adminLoginForm button').click()
-            a.locator('#iconsTab').click();a.wait_for_selector('[data-icon-id]');a.locator('#uploadCategory').select_option('weapon')
+            a.locator('#iconsTab').click();a.wait_for_selector('[data-icon-id]');a.locator('#uploadCategory').select_option('weapon');a.locator('#uploadTags').fill('magic, магия')
             a.locator('#uploadFile').set_input_files([str(f) for f in (blue,green,repeat,duplicate,invalid)])
             expect(a.locator('#uploadSummary')).to_contain_text('5 files · 2 ready')
             expect(a.locator('.upload-status.repeat')).to_have_count(1);expect(a.locator('.upload-status.duplicate')).to_have_count(1);expect(a.locator('.upload-status.invalid')).to_have_count(1)
             expect(a.locator('[data-upload-name]').nth(0)).to_have_value('spell blue')
+            expect(a.locator('[data-upload-tags]').nth(0)).to_have_value('magic, магия');expect(a.locator('[data-upload-tags]').nth(1)).to_have_value('magic, магия')
+            a.locator('[data-upload-tags]').nth(0).fill('Лёд, frost, mage');a.locator('[data-upload-tags]').nth(1).fill('природа, poison, яд')
             a.locator('[data-upload-name]').nth(0).fill('Blue comet');a.locator('[data-upload-name]').nth(1).fill('Emerald comet')
             expect(a.locator('[data-upload-name]').nth(3)).to_be_disabled()
             a.screenshot(path='work/bulk-icons-desktop.png',full_page=True)
@@ -37,8 +39,11 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
             # The duplicate from the selected batch stays blocked after its original was uploaded.
             expect(a.locator('.upload-status.duplicate')).to_have_count(2);expect(a.locator('#uploadIcons')).to_be_disabled()
             icons=admin.request.get(base+'/api/admin/icons').json()['icons'];assert len(icons)==3
-            assert {i['name'] for i in icons}=={'Existing gold','Blue comet','Emerald comet'}
+            assert {i['name'] for i in icons}=={'Existing gold','Blue comet','Emerald comet'},(icons,errors)
             assert all(i['category']=='weapon' for i in icons if i['name']!='Existing gold')
+            assert next(i for i in icons if i['name']=='Blue comet')['tags']=='Лёд, frost, mage'
+            a.locator('#adminIconSearch').fill('лед mage');expect(a.locator('#adminIconGrid article')).to_have_count(1);expect(a.locator('#adminIconGrid')).to_contain_text('Blue comet')
+            a.locator('[data-edit-icon-category]').click();a.locator('#editIconTags').fill('Лёд, frost, mage, burst');a.locator('#adminActionSave').click();expect(a.locator('#adminDialog')).not_to_be_visible();a.locator('#adminIconSearch').fill('burst');expect(a.locator('#adminIconGrid')).to_contain_text('Blue comet');a.locator('#adminIconSearch').fill('')
             a.locator('#clearUploadQueue').click();a.locator('#uploadFile').set_input_files(str(blue))
             expect(a.locator('.upload-status.duplicate')).to_contain_text('Blue comet');expect(a.locator('#uploadIcons')).to_be_disabled()
             # A failed request does not lose earlier successes or prevent retrying only that row.
@@ -86,8 +91,9 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
             m.locator('#accountMenu').click();m.locator('#profileSettings').click();m.locator('#profileLanguage').select_option('en');m.locator('#submitModal').click()
             expect(m.locator('.about-description')).to_contain_text('Create your own class.')
             m.locator('#aboutReturnEditor').click();m.locator('#className').fill('Unsaved local idea');m.locator('#className').dispatch_event('change');m.locator('#about').click();m.locator('#aboutReturnEditor').click();expect(m.locator('#className')).to_have_value('Unsaved local idea')
+            m.locator('#classIcon').click();m.locator('[data-emblem-layer="0"]').click();m.locator('#iconSearch').fill('лед mage');expect(m.locator('#iconGrid [data-icon]')).to_have_count(1);expect(m.locator('#iconGrid button')).to_have_attribute('title',__import__('re').compile('Blue comet.*burst'));m.locator('#iconSearch').fill('poison яд');expect(m.locator('#iconGrid [data-icon]')).to_have_count(1);expect(m.locator('#iconGrid button')).to_have_attribute('title',__import__('re').compile('Emerald comet'));m.locator('#closeModal').click();m.wait_for_selector('#emblemOpacity');m.locator('#closeModal').click()
             # Reload reads persistent settings, not the in-memory editor draft.
             a.set_viewport_size({'width':1440,'height':1000});a.reload();a.locator('#projectTab').click();expect(a.locator('#projectDescription')).to_have_value('Create your own class.\nA community workshop for talent trees.')
             assert not errors,errors
-            browser.close();print('PASS: multi-file review, names/categories, DB and selection duplicates, invalid file, retry, project text/links/linked images, card order, bilingual persistence, guest access and mobile widths down to 320px.')
+            browser.close();print('PASS: multi-file review, names/categories/tags, admin editing and tag search, DB and selection duplicates, invalid file, retry, project text/links/linked images, card order, bilingual persistence, guest access and mobile widths down to 320px.')
     finally:http.shutdown();http.server_close()

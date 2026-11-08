@@ -100,6 +100,40 @@ class AccountsAdminAPI(unittest.TestCase):
         self.assertEqual(self.request(admin,'/api/admin/categories/weapon',{'name':'Weapons','kind':'armor'})[0],409)
         self.assertEqual(self.request(admin,'/api/admin/icons',payload)[0],400) # Deleted category rejected on upload.
 
+    def test_icon_tags_upload_public_catalog_edit_clear_and_hidden_icons(self):
+        normal,admin=self.admin();output=io.BytesIO();Image.new('RGBA',(32,32),'cyan').save(output,'PNG')
+        payload={'name':'ico001','category':'general','image':base64.b64encode(output.getvalue()).decode(),'tags':' #Лёд; frost, Лёд,\nМАГ, frost '}
+        status,result,_=self.request(admin,'/api/admin/icons',payload);self.assertEqual(status,201,result);ident=result['id']
+        public=self.request(self.client(),'/api/icons')[1]['icons'][0];self.assertEqual(public['tags'],'Лёд, frost, МАГ');self.assertEqual(public['label'],'ico001')
+        self.assertEqual(self.request(admin,'/api/admin/icons')[1]['icons'][0]['tags'],'Лёд, frost, МАГ')
+        path='/api/admin/icons/'+ident[7:]
+        self.assertEqual(self.request(normal,path,{'tags':'unauthorized'})[0],403)
+        self.assertEqual(self.request(admin,path,{'tags':'ice, frozen'})[0],200)
+        self.assertEqual(self.request(self.client(),'/api/icons')[1]['icons'][0]['tags'],'ice, frozen')
+        self.request(admin,path,{},'DELETE')
+        self.assertEqual(self.request(admin,path,{'tags':'лед, ice'})[0],200)
+        self.assertEqual(self.request(self.client(),'/api/icons')[1]['icons'],[]) # Editing tags does not restore a hidden icon.
+        self.request(admin,path,{})
+        self.assertEqual(self.request(self.client(),'/api/icons')[1]['icons'][0]['tags'],'лед, ice')
+        self.assertEqual(self.request(admin,path,{'tags':''})[0],200)
+        self.assertEqual(self.request(self.client(),'/api/icons')[1]['icons'][0]['tags'],'')
+
+    def test_icon_tag_validation_and_existing_database_migration(self):
+        _,admin=self.admin();output=io.BytesIO();Image.new('RGB',(32,32),'purple').save(output,'PNG')
+        payload={'name':'Legacy','category':'general','image':base64.b64encode(output.getvalue()).decode()}
+        ident=self.request(admin,'/api/admin/icons',payload)[1]['id'];path='/api/admin/icons/'+ident[7:]
+        self.assertEqual(self.request(admin,'/api/admin/icons')[1]['icons'][0]['tags'],'')
+        for invalid in (None,[],42,'x'*1001,'x'*51,','.join('tag'+str(i) for i in range(31))):
+            self.assertEqual(self.request(admin,path,{'tags':invalid,'category':'weapon'})[0],400)
+        row=self.request(admin,'/api/admin/icons')[1]['icons'][0]
+        self.assertEqual(row['category'],'general');self.assertEqual(row['tags'],'')
+        with server.connect() as db:
+            original=db.execute('SELECT png FROM icon_assets WHERE id=?',(ident[7:],)).fetchone()[0]
+            db.execute('ALTER TABLE icon_assets DROP COLUMN tags');accounts.migrate(db);accounts.migrate(db)
+            row=db.execute('SELECT tags,png FROM icon_assets WHERE id=?',(ident[7:],)).fetchone()
+            self.assertEqual(row,('',original))
+        self.assertEqual(self.request(admin,path,{'tags':'legacy, old'})[0],200)
+
     def test_email_verification_and_reset_are_single_use_and_revoke_sessions(self):
         mail=[]
         with patch.dict(os.environ,{'SMTP_HOST':'smtp.example.test','SMTP_FROM':'noreply@example.test','APP_URL':'https://talent.example.test','REQUIRE_EMAIL_VERIFICATION':'1'}),patch('accounts.send_mail',side_effect=lambda *args:mail.append(args)):

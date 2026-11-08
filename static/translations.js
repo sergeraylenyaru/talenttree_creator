@@ -22,3 +22,5 @@ addTranslations([["Архив деревьев", "Tree archive"], ["Вернут
 addTranslations([['Публикации в архиве доступны только тебе. Удалённые публикации и деревья хранятся 30 дней. Восстанови их до истечения срока.','Archived publications are only visible to you. Deleted publications and trees are kept for 30 days. Restore them before the deadline.']]);
 
 addTranslations([['О проекте','About'],['Перейти','Open link']]);
+
+addTranslations([['ИКОНКА · ПОИСК ПО НАЗВАНИЮ ИЛИ ТЕГАМ','ICON · SEARCH BY NAME OR TAGS']]);
