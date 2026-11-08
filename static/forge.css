@@ -634,6 +634,6 @@ button[aria-busy="true"]::after{content:"";width:12px;height:12px;flex:0 0 12px;
 
 /* Main class title and its optional visible note have distinct hierarchy. */
 .tree-hero #treeTitle,.tree-hero #className{font-weight:700}
-.tree-hero #treeSubtitle,.tree-hero #classSubtitle{font-family:Manrope,sans-serif;font-weight:400;font-size:clamp(20px,2.5vw,32px);line-height:1.4;letter-spacing:0;color:var(--muted)}
-.tree-hero #classSubtitle{flex:0 1 360px;min-width:180px}
+.tree-hero #treeSubtitle,.tree-hero #classSubtitle{font-family:Manrope,sans-serif;font-weight:400;font-size:clamp(14px,1.6vw,22px);line-height:1.4;letter-spacing:0;color:var(--muted)}
+.tree-hero #classSubtitle{flex:0 1 300px;min-width:180px}
 .library-title .class-subtitle,.publication-title .class-subtitle{font-weight:400}
