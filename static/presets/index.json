@@ -166,5 +166,65 @@
     "name": "Друид",
     "talents": 51,
     "version": "Forever"
+  },
+  {
+    "id": "cata-warrior",
+    "name": "Воин",
+    "talents": 61,
+    "version": "4.3.4"
+  },
+  {
+    "id": "cata-paladin",
+    "name": "Паладин",
+    "talents": 60,
+    "version": "4.3.4"
+  },
+  {
+    "id": "cata-hunter",
+    "name": "Охотник",
+    "talents": 58,
+    "version": "4.3.4"
+  },
+  {
+    "id": "cata-rogue",
+    "name": "Разбойник",
+    "talents": 57,
+    "version": "4.3.4"
+  },
+  {
+    "id": "cata-priest",
+    "name": "Жрец",
+    "talents": 63,
+    "version": "4.3.4"
+  },
+  {
+    "id": "cata-shaman",
+    "name": "Шаман",
+    "talents": 58,
+    "version": "4.3.4"
+  },
+  {
+    "id": "cata-mage",
+    "name": "Маг",
+    "talents": 61,
+    "version": "4.3.4"
+  },
+  {
+    "id": "cata-warlock",
+    "name": "Чернокнижник",
+    "talents": 56,
+    "version": "4.3.4"
+  },
+  {
+    "id": "cata-druid",
+    "name": "Друид",
+    "talents": 63,
+    "version": "4.3.4"
+  },
+  {
+    "id": "cata-deathknight",
+    "name": "Рыцарь смерти",
+    "talents": 60,
+    "version": "4.3.4"
   }
 ]

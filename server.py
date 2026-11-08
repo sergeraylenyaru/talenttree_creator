@@ -70,9 +70,10 @@ def builtin_images():
 
 @lru_cache(maxsize=1)
 def avatar_catalog():
-    return {item['id'] for item in json.loads((ROOT / 'static' / 'icon-catalog.json').read_text(encoding='utf-8'))}
+    return {item['id'] for name in ('icon-catalog.json','retail-icons.json') for item in json.loads((ROOT / 'static' / name).read_text(encoding='utf-8'))}
 
 def validate_icon(value):
+    if isinstance(value,str) and value.startswith('retail:') and value not in avatar_catalog():raise ValueError('Выбери иконку из каталога')
     if isinstance(value,str) and value.startswith('custom:'):
         if not re.fullmatch(r'custom:[a-f0-9]{32}',value):raise ValueError('Invalid icon')
         with connect() as db:
@@ -130,7 +131,7 @@ def validate_class_icon(value):
         for key,lo,hi in [('x',-100,100),('y',-100,100),('scale',.75,1.5),('rotation',-180,180)]:
             if key in layer and not number(layer[key],lo,hi):raise ValueError('Проверь положение, масштаб 75–150% и угол слоя')
         icon=layer['icon']
-        if not (re.fullmatch(r'[A-Za-z0-9_]{1,100}',icon) or icon.startswith(('wotlk:','custom:')) or icon in builtin_images()):raise ValueError('Выбери иконку из каталога')
+        if not (re.fullmatch(r'[A-Za-z0-9_-]{1,100}',icon) or icon.startswith(('wotlk:','custom:','retail:')) or icon in builtin_images()):raise ValueError('Выбери иконку из каталога')
         if icon.startswith('wotlk:') and not re.fullmatch(r"wotlk:shared/global/talents/[a-z]+/images/[a-z]+/[a-z0-9'_,.\-]+\.jpg",icon):raise ValueError('Неверная иконка класса')
         validate_icon(icon)
     return value
@@ -143,6 +144,9 @@ def validate(document):
         raise ValueError('Название: от 1 до 100 символов')
     for field,limit in (('subtitle',120),('description',10000)):
         if field in document and (not isinstance(document[field],str) or len(document[field])>limit):raise ValueError('Проверь дополнительную строку и описание класса')
+    if 'specialization' in document:
+        spec=document['specialization']
+        if not isinstance(spec,dict) or type(spec.get('requiredPoints')) is not int or not 1<=spec['requiredPoints']<=100000:raise ValueError('Неверные правила специализации')
     if 'classIcon' in document:
         validate_class_icon(document['classIcon'])
     branches = document.get('branches')
@@ -215,8 +219,9 @@ def validate(document):
     if document.get('version') != 1 or not isinstance(abilities, list) or any(not isinstance(a, dict) or any(not isinstance(a.get(k), str) for k in ('id', 'name', 'description', 'icon')) for a in abilities):
         raise ValueError('Неверный формат класса или способностей')
     for ability in abilities:
-        if 'learningMode' in ability and ability['learningMode'] not in ('base','talent'):raise ValueError('Неверный способ изучения способности')
+        if 'learningMode' in ability and ability['learningMode'] not in ('base','talent','specialization'):raise ValueError('Неверный способ изучения способности')
         if 'requirements' in ability and ((len(ability['requirements'])>1000) if isinstance(ability['requirements'],str) else (not isinstance(ability['requirements'],list) or len(ability['requirements'])>40 or any(not isinstance(item,str) or not item.strip() or len(item)>100 for item in ability['requirements']) or len(set(ability['requirements']))!=len(ability['requirements']))):raise ValueError('Проверь требования способности')
+        if ability.get('learningMode')=='specialization' and ('specialization' not in document or ability.get('branchId') not in branch_ids):raise ValueError('Выбери ветку для способности специализации')
         if 'resourceUnit' in ability and ability['resourceUnit'] not in ('points','percent','count'):raise ValueError('Неверные единицы ресурса')
         if 'kind' in ability and ability['kind'] not in ('active', 'passive'):
             raise ValueError('Неверный тип способности')
@@ -247,6 +252,23 @@ def validate(document):
             if isinstance(r,dict) and 'description' in r and (not isinstance(r['description'],str) or len(r['description'])>3000):raise ValueError('Описание ресурса: до 3000 символов')
             if isinstance(r,dict) and r.get('display')=='icons' and type(r.get('max')) is int and r['max']>20:raise ValueError('Для фигур допустимо не более 20')
             if not isinstance(r,dict) or not isinstance(r.get('name'),str) or not r['name'].strip() or type(r.get('max')) is not int or not 1<=r['max']<=100000000 or type(r.get('current')) is not int or not 0<=r['current']<=r['max'] or r.get('unit','points') not in ('points','percent','count') or r.get('display') not in ('bar','icons') or r.get('shape') not in ('circle','diamond','triangle','crystal','gem','orb','flame','star') or not isinstance(r.get('color'),str) or not re.fullmatch('#[0-9a-fA-F]{6}',r['color']) or (r['display']=='icons' and r['max']>20):raise ValueError('Неверный ресурс')
+    resources=document.get('character',{}).get('resources',[{'name':'Мана'}])
+    resource_ids={'health'}
+    for i,resource in enumerate(resources):
+        rid=resource.get('id','legacy:'+str(i))
+        if not isinstance(rid,str) or not 1<=len(rid)<=100 or rid in resource_ids:raise ValueError('Неверный ресурс')
+        resource_ids.add(rid)
+    for ability in abilities:
+        if 'resourceCosts' not in ability:continue
+        costs=ability['resourceCosts']
+        if not isinstance(costs,list):raise ValueError('Проверь затраты ресурсов')
+        seen=set()
+        for cost in costs:
+            if not isinstance(cost,dict) or not isinstance(cost.get('resourceId'),str) or cost['resourceId'] not in resource_ids or cost['resourceId'] in seen or type(cost.get('amount')) not in (int,float) or not math.isfinite(cost['amount']) or not 0<=cost['amount']<=1000000000 or cost.get('unit') not in ('points','percent','count') or ('resourceName' in cost and (not isinstance(cost['resourceName'],str) or len(cost['resourceName'])>100)):raise ValueError('Выбери ресурсы класса для каждой затраты и проверь количество')
+            seen.add(cost['resourceId'])
+        for field in ('cast','cooldown','range'):
+            value=ability.get(field)
+            if type(value) not in (int,float) or not math.isfinite(value) or not 0<=value<=1000000000:raise ValueError('Параметры способности должны быть неотрицательными числами')
     return publications.without_build(document)
 
 class Handler(SimpleHTTPRequestHandler):
@@ -414,7 +436,7 @@ class Handler(SimpleHTTPRequestHandler):
                         avatar={"layers":avatar["layers"]}
                         stored_avatar=json.dumps(avatar)
                     else:
-                        if not isinstance(avatar, str) or len(avatar) > 350000 or not (re.fullmatch(r'[A-Za-z0-9_]{1,100}', avatar) or avatar in avatar_catalog() or avatar.startswith('custom:')):
+                        if not isinstance(avatar, str) or len(avatar) > 350000 or not (re.fullmatch(r'[A-Za-z0-9_-]{1,100}', avatar) or avatar in avatar_catalog() or avatar.startswith('custom:')):
                             raise ValueError('Выбери аватар из каталога иконок')
                         validate_icon(avatar)
                         stored_avatar=avatar

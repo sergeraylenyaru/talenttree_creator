@@ -55,3 +55,21 @@ class EditorMetadataAPI(unittest.TestCase):
             if change=='learning':bad['abilities'][0]['learningMode']='unknown'
             if change=='requirement_text':bad['abilities'][0]['requirements']='x'*1001
             self.assertEqual(self.request(a,'/api/projects',{'id':pid,'document':bad})[0],400)
+
+    def test_resource_costs_and_primary_choice_are_validated_and_publish_without_build_state(self):
+        a=self.client();self.register(a,'resource_author')
+        d=copy.deepcopy(base.DOCUMENT);d['specialization']={'requiredPoints':31};d['primaryBranchId']='a'
+        d['character']={'hp':1000,'race':'Человек','gender':'Мужской','armory':'','resources':[{'id':'mana','name':'Мана','max':100,'current':100,'display':'bar','shape':'circle','color':'#397de1','unit':'percent'}]}
+        d['abilities']=[{'id':'cost','name':'Удар','description':'Текст','icon':'inv_misc_book_09','kind':'active','learningMode':'specialization','branchId':'a','cast':0,'cooldown':0,'range':0,'resourceCosts':[{'resourceId':'health','resourceName':'Здоровье','amount':5,'unit':'percent'},{'resourceId':'mana','amount':25,'unit':'points'}]}]
+        status,result,_=self.request(a,'/api/projects',{'document':d});self.assertEqual(status,200);pid=result['id'];stored=self.request(a,'/api/projects/'+pid)[1]['document'];self.assertNotIn('primaryBranchId',stored);self.assertEqual(len(stored['abilities'][0]['resourceCosts']),2)
+        token=self.request(a,'/api/publish',{'projectId':pid,'visibility':'public'})[1]['token'];shared=self.request(a,'/api/shared/'+token)[1]['document'];self.assertNotIn('primaryBranchId',shared)
+        for costs in ([{'resourceId':'missing','amount':1,'unit':'points'}],[{'resourceId':'mana','amount':-1,'unit':'points'}],[{'resourceId':'mana','amount':1,'unit':'bad'}],[{'resourceId':'mana','amount':1,'unit':'points'}]*2):
+            bad=copy.deepcopy(d);bad['abilities'][0]['resourceCosts']=costs;self.assertEqual(self.request(a,'/api/projects',{'id':pid,'document':bad})[0],400)
+
+    def test_modern_irregular_icon_is_valid_for_class_and_avatar(self):
+        a=self.client();self.register(a,'modern_icon')
+        d=copy.deepcopy(base.DOCUMENT);d['classIcon']={'layers':[{'icon':'retail:132134','opacity':1}]}
+        self.assertEqual(self.request(a,'/api/projects',{'document':d})[0],200)
+        self.assertEqual(self.request(a,'/api/profile/avatar',{'avatar':d['classIcon']})[0],200)
+        d['classIcon']['layers'][0]['icon']='retail:unknown'
+        self.assertEqual(self.request(a,'/api/projects',{'document':d})[0],400)

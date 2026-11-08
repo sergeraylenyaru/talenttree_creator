@@ -12,7 +12,7 @@ def avatar_value(value):
 
 def without_build(document):
     """Keep allocations in the visitor browser, including for legacy documents."""
-    return {**document, "build": {}}
+    return {**{k:v for k,v in document.items() if k!="primaryBranchId"}, "build": {}}
 
 def migrate(db):
     if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='projects'").fetchone() and 'archived_at' not in {r[1] for r in db.execute('PRAGMA table_info(projects)')}:db.execute('ALTER TABLE projects ADD COLUMN archived_at INTEGER')

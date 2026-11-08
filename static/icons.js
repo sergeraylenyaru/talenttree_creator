@@ -1,3 +1,4 @@
+import {retailIconNames} from './retail-icon-aliases.js';
 // Curated starter catalog, not a full 3.3.5a icon database.
 export const icons = [
 ['spell_fire_fireball02','Огненный шар огонь маг'],['spell_fire_flamebolt','Пламя огонь'],['spell_fire_flameshock','Огненный шок шаман'],['spell_fire_sealoffire','Печать огня'],['spell_fire_burnout','Огонь взрыв'],
@@ -11,8 +12,9 @@ export const icons = [
 ['spell_deathknight_frostpresence','Власть льда рыцарь смерти'],['spell_deathknight_bloodpresence','Власть крови'],['spell_deathknight_unholypresence','Власть нечестивости'],['spell_deathknight_deathstrike','Удар смерти'],['inv_sword_04','Меч оружие'],['inv_axe_09','Топор оружие'],['inv_shield_04','Щит'],['inv_staff_13','Посох'],['inv_misc_questionmark','Вопрос неизвестно']
 ].map(([id,label])=>({id:id.toLowerCase(),label}));
 export function iconURL(id) {
+ if(Object.hasOwn(retailIconNames,id))return `https://wow.zamimg.com/images/wow/icons/large/${encodeURIComponent(retailIconNames[id])}.jpg`;
  if(/^custom:[a-f0-9]{32}$/.test(id||''))return '/media/icons/'+id.slice(7)+'.png';
  if(/^wotlk:shared\/global\/talents\/[a-z]+\/images\/[a-z]+\/[a-z0-9'_,.\-]+\.jpg$/.test(id||'')) return 'https://raw.githubusercontent.com/CraftedRO/Offline-talent-calculator-for-WotLK-3.3.5a/master/'+id.slice(6).split('/').map(encodeURIComponent).join('/');
  if(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(id||'') && id.length<=350000)return id;
- return /^[a-z0-9_]+$/i.test(id||'')?`https://wow.zamimg.com/images/wow/icons/large/${id.toLowerCase()}.jpg`:'';
+ return /^[a-z0-9_-]+$/i.test(id||'')?`https://wow.zamimg.com/images/wow/icons/large/${id.toLowerCase()}.jpg`:'';
 }

@@ -9,7 +9,7 @@ const labels=['Ткань','Кожа','Кольчуга','Латы','Щиты','
 const shapes={circle:'Круг',triangle:'Треугольник',diamond:'Ромб',crystal:'Кристалл',gem:'Самоцвет',orb:'Сфера',flame:'Пламя',star:'Звезда'};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function characterBuilder({character,budget,automatic,defaultBudget,onSave,onChooseIcon}){
- const c=structuredClone(character);c.armorTypes??=[];c.weaponTypes??=[];c.customArmorTypes??=[];c.customWeaponTypes??=[];c.resources.forEach(r=>r.unit??='points');
+ const c=structuredClone(character);c.armorTypes??=[];c.weaponTypes??=[];c.customArmorTypes??=[];c.customWeaponTypes??=[];c.resources.forEach((r,i)=>{r.unit??='points';r.id??='legacy:'+i;});
  let active=-1,tab='resource',page=0,equipmentPage=0,armorPage=0,customKey='customArmorTypes',customIndex=0,weaponCapacity=weaponTypes.length,armorCapacity=armorTypes.length,fitFrame=0;
  const field=(id,label,value,type='text',attrs='')=>`<label>${label}<input id="${id}" type="${type}" value="${esc(value)}" ${attrs}></label>`;
  const opts=(values,value)=>values.map(([id,label])=>`<option value="${id}" ${id===value?'selected':''}>${label}</option>`).join('');
@@ -51,7 +51,7 @@ export function characterBuilder({character,budget,automatic,defaultBudget,onSav
   }
   root.querySelectorAll('[data-resource-index]').forEach(el=>el.onclick=()=>{active=Number(el.dataset.resourceIndex);tab='resource';draw();});
   root.querySelectorAll('[data-builder-tab]').forEach(el=>el.onclick=()=>{tab=el.dataset.builderTab;draw();});
-  root.querySelector('#addResource').onclick=()=>{c.resources.push({name:t('Новый ресурс'),max:5,current:5,unit:'percent',display:'icons',shape:'crystal',color:'#9365f5'});active=c.resources.length-1;page=Math.floor(active/3);tab='resource';draw();};
+  root.querySelector('#addResource').onclick=()=>{c.resources.push({id:crypto.randomUUID(),name:t('Новый ресурс'),max:5,current:5,unit:'percent',display:'icons',shape:'crystal',color:'#9365f5'});active=c.resources.length-1;page=Math.floor(active/3);tab='resource';draw();};
   root.querySelector('#previousResource').onclick=()=>{page--;draw();};root.querySelector('#nextResource').onclick=()=>{page++;draw();};
  }
  function scheduleFit(){cancelAnimationFrame(fitFrame);fitFrame=requestAnimationFrame(()=>{

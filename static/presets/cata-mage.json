@@ -1,0 +1,1018 @@
+{
+  "version": 1,
+  "name": "Маг · 4.3.4",
+  "budget": 41,
+  "budgetAuto": false,
+  "rowCost": 5,
+  "specialization": {
+    "requiredPoints": 31
+  },
+  "branches": [
+    {
+      "id": "cata-mage-0",
+      "name": "Arcane",
+      "icon": "spell_holy_magicalsentry",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "cata-mage-0-0",
+          "name": "Arcane Concentration",
+          "icon": "spell_shadow_manaburn",
+          "maxRank": 3,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "Gives you a 3% chance of entering a Clearcasting state after any damage spell hits a target. The Clearcasting state reduces the mana cost of your next damage spell by 100%.",
+            "Gives you a 6% chance of entering a Clearcasting state after any damage spell hits a target. The Clearcasting state reduces the mana cost of your next damage spell by 100%.",
+            "Gives you a 10% chance of entering a Clearcasting state after any damage spell hits a target. The Clearcasting state reduces the mana cost of your next damage spell by 100%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-1",
+          "name": "Improved Counterspell",
+          "icon": "spell_frost_iceshock",
+          "maxRank": 2,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Your Counterspell also silences the target for 2 sec.",
+            "Your Counterspell also silences the target for 4 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-2",
+          "name": "Netherwind Presence",
+          "icon": "ability_mage_netherwindpresence",
+          "maxRank": 3,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Increases your spell haste by 1%.",
+            "Increases your spell haste by 2%.",
+            "Increases your spell haste by 3%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-3",
+          "name": "Torment the Weak",
+          "icon": "spell_arcane_focusedpower",
+          "maxRank": 3,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Your Arcane damage spells deal 2% more damage to snared or slowed targets.",
+            "Your Arcane damage spells deal 4% more damage to snared or slowed targets.",
+            "Your Arcane damage spells deal 6% more damage to snared or slowed targets."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-4",
+          "name": "Invocation",
+          "icon": "spell_arcane_invocation",
+          "maxRank": 2,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "You gain a 5% damage bonus for 8 sec after successfully interrupting a spell.",
+            "You gain a 10% damage bonus for 8 sec after successfully interrupting a spell."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-5",
+          "name": "Improved Arcane Missiles",
+          "icon": "spell_nature_starfall",
+          "maxRank": 2,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Increases the number of missiles fired by your Arcane Missiles spell by 1.",
+            "Increases the number of missiles fired by your Arcane Missiles spell by 2."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-6",
+          "name": "Improved Blink",
+          "icon": "spell_arcane_blink",
+          "maxRank": 2,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "Increases your speed by 35% for 3 sec after casting the Blink spell.",
+            "Increases your speed by 70% for 3 sec after casting the Blink spell."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-7",
+          "name": "Arcane Flows",
+          "icon": "ability_mage_potentspirit",
+          "maxRank": 2,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Reduces the cooldown of your Presence of Mind, Arcane Power and Invisibility spells by 12% and the cooldown of your Evocation spell by 1 min.",
+            "Reduces the cooldown of your Presence of Mind, Arcane Power and Invisibility spells by 25% and the cooldown of your Evocation spell by 2 min."
+          ],
+          "requires": "cata-mage-0-8"
+        },
+        {
+          "id": "cata-mage-0-8",
+          "name": "Presence of Mind",
+          "icon": "spell_nature_enchantarmor",
+          "maxRank": 1,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "When activated, your next Mage spell with a casting time less than 10 sec becomes an instant cast spell."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-9",
+          "name": "Missile Barrage",
+          "icon": "ability_mage_missilebarrage",
+          "maxRank": 2,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Your Arcane Missiles spell will fire its missiles every 0.6 sec.",
+            "Your Arcane Missiles spell will fire its missiles every 0.5 sec."
+          ],
+          "requires": "cata-mage-0-5"
+        },
+        {
+          "id": "cata-mage-0-10",
+          "name": "Prismatic Cloak",
+          "icon": "spell_arcane_prismaticcloak",
+          "maxRank": 3,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "Reduces all damage taken by 2% and reduces the fade time of your Invisibility spell by 1 sec.",
+            "Reduces all damage taken by 4% and reduces the fade time of your Invisibility spell by 2 sec.",
+            "Reduces all damage taken by 6% and reduces the fade time of your Invisibility spell by 3 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-11",
+          "name": "Improved Polymorph",
+          "icon": "spell_nature_polymorph",
+          "maxRank": 2,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "When a target you've polymorphed is damaged, that target is stunned for 1.5 sec. This effect cannot occur more often than once every 10 sec.",
+            "When a target you've polymorphed is damaged, that target is stunned for 3 sec. This effect cannot occur more often than once every 10 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-12",
+          "name": "Arcane Tactics",
+          "icon": "spell_arcane_arcanetactics",
+          "maxRank": 1,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "Increases the damage of all party and raid members within 100 yards by 3%."
+          ],
+          "requires": "cata-mage-0-8"
+        },
+        {
+          "id": "cata-mage-0-13",
+          "name": "Incanter's Absorption",
+          "icon": "ability_mage_incantersabsorbtion",
+          "maxRank": 2,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "When your Mana Shield or Mage Ward absorbs damage your spell damage is increased by 10% of the amount absorbed for 10 sec. In addition, when your Mana Shield is destroyed, all enemies within 6 yards are knocked back 12 yards.",
+            "When your Mana Shield or Mage Ward absorbs damage your spell damage is increased by 20% of the amount absorbed for 10 sec. In addition, when your Mana Shield is destroyed, all enemies within 6 yards are knocked back 12 yards."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-14",
+          "name": "Improved Arcane Explosion",
+          "icon": "spell_nature_wispsplode",
+          "maxRank": 2,
+          "row": 3,
+          "col": 3,
+          "descriptions": [
+            "Reduces the global cooldown of your Arcane Explosion spell by 0.3 sec, reduces the threat generated by 40%, and reduces the mana cost by 25%.",
+            "Reduces the global cooldown of your Arcane Explosion spell by 0.5 sec, reduces the threat generated by 80%, and reduces the mana cost by 50%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-15",
+          "name": "Arcane Potency",
+          "icon": "spell_arcane_arcanepotency",
+          "maxRank": 2,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "Increases the critical strike chance of your next two damaging spells by 7% after gaining Clearcasting or Presence of Mind.",
+            "Increases the critical strike chance of your next two damaging spells by 15% after gaining Clearcasting or Presence of Mind."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-16",
+          "name": "Slow",
+          "icon": "spell_nature_slow",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "Reduces target's movement speed by 60%, increases the time between ranged attacks by 60% and increases casting time by 30%. Lasts 15 sec. Slow can only affect one target at a time."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-17",
+          "name": "Nether Vortex",
+          "icon": "spell_arcane_blast",
+          "maxRank": 2,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "Gives your Arcane Blast spell a 50% chance to apply the Slow spell to any target it damages if no target is currently affected by Slow.",
+            "Gives your Arcane Blast spell a 100% chance to apply the Slow spell to any target it damages if no target is currently affected by Slow."
+          ],
+          "requires": "cata-mage-0-16"
+        },
+        {
+          "id": "cata-mage-0-18",
+          "name": "Focus Magic",
+          "icon": "spell_arcane_studentofmagic",
+          "maxRank": 1,
+          "row": 5,
+          "col": 0,
+          "descriptions": [
+            "Increases the target's chance to critically hit with spells by 3% for 30 min. When the target critically hits your chance to critically hit with spells is increased by 3% for 10 sec. Cannot be cast on self. Limit 1 target."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-19",
+          "name": "Improved Mana Gem",
+          "icon": "inv_misc_gem_emerald_01",
+          "maxRank": 2,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Mana gained from your Mana Gem also increases your spell power by 1% of your maximum mana for 15 sec.",
+            "Mana gained from your Mana Gem also increases your spell power by 2% of your maximum mana for 15 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-0-20",
+          "name": "Arcane Power",
+          "icon": "spell_nature_lightning",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "When activated, you deal 20% more spell damage and damaging spells cost 10% more mana to cast. [Glyph of Arcane Power: While Arcane Power is active, the global cooldown of your Blink, Mana Shield, and Mirror Image is reduced to zero]This effect lasts 15 sec."
+          ],
+          "requires": "cata-mage-0-16"
+        }
+      ]
+    },
+    {
+      "id": "cata-mage-1",
+      "name": "Fire",
+      "icon": "spell_fire_firebolt02",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "cata-mage-1-0",
+          "name": "Master of Elements",
+          "icon": "spell_fire_masterofelements",
+          "maxRank": 2,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "Your spell criticals will refund 15% of their base mana cost.",
+            "Your spell criticals will refund 30% of their base mana cost."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-1",
+          "name": "Burning Soul",
+          "icon": "spell_burningsoul",
+          "maxRank": 3,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Reduces the casting time lost from taking damaging attacks by 23%.",
+            "Reduces the casting time lost from taking damaging attacks by 46%.",
+            "Reduces the casting time lost from taking damaging attacks by 70%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-2",
+          "name": "Improved Fire Blast",
+          "icon": "spell_fire_fireball",
+          "maxRank": 2,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Increases the critical strike chance of your Fire Blast spell by 4% and increases its range by 5 yards.",
+            "Increases the critical strike chance of your Fire Blast spell by 8% and increases its range by 10 yards."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-3",
+          "name": "Ignite",
+          "icon": "spell_fire_incinerate",
+          "maxRank": 3,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Your critical strikes from non-periodic Fire damage spells cause the target to burn for an additional 13% of your spell's damage over 4 sec.",
+            "Your critical strikes from non-periodic Fire damage spells cause the target to burn for an additional 26% of your spell's damage over 4 sec.",
+            "Your critical strikes from non-periodic Fire damage spells cause the target to burn for an additional 40% of your spell's damage over 4 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-4",
+          "name": "Fire Power",
+          "icon": "spell_fire_immolation",
+          "maxRank": 3,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Increases the damage of your Fire spells by 1% and gives your Flame Orb a 33% chance to explode for 1236 damage at the end of its duration.",
+            "Increases the damage of your Fire spells by 2% and gives your Flame Orb a 66% chance to explode for 1236 damage at the end of its duration.",
+            "Increases the damage of your Fire spells by 3% and gives your Flame Orb a 100% chance to explode for 1236 damage at the end of its duration."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-5",
+          "name": "Blazing Speed",
+          "icon": "spell_fire_burningspeed",
+          "maxRank": 2,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Gives you a 5% chance when hit by a melee or ranged attack to increase your movement speed by 50% and dispel all effects that prevent movement. This effect lasts 8 sec.",
+            "Gives you a 10% chance when hit by a melee or ranged attack to increase your movement speed by 50% and dispel all effects that prevent movement. This effect lasts 8 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-6",
+          "name": "Impact",
+          "icon": "spell_fire_meteorstorm",
+          "maxRank": 2,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "Gives your damaging spells a 5% chance to reset the cooldown on Fire Blast and to cause the next Fire Blast you cast to stun the target for 2 sec and spread any Fire damage over time effects to nearby enemy targets within 12 yards.",
+            "Gives your damaging spells a 10% chance to reset the cooldown on Fire Blast and to cause the next Fire Blast you cast to stun the target for 2 sec and spread any Fire damage over time effects to nearby enemy targets within 12 yards."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-7",
+          "name": "Cauterize",
+          "icon": "spell_fire_rune",
+          "maxRank": 2,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "You have a 50% chance that an attack which would otherwise kill you will instead bring you to 40% of your maximum health. However, you will burn for 12% of your maximum health every 1.5 sec for the next 6 sec. This effect cannot occur more than once per minute.",
+            "You have a 100% chance that an attack which would otherwise kill you will instead bring you to 40% of your maximum health. However, you will burn for 12% of your maximum health every 1.5 sec for the next 6 sec. This effect cannot occur more than once per minute."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-8",
+          "name": "Blast Wave",
+          "icon": "spell_holy_excorcism_02",
+          "maxRank": 1,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "A wave of flame radiates outward from the target location, damaging all enemies caught within the blast for 928 Fire damage and are slowed by 70% for 3 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-9",
+          "name": "Hot Streak",
+          "icon": "ability_mage_hotstreak",
+          "maxRank": 1,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Your spells no longer trigger Arcane Missiles. Instead, your critical strikes with Fireball, Frostfire Bolt, Scorch, Pyroblast, or Fire Blast have a chance to cause your next Pyroblast spell cast within 15 sec to be instant cast and cost no mana."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-10",
+          "name": "Improved Scorch",
+          "icon": "spell_fire_soulburn",
+          "maxRank": 2,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "Reduces the mana cost of your Scorch spell by 50%.",
+            "Reduces the mana cost of your Scorch spell by 100%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-11",
+          "name": "Molten Shields",
+          "icon": "spell_fire_firearmor",
+          "maxRank": 1,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "Reduces the global cooldown of your Mage Ward spell by 1 sec and your Blazing Speed also removes any movement slowing effects when triggered and is also triggered any time Mage Ward dissipates from absorbing damage."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-12",
+          "name": "Combustion",
+          "icon": "spell_fire_sealoffire",
+          "maxRank": 1,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "Combines your damaging periodic Fire effects on an enemy target but does not consume them, instantly dealing 23 Fire damage and creating a new periodic effect that lasts 10 sec and deals damage per time equal to the sum of the combined effects."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-13",
+          "name": "Improved Hot Streak",
+          "icon": "ability_mage_hotstreak",
+          "maxRank": 2,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "Any time you score 2 non-periodic critical strikes in a row with your Fireball, Frostfire Bolt, Scorch, Pyroblast, or Fire Blast spells, you have a 50% chance to trigger your Hot Streak effect.",
+            "Any time you score 2 non-periodic critical strikes in a row with your Fireball, Frostfire Bolt, Scorch, Pyroblast, or Fire Blast spells, you have a 100% chance to trigger your Hot Streak effect."
+          ],
+          "requires": "cata-mage-1-9"
+        },
+        {
+          "id": "cata-mage-1-14",
+          "name": "Firestarter",
+          "icon": "ability_mage_firestarter",
+          "maxRank": 1,
+          "row": 3,
+          "col": 3,
+          "descriptions": [
+            "Allows you to cast the Scorch spell while moving."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-15",
+          "name": "Improved Flamestrike",
+          "icon": "spell_fire_selfdestruct",
+          "maxRank": 2,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "Reduces the casting time of your Flamestrike spell by 50% and gives you a 50% chance that your Blast Wave spell will also automatically Flamestrike the same location if two or more targets are affected by the Blast Wave.",
+            "Reduces the casting time of your Flamestrike spell by 100% and gives you a 100% chance that your Blast Wave spell will also automatically Flamestrike the same location if two or more targets are affected by the Blast Wave."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-16",
+          "name": "Dragon's Breath",
+          "icon": "inv_misc_head_dragon_01",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "Targets in a cone in front of the caster take 1292 Fire damage and are disoriented for 5 sec. Any direct damaging attack will revive targets."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-17",
+          "name": "Molten Fury",
+          "icon": "spell_fire_moltenblood",
+          "maxRank": 3,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "Increases damage of all spells against targets with less than 35% health by 4%.",
+            "Increases damage of all spells against targets with less than 35% health by 8%.",
+            "Increases damage of all spells against targets with less than 35% health by 12%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-18",
+          "name": "Pyromaniac",
+          "icon": "spell_fire_burnout",
+          "maxRank": 2,
+          "row": 5,
+          "col": 0,
+          "descriptions": [
+            "Increases spell haste by 5% if 3 or more targets are taking Fire damage over time from your spells.",
+            "Increases spell haste by 10% if 3 or more targets are taking Fire damage over time from your spells."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-19",
+          "name": "Critical Mass",
+          "icon": "spell_nature_wispheal",
+          "maxRank": 3,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Your Living Bomb and Flame Orb spells deal 5% more damage, and your Pyroblast and Scorch spells have a 33% chance to cause your target to be vulnerable to spell damage, increasing spell critical strike chance against that target by 5% and lasts 30 sec.",
+            "Your Living Bomb and Flame Orb spells deal 10% more damage, and your Pyroblast and Scorch spells have a 66% chance to cause your target to be vulnerable to spell damage, increasing spell critical strike chance against that target by 5% and lasts 30 sec.",
+            "Your Living Bomb and Flame Orb spells deal 15% more damage, and your Pyroblast and Scorch spells have a 100% chance to cause your target to be vulnerable to spell damage, increasing spell critical strike chance against that target by 5% and lasts 30 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-1-20",
+          "name": "Living Bomb",
+          "icon": "ability_mage_livingbomb",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "The target becomes a Living Bomb, taking 839 Fire damage over 12 sec. After 12 sec, the target explodes dealing 420 Fire damage to up to 3 enemies within 10 yards. Limit 3 targets."
+          ],
+          "requires": "cata-mage-1-16"
+        }
+      ]
+    },
+    {
+      "id": "cata-mage-2",
+      "name": "Frost",
+      "icon": "spell_frost_frostbolt02",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "cata-mage-2-0",
+          "name": "Early Frost",
+          "icon": "spell_frost_chillingbolt",
+          "maxRank": 2,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "Reduces the cast time of your Frostbolt spell by 0.3 secs. This effect becomes inactive for 15 sec after use.",
+            "Reduces the cast time of your Frostbolt spell by 0.6 secs. This effect becomes inactive for 15 sec after use."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-2-1",
+          "name": "Piercing Ice",
+          "icon": "spell_frost_frostbolt",
+          "maxRank": 3,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Increases the critical strike chance of your spells by 1%.",
+            "Increases the critical strike chance of your spells by 2%.",
+            "Increases the critical strike chance of your spells by 3%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-2-2",
+          "name": "Shatter",
+          "icon": "spell_frost_frostshock",
+          "maxRank": 2,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Multiplies the critical strike chance of all your spells against frozen targets by 2, and increases the damage done by Frostbolt against frozen targets by 10%.",
+            "Multiplies the critical strike chance of all your spells against frozen targets by 3, and increases the damage done by Frostbolt against frozen targets by 20%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-2-3",
+          "name": "Ice Floes",
+          "icon": "spell_frost_icefloes",
+          "maxRank": 3,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Reduces the cooldown of your Frost Nova, Cone of Cold, Ice Block, Cold Snap, Ice Barrier, and Icy Veins spells by 7%.",
+            "Reduces the cooldown of your Frost Nova, Cone of Cold, Ice Block, Cold Snap, Ice Barrier, and Icy Veins spells by 14%.",
+            "Reduces the cooldown of your Frost Nova, Cone of Cold, Ice Block, Cold Snap, Ice Barrier, and Icy Veins spells by 20%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-2-4",
+          "name": "Improved Cone of Cold",
+          "icon": "spell_frost_glacier",
+          "maxRank": 2,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Your Cone of Cold also freezes targets for 2 sec.",
+            "Your Cone of Cold also freezes targets for 4 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-2-5",
+          "name": "Piercing Chill",
+          "icon": "spell_frost_piercing-chill",
+          "maxRank": 2,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Your Frostbolt criticals apply the chill effect to 1 additional nearby targets.",
+            "Your Frostbolt criticals apply the chill effect to 2 additional nearby targets."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-2-6",
+          "name": "Permafrost",
+          "icon": "spell_frost_wisp",
+          "maxRank": 3,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "Your Chill effects reduce the target's speed by an additional 4%, and the target's healing received. In addition, whenever you deal spell damage, your Water Elemental is healed for 5% of the amount dealt.",
+            "Your Chill effects reduce the target's speed by an additional 7%, and the target's healing received. In addition, whenever you deal spell damage, your Water Elemental is healed for 10% of the amount dealt.",
+            "Your Chill effects reduce the target's speed by an additional 10%, and the target's healing received. In addition, whenever you deal spell damage, your Water Elemental is healed for 15% of the amount dealt."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-2-7",
+          "name": "Ice Shards",
+          "icon": "spell_frost_ice-shards",
+          "maxRank": 2,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Adds a chill effect to your Blizzard spell. This effect lowers the target's movement speed by 25%. Lasts 2 sec. In addition, increases the range of your Ice Lance spell by 2 yards.",
+            "Adds a chill effect to your Blizzard spell. This effect lowers the target's movement speed by 40%. Lasts 2 sec. In addition, increases the range of your Ice Lance spell by 5 yards."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-2-8",
+          "name": "Icy Veins",
+          "icon": "spell_frost_coldhearted",
+          "maxRank": 1,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "Hastens your spellcasting, increasing spell casting speed by 20% and reduces the pushback suffered from damaging attacks while casting by 100%. [Glyph of Icy Veins: Casting Icy Veins removes all movement slowing and cast time slowing effects] Lasts 20 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-2-9",
+          "name": "Fingers of Frost",
+          "icon": "ability_mage_wintersgrasp",
+          "maxRank": 3,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Gives your offensive Chill effects a 7% chance to grant you the Fingers of Frost effect, which causes your next Ice Lance or Deep Freeze spell to act as if your target were frozen and increases Ice Lance damage by 25%. Fingers of Frost can accumulate up to 2 charges and lasts 15 sec.",
+            "Gives your offensive Chill effects a 14% chance to grant you the Fingers of Frost effect, which causes your next Ice Lance or Deep Freeze spell to act as if your target were frozen and increases Ice Lance damage by 25%. Fingers of Frost can accumulate up to 2 charges and lasts 15 sec.",
+            "Gives your offensive Chill effects a 20% chance to grant you the Fingers of Frost effect, which causes your next Ice Lance or Deep Freeze spell to act as if your target were frozen and increases Ice Lance damage by 25%. Fingers of Frost can accumulate up to 2 charges and lasts 15 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-2-10",
+          "name": "Improved Freeze",
+          "icon": "spell_frost_summonwaterelemental",
+          "maxRank": 3,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "Gives your Water Elemental's Freeze spell a 33% chance to grant 2 charges of Fingers of Frost when it strikes enemy targets.",
+            "Gives your Water Elemental's Freeze spell a 66% chance to grant 2 charges of Fingers of Frost when it strikes enemy targets.",
+            "Gives your Water Elemental's Freeze spell a 100% chance to grant 2 charges of Fingers of Frost when it strikes enemy targets."
+          ],
+          "requires": "cata-mage-2-9"
+        },
+        {
+          "id": "cata-mage-2-11",
+          "name": "Enduring Winter",
+          "icon": "spell_frost_arcticwinds",
+          "maxRank": 3,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "Reduces the mana cost of all spells by 3%. In addition, your Frostbolt spell has a 33% chance to grant up to 10 party or raid members mana regeneration equal to 1% of their maximum mana over 10 sec.",
+            "Reduces the mana cost of all spells by 6%. In addition, your Frostbolt spell has a 66% chance to grant up to 10 party or raid members mana regeneration equal to 1% of their maximum mana over 10 sec.",
+            "Reduces the mana cost of all spells by 10%. In addition, your Frostbolt spell has a 100% chance to grant up to 10 party or raid members mana regeneration equal to 1% of their maximum mana over 10 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-2-12",
+          "name": "Cold Snap",
+          "icon": "spell_frost_wizardmark",
+          "maxRank": 1,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "When activated, this spell finishes the cooldown on all Frost spells you recently cast."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-2-13",
+          "name": "Brain Freeze",
+          "icon": "ability_mage_brainfreeze",
+          "maxRank": 3,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "Your spells no longer trigger Arcane Missiles. Instead, your Frost damage spells with chilling effects have a 5% chance to cause your next Fireball or Frostfire Bolt spell to be instant cast and cost no mana. When Frostfire Bolt is instant, it can benefit from Fingers of Frost. Brain Freeze cannot be triggered by Frostfire Bolt.",
+            "Your spells no longer trigger Arcane Missiles. Instead, your Frost damage spells with chilling effects have a 10% chance to cause your next Fireball or Frostfire Bolt spell to be instant cast and cost no mana. When Frostfire Bolt is instant, it can benefit from Fingers of Frost. Brain Freeze cannot be triggered by Frostfire Bolt.",
+            "Your spells no longer trigger Arcane Missiles. Instead, your Frost damage spells with chilling effects have a 15% chance to cause your next Fireball or Frostfire Bolt spell to be instant cast and cost no mana. When Frostfire Bolt is instant, it can benefit from Fingers of Frost. Brain Freeze cannot be triggered by Frostfire Bolt."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-2-14",
+          "name": "Shattered Barrier",
+          "icon": "ability_mage_coldasice",
+          "maxRank": 2,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "Gives your Ice Barrier spell a 100% chance to freeze all enemies within 10 yds for 2 sec when it is destroyed.",
+            "Gives your Ice Barrier spell a 100% chance to freeze all enemies within 10 yds for 4 sec when it is destroyed."
+          ],
+          "requires": "cata-mage-2-15"
+        },
+        {
+          "id": "cata-mage-2-15",
+          "name": "Ice Barrier",
+          "icon": "spell_ice_lament",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "Instantly shields you, absorbing [(8069 + Spell power * 0.87)] damage. Lasts 1 min. While the shield holds, spellcasting will not be delayed by damage."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-2-16",
+          "name": "Reactive Barrier",
+          "icon": "spell_frost_manarecharge",
+          "maxRank": 2,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "Gives the caster a 50% chance for the Ice Barrier spell to automatically cast with no mana cost upon taking damage that lowers the caster's life below 50%. This effect obeys Ice Barrier's cooldown, and will trigger the cooldown when activated.",
+            "Gives the caster a 100% chance for the Ice Barrier spell to automatically cast with no mana cost upon taking damage that lowers the caster's life below 50%. This effect obeys Ice Barrier's cooldown, and will trigger the cooldown when activated."
+          ],
+          "requires": "cata-mage-2-15"
+        },
+        {
+          "id": "cata-mage-2-17",
+          "name": "Frostfire Orb",
+          "icon": "spell_firefrost-orb",
+          "maxRank": 2,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Converts your Flame Orb into a Frostfire Orb, causing your Frostfire Orb to benefit from your Frost Specialization. In addition, reduces the speed of targets slowed by your Frostfire Bolt's chill effect by an additional 10%.",
+            "Your Frostfire Orb gains a chill effect, slowing targets damaged by the Frostfire Orb by 40% for 2 sec. In addition, reduces the speed of targets slowed by your Frostfire Bolt's chill effect by an additional 20%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-mage-2-18",
+          "name": "Deep Freeze",
+          "icon": "ability_mage_deepfreeze",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "Stuns the target for 5 sec. Only usable on Frozen targets. Deals [1037 * ((((1))) * (1))] to [1299 * ((((1))) * (1))] damage to targets that are permanently immune to stuns."
+          ],
+          "requires": "cata-mage-2-15"
+        }
+      ]
+    }
+  ],
+  "abilities": [
+    {
+      "id": "cata-mage-0-spec-44425",
+      "name": "Arcane Barrage",
+      "icon": "ability_mage_arcanebarrage",
+      "description": "Launches bolts of arcane energy at the enemy target, causing 423 Arcane damage.",
+      "kind": "active",
+      "branchId": "cata-mage-0",
+      "learningMode": "specialization",
+      "resourceCosts": [
+        {
+          "resourceId": "cata:mana",
+          "resourceName": "Мана",
+          "amount": 11,
+          "unit": "percent"
+        }
+      ],
+      "cast": 0,
+      "cooldown": 4.0,
+      "range": 40.0,
+      "requirements": "",
+      "sourceSpellId": 44425
+    },
+    {
+      "id": "cata-mage-0-spec-84671",
+      "name": "Arcane Specialization",
+      "icon": "spell_fire_twilightfire",
+      "description": "Increases the damage of your Arcane spells by 25%.",
+      "kind": "passive",
+      "branchId": "cata-mage-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 84671
+    },
+    {
+      "id": "cata-mage-0-spec-76547",
+      "name": "Mana Adept",
+      "icon": "spell_arcane_manatap",
+      "description": "Increases all spell damage done by up to 12%, based on the amount of mana the Mage has unspent. Each point of Mastery increases damage done by up to an additional 1.5%.",
+      "kind": "passive",
+      "branchId": "cata-mage-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "Level 80 · Mastery",
+      "sourceSpellId": 76547
+    },
+    {
+      "id": "cata-mage-1-spec-11366",
+      "name": "Pyroblast",
+      "icon": "spell_fire_fireball02",
+      "description": "Hurls an immense fiery boulder that causes 187 Fire damage and an additional 56 Fire damage over 12 sec.",
+      "kind": "active",
+      "branchId": "cata-mage-1",
+      "learningMode": "specialization",
+      "resourceCosts": [
+        {
+          "resourceId": "cata:mana",
+          "resourceName": "Мана",
+          "amount": 17,
+          "unit": "percent"
+        }
+      ],
+      "cast": 5.0,
+      "cooldown": 0.0,
+      "range": 40.0,
+      "requirements": "",
+      "sourceSpellId": 11366
+    },
+    {
+      "id": "cata-mage-1-spec-84668",
+      "name": "Fire Specialization",
+      "icon": "spell_fire_fire",
+      "description": "Increases the damage of your Fire spells by 25%.",
+      "kind": "passive",
+      "branchId": "cata-mage-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 84668
+    },
+    {
+      "id": "cata-mage-1-spec-76595",
+      "name": "Flashburn",
+      "icon": "spell_fire_selfdestruct",
+      "description": "Increases the damage done by all your periodic fire damage effects by 22.4%. Each point of Mastery increases periodic damage done by an additional 2.8%.",
+      "kind": "passive",
+      "branchId": "cata-mage-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "Level 80 · Mastery",
+      "sourceSpellId": 76595
+    },
+    {
+      "id": "cata-mage-2-spec-31687",
+      "name": "Summon Water Elemental",
+      "icon": "spell_frost_summonwaterelemental_2",
+      "description": "Summon a Water Elemental to fight for the caster.",
+      "kind": "active",
+      "branchId": "cata-mage-2",
+      "learningMode": "specialization",
+      "resourceCosts": [
+        {
+          "resourceId": "cata:mana",
+          "resourceName": "Мана",
+          "amount": 16,
+          "unit": "percent"
+        }
+      ],
+      "cast": 0,
+      "cooldown": 180.0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 31687
+    },
+    {
+      "id": "cata-mage-2-spec-84669",
+      "name": "Frost Specialization",
+      "icon": "spell_fire_bluefire",
+      "description": "Increases the damage of your Frost spells by 25% and of your Frostbolt spell by an additional 15%.",
+      "kind": "passive",
+      "branchId": "cata-mage-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 84669
+    },
+    {
+      "id": "cata-mage-2-spec-76613",
+      "name": "Frostburn",
+      "icon": "spell_frost_frostarmor",
+      "description": "All your spells deal 5% increased damage against Frozen targets. Each point of Mastery increases damage by an additional 2.5%.",
+      "kind": "passive",
+      "branchId": "cata-mage-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "Level 80 · Mastery",
+      "sourceSpellId": 76613
+    }
+  ],
+  "build": {},
+  "character": {
+    "hp": 10000,
+    "race": "Человек",
+    "gender": "Мужской",
+    "armory": "",
+    "resources": [
+      {
+        "id": "cata:mana",
+        "name": "Мана",
+        "max": 100,
+        "current": 100,
+        "unit": "percent",
+        "display": "bar",
+        "shape": "diamond",
+        "color": "#397de1"
+      }
+    ]
+  },
+  "source": {
+    "version": "4.3.4",
+    "url": "https://github.com/fooxytv/cplus-talents/blob/main/src/editions/cata.json",
+    "dataBlob": "a6ce40095cb8ca84926e81bca6c70db88a0f6bfa",
+    "generated": "2026-09-21T11:38:40.226Z",
+    "language": "en",
+    "primarySpells": "https://github.com/caicaicai/dbc434",
+    "notes": [
+      "Level/stat dependent specialization effects are represented symbolically.",
+      "Arcane contains 21 named talents; one stale unnamed Wowhead entry overlaps Improved Arcane Explosion and is excluded."
+    ]
+  }
+}

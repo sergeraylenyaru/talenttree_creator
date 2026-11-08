@@ -1,0 +1,1110 @@
+{
+  "version": 1,
+  "name": "Жрец · 4.3.4",
+  "budget": 41,
+  "budgetAuto": false,
+  "rowCost": 5,
+  "specialization": {
+    "requiredPoints": 31
+  },
+  "branches": [
+    {
+      "id": "cata-priest-0",
+      "name": "Discipline",
+      "icon": "spell_holy_powerwordshield",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "cata-priest-0-0",
+          "name": "Improved Power Word: Shield",
+          "icon": "spell_holy_powerwordshield",
+          "maxRank": 2,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "Increases the damage absorbed by your Power Word: Shield by 10%.",
+            "Increases the damage absorbed by your Power Word: Shield by 20%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-1",
+          "name": "Twin Disciplines",
+          "icon": "spell_holy_sealofvengeance",
+          "maxRank": 3,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Increases your Shadow and Holy spell damage and healing by 2%.",
+            "Increases your Shadow and Holy spell damage and healing by 4%.",
+            "Increases your Shadow and Holy spell damage and healing by 6%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-2",
+          "name": "Mental Agility",
+          "icon": "ability_hibernation",
+          "maxRank": 3,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Reduces the mana cost of your instant cast spells by 4%.",
+            "Reduces the mana cost of your instant cast spells by 7%.",
+            "Reduces the mana cost of your instant cast spells by 10%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-3",
+          "name": "Evangelism",
+          "icon": "spell_holy_divineillumination",
+          "maxRank": 2,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "When you cast Smite, Holy Fire or Mind Flay you gain Evangelism. Stacks up to 5 times. Lasts for 20 sec. Evangelism (Smite, Holy Fire) Increases the damage done by your Smite, Holy Fire, and Penance spells by 2% and reduces the mana cost of those spells by 3%. Dark Evangelism (Mind Flay) Increases the damage done by your Periodic Shadow spells by 1%.",
+            "When you cast Smite, Holy Fire or Mind Flay you gain Evangelism. Stacks up to 5 times. Lasts for 20 sec. Evangelism (Smite, Holy Fire) Increases the damage done by your Smite, Holy Fire, and Penance spells by 4% and reduces the mana cost of those spells by 6%. Dark Evangelism (Mind Flay) Increases the damage done by your Periodic Shadow spells by 2%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-4",
+          "name": "Archangel",
+          "icon": "ability_priest_archangel",
+          "maxRank": 1,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Consumes your Evangelism effects, causing an effect depending on what type of Evangelism effect is consumed: Archangel (Evangelism) Instantly restores 1% of your total mana and increases your healing done by 3% for each stack. Lasts for 18 sec. 30 sec cooldown. Dark Archangel (Dark Evangelism) Instantly restores 5% of your total mana and increases the damage done by your Mind Flay, Mind Spike, Mind Blast and Shadow Word: Death by 4% for each stack. Lasts for 18 sec. 90 sec cooldown."
+          ],
+          "requires": "cata-priest-0-3"
+        },
+        {
+          "id": "cata-priest-0-5",
+          "name": "Inner Sanctum",
+          "icon": "spell_holy_innerfire",
+          "maxRank": 3,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Your Inner Fire also reduces all spell damage taken by 2% while it is active, and the movement speed bonus of your Inner Will is increased by 2%.",
+            "Your Inner Fire also reduces all spell damage taken by 4% while it is active, and the movement speed bonus of your Inner Will is increased by 4%.",
+            "Spell damage taken is reduced by 6% while within Inner Fire, and the movement speed bonus of your Inner Will is increased by 6%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-6",
+          "name": "Soul Warding",
+          "icon": "ability_priest_soulwarding",
+          "maxRank": 2,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "Reduces the cooldown of your Power Word: Shield ability by 1 sec.",
+            "Reduces the cooldown of your Power Word: Shield ability by 2 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-7",
+          "name": "Renewed Hope",
+          "icon": "spell_holy_holyprotection",
+          "maxRank": 2,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Increases the critical effect chance of your Flash Heal, Greater Heal, Heal and Penance (Heal) spells by 5% on targets afflicted by the Weakened Soul effect, or blessed with your Grace effect.",
+            "Increases the critical effect chance of your Flash Heal, Greater Heal, Heal and Penance (Heal) spells by 10% on targets afflicted by the Weakened Soul effect, or blessed with your Grace effect."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-8",
+          "name": "Power Infusion",
+          "icon": "spell_holy_powerinfusion",
+          "maxRank": 1,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "Infuses the target with power, increasing spell casting speed by 20% and reducing the mana cost of all spells by 20%. Lasts 15 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-9",
+          "name": "Atonement",
+          "icon": "ability_priest_atonement",
+          "maxRank": 2,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "When you deal damage with Smite or Holy Fire, you instantly heal a nearby low health friendly target within 15 yards from the enemy target equal to 50% of the damage dealt. If the Priest is healed through Atonement, the effect is reduced in half.",
+            "When you deal damage with Smite or Holy Fire, you instantly heal a nearby low health friendly target within 15 yards from the enemy target equal to 100% of the damage dealt. If the Priest is healed through Atonement, the effect is reduced in half."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-10",
+          "name": "Inner Focus",
+          "icon": "spell_frost_windwalkon",
+          "maxRank": 1,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "Reduces the mana cost of your next Flash Heal, Binding Heal, Greater Heal or Prayer of Healing by 100% and increases its critical effect chance by 25%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-11",
+          "name": "Rapture",
+          "icon": "spell_holy_rapture",
+          "maxRank": 3,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "When your Power Word: Shield is completely absorbed or dispelled you are instantly energized with 2% of your total mana. This effect can only occur once every 12 sec.",
+            "When your Power Word: Shield is completely absorbed or dispelled you are instantly energized with 5% of your total mana. This effect can only occur once every 12 sec.",
+            "When your Power Word: Shield is completely absorbed or dispelled you are instantly energized with 7% of your total mana. This effect can only occur once every 12 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-12",
+          "name": "Borrowed Time",
+          "icon": "spell_holy_borrowedtime",
+          "maxRank": 2,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "Grants 7% spell haste for your next spell after casting Power Word: Shield. Lasts for 6 sec.",
+            "Grants 14% spell haste for your next spell after casting Power Word: Shield. Lasts for 6 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-13",
+          "name": "Reflective Shield",
+          "icon": "ability_priest_reflectiveshield",
+          "maxRank": 2,
+          "row": 3,
+          "col": 3,
+          "descriptions": [
+            "Causes 22% of the damage you absorb with Power Word: Shield to reflect back at the attacker. This damage causes no threat.",
+            "Causes 45% of the damage you absorb with Power Word: Shield to reflect back at the attacker. This damage causes no threat."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-14",
+          "name": "Strength of Soul",
+          "icon": "spell_holy_ashestoashes",
+          "maxRank": 2,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "When you heal a target with your Heal, Greater Heal or Flash Heal spell, the duration of the Weakened Soul debuff on the target is reduced by 2 sec. In addition, when you cast Inner Focus you become immune to Silence, Interrupt and Dispel effects for 3 sec.",
+            "When you heal a target with your Heal, Greater Heal or Flash Heal spell, the duration of the Weakened Soul debuff on the target is reduced by 4 sec. In addition, when you cast Inner Focus you become immune to Silence, Interrupt and Dispel effects for 5 sec."
+          ],
+          "requires": "cata-priest-0-7"
+        },
+        {
+          "id": "cata-priest-0-15",
+          "name": "Divine Aegis",
+          "icon": "spell_holy_devineaegis",
+          "maxRank": 3,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "Critical heals and all heals from Prayer of Healing create a protective shield on the target, absorbing 10% of the amount healed. Lasts 15 sec.",
+            "Critical heals and all heals from Prayer of Healing create a protective shield on the target, absorbing 20% of the amount healed. Lasts 15 sec.",
+            "Critical heals and all heals from Prayer of Healing create a protective shield on the target, absorbing 30% of the amount healed. Lasts 15 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-16",
+          "name": "Pain Suppression",
+          "icon": "spell_holy_painsupression",
+          "maxRank": 1,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "Instantly reduces a friendly target's threat by 5%, and reduces all damage they take by 40% for 8 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-17",
+          "name": "Train of Thought",
+          "icon": "ability_mage_studentofthemind",
+          "maxRank": 2,
+          "row": 4,
+          "col": 3,
+          "descriptions": [
+            "You have a 50% chance when you heal with Greater Heal to reduce the cooldown of your Inner Focus by 5 sec. You have a 50% chance when you Smite to reduce the cooldown of your Penance by 0.5 sec.",
+            "You have a 100% chance when you heal with Greater Heal to reduce the cooldown of your Inner Focus by 5 sec. You have a 100% chance when you Smite to reduce the cooldown of your Penance by 0.5 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-18",
+          "name": "Focused Will",
+          "icon": "ability_priest_focusedwill",
+          "maxRank": 2,
+          "row": 5,
+          "col": 0,
+          "descriptions": [
+            "Whenever you are victim of any damage greater than 10% of your total health or critically hit by any non-periodic attack, you gain Focused Will reducing all damage taken by 5% lasting for 8 sec. Stacks up to 2 times.",
+            "Whenever you are victim of any damage greater than 10% of your total health or critically hit by any non-periodic attack, you gain Focused Will reducing all damage taken by 10% lasting for 8 sec. Stacks up to 2 times."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-19",
+          "name": "Grace",
+          "icon": "spell_holy_hopeandgrace",
+          "maxRank": 2,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Your Flash Heal, Greater Heal, Heal and Penance spells bless the target with Grace, increasing all healing received from the Priest by 4%. This effect will stack up to 3 times. Effect lasts 15 sec.",
+            "Your Flash Heal, Greater Heal, Heal and Penance spells bless the target with Grace, increasing all healing received from the Priest by 8%. This effect will stack up to 3 times. Effect lasts 15 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-0-20",
+          "name": "Power Word: Barrier",
+          "icon": "spell_holy_powerwordbarrier",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "Summons a holy barrier on the target location that reduces all damage done to friendly targets by 25% [Glyph of Power Word: Barrier: and increasing healing received by 10%]. While within the barrier, spellcasting will not be interrupted by damage. The barrier lasts for 10 sec."
+          ],
+          "requires": "cata-priest-0-15"
+        }
+      ]
+    },
+    {
+      "id": "cata-priest-1",
+      "name": "Holy",
+      "icon": "spell_holy_guardianspirit",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "cata-priest-1-0",
+          "name": "Improved Renew",
+          "icon": "spell_holy_renew",
+          "maxRank": 2,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "Increases the amount healed by your Renew spell by 5%.",
+            "Increases the amount healed by your Renew spell by 10%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-1-1",
+          "name": "Empowered Healing",
+          "icon": "spell_holy_greaterheal",
+          "maxRank": 3,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Increases the healing done by your Flash Heal, Heal, Binding Heal and Greater Heal by 5%.",
+            "Increases the healing done by your Flash Heal, Heal, Binding Heal and Greater Heal by 10%.",
+            "Increases the healing done by your Flash Heal, Heal, Binding Heal and Greater Heal by 15%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-1-2",
+          "name": "Divine Fury",
+          "icon": "spell_holy_sealofwrath",
+          "maxRank": 3,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Reduces the casting time of your Smite, Holy Fire, Heal and Greater Heal spells by .15 sec.",
+            "Reduces the casting time of your Smite, Holy Fire, Heal and Greater Heal spells by 0.35 sec.",
+            "Reduces the casting time of your Smite, Holy Fire, Heal and Greater Heal spells by 0.5 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-1-3",
+          "name": "Desperate Prayer",
+          "icon": "spell_holy_restoration",
+          "maxRank": 1,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Instantly heals the caster for 30% of their total health."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-1-4",
+          "name": "Surge of Light",
+          "icon": "spell_holy_surgeoflight",
+          "maxRank": 2,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "You have a 3% chance when you Smite, Heal, Flash Heal, Binding Heal or Greater Heal to cause your next Flash Heal to be instant cast and cost no mana.",
+            "You have a 6% chance when you Smite, Heal, Flash Heal, Binding Heal or Greater Heal to cause your next Flash Heal to be instant cast and cost no mana."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-1-5",
+          "name": "Inspiration",
+          "icon": "spell_holy_layonhands",
+          "maxRank": 2,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "Reduces your target's physical damage taken by 5% for 15 sec after getting a critical effect from your Flash Heal, Heal, Greater Heal, Binding Heal, Penance, Prayer of Mending, Prayer of Healing, or Circle of Healing spell.",
+            "Reduces your target's physical damage taken by 10% for 15 sec after getting a critical effect from your Flash Heal, Heal, Greater Heal, Binding Heal, Penance, Prayer of Mending, Prayer of Healing, or Circle of Healing spell."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-1-6",
+          "name": "Divine Touch",
+          "icon": "ability_paladin_infusionoflight",
+          "maxRank": 2,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Your Renew will instantly heal the target for 5% of the total periodic effect.",
+            "Your Renew will instantly heal the target for 10% of the total periodic effect."
+          ],
+          "requires": "cata-priest-1-0"
+        },
+        {
+          "id": "cata-priest-1-7",
+          "name": "Holy Concentration",
+          "icon": "spell_holy_fanaticism",
+          "maxRank": 2,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "Increases the amount of mana regeneration from Spirit while in combat by an additional 15%.",
+            "Increases the amount of mana regeneration from Spirit while in combat by an additional 30%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-1-8",
+          "name": "Lightwell",
+          "icon": "spell_holy_summonlightwell",
+          "maxRank": 1,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Creates a Holy Lightwell. Friendly players can click the Lightwell to restore [((2878 + (Spell power * .308)) * 3) * (1.15 * ((1)))] health over 6 sec. Attacks done to you equal to 30% of your total health will cancel the effect. Lightwell lasts for 3 min or 10 charges."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-1-9",
+          "name": "Tome of Light",
+          "icon": "inv_misc_book_07",
+          "maxRank": 2,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "Reduces the cooldown of your Holy Word spells by 15%.",
+            "Reduces the cooldown of your Holy Word spells by 30%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-1-10",
+          "name": "Rapid Renewal",
+          "icon": "ability_paladin_blessedmending",
+          "maxRank": 1,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "Reduces the global cooldown of your Renew by 0.5 sec."
+          ],
+          "requires": "cata-priest-1-6"
+        },
+        {
+          "id": "cata-priest-1-11",
+          "name": "Spirit of Redemption",
+          "icon": "inv_enchant_essenceeternallarge",
+          "maxRank": 1,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "Upon death, the priest becomes the Spirit of Redemption for 15 sec. The Spirit of Redemption cannot move, attack, be attacked or targeted by any spells or effects. While in this form the priest can cast any healing spell free of cost. When the effect ends, the priest dies."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-1-12",
+          "name": "Serendipity",
+          "icon": "spell_holy_serendipity",
+          "maxRank": 2,
+          "row": 3,
+          "col": 3,
+          "descriptions": [
+            "When you heal with Binding Heal or Flash Heal, the cast time of your next Greater Heal or Prayer of Healing spell is reduced by 10% and mana cost reduced by 5%. Stacks up to 2 times. Lasts 20 sec.",
+            "When you heal with Binding Heal or Flash Heal, the cast time of your next Greater Heal or Prayer of Healing spell is reduced by 20% and mana cost reduced by 10%. Stacks up to 2 times. Lasts 20 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-1-13",
+          "name": "Body and Soul",
+          "icon": "spell_holy_symbolofhope",
+          "maxRank": 2,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "When you cast Power Word: Shield or Leap of Faith, you increase the target's movement speed by 30% for 4 sec, and you have a 50% chance when you cast Cure Disease on yourself to also cleanse 1 poison effect in addition to diseases.",
+            "When you cast Power Word: Shield or Leap of Faith, you increase the target's movement speed by 60% for 4 sec, and you have a 100% chance when you cast Cure Disease on yourself to also cleanse 1 poison effect in addition to diseases."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-1-14",
+          "name": "Chakra",
+          "icon": "spell_priest_chakra",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "When activated, your next Heal, Flash Heal, Greater Heal, Binding Heal, Prayer of Healing, Prayer of Mending, Mind Spike or Smite will put you into a Chakra state. Serenity (Heal, Flash Heal, Greater Heal, Binding Heal) Increases the critical effect chance of your direct healing spells by 10%, and causes your direct heals to refresh the duration of your Renew on the target. Sanctuary (Prayer of Healing, Prayer of Mending) Increases the healing done by your area of effect spells and Renew by 15% and reduces the cooldown of your Circle of Healing by 2 sec. Chastise (Smite, Mind Spike) Increases your total damage done by Shadow and Holy spells by 15%."
+          ],
+          "requires": "cata-priest-1-7"
+        },
+        {
+          "id": "cata-priest-1-15",
+          "name": "Revelations",
+          "icon": "ability_priest_bindingprayers",
+          "maxRank": 1,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "While within Chakra: Serenity or Chakra: Sanctuary, your Holy Word: Chastise ability will transform into a different ability depending on which state you are in. Holy Word: Serenity Instantly heals the target for 5650, and increases the critical effect chance of your healing spells on the target by 25% for 6 sec. 15 sec cooldown. Holy Word: Sanctuary Blesses the ground with Divine light, healing all within it for 327 every 2 sec for 18 sec. Only one Sanctuary can be active at any one time. 40 sec cooldown."
+          ],
+          "requires": "cata-priest-1-14"
+        },
+        {
+          "id": "cata-priest-1-16",
+          "name": "Blessed Resilience",
+          "icon": "spell_holy_blessedresillience",
+          "maxRank": 2,
+          "row": 4,
+          "col": 3,
+          "descriptions": [
+            "Whenever you are victim of an attack equal to damage greater than 10% of your total health or critically hit by any non-periodic attack, you gain Blessed Resilience increasing all healing received by 15% lasting for 10 sec.",
+            "Whenever you are victim of an attack equal to damage greater than 10% of your total health or critically hit by any non-periodic attack, you gain Blessed Resilience increasing all healing received by 30% lasting for 10 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-1-17",
+          "name": "Test of Faith",
+          "icon": "spell_holy_testoffaith",
+          "maxRank": 3,
+          "row": 5,
+          "col": 0,
+          "descriptions": [
+            "Increases healing by 4% on friendly targets at or below 50% health.",
+            "Increases healing by 8% on friendly targets at or below 50% health.",
+            "Increases healing by 12% on friendly targets at or below 50% health."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-1-18",
+          "name": "Heavenly Voice",
+          "icon": "ability_priest_heavanlyvoice",
+          "maxRank": 2,
+          "row": 5,
+          "col": 1,
+          "descriptions": [
+            "Increases the healing done by your Divine Hymn spell by 50%, and reduces the cooldown by 2.5 minutes.",
+            "Increases the healing done by your Divine Hymn spell by 100%, and reduces the cooldown by 5 minutes."
+          ],
+          "requires": "cata-priest-1-14"
+        },
+        {
+          "id": "cata-priest-1-19",
+          "name": "Circle of Healing",
+          "icon": "spell_holy_circleofrenewal",
+          "maxRank": 1,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Heals up to [Glyph of Circle of Healing: 6 / 5] friendly party or raid members within 30 yards of the target for 2430. Prioritizes healing the most injured party members."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-1-20",
+          "name": "Guardian Spirit",
+          "icon": "spell_holy_guardianspirit",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "Calls upon a guardian spirit to watch over the friendly target. The spirit increases the healing received by the target by 60%, and also prevents the target from dying by sacrificing itself. This sacrifice terminates the effect but heals the target of 50% of their maximum health. Lasts 10 sec."
+          ],
+          "requires": ""
+        }
+      ]
+    },
+    {
+      "id": "cata-priest-2",
+      "name": "Shadow",
+      "icon": "spell_shadow_shadowwordpain",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "cata-priest-2-0",
+          "name": "Darkness",
+          "icon": "ability_priest_darkness",
+          "maxRank": 3,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "Spell haste increased by 1%.",
+            "Spell haste increased by 2%.",
+            "Spell haste increased by 3%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-1",
+          "name": "Improved Shadow Word: Pain",
+          "icon": "spell_shadow_shadowwordpain",
+          "maxRank": 2,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Increases the damage of your Shadow Word: Pain spell by 3%.",
+            "Increases the damage of your Shadow Word: Pain spell by 6%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-2",
+          "name": "Veiled Shadows",
+          "icon": "spell_magic_lesserinvisibilty",
+          "maxRank": 2,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Decreases the cooldown of your Fade ability by 3 sec, and reduces the cooldown of your Shadowfiend ability by 30 sec.",
+            "Decreases the cooldown of your Fade ability by 6 sec, and reduces the cooldown of your Shadowfiend ability by 60 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-3",
+          "name": "Improved Psychic Scream",
+          "icon": "spell_shadow_psychicscream",
+          "maxRank": 2,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Reduces the cooldown of your Psychic Scream spell by 2 sec.",
+            "Reduces the cooldown of your Psychic Scream spell by 4 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-4",
+          "name": "Improved Mind Blast",
+          "icon": "spell_shadow_unholyfrenzy",
+          "maxRank": 3,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Reduces the cooldown of your Mind Blast spell by 0.5 sec., and while in Shadowform your Mind Blast also has a 33% chance to reduce all healing done to the target by 10% for 10 sec.",
+            "Reduces the cooldown of your Mind Blast spell by 1 sec., and while in Shadowform your Mind Blast also has a 66% chance to reduce all healing done to the target by 10% for 10 sec.",
+            "Reduces the cooldown of your Mind Blast spell by 1.5 sec., and while in Shadowform your Mind Blast also has a 100% chance to reduce all healing done to the target by 10% for 10 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-5",
+          "name": "Improved Devouring Plague",
+          "icon": "spell_shadow_devouringplague",
+          "maxRank": 2,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Your Devouring Plague instantly deals damage equal to 15% of its total periodic effect.",
+            "Your Devouring Plague instantly deals damage equal to 30% of its total periodic effect."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-6",
+          "name": "Twisted Faith",
+          "icon": "spell_shadow_mindtwisting",
+          "maxRank": 2,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "Increases your Shadow spell damage by 1%, and grants you spell hit rating equal to 50% of any Spirit gained from items or effects.",
+            "Increases your Shadow spell damage by 2%, and grants you spell hit rating equal to 100% of any Spirit gained from items or effects."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-7",
+          "name": "Shadowform",
+          "icon": "spell_shadow_shadowform",
+          "maxRank": 1,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "Assume a Shadowform, increasing your Shadow damage by 15%, reducing all damage done to you by 15%, and increasing all party and raid members spell haste by 5%. However, you may not cast Holy spells while in this form."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-8",
+          "name": "Phantasm",
+          "icon": "spell_shadow_twistedfaith",
+          "maxRank": 2,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Your Fade ability now has a 50% chance to remove all movement impairing effects.",
+            "Your Fade ability now has a 100% chance to remove all movement impairing effects."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-9",
+          "name": "Harnessed Shadows",
+          "icon": "inv_misc_orb_04",
+          "maxRank": 2,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "Increases the chance for you to gain a Shadow Orb when dealing damage with your Mind Flay and Shadow Word: Pain by 4%, and you have a 50% chance to gain a Shadow Orb when critically hit by any attack.",
+            "Increases the chance for you to gain a Shadow Orb when dealing damage with your Mind Flay and Shadow Word: Pain by 8%, and you have a 100% chance to gain a Shadow Orb when critically hit by any attack."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-10",
+          "name": "Silence",
+          "icon": "ability_priest_silence",
+          "maxRank": 1,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "Silences the target, preventing them from casting spells for 5 sec. Non-player victim spellcasting is also interrupted for 3 sec."
+          ],
+          "requires": "cata-priest-2-3"
+        },
+        {
+          "id": "cata-priest-2-11",
+          "name": "Vampiric Embrace",
+          "icon": "spell_shadow_unsummonbuilding",
+          "maxRank": 1,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "Fills you with the embrace of Shadow energy, causing you to be healed for 6% and other party members to be healed for 3% of any single-target Shadow spell damage you deal."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-12",
+          "name": "Masochism",
+          "icon": "spell_shadow_misery",
+          "maxRank": 2,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "When you take a damaging attack equal to or greater than 10% of your total health or damage yourself with your Shadow Word: Death, you instantly gain 5% of your total mana.",
+            "When you take a damaging attack equal to or greater than 10% of your total health or damage yourself with your Shadow Word: Death, you instantly gain 10% of your total mana."
+          ],
+          "requires": "cata-priest-2-11"
+        },
+        {
+          "id": "cata-priest-2-13",
+          "name": "Mind Melt",
+          "icon": "spell_shadow_skull",
+          "maxRank": 2,
+          "row": 3,
+          "col": 3,
+          "descriptions": [
+            "Increases the damage done with your Shadow Word: Death by 15% on targets at or below 25% health, and when you deal damage with Mind Spike, the cast time of your next Mind Blast is reduced by 25% lasting 6 sec. Mind Melt can stack up to 2 times.",
+            "Increases the damage done with your Shadow Word: Death by 30% on targets at or below 25% health, and when you deal damage with Mind Spike, the cast time of your next Mind Blast is reduced by 50% lasting 6 sec. Mind Melt can stack up to 2 times."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-14",
+          "name": "Pain and Suffering",
+          "icon": "spell_shadow_painandsuffering",
+          "maxRank": 2,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "Your Mind Flay has a 30% chance to refresh the duration of your Shadow Word: Pain on the target, and reduces the damage you take from your own Shadow Word: Death by 20%.",
+            "Your Mind Flay has a 60% chance to refresh the duration of your Shadow Word: Pain on the target, and reduces the damage you take from your own Shadow Word: Death by 40%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-15",
+          "name": "Vampiric Touch",
+          "icon": "spell_holy_stoicism",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "Causes 450 Shadow damage over 15 sec, and when you deal damage with Mind Blast to an affected target you cause up to 10 party or raid members to gain 1% of their maximum mana per 10 sec."
+          ],
+          "requires": "cata-priest-2-11"
+        },
+        {
+          "id": "cata-priest-2-16",
+          "name": "Paralysis",
+          "icon": "ability_rogue_masterofsubtlety",
+          "maxRank": 2,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "When you critically hit with your Mind Blast, you cause the target to be unable to move for 2 sec.",
+            "When you critically hit with your Mind Blast, you cause the target to be unable to move for 4 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-17",
+          "name": "Psychic Horror",
+          "icon": "spell_shadow_psychichorrors",
+          "maxRank": 1,
+          "row": 5,
+          "col": 0,
+          "descriptions": [
+            "You terrify the target, causing them to tremble in horror for 3 sec and drop their main hand and ranged weapons for 10 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-18",
+          "name": "Sin and Punishment",
+          "icon": "spell_holy_prayerofshadowprotection",
+          "maxRank": 2,
+          "row": 5,
+          "col": 1,
+          "descriptions": [
+            "When your Vampiric Touch is dispelled, the dispeller and all nearby enemy targets within 6 yards have a 50% chance to be instantly feared in horror for 3 sec. When your Mind Flay critically hits, the cooldown of your Shadowfiend is reduced by 5 sec.",
+            "When your Vampiric Touch is dispelled, the dispeller and all nearby enemy targets within 6 yards have a 100% chance to be instantly feared in horror for 3 sec. When your Mind Flay critically hits, the cooldown of your Shadowfiend is reduced by 10 sec."
+          ],
+          "requires": "cata-priest-2-15"
+        },
+        {
+          "id": "cata-priest-2-19",
+          "name": "Shadowy Apparition",
+          "icon": "ability_priest_shadowyapparition",
+          "maxRank": 3,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "When you deal periodic damage with your Shadow Word: Pain, you have a 4% chance to summon a shadow version of yourself which will slowly move towards a target which is afflicted by your Shadow Word: Pain. Once reaching the target, it will instantly deal 486 shadow damage. While moving, the chance to summon the shadowy apparation is increased to 20%. You can have up to 4 Shadowy Apparitions active at a time.",
+            "When you deal periodic damage with your Shadow Word: Pain, you have an 8% chance to summon a shadow version of yourself which will slowly move towards a target which is afflicted by your Shadow Word: Pain. Once reaching the target, it will instantly deal 486 shadow damage. While moving, the chance to summon the shadowy apparation is increased to 40%. You can have up to 4 Shadowy Apparitions active at a time.",
+            "When you deal periodic damage with your Shadow Word: Pain, you have a 12% chance to summon a shadow version of yourself which will slowly move towards a target which is afflicted by your Shadow Word: Pain. Once reaching the target, it will instantly deal 486 shadow damage. While moving, the chance to summon the shadowy apparation is increased to 60%. You can have up to 4 Shadowy Apparitions active at a time."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-priest-2-20",
+          "name": "Dispersion",
+          "icon": "spell_shadow_dispersion",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "You disperse into pure Shadow energy, reducing all damage taken by 90%. You are unable to attack or cast spells, but you regenerate 6% mana every 1 sec for 6 sec. Dispersion can be cast while stunned, feared or silenced. Clears all snare and movement impairing effects when cast, and makes you immune to them while dispersed."
+          ],
+          "requires": ""
+        }
+      ]
+    }
+  ],
+  "abilities": [
+    {
+      "id": "cata-priest-0-spec-47540",
+      "name": "Penance",
+      "icon": "spell_holy_penance",
+      "description": "Launches a volley of holy light at the target, causing 1 Holy damage to an enemy, or 1 healing to an ally instantly and every 1 sec for 2 sec.",
+      "kind": "active",
+      "branchId": "cata-priest-0",
+      "learningMode": "specialization",
+      "resourceCosts": [
+        {
+          "resourceId": "cata:mana",
+          "resourceName": "Мана",
+          "amount": 14,
+          "unit": "percent"
+        }
+      ],
+      "cast": 0,
+      "cooldown": 12.0,
+      "range": 40.0,
+      "requirements": "",
+      "sourceSpellId": 47540
+    },
+    {
+      "id": "cata-priest-0-spec-84732",
+      "name": "Enlightenment",
+      "icon": "spell_arcane_mindmastery",
+      "description": "Intellect increased by 15%.",
+      "kind": "passive",
+      "branchId": "cata-priest-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 84732
+    },
+    {
+      "id": "cata-priest-0-spec-95860",
+      "name": "Meditation",
+      "icon": "spell_nature_sleep",
+      "description": "Allows 50% of your mana regeneration from Spirit to continue while in combat.",
+      "kind": "passive",
+      "branchId": "cata-priest-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 95860
+    },
+    {
+      "id": "cata-priest-0-spec-33167",
+      "name": "Absolution",
+      "icon": "spell_holy_absolution",
+      "description": "Enables your Dispel Magic spell to be cast on friendly targets to remove 2 harmful magical effects.",
+      "kind": "passive",
+      "branchId": "cata-priest-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 33167
+    },
+    {
+      "id": "cata-priest-0-spec-77484",
+      "name": "Shield Discipline",
+      "icon": "spell_holy_powerwordshield",
+      "description": "Increases the potency of all your damage absorption spells by 20%. Each point of Mastery increases the potency of absorbs by an additional 2.5%.",
+      "kind": "passive",
+      "branchId": "cata-priest-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "Level 80 · Mastery",
+      "sourceSpellId": 77484
+    },
+    {
+      "id": "cata-priest-1-spec-88625",
+      "name": "Holy Word: Chastise",
+      "icon": "spell_holy_chastise",
+      "description": "Chastise the target for 1 Holy damage, and disorients them for 3 sec.",
+      "kind": "active",
+      "branchId": "cata-priest-1",
+      "learningMode": "specialization",
+      "resourceCosts": [
+        {
+          "resourceId": "cata:mana",
+          "resourceName": "Мана",
+          "amount": 15,
+          "unit": "percent"
+        }
+      ],
+      "cast": 0,
+      "cooldown": 30.0,
+      "range": 30.0,
+      "requirements": "",
+      "sourceSpellId": 88625
+    },
+    {
+      "id": "cata-priest-1-spec-87336",
+      "name": "Spiritual Healing",
+      "icon": "spell_holy_impholyconcentration",
+      "description": "Healing increased by 15%.",
+      "kind": "passive",
+      "branchId": "cata-priest-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 87336
+    },
+    {
+      "id": "cata-priest-1-spec-95861",
+      "name": "Meditation",
+      "icon": "spell_nature_sleep",
+      "description": "Allows 50% of your mana regeneration from Spirit to continue while in combat.",
+      "kind": "passive",
+      "branchId": "cata-priest-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 95861
+    },
+    {
+      "id": "cata-priest-1-spec-33167",
+      "name": "Absolution",
+      "icon": "spell_holy_absolution",
+      "description": "Enables your Dispel Magic spell to be cast on friendly targets to remove 2 harmful magical effects.",
+      "kind": "passive",
+      "branchId": "cata-priest-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 33167
+    },
+    {
+      "id": "cata-priest-1-spec-77485",
+      "name": "Echo of Light",
+      "icon": "spell_holy_aspiration",
+      "description": "Your direct healing spells heal for an additional 10% over 6 sec. Each point of Mastery provides an additional 1.25% healing over 6 sec.",
+      "kind": "passive",
+      "branchId": "cata-priest-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "Level 80 · Mastery",
+      "sourceSpellId": 77485
+    },
+    {
+      "id": "cata-priest-2-spec-15407",
+      "name": "Mind Flay",
+      "icon": "spell_shadow_siphonmana",
+      "description": "Assault the target's mind with Shadow energy, causing 30 Shadow damage over 3 sec and slowing their movement speed by 50%.",
+      "kind": "active",
+      "branchId": "cata-priest-2",
+      "learningMode": "specialization",
+      "resourceCosts": [
+        {
+          "resourceId": "cata:mana",
+          "resourceName": "Мана",
+          "amount": 8,
+          "unit": "percent"
+        }
+      ],
+      "cast": 0,
+      "cooldown": 0.0,
+      "range": 40.0,
+      "requirements": "",
+      "sourceSpellId": 15407
+    },
+    {
+      "id": "cata-priest-2-spec-87327",
+      "name": "Shadow Power",
+      "icon": "spell_shadow_shadowpower",
+      "description": "Spell damage increased by 15%.\n\nIncreases the critical damage of your Shadow spells by 100%.",
+      "kind": "passive",
+      "branchId": "cata-priest-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 87327
+    },
+    {
+      "id": "cata-priest-2-spec-95740",
+      "name": "Shadow Orbs",
+      "icon": "spell_priest_shadoworbs",
+      "description": "You have a 10% chance for your Shadow Word: Pain and Mind Flay spells to grant you a Shadow Orb each time they deal damage. Casting your Mind Blast or Mind Spike spell consumes all Shadow Orbs, increasing damage of that spell by 10% per Shadow Orb, and granting 10% increased damage on your periodic Shadow spells for 15 sec. You can have up to a maximum of 3 orbs.",
+      "kind": "passive",
+      "branchId": "cata-priest-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 95740
+    },
+    {
+      "id": "cata-priest-2-spec-77486",
+      "name": "Shadow Orb Power",
+      "icon": "inv_chaos_orb",
+      "description": "Increases the damage done by your Shadow Orbs by 11.6%. Each point of Mastery increases damage by an additional 1.45%.",
+      "kind": "passive",
+      "branchId": "cata-priest-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "Level 80 · Mastery",
+      "sourceSpellId": 77486
+    }
+  ],
+  "build": {},
+  "character": {
+    "hp": 10000,
+    "race": "Человек",
+    "gender": "Мужской",
+    "armory": "",
+    "resources": [
+      {
+        "id": "cata:mana",
+        "name": "Мана",
+        "max": 100,
+        "current": 100,
+        "unit": "percent",
+        "display": "bar",
+        "shape": "diamond",
+        "color": "#397de1"
+      }
+    ]
+  },
+  "source": {
+    "version": "4.3.4",
+    "url": "https://github.com/fooxytv/cplus-talents/blob/main/src/editions/cata.json",
+    "dataBlob": "a6ce40095cb8ca84926e81bca6c70db88a0f6bfa",
+    "generated": "2026-09-21T11:38:40.226Z",
+    "language": "en",
+    "primarySpells": "https://github.com/caicaicai/dbc434",
+    "notes": [
+      "Level/stat dependent specialization effects are represented symbolically."
+    ]
+  }
+}

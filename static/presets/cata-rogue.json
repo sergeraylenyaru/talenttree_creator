@@ -1,0 +1,1016 @@
+{
+  "version": 1,
+  "name": "Разбойник · 4.3.4",
+  "budget": 41,
+  "budgetAuto": false,
+  "rowCost": 5,
+  "specialization": {
+    "requiredPoints": 31
+  },
+  "branches": [
+    {
+      "id": "cata-rogue-0",
+      "name": "Assassination",
+      "icon": "ability_rogue_eviscerate",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "cata-rogue-0-0",
+          "name": "Deadly Momentum",
+          "icon": "ability_rogue_deadlymomentum",
+          "maxRank": 2,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "After killing an opponent that yields experience or honor, you have a 50% chance to increase the critical strike chance of your next ability within 15 sec by 40%, and to refresh your Slice and Dice and Recuperate abilities to their original duration.",
+            "After killing an opponent that yields experience or honor, the critical strike chance of your next ability within 15 sec is increased by 40% and your Slice and Dice and Recuperate abilities are refreshed to their original duration."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-1",
+          "name": "Coup de Grace",
+          "icon": "ability_rogue_eviscerate",
+          "maxRank": 3,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Increases the damage done by your Eviscerate and Envenom abilities by 7%.",
+            "Increases the damage done by your Eviscerate and Envenom abilities by 14%.",
+            "Increases the damage done by your Eviscerate and Envenom abilities by 20%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-2",
+          "name": "Lethality",
+          "icon": "ability_criticalstrike",
+          "maxRank": 3,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Increases the critical strike damage bonus of your Sinister Strike, Backstab, Mutilate and Hemorrhage abilities by 10%.",
+            "Increases the critical strike damage bonus of your Sinister Strike, Backstab, Mutilate and Hemorrhage abilities by 20%.",
+            "Increases the critical strike damage bonus of your Sinister Strike, Backstab, Mutilate and Hemorrhage abilities by 30%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-3",
+          "name": "Ruthlessness",
+          "icon": "ability_druid_disembowel",
+          "maxRank": 3,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Gives your melee finishing moves a 20% chance to add a combo point to your target.",
+            "Gives your melee finishing moves a 40% chance to add a combo point to your target.",
+            "Gives your melee finishing moves a 60% chance to add a combo point to your target."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-4",
+          "name": "Quickening",
+          "icon": "ability_rogue_quickrecovery",
+          "maxRank": 2,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "All healing effects on you are increased by 10% and your movement speed is increased by 8%. This does not stack with most other movement speed increasing effects.",
+            "All healing effects on you are increased by 20% and your movement speed is increased by 15%. This does not stack with most other movement speed increasing effects."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-5",
+          "name": "Puncturing Wounds",
+          "icon": "ability_backstab",
+          "maxRank": 3,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Increases the critical strike chance of your Backstab ability by 10%, and the critical strike chance of your Mutilate ability by 5%.",
+            "Increases the critical strike chance of your Backstab ability by 20%, and the critical strike chance of your Mutilate ability by 10%.",
+            "Increases the critical strike chance of your Backstab ability by 30%, and the critical strike chance of your Mutilate ability by 15%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-6",
+          "name": "Blackjack",
+          "icon": "ability_rogue_blackjack",
+          "maxRank": 2,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "Even after your Sap wears off, its effects linger on enemies, reducing their damage done by 35% for 8 sec.",
+            "Even after your Sap wears off, its effects linger on enemies, reducing their damage done by 70% for 8 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-7",
+          "name": "Deadly Brew",
+          "icon": "ability_rogue_deadlybrew",
+          "maxRank": 2,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "When you apply Instant, Wound or Mind-Numbing Poison to a target, you have a 50% chance to apply Crippling Poison.",
+            "When you apply Instant, Wound, or Mind-Numbing Poison to a target, you have a 100% chance to apply Crippling Poison."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-8",
+          "name": "Cold Blood",
+          "icon": "spell_ice_lament",
+          "maxRank": 1,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "When activated, generates 25 Energy and increases the critical strike chance of your next non-periodic offensive ability by 100%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-9",
+          "name": "Vile Poisons",
+          "icon": "ability_rogue_feigndeath",
+          "maxRank": 3,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Increases the damage dealt by your poisons by 12% and gives you 33% of the normal chance of applying poisons from your equipped melee weapons when you use the Fan of Knives ability.",
+            "Increases the damage dealt by your poisons by 24% and gives you 67% of the normal chance of applying poisons from your equipped melee weapons when you use the Fan of Knives ability.",
+            "Increases the damage dealt by your poisons by 36% and gives you 100% of the normal chance of applying poisons from your equipped melee weapons when you use the Fan of Knives ability."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-10",
+          "name": "Deadened Nerves",
+          "icon": "ability_rogue_deadenednerves",
+          "maxRank": 3,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "Reduces all damage taken by 3%.",
+            "Reduces all damage taken by 7%.",
+            "Reduces all damage taken by 10%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-11",
+          "name": "Seal Fate",
+          "icon": "ability_rogue_stayofexecution",
+          "maxRank": 2,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "Your critical strikes from abilities that add combo points have a 50% chance to add an additional combo point.",
+            "Your critical strikes from abilities that add combo points have a 100% chance to add an additional combo point."
+          ],
+          "requires": "cata-rogue-0-8"
+        },
+        {
+          "id": "cata-rogue-0-12",
+          "name": "Murderous Intent",
+          "icon": "spell_shadow_deathscream",
+          "maxRank": 2,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "When you Backstab an enemy that is below 35% health, you instantly recover 15 Energy.",
+            "When you Backstab an enemy that is below 35% health, you instantly recover 30 Energy."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-13",
+          "name": "Overkill",
+          "icon": "ability_hunter_rapidkilling",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "While stealthed, and for 20 seconds after breaking stealth, you regenerate 30% additional energy."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-14",
+          "name": "Master Poisoner",
+          "icon": "ability_creature_poison_06",
+          "maxRank": 1,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "Increases the spell damage taken by any target you have poisoned by 8%, causes your Envenom ability to no longer consume Deadly Poison, and reduces the duration of all Poison effects applied to you by 50%."
+          ],
+          "requires": "cata-rogue-0-9"
+        },
+        {
+          "id": "cata-rogue-0-15",
+          "name": "Improved Expose Armor",
+          "icon": "ability_warrior_riposte",
+          "maxRank": 2,
+          "row": 4,
+          "col": 3,
+          "descriptions": [
+            "Gives a 50% chance to refund all combo points used when performing your Expose Armor ability.",
+            "Gives a 100% chance to refund all combo points used when performing your Expose Armor ability."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-16",
+          "name": "Cut to the Chase",
+          "icon": "ability_rogue_cuttothechase",
+          "maxRank": 3,
+          "row": 5,
+          "col": 1,
+          "descriptions": [
+            "Your Eviscerate and Envenom abilities have a 33% chance to refresh your Slice and Dice duration to its 5 combo point maximum.",
+            "Your Eviscerate and Envenom abilities have a 67% chance to refresh your Slice and Dice duration to its 5 combo point maximum.",
+            "Your Eviscerate and Envenom abilities have a 100% chance to refresh your Slice and Dice duration to its 5 combo point maximum."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-17",
+          "name": "Venomous Wounds",
+          "icon": "ability_rogue_venomouswounds",
+          "maxRank": 2,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Each time your Rupture or Garrote deals damage to an enemy that you have poisoned, you have a 30% chance to deal 675 additional Nature damage and to regain 10 Energy. If an enemy dies while afflicted by your Rupture, you regain energy proportional to the remaining Rupture duration.",
+            "Each time your Rupture or Garrote deals damage to an enemy that you have poisoned, you have a 60% chance to deal 675 additional Nature damage and to regain 10 Energy. If an enemy dies while afflicted by your Rupture, you regain energy proportional to the remaining Rupture duration."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-0-18",
+          "name": "Vendetta",
+          "icon": "ability_rogue_deadliness",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "Marks an enemy for death, increasing all damage you deal to the target by 20% and granting you unerring vision of your target, regardless of concealments such as stealth and invisibility. Lasts 30 sec."
+          ],
+          "requires": ""
+        }
+      ]
+    },
+    {
+      "id": "cata-rogue-1",
+      "name": "Combat",
+      "icon": "ability_backstab",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "cata-rogue-1-0",
+          "name": "Improved Recuperate",
+          "icon": "ability_rogue_improvedrecuperate",
+          "maxRank": 2,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "Causes your Recuperate ability to restore an additional 0.5% of your maximum health and reduces all damage taken by 3% while your Recuperate ability is active.",
+            "Causes your Recuperate ability to restore an additional 1% of your maximum health and reduces all damage taken by 6% while your Recuperate ability is active."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-1",
+          "name": "Improved Sinister Strike",
+          "icon": "spell_shadow_ritualofsacrifice",
+          "maxRank": 3,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Increases the damage dealt by your Sinister Strike ability by 10% and reduces its Energy cost by 2.",
+            "Increases the damage dealt by your Sinister Strike ability by 20% and reduces its Energy cost by 4.",
+            "Increases the damage dealt by your Sinister Strike ability by 30% and reduces its Energy cost by 6."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-2",
+          "name": "Precision",
+          "icon": "ability_marksmanship",
+          "maxRank": 3,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Increases your chance to hit with weapon and poison attacks by 2%.",
+            "Increases your chance to hit with weapon and poison attacks by 4%.",
+            "Increases your chance to hit with weapon and poison attacks by 6%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-3",
+          "name": "Improved Slice and Dice",
+          "icon": "ability_rogue_slicedice",
+          "maxRank": 2,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Increases the duration of your Slice and Dice ability by 25%.",
+            "Increases the duration of your Slice and Dice ability by 50%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-4",
+          "name": "Improved Sprint",
+          "icon": "ability_rogue_sprint",
+          "maxRank": 2,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Gives a 50% chance to remove all movement-impairing effects when you activate your Sprint ability.",
+            "Gives a 100% chance to remove all movement-impairing effects when you activate your Sprint ability."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-5",
+          "name": "Aggression",
+          "icon": "ability_racial_avatar",
+          "maxRank": 3,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Increases the damage of your Sinister Strike, Backstab, and Eviscerate abilities by 7%.",
+            "Increases the damage of your Sinister Strike, Backstab, and Eviscerate abilities by 14%.",
+            "Increases the damage of your Sinister Strike, Backstab, and Eviscerate abilities by 20%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-6",
+          "name": "Improved Kick",
+          "icon": "ability_kick",
+          "maxRank": 2,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "Causes your Kick ability to also silence the target for 1.50 sec.",
+            "Causes your Kick ability to silence the target for 3 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-7",
+          "name": "Lightning Reflexes",
+          "icon": "spell_nature_invisibilty",
+          "maxRank": 3,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Increases your chance to dodge enemy attacks by 3% and your attack speed by 2%.",
+            "Increases your chance to dodge enemy attacks by 6% and your attack speed by 4%.",
+            "Increases your chance to dodge enemy attacks by 9% and your attack speed by 6%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-8",
+          "name": "Revealing Strike",
+          "icon": "inv_sword_97",
+          "maxRank": 1,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "An instant strike that causes 125% of your normal weapon damage and increases the effectiveness of your next offensive finishing move on that target by 35% for 15 sec. Awards 1 combo point."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-9",
+          "name": "Reinforced Leather",
+          "icon": "ability_rogue_reinforcedleather",
+          "maxRank": 2,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Increases your armor contribution from cloth and leather items by 25%.",
+            "Increases your armor contribution from cloth and leather items by 50%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-10",
+          "name": "Improved Gouge",
+          "icon": "ability_gouge",
+          "maxRank": 2,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "Increases the effect duration of your Gouge ability by 1 sec and reduces its Energy cost by 15.",
+            "Increases the effect duration of your Gouge ability by 2 sec and reduces its Energy cost by 30."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-11",
+          "name": "Combat Potency",
+          "icon": "inv_weapon_shortblade_38",
+          "maxRank": 3,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "Gives your successful off-hand melee attacks and Main Gauche attacks a 20% chance to generate 5 Energy.",
+            "Gives your successful off-hand melee attacks and Main Gauche attacks a 20% chance to generate 10 Energy.",
+            "Gives your successful off-hand melee attacks and Main Gauche attacks a 20% chance to generate 15 Energy."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-12",
+          "name": "Blade Twisting",
+          "icon": "ability_rogue_bladetwisting",
+          "maxRank": 2,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "Gives your damaging melee attacks a 20% chance to daze the target, reducing movement speed by 70% for 4 sec.",
+            "Gives your damaging melee attacks a 40% chance to daze the target, reducing movement speed by 70% for 8 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-13",
+          "name": "Throwing Specialization",
+          "icon": "ability_rogue_throwingspecialization",
+          "maxRank": 2,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "Increases the range of Throw and Deadly Throw by 5 yards and gives your Deadly Throw a 50% chance to interrupt the target for 3 sec.",
+            "Increases the range of Throw and Deadly Throw by 10 yards and gives your Deadly Throw a 100% chance to interrupt the target for 3 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-14",
+          "name": "Adrenaline Rush",
+          "icon": "spell_shadow_shadowworddominate",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "Increases your Energy regeneration rate by 100% and your melee attack speed by 20% for 15 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-15",
+          "name": "Savage Combat",
+          "icon": "ability_creature_disease_03",
+          "maxRank": 2,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "Increases your total attack power by 3% and all physical damage caused to enemies you have poisoned is increased by 2%.",
+            "Increases your total attack power by 6% and all physical damage caused to enemies you have poisoned is increased by 4%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-16",
+          "name": "Bandit's Guile",
+          "icon": "ability_rogue_preyontheweak",
+          "maxRank": 3,
+          "row": 5,
+          "col": 0,
+          "descriptions": [
+            "Your Sinister Strike and Revealing Strike abilities have a 33% chance to grant you an evolving insight into an opponent's defenses, increasing damage to that target by up to 30%. Opponents can adapt over time, negating this benefit, and Striking a different opponent will begin the cycle anew.",
+            "Your Sinister Strike and Revealing Strike abilities have a 67% chance to grant you an evolving insight into an opponent's defenses, increasing damage to that target by up to 30%. Opponents can adapt over time, negating this benefit, and Striking a different opponent will begin the cycle anew.",
+            "Your Sinister Strike and Revealing Strike abilities have a 100% chance to grant you an evolving insight into an opponent's defenses, increasing damage to that target by up to 30%. Opponents can adapt over time, negating this benefit, and Striking a different opponent will begin the cycle anew."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-17",
+          "name": "Restless Blades",
+          "icon": "ability_rogue_restlessblades",
+          "maxRank": 2,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Your damaging finishing moves reduce the cooldown of your Adrenaline Rush, Killing Spree, Redirect, and Sprint abilities by 1 sec per combo point.",
+            "Your damaging finishing moves reduce the cooldown of your Adrenaline Rush, Killing Spree, Redirect, and Sprint abilities by 2 sec per combo point."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-1-18",
+          "name": "Killing Spree",
+          "icon": "ability_rogue_murderspree",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "Step through the shadows from enemy to enemy within 10 yards, attacking an enemy every 0.5 sec with both weapons until 5 assaults are made, and increasing all damage done by 20% for the duration. Can hit the same target multiple times. Cannot hit invisible or stealthed targets."
+          ],
+          "requires": "cata-rogue-1-14"
+        }
+      ]
+    },
+    {
+      "id": "cata-rogue-2",
+      "name": "Subtlety",
+      "icon": "ability_stealth",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "cata-rogue-2-0",
+          "name": "Nightstalker",
+          "icon": "ability_stealth",
+          "maxRank": 2,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "Increases your speed while stealthed by 5% and reduces the cooldown of your Stealth ability by 2 sec.",
+            "Increases your speed while stealthed by 10% and reduces the cooldown of your Stealth ability by 4 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-1",
+          "name": "Improved Ambush",
+          "icon": "ability_rogue_ambush",
+          "maxRank": 3,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Increases the critical strike chance of your Ambush ability by 20% and its damage by 5%.",
+            "Increases the critical strike chance of your Ambush ability by 40% and its damage by 10%.",
+            "Increases the critical strike chance of your Ambush ability by 60% and its damage by 15%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-2",
+          "name": "Relentless Strikes",
+          "icon": "ability_warrior_decisivestrike",
+          "maxRank": 3,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Your finishing moves have a 7% chance per combo point to restore 25 Energy.",
+            "Your finishing moves have a 14% chance per combo point to restore 25 Energy.",
+            "Your finishing moves have a 20% chance per combo point to restore 25 Energy."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-3",
+          "name": "Elusiveness",
+          "icon": "spell_magic_lesserinvisibilty",
+          "maxRank": 2,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Reduces the cooldown of your Vanish and Blind abilities by 30 sec, and your Cloak of Shadows and Combat Readiness abilities by 15 sec.",
+            "Reduces the cooldown of your Vanish and Blind abilities by 60 sec, and your Cloak of Shadows and Combat Readiness abilities by 30 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-4",
+          "name": "Waylay",
+          "icon": "ability_rogue_waylay",
+          "maxRank": 2,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Your Ambush and Backstab hits have a 50% chance to unbalance a target, increasing the time between their melee and ranged attacks by 20%, and reducing movement speed by 50% for 8 sec.",
+            "Your Ambush and Backstab hits have a 100% chance to unbalance a target, increasing the time between their melee and ranged attacks by 20%, and reducing movement speed by 50% for 8 sec."
+          ],
+          "requires": "cata-rogue-2-1"
+        },
+        {
+          "id": "cata-rogue-2-5",
+          "name": "Opportunity",
+          "icon": "ability_rogue_bloodsplatter",
+          "maxRank": 3,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Increases the damage dealt with your Backstab, Mutilate, Garrote, and Ambush abilities by 10%.",
+            "Increases the damage dealt with your Backstab, Mutilate, Garrote and Ambush abilities by 20%.",
+            "Increases the damage dealt with your Backstab, Mutilate, Garrote and Ambush abilities by 30%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-6",
+          "name": "Initiative",
+          "icon": "spell_shadow_fumble",
+          "maxRank": 2,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "Gives you a 50% chance to add an additional combo point to your target when using your Ambush, Garrote, or Cheap Shot ability.",
+            "Gives you a 100% chance to add an additional combo point to your target when using your Ambush, Garrote, or Cheap Shot ability."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-7",
+          "name": "Energetic Recovery",
+          "icon": "ability_rogue_sturdyrecuperate",
+          "maxRank": 3,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Empowers your Recuperate ability, causing its periodic effect to also restore 4 Energy.",
+            "Empowers your Recuperate ability, causing its periodic effect to also restore 8 Energy.",
+            "Empowers your Recuperate ability, causing its periodic effect to also restore 12 Energy."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-8",
+          "name": "Find Weakness",
+          "icon": "ability_rogue_findweakness",
+          "maxRank": 2,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "Your Ambush, Garrote, and Cheap Shot abilities reveal a flaw in your target's defenses, causing all your attacks to bypass 35% of that enemy's armor for 10 sec.",
+            "Your Ambush, Garrote, and Cheap Shot abilities reveal a flaw in your target's defenses, causing all your attacks to bypass 70% of that enemy's armor for 10 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-9",
+          "name": "Hemorrhage",
+          "icon": "spell_shadow_lifedrain",
+          "maxRank": 1,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "An instant strike that deals 155% weapon damage [(155 * 1.45)% if a dagger is equipped] [Glyph of Hemorrhage: opens a wound that deals an additional 40% of the direct strike's damage over 24 sec] and causes the target to take 30% additional damage from Bleed effects for 1 min. Awards 1 combo point."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-10",
+          "name": "Honor Among Thieves",
+          "icon": "ability_rogue_honoramongstthieves",
+          "maxRank": 3,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "Increases the critical strike chance of all party and raid members by 5%. When any player in your party or raid critically hits with a spell or ability, you have a 33% chance to gain a combo point on your current target. This effect cannot occur more than once every 4 seconds.",
+            "Increases the critical strike chance of all party and raid members by 5%. When any player in your party or raid critically hits with a spell or ability, you have a 66% chance to gain a combo point on your current target. This effect cannot occur more than once every 3 seconds.",
+            "Increases the critical strike chance of all party and raid members by 5%. When any player in your party or raid critically hits with a spell or ability, you have a 100% chance to gain a combo point on your current target. This effect cannot occur more than once every 2 seconds."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-11",
+          "name": "Premeditation",
+          "icon": "spell_shadow_possession",
+          "maxRank": 1,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "When used, adds 2 combo points to your target. You must add to or use those combo points within 20 sec or the combo points are lost."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-12",
+          "name": "Enveloping Shadows",
+          "icon": "ability_rogue_envelopingshadows",
+          "maxRank": 3,
+          "row": 3,
+          "col": 3,
+          "descriptions": [
+            "Reduces the damage taken by area of effect attacks by 10% and increases the duration of your Feint ability by 1 sec.",
+            "Reduces the damage taken by area of effect attacks by 20% and increases the duration of your Feint ability by 2 sec.",
+            "Reduces the damage taken by area of effect attacks by 30% and increases the duration of your Feint ability by 3 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-13",
+          "name": "Cheat Death",
+          "icon": "ability_rogue_cheatdeath",
+          "maxRank": 3,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "You have a 33% chance that an attack which would otherwise kill you will instead reduce you to 10% of your maximum health. In addition, all damage taken will be reduced by 80% for 3 sec. This effect cannot occur more than once per 90 seconds.",
+            "You have a 66% chance that an attack which would otherwise kill you will instead reduce you to 10% of your maximum health. In addition, all damage taken will be reduced by 80% for 3 sec. This effect cannot occur more than once per 90 seconds.",
+            "You have a 100% chance that an attack which would otherwise kill you will instead reduce you to 10% of your maximum health. In addition, all damage taken will be reduced by 80% for 3 sec. This effect cannot occur more than once per 90 seconds."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-14",
+          "name": "Preparation",
+          "icon": "ability_rogue_preparation",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "When activated, this ability immediately finishes the cooldown on your Sprint, Vanish, [Glyph of Preparation: Kick, Dismantle, Smoke Bomb] and Shadowstep abilities."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-15",
+          "name": "Sanguinary Vein",
+          "icon": "ability_rogue_sanguinaryvein",
+          "maxRank": 2,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "Increases your damage dealt to targets with a Bleed effect on them by 8% and gives your Bleed effects a 50% chance to not break your Gouge.",
+            "Increases your damage dealt to targets with a Bleed effect on them by 16% and gives your Bleed effects a 100% chance to not break your Gouge."
+          ],
+          "requires": "cata-rogue-2-9"
+        },
+        {
+          "id": "cata-rogue-2-16",
+          "name": "Slaughter from the Shadows",
+          "icon": "ability_rogue_slaughterfromtheshadows",
+          "maxRank": 3,
+          "row": 5,
+          "col": 1,
+          "descriptions": [
+            "Reduces the Energy cost of your Backstab and Ambush abilities by 7, and the Energy cost of your Hemorrhage and Fan of Knives abilities by 2.",
+            "Reduces the Energy cost of your Backstab and Ambush abilities by 14, and the Energy cost of your Hemorrhage and Fan of Knives abilities by 4.",
+            "Reduces the Energy cost of your Backstab and Ambush abilities by 20, and the Energy cost of your Hemorrhage and Fan of Knives abilities by 6."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-17",
+          "name": "Serrated Blades",
+          "icon": "inv_sword_17",
+          "maxRank": 2,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Your Eviscerate has a 10% chance per combo point to refresh your Rupture on the target to its original duration.",
+            "Your Eviscerate has a 20% chance per combo point to refresh your Rupture on the target to its original duration."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-rogue-2-18",
+          "name": "Shadow Dance",
+          "icon": "ability_rogue_shadowdance",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "Enter the Shadow Dance for 6 sec, allowing the use of Sap, Garrote, Ambush, Cheap Shot, Premeditation, Pick Pocket, and Disarm Trap regardless of being stealthed."
+          ],
+          "requires": ""
+        }
+      ]
+    }
+  ],
+  "abilities": [
+    {
+      "id": "cata-rogue-0-spec-1329",
+      "name": "Mutilate",
+      "icon": "ability_rogue_shadowstrikes",
+      "description": "Instantly attacks with both weapons for 75% weapon damage plus an additional 44 with each weapon. Awards 2 combo points.",
+      "kind": "active",
+      "branchId": "cata-rogue-0",
+      "learningMode": "specialization",
+      "resourceCosts": [
+        {
+          "resourceId": "cata:energy",
+          "resourceName": "Энергия",
+          "amount": 60,
+          "unit": "points"
+        }
+      ],
+      "cast": 0,
+      "cooldown": 0.0,
+      "range": 5.0,
+      "requirements": "",
+      "sourceSpellId": 1329
+    },
+    {
+      "id": "cata-rogue-0-spec-84601",
+      "name": "Assassin's Resolve",
+      "icon": "ability_rogue_sinistercalling",
+      "description": "While wielding daggers, your maximum Energy is increased by 20 and your melee damage is increased by 20%.",
+      "kind": "passive",
+      "branchId": "cata-rogue-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 84601
+    },
+    {
+      "id": "cata-rogue-0-spec-14117",
+      "name": "Improved Poisons",
+      "icon": "ability_poisons",
+      "description": "Increases the chance to apply Deadly Poison to your target by 20% and the frequency of applying Instant Poison to your target by 50%.",
+      "kind": "passive",
+      "branchId": "cata-rogue-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 14117
+    },
+    {
+      "id": "cata-rogue-0-spec-76803",
+      "name": "Potent Poisons",
+      "icon": "trade_brewpoison",
+      "description": "Increases the damage done by your poisons by 28%. Each point of Mastery increases damage by an additional 3.5%.",
+      "kind": "passive",
+      "branchId": "cata-rogue-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "Level 80 · Mastery",
+      "sourceSpellId": 76803
+    },
+    {
+      "id": "cata-rogue-1-spec-13877",
+      "name": "Blade Flurry",
+      "icon": "ability_warrior_punishingblow",
+      "description": "While active, the rogue's attacks strike an additional nearby opponent, but energy regeneration is reduced by 30%. Lasts until canceled.",
+      "kind": "active",
+      "branchId": "cata-rogue-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 10.0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 13877
+    },
+    {
+      "id": "cata-rogue-1-spec-13852",
+      "name": "Ambidexterity",
+      "icon": "ability_dualwield",
+      "description": "Increases the damage done by your off-hand weapon, and the damage of your Throw, Deadly Throw, and Fan of Knives abilities, by 75%.",
+      "kind": "passive",
+      "branchId": "cata-rogue-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 13852
+    },
+    {
+      "id": "cata-rogue-1-spec-61329",
+      "name": "Vitality",
+      "icon": "ability_warrior_revenge",
+      "description": "Increases your Energy regeneration rate by 25% and your Attack Power by 30%.",
+      "kind": "passive",
+      "branchId": "cata-rogue-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 61329
+    },
+    {
+      "id": "cata-rogue-1-spec-76806",
+      "name": "Main Gauche",
+      "icon": "inv_weapon_shortblade_15",
+      "description": "Your main-hand attacks have a 16% chance to grant you an attack that deals damage equal to 100% of a main-hand attack. Each point of Mastery increases the chance by an additional 2%.",
+      "kind": "passive",
+      "branchId": "cata-rogue-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "Level 80 · Mastery",
+      "sourceSpellId": 76806
+    },
+    {
+      "id": "cata-rogue-2-spec-36554",
+      "name": "Shadowstep",
+      "icon": "ability_rogue_shadowstep",
+      "description": "Causes you to step through the shadows and appear behind an enemy target. Your next Ambush or Garrote delivered within 10 sec will deal 30% additional damage, and your movement speed is increased by 70% for 3 sec.",
+      "kind": "active",
+      "branchId": "cata-rogue-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 24.0,
+      "range": 25.0,
+      "requirements": "",
+      "sourceSpellId": 36554
+    },
+    {
+      "id": "cata-rogue-2-spec-31223",
+      "name": "Master of Subtlety",
+      "icon": "ability_rogue_masterofsubtlety",
+      "description": "Attacks made while stealthed and for 6 seconds after breaking stealth cause an additional 10% damage.",
+      "kind": "passive",
+      "branchId": "cata-rogue-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 31223
+    },
+    {
+      "id": "cata-rogue-2-spec-31220",
+      "name": "Sinister Calling",
+      "icon": "ability_rogue_sinistercalling",
+      "description": "Increases your total Agility by 30% and increases the percentage damage bonus of Backstab and Hemorrhage by 40%.",
+      "kind": "passive",
+      "branchId": "cata-rogue-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 31220
+    },
+    {
+      "id": "cata-rogue-2-spec-76808",
+      "name": "Executioner",
+      "icon": "inv_axe_06",
+      "description": "Increases the damage of your finishing moves and the effectiveness of Slice and Dice. The bonus increases with Mastery.",
+      "kind": "passive",
+      "branchId": "cata-rogue-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "Level 80 · Mastery",
+      "sourceSpellId": 76808
+    }
+  ],
+  "build": {},
+  "character": {
+    "hp": 10000,
+    "race": "Человек",
+    "gender": "Мужской",
+    "armory": "",
+    "resources": [
+      {
+        "id": "cata:energy",
+        "name": "Энергия",
+        "max": 100,
+        "current": 100,
+        "unit": "points",
+        "display": "bar",
+        "shape": "diamond",
+        "color": "#b84e42"
+      },
+      {
+        "id": "cata:combo",
+        "name": "Приёмы",
+        "max": 5,
+        "current": 0,
+        "unit": "count",
+        "display": "icons",
+        "shape": "diamond",
+        "color": "#b84e42"
+      }
+    ]
+  },
+  "source": {
+    "version": "4.3.4",
+    "url": "https://github.com/fooxytv/cplus-talents/blob/main/src/editions/cata.json",
+    "dataBlob": "a6ce40095cb8ca84926e81bca6c70db88a0f6bfa",
+    "generated": "2026-09-21T11:38:40.226Z",
+    "language": "en",
+    "primarySpells": "https://github.com/caicaicai/dbc434",
+    "notes": [
+      "Level/stat dependent specialization effects are represented symbolically."
+    ]
+  }
+}

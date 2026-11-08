@@ -203,7 +203,7 @@ class API(unittest.TestCase):
 
     def test_presets_validate_on_server(self):
         files = list((server.ROOT / 'static' / 'presets').glob('*.json'))
-        self.assertEqual(len(files), 29)
+        self.assertEqual(len(files), 39)
         for path in files:
             if path.name != 'index.json':
                 server.validate(json.loads(path.read_text()))

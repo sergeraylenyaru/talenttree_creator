@@ -24,7 +24,7 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
             for width,height in [(1440,1000),(1366,768)]:page.set_viewport_size({'width':width,'height':height});no_scroll('ability')
             assert page.locator('#abilityDescription').evaluate('el=>el.getBoundingClientRect().height>=220&&el.getBoundingClientRect().width>=400')
             page.locator('#abilityName').fill('Мой удар');page.locator('#abilityDescription').fill('Описание сильного удара.\nВторая строка.');page.locator('#abilityBranch').select_option('one');expect(page.locator('#abilityLearning')).to_have_value('base');expect(page.locator('#talentLinkField')).not_to_be_visible()
-            page.locator('#resourceType').select_option('Кровь');page.locator('#resource').fill('25');page.locator('#cooldown').fill('6');page.locator('#abilityRequirements').fill('Латы, Кинжалы');no_scroll('ability with requirements')
+            page.locator('#resourceType').select_option(label='Кровь');page.locator('#resource').fill('25');page.locator('#cooldown').fill('6');page.locator('#abilityRequirements').fill('Латы, Кинжалы');no_scroll('ability with requirements')
             page.screenshot(path='work/compact-ability-desktop.png',full_page=True);page.locator('#submitModal').click();expect(page.locator('#modal')).not_to_be_visible()
             page.locator('[data-ability-view="details"]').click();expect(page.locator('#abilities')).to_contain_text('Ближний бой');expect(page.locator('#abilities')).to_contain_text('Мгновенное');expect(page.locator('#abilities')).to_contain_text('Требуется: Латы, Кинжалы')
             expect(page.locator('[data-ability-band="general"] .ability-band-label img')).to_have_attribute('src',re.compile('inv_misc_book_09'))

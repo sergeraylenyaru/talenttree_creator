@@ -1,18 +1,20 @@
 import {validBuild} from './engine.js';
 
-export function withoutBuild(document) { return {...document,build:{}}; }
+export function withoutBuild(document) { const {primaryBranchId,...rest}=document;return {...rest,build:{}}; }
 const key=id=>'talentforge-build:'+id;
 
 // A publication is immutable; its visitor's allocation belongs only to this browser.
 export function restoreBrowserBuild(document,id,storage=localStorage) {
  const result=withoutBuild(document);
  try {
-  const build=JSON.parse(storage.getItem(key(id)));
+  const saved=JSON.parse(storage.getItem(key(id)));
+  const build=result.specialization&&saved?.build?saved.build:saved;
+  if(result.specialization&&saved?.primaryBranchId&&result.branches.some(b=>b.id===saved.primaryBranchId))result.primaryBranchId=saved.primaryBranchId;
   if(build&&typeof build==='object'&&!Array.isArray(build)&&validBuild(result,build))result.build={...build};
  } catch {}
  return result;
 }
 
 export function saveBrowserBuild(document,id,storage=localStorage) {
- storage.setItem(key(id),JSON.stringify(document.build));
+ storage.setItem(key(id),JSON.stringify(document.specialization?{build:document.build,primaryBranchId:document.primaryBranchId||''}:document.build));
 }

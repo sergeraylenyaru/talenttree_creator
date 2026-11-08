@@ -1,0 +1,1086 @@
+{
+  "version": 1,
+  "name": "Паладин · 4.3.4",
+  "budget": 41,
+  "budgetAuto": false,
+  "rowCost": 5,
+  "specialization": {
+    "requiredPoints": 31
+  },
+  "branches": [
+    {
+      "id": "cata-paladin-0",
+      "name": "Holy",
+      "icon": "spell_holy_holybolt",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "cata-paladin-0-0",
+          "name": "Arbiter of the Light",
+          "icon": "spell_holy_healingaura",
+          "maxRank": 2,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "Increases the critical effect chance of your Judgement and Templar's Verdict by 6%.",
+            "Increases the critical effect chance of your Judgement and Templar's Verdict by 12%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-1",
+          "name": "Protector of the Innocent",
+          "icon": "ability_paladin_protectoroftheinnocent",
+          "maxRank": 3,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Casting a targeted heal on any target, except yourself, also heals you for 934.",
+            "Casting a targeted heal on any target, except yourself, also heals you for 1868.",
+            "Casting a targeted heal on any target, except yourself, also heals you for 2802."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-2",
+          "name": "Judgements of the Pure",
+          "icon": "ability_paladin_judgementofthepure",
+          "maxRank": 3,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Your Judgement increases your casting and melee haste by 3% for 1 min and your mana regeneration from Spirit while in combat by 10%.",
+            "Your Judgement increases your casting and melee haste by 6% for 1 min and your mana regeneration from Spirit while in combat by 20%.",
+            "Your Judgement increases your casting and melee haste by 9% for 1 min and your mana regeneration from Spirit while in combat by 30%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-3",
+          "name": "Clarity of Purpose",
+          "icon": "spell_paladin_clarityofpurpose",
+          "maxRank": 3,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Reduces the casting time of your Holy Light, Divine Light and Holy Radiance by 0.15 sec.",
+            "Reduces the casting time of your Holy Light, Divine Light and Holy Radiance by 0.3 sec.",
+            "Reduces the casting time of your Holy Light, Divine Light and Holy Radiance by 0.5 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-4",
+          "name": "Last Word",
+          "icon": "spell_holy_holyguidance",
+          "maxRank": 2,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Gives your Word of Glory a 30% increased critical chance when used on targets with 35% or less health.",
+            "Gives your Word of Glory a 60% increased critical chance when used on targets with 35% or less health."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-5",
+          "name": "Blazing Light",
+          "icon": "spell_holy_holybolt",
+          "maxRank": 2,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Increases the damage of your Holy Shock and Exorcism by 10%.",
+            "Increases the damage of your Holy Shock and Exorcism by 20%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-6",
+          "name": "Denounce",
+          "icon": "spell_holy_excorcism_02",
+          "maxRank": 2,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Reduces the mana cost of Exorcism by 38%. In addition, you have a 50% chance to cause the Denounce effect on the targets of your Exorcism. The Denounce effect prevents targets from causing critical effects for the next 6 sec.",
+            "Reduces the mana cost of Exorcism by 75%. In addition, you have a 100% chance to cause the Denounce effect on the targets of your Exorcism. The Denounce effect prevents targets from causing critical effects for the next 6 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-7",
+          "name": "Divine Favor",
+          "icon": "spell_holy_divineillumination",
+          "maxRank": 1,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "Increases your spell casting haste by 20% and spell critical chance by 20% for 20 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-8",
+          "name": "Infusion of Light",
+          "icon": "ability_paladin_infusionoflight",
+          "maxRank": 2,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Increases the critical effect chance of your Holy Shock by 5%. In addition, your Holy Shock critical effects reduce the cast time of your next Flash of Light, Holy Light, Divine Light or Holy Radiance by 0.75 sec.",
+            "Increases the critical effect chance of your Holy Shock by 10%. In addition, your Holy Shock critical effects reduce the cast time of your next Flash of Light, Holy Light, Divine Light or Holy Radiance by 1.50 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-9",
+          "name": "Daybreak",
+          "icon": "inv_qirajidol_sun",
+          "maxRank": 2,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "Your Flash of Light, Holy Light and Divine Light have a 10% chance to make your next Holy Shock not trigger a cooldown if used within 12 sec.",
+            "Your Flash of Light, Holy Light and Divine Light have a 20% chance to make your next Holy Shock not trigger a cooldown if used within 12 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-10",
+          "name": "Enlightened Judgements",
+          "icon": "ability_paladin_enlightenedjudgements",
+          "maxRank": 2,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "Grants hit rating equal to 50% of any Spirit gained from items or effects, and increases the range of your Judgement by 5 yards. In addition, your Judgement instantly heals you for 1334.",
+            "Grants hit rating equal to 100% of any Spirit gained from items or effects, and increases the range of your Judgement by 10 yards. In addition, your Judgement instantly heals you for 2668."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-11",
+          "name": "Beacon of Light",
+          "icon": "ability_paladin_beaconoflight",
+          "maxRank": 1,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "The target becomes a Beacon of Light to all targets within a 60 yard radius. Your Word of Glory, Holy Shock, Flash of Light, Divine Light and Light of Dawn will also heal the Beacon for 50% of the amount healed. Holy Light will heal for 100% of the amount. Only one target can be the Beacon of Light at a time. Lasts 5 min."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-12",
+          "name": "Speed of Light",
+          "icon": "paladin_icon_speedoflight",
+          "maxRank": 3,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "Grants 1% spell haste. In addition, casting Divine Protection increases your movement speed by 20% for 4 sec.",
+            "Grants 2% spell haste. In addition, casting Divine Protection increases your movement speed by 40% for 4 sec.",
+            "Grants 3% spell haste. In addition, casting Divine Protection increases your movement speed by 60% for 4 sec."
+          ],
+          "requires": "cata-paladin-0-8"
+        },
+        {
+          "id": "cata-paladin-0-13",
+          "name": "Sacred Cleansing",
+          "icon": "ability_paladin_sacredcleansing",
+          "maxRank": 1,
+          "row": 3,
+          "col": 3,
+          "descriptions": [
+            "Your Cleanse spell now also dispels 1 Magic effect."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-14",
+          "name": "Conviction",
+          "icon": "ability_paladin_conviction",
+          "maxRank": 3,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "Gives you a 1% bonus to damage and healing for 15 sec after causing a critical effect from a weapon swing, non-periodic spell, or ability. This effect stacks up to 3 times.",
+            "Gives you a 2% bonus to damage and healing for 15 sec after causing a critical effect from a weapon swing, non-periodic spell, or ability. This effect stacks up to 3 times.",
+            "Gives you a 3% bonus to damage and healing for 15 sec after causing a critical effect from a weapon swing, non-periodic spell, or ability. This effect stacks up to 3 times."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-15",
+          "name": "Aura Mastery",
+          "icon": "spell_holy_auramastery",
+          "maxRank": 1,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "Causes your Concentration Aura to make all affected targets immune to Silence and Interrupt effects and improve the effect of Devotion Aura, Resistance Aura, and Retribution Aura by 100%. Lasts 6 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-16",
+          "name": "Paragon of Virtue",
+          "icon": "spell_holy_avenginewrath",
+          "maxRank": 2,
+          "row": 4,
+          "col": 3,
+          "descriptions": [
+            "Reduces the cooldown of Divine Protection by 15 sec, Hand of Sacrifice by 15 sec and Avenging Wrath by 30 sec.",
+            "Reduces the cooldown of Divine Protection by 30 sec, Hand of Sacrifice by 30 sec and Avenging Wrath by 60 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-17",
+          "name": "Tower of Radiance",
+          "icon": "achievement_bg_winsoa",
+          "maxRank": 3,
+          "row": 5,
+          "col": 1,
+          "descriptions": [
+            "Healing the target of your Beacon of Light with Flash of Light or Divine Light has a 33% chance to generate a charge of Holy Power. In addition, casting Holy Radiance will always generate one charge of Holy Power.",
+            "Healing the target of your Beacon of Light with Flash of Light or Divine Light has a 66% chance to generate a charge of Holy Power. In addition, casting Holy Radiance will always generate one charge of Holy Power.",
+            "Healing the target of your Beacon of Light with Flash of Light or Divine Light has a 100% chance to generate a charge of Holy Power. In addition, casting Holy Radiance will always generate one charge of Holy Power."
+          ],
+          "requires": "cata-paladin-0-11"
+        },
+        {
+          "id": "cata-paladin-0-18",
+          "name": "Blessed Life",
+          "icon": "spell_holy_blessedlife",
+          "maxRank": 2,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "You have a 50% chance to gain a charge of Holy Power whenever you take direct damage. This effect cannot occur more than once every 8 seconds.",
+            "You have a 100% chance to gain a charge of Holy Power whenever you take direct damage. This effect cannot occur more than once every 8 seconds."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-0-19",
+          "name": "Light of Dawn",
+          "icon": "spell_paladin_lightofdawn",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "Consumes all Holy Power to send a wave of healing energy before you, healing up to [Glyph of Light of Dawn: 4 / 6] of the most injured targets in your party or raid within a 30 yard frontal cone for 640 per charge of Holy Power."
+          ],
+          "requires": ""
+        }
+      ]
+    },
+    {
+      "id": "cata-paladin-1",
+      "name": "Protection",
+      "icon": "ability_paladin_shieldofthetemplar",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "cata-paladin-1-0",
+          "name": "Divinity",
+          "icon": "spell_holy_blindingheal",
+          "maxRank": 3,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "Increases all healing done by you and all healing effects on you by 2%.",
+            "Increases all healing done by you and all healing effects on you by 4%.",
+            "Increases all healing done by you and all healing effects on you by 6%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-1-1",
+          "name": "Seals of the Pure",
+          "icon": "inv_mace_46",
+          "maxRank": 2,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Increases the damage done by your Seal of Righteousness, Seal of Truth, and Seal of Justice by 6%.",
+            "Increases the damage done by your Seal of Righteousness, Seal of Truth, and Seal of Justice by 12%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-1-2",
+          "name": "Eternal Glory",
+          "icon": "inv_torch_thrown",
+          "maxRank": 2,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Your Word of Glory has a 15% chance not to consume Holy Power.",
+            "Your Word of Glory has a 30% chance not to consume Holy Power."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-1-3",
+          "name": "Judgements of the Just",
+          "icon": "ability_paladin_judgementsofthejust",
+          "maxRank": 2,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Your Judgement reduces the melee and ranged attack speed of the target by 10% for 20 sec. In addition, increases the duration of your Seal of Justice effect by 0.5 sec.",
+            "Your Judgement reduces the melee and ranged attack speed of the target by 20% for 20 sec. In addition, increases the duration of your Seal of Justice effect by 1 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-1-4",
+          "name": "Toughness",
+          "icon": "spell_holy_devotion",
+          "maxRank": 3,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Increases your armor value from items by 3%.",
+            "Increases your armor value from items by 6%.",
+            "Increases your armor value from items by 10%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-1-5",
+          "name": "Improved Hammer of Justice",
+          "icon": "spell_holy_sealofmight",
+          "maxRank": 2,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Decreases the cooldown of your Hammer of Justice spell by 10 sec.",
+            "Decreases the cooldown of your Hammer of Justice spell by 20 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-1-6",
+          "name": "Hallowed Ground",
+          "icon": "spell_holy_innerfire",
+          "maxRank": 2,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Increases the damage of your Consecration by 20% and decreases its mana cost by 40%.",
+            "Increases the damage of your Consecration by 40% and decreases its mana cost by 80%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-1-7",
+          "name": "Sanctuary",
+          "icon": "spell_nature_lightningshield",
+          "maxRank": 3,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "Reduces the chance you'll be critically hit by melee attacks by 2% and reduces all damage taken by 3%. In addition when you block or dodge a melee attack you gain 1% of maximum mana.",
+            "Reduces the chance you'll be critically hit by melee attacks by 4% and reduces all damage taken by 7%. In addition when you block or dodge a melee attack you gain 2% of maximum mana.",
+            "Reduces the chance you'll be critically hit by melee attacks by 6% and reduces all damage taken by 10%. In addition when you block or dodge a melee attack you gain 3% of maximum mana."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-1-8",
+          "name": "Hammer of the Righteous",
+          "icon": "ability_paladin_hammeroftherighteous",
+          "maxRank": 1,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Hammer the current target for 30% weapon damage, causing a wave of light that hits all targets within 8 yards for 729 Holy damage. Grants a charge of Holy Power."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-1-9",
+          "name": "Wrath of the Lightbringer",
+          "icon": "inv_mace_82",
+          "maxRank": 2,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "Increases the damage of your Crusader Strike and Judgement abilities by 50%, and increases the critical strike chance of your Holy Wrath and Hammer of Wrath spells by 15%.",
+            "Increases the damage of your Crusader Strike and Judgement abilities by 100%, and increases the critical strike chance of your Holy Wrath and Hammer of Wrath spells by 30%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-1-10",
+          "name": "Reckoning",
+          "icon": "spell_holy_blessingofstrength",
+          "maxRank": 2,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "You have a 10% chance after blocking an attack for your next 4 weapon swings within 8 sec to generate an additional attack.",
+            "You have a 20% chance after blocking an attack for your next 4 weapon swings within 8 sec to generate an additional attack."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-1-11",
+          "name": "Shield of the Righteous",
+          "icon": "ability_paladin_shieldofvengeance",
+          "maxRank": 1,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "Slam the target with your shield, causing Holy damage. Consumes all charges of Holy Power to determine damage dealt: 1 Holy Power: (610 - 1) damage 2 Holy Power: (610 * 3 - 3) damage 3 Holy Power: (610 * 6 - 6) damage"
+          ],
+          "requires": "cata-paladin-1-7"
+        },
+        {
+          "id": "cata-paladin-1-12",
+          "name": "Grand Crusader",
+          "icon": "inv_helmet_74",
+          "maxRank": 2,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "When your Crusader Strike or Hammer of the Righteous deal damage to your primary target, they have a 10% chance of refreshing the cooldown on your next Avenger's Shield and causing it to generate a charge of Holy Power if used within 6 sec.",
+            "When your Crusader Strike or Hammer of the Righteous deal damage to your primary target, they have a 20% chance of refreshing the cooldown on your next Avenger's Shield and causing it to generate a charge of Holy Power if used within 6 sec."
+          ],
+          "requires": "cata-paladin-1-8"
+        },
+        {
+          "id": "cata-paladin-1-13",
+          "name": "Vindication",
+          "icon": "spell_holy_vindication",
+          "maxRank": 1,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "Your Crusader Strike and Hammer of the Righteous reduce physical damage done by their primary targets by 10% for 30 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-1-14",
+          "name": "Holy Shield",
+          "icon": "classic_spell_holy_blessingofprotection",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "Increases the amount your shield blocks by an additional 20% for 10 sec."
+          ],
+          "requires": "cata-paladin-1-11"
+        },
+        {
+          "id": "cata-paladin-1-15",
+          "name": "Guarded by the Light",
+          "icon": "ability_paladin_gaurdedbythelight",
+          "maxRank": 2,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "Increases your Word of Glory by 5% when used to heal yourself.",
+            "Increases your Word of Glory by 10% when used to heal yourself. In addition, any overhealing will create a protective shield equal to the amount of overhealing that lasts for 6 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-1-16",
+          "name": "Divine Guardian",
+          "icon": "spell_holy_powerwordbarrier",
+          "maxRank": 1,
+          "row": 4,
+          "col": 3,
+          "descriptions": [
+            "All party or raid members within 30 yards, excluding the Paladin, take 20% reduced damage for 6 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-1-17",
+          "name": "Sacred Duty",
+          "icon": "spell_holy_divineintervention",
+          "maxRank": 2,
+          "row": 5,
+          "col": 1,
+          "descriptions": [
+            "Your Judgement and Avenger Shield have a 25% chance of making your next Shield of the Righteous a critical strike. Lasts 10 sec.",
+            "Your Judgement and Avenger's Shield have a 50% chance of making your next Shield of the Righteous a critical strike. Lasts 10 sec."
+          ],
+          "requires": "cata-paladin-1-14"
+        },
+        {
+          "id": "cata-paladin-1-18",
+          "name": "Shield of the Templar",
+          "icon": "ability_paladin_shieldofthetemplar",
+          "maxRank": 3,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Reduces the cooldown of Avenging Wrath by 20 sec and Guardian of Ancient Kings by 40 sec. In addition, your Divine Plea will generate 1 Holy Power.",
+            "Reduces the cooldown of Avenging Wrath by 40 sec and Guardian of Ancient Kings by 80 sec. In addition, your Divine Plea will generate 2 Holy Power.",
+            "Reduces the cooldown of Avenging Wrath by 60 sec and Guardian of Ancient Kings by 120 sec. In addition, your Divine Plea will generate 3 Holy Power."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-1-19",
+          "name": "Ardent Defender",
+          "icon": "spell_holy_ardentdefender",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "Reduce damage taken by 20% for 10 sec. While Ardent Defender is active, the next attack that would otherwise kill you will instead cause you to be healed for 15% of your maximum health."
+          ],
+          "requires": ""
+        }
+      ]
+    },
+    {
+      "id": "cata-paladin-2",
+      "name": "Retribution",
+      "icon": "spell_holy_auraoflight",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "cata-paladin-2-0",
+          "name": "Eye for an Eye",
+          "icon": "spell_holy_eyeforaneye",
+          "maxRank": 2,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "All magic attacks against you have a 20% chance to cause 30% of the damage taken back to the attacker as well.",
+            "All magic attacks against you have a 40% chance to cause 30% of the damage taken back to the attacker as well."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-1",
+          "name": "Crusade",
+          "icon": "spell_holy_crusade",
+          "maxRank": 3,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Increases the damage of your Crusader Strike, Hammer of the Righteous, and Templar's Verdict by 10%, and the damage and healing of your Holy Shock by 10%. In addition, for 15 sec after you kill an enemy that yields experience or honor, your next Holy Light heals for an additional 100%.",
+            "Increases the damage of your Crusader Strike, Hammer of the Righteous, and Templar's Verdict by 20%, and the damage and healing of your Holy Shock by 20%. In addition, for 15 sec after you kill an enemy that yields experience or honor, your next Holy Light heals for an additional 200%.",
+            "Increases the damage of your Crusader Strike, Hammer of the Righteous, and Templar's Verdict by 30%, and the damage and healing of your Holy Shock by 30%. In addition, for 15 sec after you kill an enemy that yields experience or honor, your next Holy Light heals for an additional 300%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-2",
+          "name": "Improved Judgement",
+          "icon": "ability_paladin_judgementblue",
+          "maxRank": 2,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Increases the range of your Judgement by 10 yards.",
+            "Increases the range of your Judgement by 20 yards."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-3",
+          "name": "Guardian's Favor",
+          "icon": "spell_holy_sealofprotection",
+          "maxRank": 2,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Reduces the cooldown of your Hand of Protection by 60 sec and increases the duration of your Hand of Freedom by 2 sec.",
+            "Reduces the cooldown of your Hand of Protection by 2 min and increases the duration of your Hand of Freedom by 4 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-4",
+          "name": "Rule of Law",
+          "icon": "inv_relics_libramofhope",
+          "maxRank": 3,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Increases the critical effect chance of your Crusader Strike, Hammer of the Righteous and Word of Glory by 5%.",
+            "Increases the critical effect chance of your Crusader Strike, Hammer of the Righteous and Word of Glory by 10%.",
+            "Increases the critical effect chance of your Crusader Strike, Hammer of the Righteous and Word of Glory by 15%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-5",
+          "name": "Pursuit of Justice",
+          "icon": "spell_holy_persuitofjustice",
+          "maxRank": 2,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "You have a 50% chance to gain a charge of Holy Power when struck by a Stun, Fear or Immobilize effect. In addition, increases your movement and mounted movement speed by 8%. This effect does not stack with other movement speed increasing effects.",
+            "You have a 100% chance to gain a charge of Holy Power when struck by a Stun, Fear or Immobilize effect. In addition, increases your movement and mounted movement speed by 15%. This effect does not stack with other movement speed increasing effects."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-6",
+          "name": "Communion",
+          "icon": "ability_paladin_judgementofthewise",
+          "maxRank": 1,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Your auras increase your party and raid's damage dealt by 3%, and your own damage is increased by an additional 2% at all times. In addition, your Judgement causes Replenishment. Replenishment - Grants up to 10 party or raid members mana regeneration equal to 1% of their maximum mana per 10 sec. Lasts for 15 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-7",
+          "name": "The Art of War",
+          "icon": "ability_paladin_artofwar",
+          "maxRank": 3,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "Your autoattacks have a 7% chance to make your next Exorcism instant, free and cause 100% additional damage.",
+            "Your autoattacks have a 14% chance to make your next Exorcism instant, free and cause 100% additional damage.",
+            "Your autoattacks have a 20% chance to make your next Exorcism instant, free and cause 100% additional damage."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-8",
+          "name": "Long Arm of the Law",
+          "icon": "ability_paladin_judgementred",
+          "maxRank": 2,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Your Judgement has a 50% chance to increase your movement speed by 45% for 4 sec when used on targets at or further than 15 yards from you.",
+            "Your Judgement has a 100% chance to increase your movement speed by 45% for 4 sec when used on targets at or further than 15 yards from you."
+          ],
+          "requires": "cata-paladin-2-2"
+        },
+        {
+          "id": "cata-paladin-2-9",
+          "name": "Divine Storm",
+          "icon": "ability_paladin_divinestorm",
+          "maxRank": 1,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "An instant attack that causes 100% weapon damage to all enemies within 8 yards. The Divine Storm heals up to 3 party or raid members totaling 25% of the damage caused, and will grant a charge of Holy Power if it hits 4 or more targets."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-10",
+          "name": "Sacred Shield",
+          "icon": "ability_paladin_blessedmending",
+          "maxRank": 1,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "When reduced below 30% health, you gain the Sacred Shield effect. The Sacred Shield absorbs [(1) + (Attack power * 2.8)] damage and increases healing received by 20%. Lasts 15 sec. This effect cannot occur more than once every 60 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-11",
+          "name": "Sanctity of Battle",
+          "icon": "inv_sword_136",
+          "maxRank": 1,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "Haste effects lower the cooldown of your Crusader Strike and Divine Storm abilities."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-12",
+          "name": "Seals of Command",
+          "icon": "ability_warrior_innerrage",
+          "maxRank": 1,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "Your Seal of Righteousness, Seal of Truth, and Seal of Justice now also deal 7% weapon damage when triggered. In addition, your Seal of Righteousness now hits all enemy targets within melee range."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-13",
+          "name": "Sanctified Wrath",
+          "icon": "ability_paladin_sanctifiedwrath",
+          "maxRank": 3,
+          "row": 3,
+          "col": 3,
+          "descriptions": [
+            "Increases the critical strike chance of Hammer of Wrath by 2%, reduces the cooldown of Avenging Wrath by 20 secs and allows the use of Hammer of Wrath at all times during Avenging Wrath.",
+            "Increases the critical strike chance of Hammer of Wrath by 4%, reduces the cooldown of Avenging Wrath by 40 secs and allows the use of Hammer of Wrath at all times during Avenging Wrath.",
+            "Increases the critical strike chance of Hammer of Wrath by 6%, reduces the cooldown of Avenging Wrath by 60 secs and allows the use of Hammer of Wrath at all times during Avenging Wrath."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-14",
+          "name": "Selfless Healer",
+          "icon": "spell_holy_rune",
+          "maxRank": 2,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "Reduces the cooldown of Word of Glory by 5 sec. In addition, when you heal others with your Word of Glory, it increases the effectiveness of the heal by 25% and increases your damage done by 2% per charge of Holy Power for 10 sec.",
+            "Reduces the cooldown of Word of Glory by 10 sec. In addition, when you heal others with your Word of Glory, it increases the effectiveness of the heal by 50% and increases your damage done by 4% per charge of Holy Power for 10 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-15",
+          "name": "Repentance",
+          "icon": "spell_holy_prayerofhealing",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "Puts the enemy target in a state of meditation, incapacitating them for up to 1 min. Any damage from sources other than Censure will awaken the target. Usable against Demons, Dragonkin, Giants, Humanoids and Undead."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-16",
+          "name": "Divine Purpose",
+          "icon": "spell_holy_divinepurpose",
+          "maxRank": 2,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "The following attacks have a 7% chance to cause your next Holy Power ability to consume no Holy Power and to cast as if 3 Holy Power were consumed: - Judgement - Exorcism - Templar's Verdict - Divine Storm - Inquisition - Holy Wrath - Hammer of Wrath",
+            "The following attacks have a 15% chance to cause your next Holy Power ability to consume no Holy Power and to cast as if 3 Holy Power were consumed: - Judgement - Exorcism - Templar's Verdict - Divine Storm - Inquisition - Holy Wrath - Hammer of Wrath"
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-17",
+          "name": "Inquiry of Faith",
+          "icon": "ability_paladin_righteousvengeance",
+          "maxRank": 3,
+          "row": 5,
+          "col": 1,
+          "descriptions": [
+            "Increases the periodic damage done by your Seal of Truth by 10%, and the duration of your Inquisition by 66%.",
+            "Increases the periodic damage done by your Seal of Truth by 20%, and the duration of your Inquisition by 133%.",
+            "Increases the periodic damage done by your Seal of Truth by 30%, and the duration of your Inquisition by 200%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-18",
+          "name": "Acts of Sacrifice",
+          "icon": "ability_paladin_blessedhands",
+          "maxRank": 2,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Reduces the cooldown by 10% and mana cost by 10% of your Hand of Freedom, Hand of Salvation and Hand of Sacrifice. In addition, your Cleanse will remove one movement impairing effect if cast on yourself.",
+            "Reduces the cooldown by 20% and mana cost by 20% of your Hand of Freedom, Hand of Salvation and Hand of Sacrifice. In addition, your Cleanse will remove one movement impairing effect if cast on yourself."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-paladin-2-19",
+          "name": "Zealotry",
+          "icon": "spell_holy_proclaimchampion_02",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "Your Crusader Strike generates 3 charges of Holy Power per strike for the next 20 sec. Requires 3 Holy Power to use, but does not consume Holy Power."
+          ],
+          "requires": ""
+        }
+      ]
+    }
+  ],
+  "abilities": [
+    {
+      "id": "cata-paladin-0-spec-20473",
+      "name": "Holy Shock",
+      "icon": "spell_holy_searinglight",
+      "description": "Blasts the target with Holy energy, causing 340 Holy damage to an enemy, or 519 healing to an ally, and grants a charge of Holy Power.",
+      "kind": "active",
+      "branchId": "cata-paladin-0",
+      "learningMode": "specialization",
+      "resourceCosts": [
+        {
+          "resourceId": "cata:mana",
+          "resourceName": "Мана",
+          "amount": 7,
+          "unit": "percent"
+        }
+      ],
+      "cast": 0,
+      "cooldown": 6.0,
+      "range": 40.0,
+      "requirements": "",
+      "sourceSpellId": 20473
+    },
+    {
+      "id": "cata-paladin-0-spec-85102",
+      "name": "Walk in the Light",
+      "icon": "spell_holy_championsgrace",
+      "description": "Increases the effectiveness of your healing spells by 10%, the effectiveness of your Word of Glory by 30%, and removes the cooldown on Word of Glory.",
+      "kind": "passive",
+      "branchId": "cata-paladin-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 85102
+    },
+    {
+      "id": "cata-paladin-0-spec-95859",
+      "name": "Meditation",
+      "icon": "spell_nature_sleep",
+      "description": "Allows 50% of your mana regeneration from Spirit to continue while in combat.",
+      "kind": "passive",
+      "branchId": "cata-paladin-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 95859
+    },
+    {
+      "id": "cata-paladin-0-spec-76669",
+      "name": "Illuminated Healing",
+      "icon": "spell_holy_absolution",
+      "description": "Your direct healing spells also place an absorb shield on your target for 12% of the amount healed lasting 15 sec. Each point of Mastery increases the absorb amount by an additional 1.50%.",
+      "kind": "passive",
+      "branchId": "cata-paladin-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "Level 80 · Mastery",
+      "sourceSpellId": 76669
+    },
+    {
+      "id": "cata-paladin-1-spec-31935",
+      "name": "Avenger's Shield",
+      "icon": "spell_holy_avengersshield",
+      "description": "Hurls a holy shield at the enemy, dealing 536 Holy damage, silencing and interrupting spellcasting for 3 sec, and then jumping to additional nearby enemies. Affects 3 total targets.",
+      "kind": "active",
+      "branchId": "cata-paladin-1",
+      "learningMode": "specialization",
+      "resourceCosts": [
+        {
+          "resourceId": "cata:mana",
+          "resourceName": "Мана",
+          "amount": 6,
+          "unit": "percent"
+        }
+      ],
+      "cast": 0,
+      "cooldown": 15.0,
+      "range": 30.0,
+      "requirements": "",
+      "sourceSpellId": 31935
+    },
+    {
+      "id": "cata-paladin-1-spec-53592",
+      "name": "Touched by the Light",
+      "icon": "ability_paladin_touchedbylight",
+      "description": "Increases your total Stamina by 15%, increases your spell hit by 8%, and increases your spell power by an amount equal to 60% of your Strength.",
+      "kind": "passive",
+      "branchId": "cata-paladin-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 53592
+    },
+    {
+      "id": "cata-paladin-1-spec-84839",
+      "name": "Vengeance",
+      "icon": "ability_paladin_shieldofvengeance",
+      "description": "Each time you take damage, you gain 5% of the damage taken as attack power, up to a maximum of 10% of your health.",
+      "kind": "passive",
+      "branchId": "cata-paladin-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 84839
+    },
+    {
+      "id": "cata-paladin-1-spec-31878",
+      "name": "Judgements of the Wise",
+      "icon": "ability_paladin_judgementofthewise",
+      "description": "Using your Judgement ability grants you 30% of your base mana over 10 sec.",
+      "kind": "passive",
+      "branchId": "cata-paladin-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 31878
+    },
+    {
+      "id": "cata-paladin-1-spec-76671",
+      "name": "Divine Bulwark",
+      "icon": "spell_holy_holyprotection",
+      "description": "Increases your chance to block melee attacks by 18%. Each point of Mastery increases block chance by an additional 2.25%.",
+      "kind": "passive",
+      "branchId": "cata-paladin-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "Level 80 · Mastery",
+      "sourceSpellId": 76671
+    },
+    {
+      "id": "cata-paladin-2-spec-85256",
+      "name": "Templar's Verdict",
+      "icon": "spell_paladin_templarsverdict",
+      "description": "An instant weapon attack that causes a percentage of weapon damage. Consumes all charges of Holy Power to increase damage dealt:\n\n1 Holy Power: 30% Weapon Damage\n2 Holy Power: 90% Weapon Damage\n3 Holy Power: 235% Weapon Damage",
+      "kind": "active",
+      "branchId": "cata-paladin-2",
+      "learningMode": "specialization",
+      "resourceCosts": [
+        {
+          "resourceId": "cata:holy",
+          "resourceName": "Светлая сила",
+          "amount": 1,
+          "unit": "points"
+        }
+      ],
+      "cast": 0,
+      "cooldown": 0.0,
+      "range": 5.0,
+      "requirements": "",
+      "sourceSpellId": 85256
+    },
+    {
+      "id": "cata-paladin-2-spec-20113",
+      "name": "Two-Handed Weapon Specialization",
+      "icon": "inv_hammer_04",
+      "description": "Increases the damage you deal with two-handed melee weapons by 25%.",
+      "kind": "passive",
+      "branchId": "cata-paladin-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 20113
+    },
+    {
+      "id": "cata-paladin-2-spec-53503",
+      "name": "Sheath of Light",
+      "icon": "ability_paladin_sheathoflight",
+      "description": "Increases your spell power by an amount equal to 30% of your attack power and increases your chance to hit with spells by 8%.",
+      "kind": "passive",
+      "branchId": "cata-paladin-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 53503
+    },
+    {
+      "id": "cata-paladin-2-spec-89901",
+      "name": "Judgements of the Bold",
+      "icon": "ability_paladin_judgementofthewise",
+      "description": "Your Judgement grants you 25% of your base mana over 10 sec.",
+      "kind": "passive",
+      "branchId": "cata-paladin-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 89901
+    },
+    {
+      "id": "cata-paladin-2-spec-76672",
+      "name": "Hand of Light",
+      "icon": "ability_paladin_blessedhands",
+      "description": "Your Templar's Verdict, Crusader Strike, and Divine Storm deal 16.8% additional damage as Holy damage. Each point of Mastery increases the damage by an additional 2.1%.",
+      "kind": "passive",
+      "branchId": "cata-paladin-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "Level 80 · Mastery",
+      "sourceSpellId": 76672
+    }
+  ],
+  "build": {},
+  "character": {
+    "hp": 10000,
+    "race": "Человек",
+    "gender": "Мужской",
+    "armory": "",
+    "resources": [
+      {
+        "id": "cata:mana",
+        "name": "Мана",
+        "max": 100,
+        "current": 100,
+        "unit": "percent",
+        "display": "bar",
+        "shape": "diamond",
+        "color": "#397de1"
+      },
+      {
+        "id": "cata:holy",
+        "name": "Светлая сила",
+        "max": 3,
+        "current": 0,
+        "unit": "count",
+        "display": "icons",
+        "shape": "diamond",
+        "color": "#b84e42"
+      }
+    ]
+  },
+  "source": {
+    "version": "4.3.4",
+    "url": "https://github.com/fooxytv/cplus-talents/blob/main/src/editions/cata.json",
+    "dataBlob": "a6ce40095cb8ca84926e81bca6c70db88a0f6bfa",
+    "generated": "2026-09-21T11:38:40.226Z",
+    "language": "en",
+    "primarySpells": "https://github.com/caicaicai/dbc434",
+    "notes": [
+      "Level/stat dependent specialization effects are represented symbolically."
+    ]
+  }
+}

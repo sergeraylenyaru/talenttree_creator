@@ -1,0 +1,1096 @@
+{
+  "version": 1,
+  "name": "Рыцарь смерти · 4.3.4",
+  "budget": 41,
+  "budgetAuto": false,
+  "rowCost": 5,
+  "specialization": {
+    "requiredPoints": 31
+  },
+  "branches": [
+    {
+      "id": "cata-deathknight-0",
+      "name": "Blood",
+      "icon": "spell_deathknight_bloodpresence",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "cata-deathknight-0-0",
+          "name": "Butchery",
+          "icon": "inv_axe_68",
+          "maxRank": 2,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "Whenever you kill an enemy that grants experience or honor, you generate up to 10 Runic Power. In addition, you generate 1 Runic Power per 5 sec while in combat.",
+            "Whenever you kill an enemy that grants experience or honor, you generate up to 20 Runic Power. In addition, you generate 2 Runic Power per 5 sec while in combat."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-1",
+          "name": "Blade Barrier",
+          "icon": "ability_upgrademoonglaive",
+          "maxRank": 3,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "You take 2% less damage from all sources.",
+            "You take 4% less damage from all sources.",
+            "You take 6% less damage from all sources."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-2",
+          "name": "Bladed Armor",
+          "icon": "inv_shoulder_36",
+          "maxRank": 3,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Increases your attack power by 2 for every 180 armor value you have.",
+            "Increases your attack power by 4 for every 180 armor value you have.",
+            "Increases your attack power by 6 for every 180 armor value you have."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-3",
+          "name": "Improved Blood Tap",
+          "icon": "spell_deathknight_bloodtap",
+          "maxRank": 2,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Reduces the cooldown of your Blood Tap ability by 15 sec.",
+            "Reduces the cooldown of your Blood Tap ability by 30 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-4",
+          "name": "Scent of Blood",
+          "icon": "ability_rogue_bloodyeye",
+          "maxRank": 3,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "You have a 15% chance after dodging, parrying or taking direct damage to gain the Scent of Blood effect, causing your next melee hit to generate 10 Runic Power.",
+            "You have a 15% chance after dodging, parrying or taking direct damage to gain the Scent of Blood effect, causing your next 2 melee hits to generate 10 Runic Power.",
+            "You have a 15% chance after dodging, parrying or taking direct damage to gain the Scent of Blood effect, causing your next 3 melee hits to generate 10 Runic Power."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-5",
+          "name": "Scarlet Fever",
+          "icon": "ability_rogue_vendetta",
+          "maxRank": 2,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "Causes your Blood Plague to afflict enemies with Scarlet Fever, reducing their physical damage dealt by 5% for 21 sec.",
+            "Causes your Blood Plague to afflict enemies with Scarlet Fever, reducing their physical damage dealt by 10% for 21 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-6",
+          "name": "Hand of Doom",
+          "icon": "ability_deathknight_desolation",
+          "maxRank": 2,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "Reduces the cooldown of your Strangulate ability by 30 sec.",
+            "Reduces the cooldown of your Strangulate ability by 60 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-7",
+          "name": "Blood-Caked Blade",
+          "icon": "ability_criticalstrike",
+          "maxRank": 3,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Your autoattacks have a 10% chance to cause a Blood-Caked Strike, which hits for 25% weapon damage plus 12.5% for each of your diseases on the target.",
+            "Your autoattacks have a 20% chance to cause a Blood-Caked Strike, which hits for 25% weapon damage plus 12.5% for each of your diseases on the target.",
+            "Your autoattacks have a 30% chance to cause a Blood-Caked Strike, which hits for 25% weapon damage plus 12.5% for each of your diseases on the target."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-8",
+          "name": "Bone Shield",
+          "icon": "ability_deathknight_boneshield",
+          "maxRank": 1,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "Surrounds you with a barrier of whirling bones. The shield begins with 6 charges, and each damaging attack consumes a charge. While at least 1 charge remains, you take 20% less damage from all sources and deal 2% more damage with all attacks, spells and abilities [Glyph of Bone Shield: and move up to 0% faster]. Lasts 5 min."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-9",
+          "name": "Toughness",
+          "icon": "spell_holy_devotion",
+          "maxRank": 3,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Increases your armor value from items by 3%.",
+            "Increases your armor value from items by 7%.",
+            "Increases your armor value from items by 10%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-10",
+          "name": "Abomination's Might",
+          "icon": "ability_warrior_intensifyrage",
+          "maxRank": 2,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "Increases melee attack power by 10% and ranged attack power by 5% of party and raid members within 100 yards. Also increases your total Strength by 1%.",
+            "Increases melee attack power by 20% and ranged attack power by 10% of party and raid members within 100 yards. Also increases your total Strength by 2%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-11",
+          "name": "Sanguine Fortitude",
+          "icon": "ability_deathknight_sanguinfortitude",
+          "maxRank": 2,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "Your Icebound Fortitude reduces damage taken by an additional 15%, and costs 50% less Runic Power to activate.",
+            "Your Icebound Fortitude reduces damage taken by an additional 30%, and costs no Runic Power to activate."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-12",
+          "name": "Blood Parasite",
+          "icon": "spell_shadow_soulleech",
+          "maxRank": 2,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "Your melee attacks have a 5% chance to spawn a Bloodworm. The Bloodworm attacks your enemies, gorging itself with blood until it bursts to heal nearby allies. Lasts up to 20 sec.",
+            "Your melee attacks have a 10% chance to spawn a Bloodworm. The Bloodworm attacks your enemies, gorging itself with blood until it bursts to heal nearby allies. Lasts up to 20 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-13",
+          "name": "Improved Blood Presence",
+          "icon": "spell_deathknight_bloodpresence",
+          "maxRank": 2,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "Increases your rune regeneration by 10% and reduces the chance that you will be critically hit by melee attacks while in Blood Presence by 3%. In addition, while in Frost Presence or Unholy Presence, you retain 2% damage reduction from Blood Presence.",
+            "Increases your rune regeneration by 20% and reduces the chance that you will be critically hit by melee attacks while in Blood Presence by 6%. In addition, while in Frost Presence or Unholy Presence, you retain 4% damage reduction from Blood Presence."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-14",
+          "name": "Will of the Necropolis",
+          "icon": "ability_creature_cursed_02",
+          "maxRank": 3,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "When a damaging attack brings you below 30% of your maximum health, the cooldown on your Rune Tap ability is refreshed and your next Rune Tap has no cost, and all damage taken is reduced by 8% for 8 sec. This effect cannot occur more than once every 45 seconds.",
+            "When a damaging attack brings you below 30% of your maximum health, the cooldown on your Rune Tap ability is refreshed and your next Rune Tap has no cost, and all damage taken is reduced by 16% for 8 sec. This effect cannot occur more than once every 45 seconds.",
+            "When a damaging attack brings you below 30% of your maximum health, the cooldown on your Rune Tap ability is refreshed and your next Rune Tap has no cost, and all damage taken is reduced by 25% for 8 sec. This effect cannot occur more than once every 45 seconds."
+          ],
+          "requires": "cata-deathknight-0-15"
+        },
+        {
+          "id": "cata-deathknight-0-15",
+          "name": "Rune Tap",
+          "icon": "spell_deathknight_runetap",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "Converts 1 Blood Rune into 10% of your maximum health."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-16",
+          "name": "Vampiric Blood",
+          "icon": "spell_shadow_lifedrain",
+          "maxRank": 1,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "[Glyph of Vampiric Blood: Increases the amount of health the Death Knight receives from healing spells and effects by 25% for 10 sec / Temporarily grants the Death Knight 15% of maximum health and increases the amount of health received from healing spells and effects by 25% for 10 sec. After the effect expires, the health is lost.]"
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-17",
+          "name": "Improved Death Strike",
+          "icon": "spell_deathknight_butcher2",
+          "maxRank": 3,
+          "row": 5,
+          "col": 1,
+          "descriptions": [
+            "Increases the damage done by your Death Strike by 40%, its critical strike chance by 10%, and its amount healed by 15%.",
+            "Increases the damage done by your Death Strike by 80%, its critical strike chance by 20%, and its amount healed by 30%.",
+            "Increases the damage done by your Death Strike by 120%, its critical strike chance by 30%, and its amount healed by 45%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-18",
+          "name": "Crimson Scourge",
+          "icon": "spell_deathknight_bloodboil",
+          "maxRank": 2,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Increases the damage dealt by your Blood Boil by 20%, and when you land a melee attack on a target that is infected with your Blood Plague, there is a 5% chance that your next Blood Boil will consume no runes.",
+            "Increases the damage dealt by your Blood Boil by 40%, and when you land a melee attack on a target that is infected with your Blood Plague, there is a 10% chance that your next Blood Boil will consume no runes."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-0-19",
+          "name": "Dancing Rune Weapon",
+          "icon": "inv_sword_07",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "Summons a second rune weapon that fights on its own for 12 sec, mirroring the Death Knight's attacks. The rune weapon also assists in defense of its master, granting an additional 20% parry chance while active."
+          ],
+          "requires": ""
+        }
+      ]
+    },
+    {
+      "id": "cata-deathknight-1",
+      "name": "Frost",
+      "icon": "spell_deathknight_frostpresence",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "cata-deathknight-1-0",
+          "name": "Runic Power Mastery",
+          "icon": "spell_arcane_arcane01",
+          "maxRank": 3,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "Increases your maximum Runic Power by 10.",
+            "Increases your maximum Runic Power by 20.",
+            "Increases your maximum Runic Power by 30."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-1",
+          "name": "Icy Reach",
+          "icon": "spell_frost_manarecharge",
+          "maxRank": 2,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Increases the range of your Icy Touch, Chains of Ice and Howling Blast by 5 yards.",
+            "Increases the range of your Icy Touch, Chains of Ice and Howling Blast by 10 yards."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-2",
+          "name": "Nerves of Cold Steel",
+          "icon": "ability_dualwield",
+          "maxRank": 3,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Increases your chance to hit with one-handed melee weapons by 1% and increases the damage done by your off-hand weapon by 8%.",
+            "Increases your chance to hit with one-handed melee weapons by 2% and increases the damage done by your off-hand weapon by 16%.",
+            "Increases your chance to hit with one-handed melee weapons by 3% and increases the damage done by your off-hand weapon by 25%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-3",
+          "name": "Annihilation",
+          "icon": "inv_weapon_hand_18",
+          "maxRank": 3,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Increases the damage dealt by your Obliterate ability by 15%.",
+            "Increases the damage dealt by your Obliterate ability by 30%.",
+            "Increases the damage dealt by your Obliterate ability by 45%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-4",
+          "name": "Lichborne",
+          "icon": "spell_shadow_raisedead",
+          "maxRank": 1,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "Draw upon unholy energy to become undead for 10 sec. While undead, you are immune to Charm, Fear and Sleep effects."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-5",
+          "name": "On a Pale Horse",
+          "icon": "ability_mount_undeadhorse",
+          "maxRank": 2,
+          "row": 1,
+          "col": 2,
+          "descriptions": [
+            "You become as hard to stop as death itself. The duration of movement-slowing effects used against you is reduced by 15%, and your mounted speed is increased by 10%. This does not stack with other movement speed increasing effects.",
+            "You become as hard to stop as death itself. The duration of movement-slowing effects used against you is reduced by 30%, and your mounted speed is increased by 20%. This does not stack with other movement speed increasing effects."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-6",
+          "name": "Endless Winter",
+          "icon": "spell_shadow_twilight",
+          "maxRank": 2,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "The cost of your Mind Freeze is reduced to 10 Runic Power.",
+            "Your Mind Freeze no longer costs Runic Power."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-7",
+          "name": "Merciless Combat",
+          "icon": "inv_sword_112",
+          "maxRank": 2,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Your Icy Touch, Howling Blast, Obliterate and Frost Strike do an additional 6% damage when striking targets with less than 35% health.",
+            "Your Icy Touch, Howling Blast, Obliterate and Frost Strike do an additional 12% damage when striking targets with less than 35% health."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-8",
+          "name": "Chill of the Grave",
+          "icon": "spell_frost_frostshock",
+          "maxRank": 2,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "Your Chains of Ice, Howling Blast, Icy Touch and Obliterate generate 5 additional Runic Power.",
+            "Your Chains of Ice, Howling Blast, Icy Touch and Obliterate generate 10 additional Runic Power."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-9",
+          "name": "Killing Machine",
+          "icon": "inv_sword_122",
+          "maxRank": 3,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Your autoattacks have a chance to grant a 100% critical strike bonus to your next Obliterate or Frost Strike.",
+            "Your autoattacks have a chance to grant a 100% critical strike bonus to your next Obliterate or Frost Strike. Effect occurs more often than Killing Machine (Rank 1).",
+            "Your autoattacks have a chance to grant a 100% critical strike bonus to your next Obliterate or Frost Strike. Effect occurs more often than Killing Machine (Rank 2)."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-10",
+          "name": "Rime",
+          "icon": "spell_frost_freezingbreath",
+          "maxRank": 3,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "Your Obliterate has a 15% chance to cause your next Howling Blast or Icy Touch to consume no runes.",
+            "Your Obliterate has a 30% chance to cause your next Howling Blast or Icy Touch to consume no runes.",
+            "Your Obliterate has a 45% chance to cause your next Howling Blast or Icy Touch to consume no runes."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-11",
+          "name": "Pillar of Frost",
+          "icon": "ability_deathknight_pillaroffrost",
+          "maxRank": 1,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "Calls upon the power of Frost to increase the Death Knight's Strength by 20%. Icy crystals hang heavy upon the Death Knight's body, providing immunity against external movement such as knockbacks. Lasts 20 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-12",
+          "name": "Improved Icy Talons",
+          "icon": "spell_deathknight_icytalons",
+          "maxRank": 1,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "Increases the melee and ranged attack speed of all party and raid members within 100 yards by 10%, and your own attack speed by an additional 5%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-13",
+          "name": "Brittle Bones",
+          "icon": "ability_deathknight_brittlebones",
+          "maxRank": 2,
+          "row": 3,
+          "col": 3,
+          "descriptions": [
+            "Your Strength is increased by 2% and your Frost Fever chills the bones of its victims, increasing their physical damage taken by 2%.",
+            "Your Strength is increased by 4% and your Frost Fever chills the bones of its victims, increasing their physical damage taken by 4%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-14",
+          "name": "Chilblains",
+          "icon": "spell_frost_wisp",
+          "maxRank": 2,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "Victims of your Frost Fever disease are Chilled, reducing movement speed by 25% for 10 sec, and your Chains of Ice immobilizes targets for 1.50 sec.",
+            "Victims of your Frost Fever disease are Chilled, reducing movement speed by 50% for 10 sec, and your Chains of Ice immobilizes targets for 3 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-15",
+          "name": "Hungering Cold",
+          "icon": "inv_staff_15",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "Purges the earth around the Death Knight of all heat. Enemies within 10 yards are afflicted with Frost Fever and trapped in ice, preventing them from performing any action for 10 sec. Enemies are considered Frozen, but any damage other than diseases will break the ice."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-16",
+          "name": "Improved Frost Presence",
+          "icon": "spell_deathknight_frostpresence",
+          "maxRank": 2,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "Increases your bonus damage while in Frost Presence by an additional 2%. In addition, while in Blood Presence or Unholy Presence, you retain 2% increased Runic Power generation from Frost Presence.",
+            "Increases your bonus damage while in Frost Presence by an additional 5%. In addition, while in Blood Presence or Unholy Presence, you retain 4% increased Runic Power generation from Frost Presence."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-17",
+          "name": "Threat of Thassarian",
+          "icon": "ability_dualwieldspecialization",
+          "maxRank": 3,
+          "row": 5,
+          "col": 0,
+          "descriptions": [
+            "When dual-wielding, your Death Strikes, Obliterates, Plague Strikes, Rune Strikes, Blood Strikes and Frost Strikes have a 30% chance to also deal damage with your off-hand weapon. Off-hand strikes from Rune Strike generate increased threat.",
+            "When dual-wielding, your Death Strikes, Obliterates, Plague Strikes, Rune Strikes, Blood Strikes and Frost Strikes have a 60% chance to also deal damage with your off-hand weapon. Off-hand strikes from Rune Strike generate increased threat.",
+            "When dual-wielding, your Death Strikes, Obliterates, Plague Strikes, Rune Strikes, Blood Strikes and Frost Strikes have a 100% chance to also deal damage with your off-hand weapon. Off-hand strikes from Rune Strike generate increased threat."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-18",
+          "name": "Might of the Frozen Wastes",
+          "icon": "inv_sword_120",
+          "maxRank": 3,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "When wielding a two-handed weapon, your melee attacks deal an additional 3% damage and your autoattacks have a 15% chance to generate 10 Runic Power.",
+            "When wielding a two-handed weapon, your melee attacks deal an additional 7% damage and your autoattacks have a 30% chance to generate 10 Runic Power.",
+            "When wielding a two-handed weapon, your melee attacks deal an additional 10% damage and your autoattacks have a 45% chance to generate 10 Runic Power."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-1-19",
+          "name": "Howling Blast",
+          "icon": "spell_frost_arcticwinds",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "Blast the target with a frigid wind, dealing [((197 + 197) / 2) + (Attack power * 0.44)] Frost damage to that foe, and [(0.5 * (((197 + 197) / 2) + (Attack power * 0.44)))] Frost damage to all other enemies within 10 yards [Glyph of Howling Blast: infecting all targets with Frost Fever]."
+          ],
+          "requires": "cata-deathknight-1-15"
+        }
+      ]
+    },
+    {
+      "id": "cata-deathknight-2",
+      "name": "Unholy",
+      "icon": "spell_deathknight_unholypresence",
+      "rows": 7,
+      "talents": [
+        {
+          "id": "cata-deathknight-2-0",
+          "name": "Unholy Command",
+          "icon": "spell_deathknight_strangulate",
+          "maxRank": 2,
+          "row": 0,
+          "col": 0,
+          "descriptions": [
+            "Reduces the cooldown of your Death Grip ability by 5 sec, and gives you a 50% chance to refresh its cooldown when dealing a killing blow to a target that grants experience or honor.",
+            "Reduces the cooldown of your Death Grip ability by 10 sec, and gives you a 100% chance to refresh its cooldown when dealing a killing blow to a target that grants experience or honor."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-1",
+          "name": "Virulence",
+          "icon": "spell_shadow_burningspirit",
+          "maxRank": 3,
+          "row": 0,
+          "col": 1,
+          "descriptions": [
+            "Increases the damage done by your diseases by 10%.",
+            "Increases the damage done by your diseases by 20%.",
+            "Increases the damage done by your diseases by 30%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-2",
+          "name": "Epidemic",
+          "icon": "spell_shadow_shadowwordpain",
+          "maxRank": 3,
+          "row": 0,
+          "col": 2,
+          "descriptions": [
+            "Increases the duration of Blood Plague and Frost Fever by 4 sec.",
+            "Increases the duration of Blood Plague and Frost Fever by 8 sec.",
+            "Increases the duration of Blood Plague and Frost Fever by 12 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-3",
+          "name": "Desecration",
+          "icon": "spell_shadow_shadowfiend",
+          "maxRank": 2,
+          "row": 1,
+          "col": 0,
+          "descriptions": [
+            "Your Plague, Scourge, and Necrotic Strikes defile the ground within 7 yards of your target. Enemies in the area are slowed by 25% while standing on the unholy ground. Does not trigger against targets that are immune to movement-slowing effects. Lasts 20 sec.",
+            "Your Plague, Scourge, and Necrotic Strikes defile the ground within 7 yards of your target. Enemies in the area are slowed by 50% while standing on the unholy ground. Does not trigger against targets that are immune to movement-slowing effects. Lasts 20 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-4",
+          "name": "Resilient Infection",
+          "icon": "ability_creature_disease_05",
+          "maxRank": 2,
+          "row": 1,
+          "col": 1,
+          "descriptions": [
+            "When your diseases are dispelled by an enemy, you have a 50% chance to activate a Frost Rune if Frost Fever was removed, or an Unholy Rune if Blood Plague was removed.",
+            "When your diseases are dispelled by an enemy, you have a 100% chance to activate a Frost Rune if Frost Fever was removed, or an Unholy Rune if Blood Plague was removed."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-5",
+          "name": "Morbidity",
+          "icon": "spell_shadow_deathanddecay",
+          "maxRank": 3,
+          "row": 1,
+          "col": 3,
+          "descriptions": [
+            "Increases the damage and healing of Death Coil by 5% and Death and Decay by 10%.",
+            "Increases the damage and healing of Death Coil by 10% and Death and Decay by 20%.",
+            "Increases the damage and healing of Death Coil by 15% and Death and Decay by 30%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-6",
+          "name": "Runic Corruption",
+          "icon": "spell_shadow_rune",
+          "maxRank": 2,
+          "row": 2,
+          "col": 0,
+          "descriptions": [
+            "Reduces the cost of your Death Coil by 3, and causes your Runic Empowerment ability to no longer refresh a depleted rune, but instead to increase your rune regeneration rate by 50% for 3 sec.",
+            "Reduces the cost of your Death Coil by 6, and causes your Runic Empowerment ability to no longer refresh a depleted rune, but instead to increase your rune regeneration rate by 100% for 3 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-7",
+          "name": "Unholy Frenzy",
+          "icon": "spell_shadow_unholyfrenzy",
+          "maxRank": 1,
+          "row": 2,
+          "col": 1,
+          "descriptions": [
+            "Incites a friendly party or raid member into a killing frenzy for 30 sec. The target is Enraged, increasing their melee and ranged haste by 20%, but causes them to lose health equal to 2% of their maximum health every 3 sec."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-8",
+          "name": "Contagion",
+          "icon": "spell_shadow_plaguecloud",
+          "maxRank": 2,
+          "row": 2,
+          "col": 2,
+          "descriptions": [
+            "Increases the damage of your diseases spread via Pestilence by 50%.",
+            "Increases the damage of your diseases spread via Pestilence by 100%."
+          ],
+          "requires": "cata-deathknight-2-2"
+        },
+        {
+          "id": "cata-deathknight-2-9",
+          "name": "Shadow Infusion",
+          "icon": "spell_shadow_requiem",
+          "maxRank": 3,
+          "row": 2,
+          "col": 3,
+          "descriptions": [
+            "Grants your successful Death Coils a 33% chance to empower your active Ghoul, increasing its damage dealt by 6% for 30 sec. Stacks up to 5 times.",
+            "Grants your successful Death Coils a 66% chance to empower your active Ghoul, increasing its damage dealt by 6% for 30 sec. Stacks up to 5 times.",
+            "Grants your successful Death Coils a 100% chance to empower your active Ghoul, increasing its damage dealt by 6% for 30 sec. Stacks up to 5 times."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-10",
+          "name": "Death's Advance",
+          "icon": "spell_shadow_demonicempathy",
+          "maxRank": 2,
+          "row": 3,
+          "col": 0,
+          "descriptions": [
+            "While your Unholy Runes are both depleted, movement-impairing effects may not reduce you below 60% of normal movement speed.",
+            "While your Unholy Runes are both depleted, movement-impairing effects may not reduce you below 75% of normal movement speed."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-11",
+          "name": "Magic Suppression",
+          "icon": "spell_shadow_antimagicshell",
+          "maxRank": 3,
+          "row": 3,
+          "col": 1,
+          "descriptions": [
+            "Increases the spell damage absorption of your Anti-Magic Shell by an additional 8%, and causes damage absorbed by Anti-Magic Shell to energize the Death Knight with Runic Power.",
+            "Increases the spell damage absorption of your Anti-Magic Shell by an additional 16%, and increases the Runic Power generated when damage is absorbed by Anti-Magic Shell.",
+            "Increases the spell damage absorption of your Anti-Magic Shell by an additional 25%, and increases the Runic Power generated when damage is absorbed by Anti-Magic Shell."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-12",
+          "name": "Rage of Rivendare",
+          "icon": "inv_weapon_halberd14",
+          "maxRank": 3,
+          "row": 3,
+          "col": 2,
+          "descriptions": [
+            "Increases the damage of your Plague Strike, Scourge Strike, and Festering Strike abilities by 15%.",
+            "Increases the damage of your Plague Strike, Scourge Strike, and Festering Strike abilities by 30%.",
+            "Increases the damage of your Plague Strike, Scourge Strike, and Festering Strike abilities by 45%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-13",
+          "name": "Unholy Blight",
+          "icon": "spell_shadow_contagion",
+          "maxRank": 1,
+          "row": 4,
+          "col": 0,
+          "descriptions": [
+            "Causes the victims of your Death Coil to be surrounded by a vile swarm of unholy insects, taking 10% of the damage done by the Death Coil over 10 sec, and preventing any diseases on the victim from being dispelled."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-14",
+          "name": "Anti-Magic Zone",
+          "icon": "spell_deathknight_antimagiczone",
+          "maxRank": 1,
+          "row": 4,
+          "col": 1,
+          "descriptions": [
+            "Places a large, stationary Anti-Magic Zone that reduces spell damage done to party or raid members inside it by 75%. The Anti-Magic Zone lasts for 10 sec or until it absorbs (10000 + 2 * Attack power) spell damage."
+          ],
+          "requires": "cata-deathknight-2-11"
+        },
+        {
+          "id": "cata-deathknight-2-15",
+          "name": "Improved Unholy Presence",
+          "icon": "spell_deathknight_unholypresence",
+          "maxRank": 2,
+          "row": 4,
+          "col": 2,
+          "descriptions": [
+            "Grants you an additional 5% haste while in Unholy Presence. In addition, while in Blood Presence or Frost Presence, you retain 8% increased movement speed from Unholy Presence.",
+            "Grants you an additional 10% haste while in Unholy Presence. In addition, while in Blood Presence or Frost Presence, you retain 15% increased movement speed from Unholy Presence."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-16",
+          "name": "Dark Transformation",
+          "icon": "achievement_boss_festergutrotface",
+          "maxRank": 1,
+          "row": 4,
+          "col": 3,
+          "descriptions": [
+            "Consume 5 charges of Shadow Infusion on your Ghoul to transform it into a powerful undead monstrosity for 30 sec. The Ghoul's abilities are empowered and take on new functions while the transformation is active."
+          ],
+          "requires": "cata-deathknight-2-9"
+        },
+        {
+          "id": "cata-deathknight-2-17",
+          "name": "Ebon Plaguebringer",
+          "icon": "ability_creature_cursed_03",
+          "maxRank": 2,
+          "row": 5,
+          "col": 1,
+          "descriptions": [
+            "Your Plague Strike, Icy Touch, Chains of Ice, and Outbreak abilities also infect their target with Ebon Plague, which increases damage taken from your diseases by 15% and all magic damage taken by an additional 8%.",
+            "Your Plague Strike, Icy Touch, Chains of Ice, and Outbreak abilities also infect their target with Ebon Plague, which increases damage taken from your diseases by 30% and all magic damage taken by an additional 8%."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-18",
+          "name": "Sudden Doom",
+          "icon": "spell_shadow_painspike",
+          "maxRank": 3,
+          "row": 5,
+          "col": 2,
+          "descriptions": [
+            "Your main-hand autoattacks have a chance to make your next Death Coil cost no Runic Power.",
+            "Your main-hand autoattacks have a chance (higher than rank 1) to make your next Death Coil cost no Runic Power.",
+            "Your main-hand autoattacks have a chance (higher than rank 2) to make your next Death Coil cost no Runic Power."
+          ],
+          "requires": ""
+        },
+        {
+          "id": "cata-deathknight-2-19",
+          "name": "Summon Gargoyle",
+          "icon": "ability_deathknight_summongargoyle",
+          "maxRank": 1,
+          "row": 6,
+          "col": 1,
+          "descriptions": [
+            "A Gargoyle flies into the area and bombards the target with Nature damage modified by the Death Knight's attack power. Persists for 30 sec."
+          ],
+          "requires": ""
+        }
+      ]
+    }
+  ],
+  "abilities": [
+    {
+      "id": "cata-deathknight-0-spec-55050",
+      "name": "Heart Strike",
+      "icon": "inv_weapon_shortblade_40",
+      "description": "Instantly strike the target and up to two additional nearby enemies, causing 175% weapon damage plus 250 on the primary target, with each additional enemy struck taking 25% less damage than the previous target. Damage dealt to each target is increased by an additional 15% for each of your diseases present.",
+      "kind": "active",
+      "branchId": "cata-deathknight-0",
+      "learningMode": "specialization",
+      "resourceCosts": [
+        {
+          "resourceId": "cata:runes",
+          "resourceName": "Руны",
+          "amount": 1,
+          "unit": "count"
+        }
+      ],
+      "cast": 0,
+      "cooldown": 0.0,
+      "range": 5.0,
+      "requirements": "",
+      "sourceSpellId": 55050
+    },
+    {
+      "id": "cata-deathknight-0-spec-50029",
+      "name": "Veteran of the Third War",
+      "icon": "spell_misc_warsongfocus",
+      "description": "Increases your total Stamina by 9%, your expertise by 6, and reduces the cooldown of Outbreak by 30 sec.",
+      "kind": "passive",
+      "branchId": "cata-deathknight-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 50029
+    },
+    {
+      "id": "cata-deathknight-0-spec-50034",
+      "name": "Blood Rites",
+      "icon": "spell_deathknight_bloodtap",
+      "description": "Whenever you hit with Death Strike or Obliterate, the Frost and Unholy Runes will become Death Runes when they activate. Death Runes count as a Blood, Frost or Unholy Rune.",
+      "kind": "passive",
+      "branchId": "cata-deathknight-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 180.0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 50034
+    },
+    {
+      "id": "cata-deathknight-0-spec-93099",
+      "name": "Vengeance",
+      "icon": "ability_paladin_shieldofvengeance",
+      "description": "Each time you take damage, you gain 5% of the damage taken as attack power, up to a maximum of 10% of your health.",
+      "kind": "passive",
+      "branchId": "cata-deathknight-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 93099
+    },
+    {
+      "id": "cata-deathknight-0-spec-77513",
+      "name": "Blood Shield",
+      "icon": "spell_deathknight_deathstrike",
+      "description": "Each time you heal yourself with Death Strike while in Blood Presence, you gain 50% of the amount healed as a damage absorption shield. Each point of Mastery increases the shield by an additional 6.25%.",
+      "kind": "passive",
+      "branchId": "cata-deathknight-0",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "Level 80 · Mastery",
+      "sourceSpellId": 77513
+    },
+    {
+      "id": "cata-deathknight-1-spec-49143",
+      "name": "Frost Strike",
+      "icon": "spell_deathknight_empowerruneblade2",
+      "description": "Instantly strike the enemy, causing 130% weapon damage plus 87 as Frost damage.",
+      "kind": "active",
+      "branchId": "cata-deathknight-1",
+      "learningMode": "specialization",
+      "resourceCosts": [
+        {
+          "resourceId": "cata:runic",
+          "resourceName": "Сила рун",
+          "amount": 40.0,
+          "unit": "points"
+        }
+      ],
+      "cast": 0,
+      "cooldown": 0.0,
+      "range": 5.0,
+      "requirements": "",
+      "sourceSpellId": 49143
+    },
+    {
+      "id": "cata-deathknight-1-spec-50887",
+      "name": "Icy Talons",
+      "icon": "spell_deathknight_icytalons",
+      "description": "Your melee attack speed is increased by 20%.",
+      "kind": "passive",
+      "branchId": "cata-deathknight-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 50887
+    },
+    {
+      "id": "cata-deathknight-1-spec-54637",
+      "name": "Blood of the North",
+      "icon": "inv_weapon_shortblade_79",
+      "description": "Permanently transforms your Blood Runes into Death Runes. Death Runes count as a Blood, Frost, or Unholy Rune.",
+      "kind": "passive",
+      "branchId": "cata-deathknight-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 54637
+    },
+    {
+      "id": "cata-deathknight-1-spec-77514",
+      "name": "Frozen Heart",
+      "icon": "inv_misc_gem_sapphire_01",
+      "description": "Increases all Frost damage done by 16%. Each point of Mastery increases Frost damage by an additional 2%.",
+      "kind": "passive",
+      "branchId": "cata-deathknight-1",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "Level 80 · Mastery",
+      "sourceSpellId": 77514
+    },
+    {
+      "id": "cata-deathknight-2-spec-55090",
+      "name": "Scourge Strike",
+      "icon": "spell_deathknight_scourgestrike",
+      "description": "An unholy strike that deals 100% of weapon damage as Physical damage plus 340. In addition, for each of your diseases on your target, you deal an additional 18% of the Physical damage done as Shadow damage.",
+      "kind": "active",
+      "branchId": "cata-deathknight-2",
+      "learningMode": "specialization",
+      "resourceCosts": [
+        {
+          "resourceId": "cata:runes",
+          "resourceName": "Руны",
+          "amount": 1,
+          "unit": "count"
+        }
+      ],
+      "cast": 0,
+      "cooldown": 0.0,
+      "range": 5.0,
+      "requirements": "",
+      "sourceSpellId": 55090
+    },
+    {
+      "id": "cata-deathknight-2-spec-52143",
+      "name": "Master of Ghouls",
+      "icon": "spell_shadow_animatedead",
+      "description": "Reduces the cooldown on Raise Dead by -60 sec, and the Ghoul summoned by your Raise Dead spell is considered a pet under your control. Unlike normal Death Knight Ghouls, your pet does not have a limited duration.",
+      "kind": "passive",
+      "branchId": "cata-deathknight-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 52143
+    },
+    {
+      "id": "cata-deathknight-2-spec-91107",
+      "name": "Unholy Might",
+      "icon": "spell_shadow_unholystrength",
+      "description": "Dark power courses through your limbs, increasing your Strength by 25%.",
+      "kind": "passive",
+      "branchId": "cata-deathknight-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 91107
+    },
+    {
+      "id": "cata-deathknight-2-spec-56835",
+      "name": "Reaping",
+      "icon": "spell_shadow_shadetruesight",
+      "description": "Whenever you hit with Blood Strike, Pestilence, or Festering Strike, the Runes spent will become Death Runes when they activate. Death Runes count as a Blood, Frost or Unholy Rune.",
+      "kind": "passive",
+      "branchId": "cata-deathknight-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "",
+      "sourceSpellId": 56835
+    },
+    {
+      "id": "cata-deathknight-2-spec-77515",
+      "name": "Dreadblade",
+      "icon": "achievement_zone_westernplaguelands_01",
+      "description": "Increases Shadow damage done by 20%. Each point of Mastery increases Shadow damage by an additional 2.5%.",
+      "kind": "passive",
+      "branchId": "cata-deathknight-2",
+      "learningMode": "specialization",
+      "resourceCosts": [],
+      "cast": 0,
+      "cooldown": 0,
+      "range": 0.0,
+      "requirements": "Level 80 · Mastery",
+      "sourceSpellId": 77515
+    }
+  ],
+  "build": {},
+  "character": {
+    "hp": 10000,
+    "race": "Человек",
+    "gender": "Мужской",
+    "armory": "",
+    "resources": [
+      {
+        "id": "cata:runes",
+        "name": "Руны",
+        "max": 6,
+        "current": 6,
+        "unit": "count",
+        "display": "icons",
+        "shape": "diamond",
+        "color": "#b84e42"
+      },
+      {
+        "id": "cata:runic",
+        "name": "Сила рун",
+        "max": 100,
+        "current": 0,
+        "unit": "points",
+        "display": "bar",
+        "shape": "diamond",
+        "color": "#b84e42"
+      }
+    ]
+  },
+  "source": {
+    "version": "4.3.4",
+    "url": "https://github.com/fooxytv/cplus-talents/blob/main/src/editions/cata.json",
+    "dataBlob": "a6ce40095cb8ca84926e81bca6c70db88a0f6bfa",
+    "generated": "2026-09-21T11:38:40.226Z",
+    "language": "en",
+    "primarySpells": "https://github.com/caicaicai/dbc434",
+    "notes": [
+      "Level/stat dependent specialization effects are represented symbolically."
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+import {classResources,abilityResourceCosts,validateResourceCosts} from './resource-costs.js';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export function resourceCostEditor(root,ability,character,newAbility=false){
+ const choices=classResources(character),costs=abilityResourceCosts(ability,character);
+ if(!costs.length&&newAbility)costs.push({resourceId:(choices[1]||choices[0]).id,amount:0,unit:'percent'});
+ function capture(){for(const row of root.querySelectorAll('[data-resource-cost]')){const i=Number(row.dataset.resourceCost);costs[i]={resourceId:row.querySelector('[data-cost-type]').value,amount:Number(row.querySelector('[data-cost-amount]').value),unit:row.querySelector('[data-cost-unit]').value};}}
+ function draw(){
+  root.innerHTML=`<div class="cost-heading"><label>ЗАТРАТЫ РЕСУРСОВ</label><button type="button" id="addResourceCost" ${costs.length>=choices.length?'disabled':''}>＋ Добавить ресурс</button></div><div class="resource-cost-list">${costs.map((cost,i)=>`<div class="resource-cost-row" data-resource-cost="${i}"><select ${i===0?'id="resourceType"':''} data-cost-type aria-label="Расходуемый ресурс" required><option value="" disabled ${!choices.some(r=>r.id===cost.resourceId)?'selected':''}>Выбери ресурс класса</option>${choices.map(r=>`<option value="${esc(r.id)}" ${r.id===cost.resourceId?'selected':''} ${costs.some((c,j)=>j!==i&&c.resourceId===r.id)?'disabled':''} ${r.id==='health'?'':'data-user-content'}>${esc(r.name)}</option>`).join('')}</select><input ${i===0?'id="resource"':''} data-cost-amount type="number" min="0" max="1000000000" step="any" required value="${esc(cost.amount)}" aria-label="Количество ресурса"><select ${i===0?'id="resourceUnit"':''} data-cost-unit aria-label="Единицы">${[['percent','%'],['points','ед.'],['count','шт.']].map(([value,label])=>`<option value="${value}" ${cost.unit===value?'selected':''}>${label}</option>`).join('')}</select><button type="button" data-remove-cost="${i}" class="icon-button" aria-label="Убрать затрату">×</button></div>`).join('')||'<p class="muted">Без затрат ресурсов</p>'}</div>`;
+  root.querySelector('#addResourceCost').onclick=()=>{capture();const resource=choices.find(r=>!costs.some(c=>c.resourceId===r.id));if(resource){costs.push({resourceId:resource.id,resourceName:resource.name,amount:0,unit:resource.unit});draw();}};
+  for(const button of root.querySelectorAll('[data-remove-cost]'))button.onclick=()=>{capture();costs.splice(Number(button.dataset.removeCost),1);draw();};
+  for(const select of root.querySelectorAll('[data-cost-type]'))select.onchange=()=>{capture();draw();};
+ }
+ draw();return ()=>{capture();const result=costs.map(c=>({...c,resourceName:choices.find(r=>r.id===c.resourceId)?.name||''}));validateResourceCosts({resourceCosts:result},character);return result;};
+}
