@@ -31,4 +31,4 @@ addTranslations([["Дополнительная строка", "Subtitle"], ["О
 
 addTranslations([['ИЗУЧЕНИЕ СПОСОБНОСТИ','ABILITY LEARNING'],['Изучается без таланта','Learned without a talent'],['Требуется талант','Requires a talent'],['По размещению в дереве','From placement in the tree'],['Неверный способ изучения способности','Invalid ability learning mode']]);
 
-addTranslations([['Доступная экипировка','Available equipment'],['v1 воин света','v1 Light warrior']]);
+addTranslations([['Доступная экипировка','Available equipment'],['Видимая заметка','Visible note'],['Последние изменения ещё не сохранены. Сохрани дерево ещё раз.','Your latest changes are not saved yet. Save the tree again.']]);

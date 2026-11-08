@@ -216,7 +216,7 @@ def validate(document):
         raise ValueError('Неверный формат класса или способностей')
     for ability in abilities:
         if 'learningMode' in ability and ability['learningMode'] not in ('base','talent'):raise ValueError('Неверный способ изучения способности')
-        if 'requirements' in ability and (not isinstance(ability['requirements'],list) or len(ability['requirements'])>40 or any(not isinstance(item,str) or not item.strip() or len(item)>100 for item in ability['requirements']) or len(set(ability['requirements']))!=len(ability['requirements'])):raise ValueError('Проверь требования способности')
+        if 'requirements' in ability and ((len(ability['requirements'])>1000) if isinstance(ability['requirements'],str) else (not isinstance(ability['requirements'],list) or len(ability['requirements'])>40 or any(not isinstance(item,str) or not item.strip() or len(item)>100 for item in ability['requirements']) or len(set(ability['requirements']))!=len(ability['requirements']))):raise ValueError('Проверь требования способности')
         if 'resourceUnit' in ability and ability['resourceUnit'] not in ('points','percent','count'):raise ValueError('Неверные единицы ресурса')
         if 'kind' in ability and ability['kind'] not in ('active', 'passive'):
             raise ValueError('Неверный тип способности')

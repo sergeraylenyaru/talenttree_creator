@@ -56,7 +56,7 @@ export function normalize(doc,{allowLegacy=false}={}) {
   }
   if(!allowLegacy)for(const b of doc.branches)if([...dependencyRoutes(b).values()].some(path=>!path))throw Error('Стрелки зависимостей пересекаются или нет свободного пути. Убери или измени зависимость.');
   if(!Array.isArray(doc.abilities)||doc.abilities.some(a=>!a||typeof a.id!=='string'||typeof a.name!=='string'||typeof a.description!=='string')) throw Error('Неверный список способностей');
-  for(const a of doc.abilities)if(a.requirements!==undefined&&(!Array.isArray(a.requirements)||a.requirements.length>40||a.requirements.some(v=>typeof v!=='string'||!v.trim()||v.length>100)||new Set(a.requirements).size!==a.requirements.length))throw Error('Проверь требования способности');
+  for(const a of doc.abilities)if(a.requirements!==undefined&&(typeof a.requirements==='string'?a.requirements.length>1000:(!Array.isArray(a.requirements)||a.requirements.length>40||a.requirements.some(v=>typeof v!=='string'||!v.trim()||v.length>100)||new Set(a.requirements).size!==a.requirements.length)))throw Error('Проверь требования способности');
   for(const a of doc.abilities)if(a.learningMode!==undefined&&!['base','talent'].includes(a.learningMode))throw Error('Неверный способ изучения способности');
   for(const a of doc.abilities){if(a.kind!==undefined&&!['active','passive'].includes(a.kind))throw Error('Неверный тип способности');if(a.branchId!==undefined&&!['','auto'].includes(a.branchId)&&!branchIds.has(a.branchId))throw Error('Ветка способности не найдена');}
   for(const a of doc.abilities)if(a.resourceUnit!==undefined&&!['points','percent','count'].includes(a.resourceUnit))throw Error('Неверные единицы ресурса');

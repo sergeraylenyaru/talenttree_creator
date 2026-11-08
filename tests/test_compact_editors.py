@@ -43,11 +43,15 @@ class EditorMetadataAPI(unittest.TestCase):
         d['character']={'hp':100,'hpDescription':'Жизнь','race':'Человек','gender':'Мужской','armory':'','resources':[{'name':'Кровь','description':'Накапливается за попадания','max':100,'current':0,'display':'bar','shape':'circle','color':'#ff0000'}]}
         d['abilities']=[{'id':'a','name':'Удар','icon':'inv_misc_book_09','description':'Урон','requirements':['Кинжалы','Латы'],'learningMode':'base','range':0,'cast':0,'resource':0,'cooldown':0,'resourceType':'Кровь'}]
         pid=self.request(a,'/api/projects',{'document':d})[1]['id'];self.assertEqual(self.request(a,'/api/projects/'+pid)[1]['document'],d)
-        for change in ('subtitle','description','requirements','resource','learning'):
+        d['abilities'][0]['requirements']='Щит и свободная рука; стойка Стража'
+        self.assertEqual(self.request(a,'/api/projects',{'id':pid,'document':d})[0],200)
+        self.assertEqual(self.request(a,'/api/projects/'+pid)[1]['document'],d)
+        for change in ('subtitle','description','requirements','resource','learning','requirement_text'):
             bad=copy.deepcopy(d)
             if change=='subtitle':bad['subtitle']='x'*121
             if change=='description':bad['description']=[]
             if change=='requirements':bad['abilities'][0]['requirements']=['Кинжалы','Кинжалы']
             if change=='resource':bad['character']['resources'][0]['description']='x'*3001
             if change=='learning':bad['abilities'][0]['learningMode']='unknown'
+            if change=='requirement_text':bad['abilities'][0]['requirements']='x'*1001
             self.assertEqual(self.request(a,'/api/projects',{'id':pid,'document':bad})[0],400)

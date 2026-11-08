@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {abilityStatLines} from '../static/ability-format.js';
+import {abilityStatLines,abilityRequirementsText} from '../static/ability-format.js';
 import {blank,normalize,groupedAbilities,abilityUnlocked,placeAbilityTalent} from '../static/engine.js';
 test('zero range/cast show melee and instant, and requirements are shown',()=>{
  const lines=abilityStatLines({range:0,cast:0,cooldown:12,requirements:['Кинжалы','Латы']},'20 Кровь');
@@ -19,4 +19,14 @@ test('branch grouping and learning requirements are independent',()=>{
  const placed=placeAbilityTalent(d,a.id,d.branches[0].id,0,0);assert.equal(placed.abilities[0].learningMode,'talent');assert.equal(abilityUnlocked(placed,placed.abilities[0]),false);
  placed.build[placed.branches[0].talents[0].id]=1;assert.equal(abilityUnlocked(placed,placed.abilities[0]),true);
  placed.abilities[0].learningMode='base';placed.build={};assert.equal(abilityUnlocked(placed,placed.abilities[0]),true);
+});
+
+test('free-text requirements preserve arbitrary prose and support legacy choices',()=>{
+ const requirement='Щит и свободная рука; стойка Стража (уровень 20)';
+ const d=blank();d.abilities=[{id:'a',name:'Удар',icon:'inv_misc_book_09',description:'Урон',requirements:requirement}];
+ assert.equal(normalize(structuredClone(d)).abilities[0].requirements,requirement);
+ assert.ok(abilityStatLines(d.abilities[0]).includes('Требуется: '+requirement));
+ assert.equal(abilityRequirementsText({requirements:['Латы','Кинжалы']}),'Латы, Кинжалы');
+ assert.equal(abilityRequirementsText({requirements:''}),'');
+ d.abilities[0].requirements='x'.repeat(1001);assert.throws(()=>normalize(d),/требования/);
 });
