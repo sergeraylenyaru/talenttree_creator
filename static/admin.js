@@ -1,3 +1,4 @@
+import {initIconFitting} from './icon-fit.js';
 import {bindIconUploads} from './admin-uploads.js';
 import {bindProjectSettings} from './admin-project.js';
 import {iconURL} from './icons.js';
@@ -25,3 +26,5 @@ const projectSettings=bindProjectSettings({api,notice});
 function selectTab(id){for(const [tab,section] of [['usersTab','adminUsers'],['iconsTab','adminIcons'],['projectTab','adminProject']]){$('#'+section).hidden=tab!==id;$('#'+tab).classList.toggle('selected',tab===id);}}
 $('#usersTab').onclick=()=>{selectTab('usersTab');loadUsers().catch(e=>notice(e.message));};$('#iconsTab').onclick=()=>{selectTab('iconsTab');loadIcons().catch(e=>notice(e.message));};$('#projectTab').onclick=()=>{selectTab('projectTab');projectSettings.load().catch(e=>notice(e.message));};
 api('/me').then(async r=>{current=r.admin;render();if(current)await loadUsers();}).catch(e=>notice(e.message));
+
+initIconFitting();

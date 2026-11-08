@@ -1,3 +1,4 @@
+import {initIconFitting} from './icon-fit.js';
 import {aboutMarkup} from './about.js';
 import {characterBuilder} from './character-builder.js';
 import './translations.js';
@@ -496,3 +497,5 @@ if(sharedToken) api('/shared/'+encodeURIComponent(sharedToken)).then(async resul
 }).catch(err=>toast(err.message));
 
 if(location.hash==='#about')openAbout();
+
+initIconFitting();
