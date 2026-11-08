@@ -28,7 +28,7 @@ async function api(path, data, method) {
  const response=await fetch('/api'+path,options);
  const result=await response.json();if(!response.ok) throw Error(result.error||'Ошибка сервера');return result;
 }
-function image(id,extra='') { return `<img src="${esc(iconURL(id))||'missing-icon'}" alt="" loading="lazy" draggable="false" ${extra}>`; }
+function image(id,extra='') { return `<img data-fit-icon src="${esc(iconURL(id))||'missing-icon'}" alt="" loading="lazy" draggable="false" ${extra}>`; }
 document.addEventListener('error',e=>{if(e.target.tagName==='IMG'){e.target.style.visibility='hidden';e.target.alt='Иконка недоступна';}},true);
 function syncHero(){const inTree=!$('.workspace').hidden;$('.intro').hidden=inTree||!$('#aboutPage').hidden;$('#treeHero').hidden=!inTree;$('#modeBar').hidden=!inTree;}
 function showWorkspace(){closeMenus();$('#aboutPage').hidden=true;if(location.hash==='#about')history.replaceState(null,'',location.pathname+location.search);$('#library').hidden=true;$('#community').hidden=true;$('.workspace').hidden=false;document.body.dataset.view='editor';syncHero();}
@@ -96,7 +96,7 @@ function field(id,label,value='',type='text',attrs=''){return `<label for="${id}
 function refreshIconCategoryOptions(){const select=$('#iconCategory');if(!select)return;const current=select.value;select.innerHTML=`<option value="all">Все иконки</option><option value="weapons">Оружие и щиты</option><option value="armor">Доспехи</option>${iconCategories.filter(c=>!['general','weapon','armor'].includes(c.id)).map(c=>`<option data-user-content value="category:${esc(c.id)}">${esc(c.name)}</option>`).join('')}`;if([...select.options].some(o=>o.value===current))select.value=current;}
 function iconMatchesCategory(i,value){if(value==='all')return true;if(value==='weapons')return i.categoryKind==='weapon'||i.category==='weapon'||/^inv_(?:sword|axe|mace|hammer|staff|wand|weapon|bow|crossbow|musket|spear|throwing|knife|shield|polearm)/i.test(i.id);if(value==='armor')return i.categoryKind==='armor'||i.category==='armor'||/^inv_(?:chest|helmet|shoulder|pants|belt|boots|bracer|shield)/i.test(i.id);return i.category===value.replace(/^category:/,'');}
 function iconPicker(selected='inv_misc_questionmark'){
- return `<label for="iconSearch">ИКОНКА · ПОИСК ПО НАЗВАНИЮ ИЛИ ТЕГАМ</label><input id="iconSearch" placeholder="Огонь, лечение, воин…"><label for="iconCategory">КАТЕГОРИЯ</label><select id="iconCategory"><option value="all">Все иконки</option><option value="weapons">Оружие и щиты</option></select><div id="iconGrid" class="icon-grid"></div>${field('iconName','ИЛИ ВВЕДИ ИМЯ ЛЮБОЙ WOW-ИКОНКИ',/^[a-z0-9_]+$/i.test(selected)?selected:'','text',`pattern="[A-Za-z0-9_]+" data-initial="${esc(selected)}"`)}<div class="icon-preview">${image(selected,'id="iconPreview"')}<small class="muted"><span id="iconCount">Загрузка каталога…</span></small></div>`;
+ return `<label for="iconSearch">ИКОНКА · ПОИСК ПО НАЗВАНИЮ ИЛИ ТЕГАМ</label><input id="iconSearch" type="search" placeholder="Название или теги: лёд, frost, маг…" autocomplete="off"><label for="iconCategory">КАТЕГОРИЯ</label><select id="iconCategory"><option value="all">Все иконки</option><option value="weapons">Оружие и щиты</option></select><div id="iconGrid" class="icon-grid"></div>${field('iconName','ПРЯМОЕ ИМЯ WOW-ИКОНКИ',/^[a-z0-9_]+$/i.test(selected)?selected:'','text',`pattern="[A-Za-z0-9_]+" data-initial="${esc(selected)}"`)}<div class="icon-preview">${image(selected,'id="iconPreview"')}<small class="muted"><span id="iconCount">Загрузка каталога…</span></small></div>`;
 }
 function readIcon(){return $('#iconName').value.toLowerCase()||$('#iconName').dataset.initial||'inv_misc_questionmark';}
 function bindPicker(){
@@ -105,7 +105,7 @@ function bindPicker(){
  const preview=()=>{$('#iconPreview').style.visibility='visible';$('#iconPreview').src=iconURL(readIcon())||'missing-icon';};
  $('#iconGrid').onclick=e=>{const btn=e.target.closest('[data-icon]');if(btn){$('#iconName').dataset.initial=btn.dataset.icon;$('#iconName').value=/^[a-z0-9_]+$/i.test(btn.dataset.icon)?btn.dataset.icon:'';preview();update();}};
  $('#iconName').oninput=preview;
- update();loadIconCatalog().then(update).catch(()=>toast('Не удалось загрузить полный каталог иконок'));
+ update();$('#iconGrid').setAttribute('aria-busy','true');loadIconCatalog(update).then(update).catch(()=>toast('Не удалось загрузить каталог иконок. Попробуй открыть выбор ещё раз.')).finally(()=>$('#iconGrid')?.setAttribute('aria-busy','false'));
 }
 function editTalent(b,row,col,existing,draft){
  const t=draft||existing||{id:crypto.randomUUID(),row,col,name:'',icon:'inv_misc_questionmark',maxRank:1,descriptions:[''],requires:''};
@@ -404,10 +404,16 @@ $('#trees').addEventListener('dragstart',e=>{const slot=e.target.closest('[data-
 $('#trees').addEventListener('dragover',e=>{if(mode==='edit'&&(draggedTalent||draggedAbility)&&e.target.closest('.slot')){e.preventDefault();e.dataTransfer.dropEffect=draggedAbility?'copy':'move';}});
 $('#trees').addEventListener('drop',e=>{const slot=e.target.closest('.slot');if(mode!=='edit'||(!draggedTalent&&!draggedAbility)||!slot)return;e.preventDefault();try{if(draggedAbility){if(slot.dataset.talent&&!confirm('Заменить талант выбранной способностью?'))return;doc=placeAbilityTalent(doc,draggedAbility,slot.closest('.tree').dataset.branch,Number(slot.dataset.row),Number(slot.dataset.col),!!slot.dataset.talent);}else doc=moveTalent(doc,draggedTalent,slot.closest('.tree').dataset.branch,Number(slot.dataset.row),Number(slot.dataset.col));changed();render();}catch(err){toast(err.message);}finally{draggedTalent=null;draggedAbility=null;abilityDragIcon?.remove();abilityDragIcon=null;}});
 $('#trees').addEventListener('dragend',()=>draggedTalent=null);$('#abilities').addEventListener('dragstart',e=>{const card=e.target.closest('[data-ability]');if(mode!=='edit'||!card){e.preventDefault();return;}draggedAbility=card.dataset.ability;e.dataTransfer.effectAllowed='copy';e.dataTransfer.setData('text/plain',draggedAbility);const img=card.querySelector('img');abilityDragIcon=document.createElement('canvas');abilityDragIcon.width=48;abilityDragIcon.height=48;abilityDragIcon.style.cssText='position:fixed;left:-1000px;top:0;width:48px;height:48px;pointer-events:none';const context=abilityDragIcon.getContext('2d');context.fillStyle='#151a1f';context.fillRect(0,0,48,48);if(img?.complete&&img.naturalWidth)context.drawImage(img,2,2,44,44);else{context.fillStyle='#d6ad66';context.font='28px serif';context.fillText('✦',10,34);}context.strokeStyle='#d6ad66';context.strokeRect(1,1,46,46);document.body.append(abilityDragIcon);e.dataTransfer.setDragImage(abilityDragIcon,24,24);});$('#abilities').addEventListener('dragend',()=>{draggedAbility=null;abilityDragIcon?.remove();abilityDragIcon=null;});
-let iconCatalog=[...icons],iconPromise=null,iconCategories=[];
-async function loadIconCatalog(){
- const core=await (iconPromise??=Promise.all(['icon-catalog.json','weapon-icons.json'].map(path=>fetch(path).then(r=>{if(!r.ok)throw Error('Иконки недоступны');return r.json();}))).then(lists=>lists.flat()).catch(error=>{iconPromise=null;throw error;}));
- const {icons:custom,categories=[]}=await api('/icons');iconCategories=categories;refreshIconCategoryOptions();const combined=new Map();for(const i of [...icons,...core,...custom]){const previous=combined.get(i.id);combined.set(i.id,{...i,label:(previous?previous.label+' ':'')+i.label});}iconCatalog=[...combined.values()];return iconCatalog;
+let iconCatalog=[...icons],iconPromise=null,iconCategories=[],coreIconCatalog=[],customIconCatalog=[],iconCatalogRequest=0;
+async function loadIconCatalog(onUpdate=()=>{}){
+ const request=++iconCatalogRequest;
+ function updateCatalog(){const combined=new Map();for(const i of [...icons,...coreIconCatalog,...customIconCatalog]){const previous=combined.get(i.id);combined.set(i.id,{...previous,...i,label:(previous?previous.label+' ':'')+i.label});}iconCatalog=[...combined.values()];refreshIconCategoryOptions();onUpdate();}
+ const standard=(iconPromise??=Promise.all(['icon-catalog.json','weapon-icons.json'].map(path=>fetch(path).then(r=>{if(!r.ok)throw Error('Иконки недоступны');return r.json();}))).then(lists=>lists.flat()).catch(error=>{iconPromise=null;throw error;})).then(core=>{coreIconCatalog=core;updateCatalog();});
+ const uploaded=api('/icons').then(({icons:custom,categories=[]})=>{if(request!==iconCatalogRequest)return;customIconCatalog=custom;iconCategories=categories;updateCatalog();});
+ const results=await Promise.allSettled([standard,uploaded]);
+ if(results.every(r=>r.status==='rejected'))throw Error('Не удалось загрузить каталог иконок');
+ if(results[1].status==='rejected')toast('Не удалось загрузить загруженные иконки и теги. Открой выбор ещё раз.');
+ return iconCatalog;
 }
 async function saveReadOnlyFavorite(kind,item){await api('/favorites',{kind,item:structuredClone(item)});$('#modal').close();toast('Сохранено в твоё избранное');}
 function readOnlyFavorite(kind,item){const button=$('#favoriteItem');button.hidden=false;button.textContent=kind==='ability'?'★ Способность в избранное':'★ Талант в избранное';button.onclick=async()=>{const copy=structuredClone(item);if(!user){$('#modal').close();auth(false,()=>saveReadOnlyFavorite(kind,copy));return;}button.disabled=true;try{await saveReadOnlyFavorite(kind,copy);}catch(e){toast(e.message);}finally{button.disabled=false;}};}

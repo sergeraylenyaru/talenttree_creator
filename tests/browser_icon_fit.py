@@ -16,7 +16,7 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
         if rect:ImageDraw.Draw(img).rectangle(rect,fill=color)
         path=tmp/(name+'.png');img.save(path)
         with server.connect() as db:
-            ident=accounts.upload_icon(db,{'name':name,'category':'general','image':base64.b64encode(path.read_bytes()).decode()})
+            ident=accounts.upload_icon(db,{'name':name,'category':'general','image':base64.b64encode(path.read_bytes()).decode(),'tags':'tagtoken_'+name})
         fixtures.append((name,path,ident))
     http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);threading.Thread(target=http.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{http.server_port}'
     try:
@@ -42,6 +42,31 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
             page.goto(base);expect(page.locator('#user')).to_have_text('icon_admin');page.locator('#classIcon').click();page.locator('[data-emblem-layer="0"]').click()
             for name,_,ident in fixtures:
                 page.locator('#iconSearch').fill(name);expect(page.locator('[data-icon="custom:'+ident+'"]')).to_be_visible();filled('[data-icon="custom:'+ident+'"] img')
+            page.locator('#closeModal').click();page.wait_for_selector('#emblemOpacity');page.locator('#closeModal').click()
+            icon='custom:'+fixtures[-1][2]
+            inline='data:image/png;base64,'+base64.b64encode(fixtures[-1][1].read_bytes()).decode()
+            cdn='https://wow.zamimg.com/images/wow/icons/large/inv_sword_04.jpg'
+            ctx.route(cdn,lambda route:route.fulfill(status=200,content_type='image/png',body=fixtures[-1][1].read_bytes(),headers={'Access-Control-Allow-Origin':'*'}))
+            document={'version':1,'name':'Fitted talent','budget':41,'rowCost':5,'build':{},'abilities':[], 'branches':[{'id':'one','name':'One','icon':icon,'rows':5,'talents':[{'id':'fitted','name':'Fitted talent','icon':icon,'row':0,'col':0,'maxRank':1,'descriptions':['Damage'],'requires':''}]}]}
+            for index,source in enumerate([inline,'inv_sword_04'],start=1):document['branches'][0]['talents'].append({'id':'source'+str(index),'name':'Other source '+str(index),'icon':source,'row':0,'col':index,'maxRank':1,'descriptions':['Damage'],'requires':''})
+            with patch('server.builtin_images',return_value={inline}):pid=ctx.request.post(base+'/api/projects',data={'document':document}).json()['id']
+            page.locator('#projects').click();page.locator('[data-open="'+pid+'"]').click();filled('#trees .slot.filled img');filled('#trees .branch-icon-button img')
+            page.locator('[data-talent="fitted"]').click();page.locator('#iconSearch').fill('#tagtoken_black_padding');expect(page.locator('#iconGrid [data-icon]')).to_have_count(1);filled('#liveRankIcon img');filled('#iconPreview')
+            assert page.locator('#liveRankIcon').evaluate('button=>{const b=button.getBoundingClientRect(),i=button.querySelector("img").getBoundingClientRect();return Math.abs(i.width-(b.width-4))<1&&Math.abs(i.height-(b.height-4))<1}')
+            page.locator('#liveRankIcon').click();filled('#liveRankIcon img');page.locator('#closeModal').click();page.locator('#playMode').click();filled('#trees .slot.filled img')
+            assert page.locator('#trees .slot.filled').evaluate_all('buttons=>buttons.every(button=>{const b=button.getBoundingClientRect(),i=button.querySelector("img").getBoundingClientRect();return Math.abs(i.width-(b.width-4))<1&&Math.abs(i.height-(b.height-4))<1})')
+            page.screenshot(path='work/fitted-talent-calculator.png',full_page=True)
+            page.locator('#editMode').click();page.locator('[data-talent="source1"]').click();filled('#liveRankIcon img');page.locator('#liveRankIcon').click();filled('#liveRankIcon img');page.locator('#closeModal').click()
+            page.locator('[data-talent="source2"]').click();filled('#liveRankIcon img');page.locator('#closeModal').click()
+            # Uploaded tags remain searchable in the actual talent editor when static catalogs fail.
+            page.route('**/icon-catalog.json',lambda route:route.fulfill(status=503,json={'error':'unavailable'}));page.route('**/weapon-icons.json',lambda route:route.fulfill(status=503,json={'error':'unavailable'}));page.reload();expect(page.locator('#user')).to_have_text('icon_admin')
+            page.locator('[data-talent="fitted"]').click();page.locator('#iconSearch').fill('#tagtoken_black_padding');expect(page.locator('#iconGrid [data-icon]')).to_have_count(1);page.locator('#iconGrid [data-icon]').click();filled('#liveRankIcon img');page.locator('#submitModal').click();filled('[data-talent="fitted"] img')
+            with patch('server.builtin_images',return_value={inline}):
+                with page.expect_response(lambda response:response.url==base+'/api/projects' and response.request.method=='POST') as saved:
+                    page.locator('#save').click()
+                assert saved.value.status==200;saved_pid=saved.value.json()['id']
+            assert ctx.request.get(base+'/api/projects/'+saved_pid).json()['document']['branches'][0]['talents'][0]['icon']==icon
+            page.reload();expect(page.locator('#user')).to_have_text('icon_admin');page.locator('#projects').click();page.locator('[data-open="'+saved_pid+'"]').click();filled('#trees .slot.filled img')
             assert not errors,errors
-            print('PASS: small/large icons, transparent and black padding fill frames in existing catalog, upload previews and main picker; 48px frames and no overflow down to 320px.');browser.close()
+            print('PASS: small/large icons, transparent and black padding fill frames in existing catalog, uploads, picker, talent editor, tree and calculator; inline/CDN images and tags with unavailable static catalogs; 48px frames and no overflow down to 320px.');browser.close()
     finally:http.shutdown();http.server_close()

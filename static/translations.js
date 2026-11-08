@@ -24,3 +24,5 @@ addTranslations([['Публикации в архиве доступны тол�
 addTranslations([['О проекте','About'],['Перейти','Open link']]);
 
 addTranslations([['ИКОНКА · ПОИСК ПО НАЗВАНИЮ ИЛИ ТЕГАМ','ICON · SEARCH BY NAME OR TAGS']]);
+
+addTranslations([['Название или теги: лёд, frost, маг…','Name or tags: ice, frost, mage…'],['ПРЯМОЕ ИМЯ WOW-ИКОНКИ','EXACT WOW ICON NAME'],['Не удалось загрузить загруженные иконки и теги. Открой выбор ещё раз.','Could not load uploaded icons and tags. Open the picker again.'],['Не удалось загрузить каталог иконок. Попробуй открыть выбор ещё раз.','Could not load the icon catalog. Try opening the picker again.']]);

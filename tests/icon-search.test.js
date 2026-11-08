@@ -4,6 +4,7 @@ import {matchesIconSearch} from '../static/icon-search.js';
 test('custom icons can be found by independent tags even with an opaque filename',()=>{
  const icon={id:'custom:abc',label:'ico001',tags:'лёд, frost, маг'};
  assert.ok(matchesIconSearch(icon,'лед'));assert.ok(matchesIconSearch(icon,'FRoST'));assert.ok(matchesIconSearch(icon,'маг лед'));
+ assert.ok(matchesIconSearch(icon,'#лёд #маг'));assert.ok(matchesIconSearch(icon,'#frost'));
  assert.ok(matchesIconSearch(icon,'ico001 frost'));assert.ok(!matchesIconSearch(icon,'яд'));
 });
 test('retains name, internal ID and existing catalog keywords with no tags',()=>{

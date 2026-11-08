@@ -2,5 +2,5 @@ function normalized(value){return String(value??'').normalize('NFKC').toLocaleLo
 export function matchesIconSearch(icon,query){
  const tags=Array.isArray(icon.tags)?icon.tags.join(' '):icon.tags||'';
  const text=normalized([icon.id,icon.label,icon.name,tags].filter(Boolean).join(' '));
- return normalized(query).trim().split(/[\s,;]+/u).filter(Boolean).every(term=>text.includes(term));
+ return normalized(query).trim().split(/[\s,;]+/u).map(term=>term.replace(/^#+/u,'')).filter(Boolean).every(term=>text.includes(term));
 }

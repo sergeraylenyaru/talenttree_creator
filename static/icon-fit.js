@@ -10,28 +10,29 @@ export function iconContentBox(pixels,width,height){
  return right<left?[0,0,width,height]:[left,top,right-left+1,bottom-top+1];
 }
 export function initIconFitting(){
- const selector='img[src^="/media/icons/"],.admin-icon-grid img,.upload-entry img',seen=new WeakMap(),cache=new Map();
+ const selector='img[data-fit-icon],img[src*="/media/icons/"],.slot img,.branch-icon-button img,#iconGrid img,#iconPreview,.admin-icon-grid img,.upload-entry img',seen=new WeakMap(),cache=new Map();
+ async function prepared(img,source){
+  try{
+   let picture=img;const url=new URL(source,location.href);
+   if(['http:','https:'].includes(url.protocol)&&url.origin!==location.origin){picture=new Image();picture.crossOrigin='anonymous';picture.src=source;await picture.decode();}
+   const sample=document.createElement('canvas'),scale=Math.min(1,256/Math.max(picture.naturalWidth,picture.naturalHeight));
+   sample.width=Math.max(1,Math.round(picture.naturalWidth*scale));sample.height=Math.max(1,Math.round(picture.naturalHeight*scale));
+   const context=sample.getContext('2d',{willReadFrequently:true});context.drawImage(picture,0,0,sample.width,sample.height);
+   const [x,y,w,h]=iconContentBox(context.getImageData(0,0,sample.width,sample.height).data,sample.width,sample.height);
+   if(!x&&!y&&w===sample.width&&h===sample.height)return source;
+   const output=document.createElement('canvas');output.width=output.height=128;const target=output.getContext('2d'),zoom=Math.max(128/w,128/h),dw=w*zoom,dh=h*zoom;
+   target.imageSmoothingQuality='high';target.drawImage(picture,x*picture.naturalWidth/sample.width,y*picture.naturalHeight/sample.height,w*picture.naturalWidth/sample.width,h*picture.naturalHeight/sample.height,(128-dw)/2,(128-dh)/2,dw,dh);
+   return output.toDataURL('image/png');
+  }catch{return source;}
+ }
  function fit(img){
   if(!img.matches(selector))return;const source=img.src;if(seen.get(img)===source)return;seen.set(img,source);
-  const apply=()=>{
+  const apply=async()=>{
    if(img.src!==source||!img.naturalWidth)return;
-   try{
-    if(!cache.has(source)){
-     const sample=document.createElement('canvas'),scale=Math.min(1,256/Math.max(img.naturalWidth,img.naturalHeight));
-     sample.width=Math.max(1,Math.round(img.naturalWidth*scale));sample.height=Math.max(1,Math.round(img.naturalHeight*scale));
-     const context=sample.getContext('2d',{willReadFrequently:true});context.drawImage(img,0,0,sample.width,sample.height);
-     const [x,y,w,h]=iconContentBox(context.getImageData(0,0,sample.width,sample.height).data,sample.width,sample.height);
-     let fitted=source;
-     if(x||y||w!==sample.width||h!==sample.height){
-      const output=document.createElement('canvas');output.width=output.height=128;const target=output.getContext('2d'),zoom=Math.max(128/w,128/h),dw=w*zoom,dh=h*zoom;
-      target.imageSmoothingQuality='high';target.drawImage(img,x*img.naturalWidth/sample.width,y*img.naturalHeight/sample.height,w*img.naturalWidth/sample.width,h*img.naturalHeight/sample.height,(128-dw)/2,(128-dh)/2,dw,dh);fitted=output.toDataURL('image/png');
-     }
-     cache.set(source,fitted);if(cache.size>256)cache.delete(cache.keys().next().value);
-    }
-    const fitted=cache.get(source);if(fitted&&fitted!==source){seen.set(img,fitted);img.src=fitted;}
-   }catch{/* Leave the original visible if browser image access is unavailable. */}
+   if(!cache.has(source)){cache.set(source,prepared(img,source));if(cache.size>256)cache.delete(cache.keys().next().value);}
+   const fitted=await cache.get(source);if(img.src===source&&fitted&&fitted!==source){seen.set(img,fitted);img.src=fitted;}
   };
-  if(img.complete)apply();else img.addEventListener('load',apply,{once:true});
+  if(img.complete&&img.naturalWidth)apply();else img.addEventListener('load',apply,{once:true});
  }
  function scan(root){if(root.nodeType!==1)return;if(root.matches(selector))fit(root);for(const img of root.querySelectorAll(selector))fit(img);}
  new MutationObserver(records=>{for(const record of records){if(record.type==='attributes')fit(record.target);else for(const node of record.addedNodes)scan(node);}}).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['src']});

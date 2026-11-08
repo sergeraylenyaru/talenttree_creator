@@ -13,5 +13,5 @@ export function validateClassIcon(value){
 export function defaultClassIcon(icon='inv_misc_questionmark'){return {layers:[{icon,opacity:1}]};}
 export function classEmblem(value,fallback='inv_misc_questionmark'){
  let model;try{model=validateClassIcon(value);}catch{model=defaultClassIcon(fallback||'inv_misc_questionmark');}
- return `<span class="class-emblem" aria-label="Эмблема класса">${model.layers.map(layer=>`<img src="${esc(iconURL(layer.icon))}" alt="" draggable="false" loading="lazy" style="opacity:${layer.opacity};transform:rotate(${layer.rotation??0}deg) translate(${layer.x??0}%,${layer.y??0}%) scale(${layer.scale??1});transform-origin:50% 50%">`).join('')}</span>`;
+ return `<span class="class-emblem" aria-label="Эмблема класса">${model.layers.map(layer=>`<img src="${esc(iconURL(layer.icon))}" data-fit-icon alt="" draggable="false" loading="lazy" style="opacity:${layer.opacity};transform:rotate(${layer.rotation??0}deg) translate(${layer.x??0}%,${layer.y??0}%) scale(${layer.scale??1});transform-origin:50% 50%">`).join('')}</span>`;
 }
