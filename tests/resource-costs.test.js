@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {classResources,abilityResourceCosts,validateResourceCosts,reconcileResourceCosts,adaptResourceCosts} from '../static/resource-costs.js';
-import {blank,normalize,changeRank,validBuild,abilityUnlocked} from '../static/engine.js';
+import {blank,normalize,changeRank,validBuild,abilityUnlocked,usesPrimaryBranch} from '../static/engine.js';
 import {withoutBuild,saveBrowserBuild,restoreBrowserBuild} from '../static/browser-build.js';
 const character=()=>({hp:1000,race:'Человек',gender:'Мужской',armory:'',resources:[{id:'blood',name:'Кровь',max:100,current:0,unit:'points',display:'bar',shape:'diamond',color:'#aa0000'},{id:'stars',name:'Звёзды',max:5,current:5,unit:'count',display:'icons',shape:'star',color:'#ccaa00'}]});
 const cost=(resourceId,amount,unit='points')=>({resourceId,amount,unit});
@@ -22,11 +22,24 @@ test('renames preserve cost references; deleting used resources refuses without 
  next.resources.shift();assert.throws(()=>reconcileResourceCosts([a],before,next),/Удар/);
  const portable=adaptResourceCosts({...a,resourceCosts:[{...a.resourceCosts[0],resourceName:'Кровь'}]},{resources:[{id:'new',name:'Кровь'}]});assert.equal(portable.resourceCosts[0].resourceId,'new');
 });
-function spec(){const d=blank();d.specialization={requiredPoints:31};d.branches[0].talents=[{id:'a',name:'A',row:0,col:0,icon:'inv_misc_book_09',maxRank:31,descriptions:Array(31).fill('A'),requires:''}];d.branches[1].talents=[{id:'b',name:'B',row:0,col:0,icon:'inv_misc_book_09',maxRank:5,descriptions:Array(5).fill('B'),requires:''}];return d;}
-test('Cata primary selection grants abilities immediately and gates other trees at 31 points',()=>{
- const d=spec(),a={branchId:d.branches[0].id,learningMode:'specialization'};assert.equal(changeRank(d,'a',1),false);assert.equal(abilityUnlocked(d,a),false);
- d.primaryBranchId=d.branches[0].id;assert.equal(abilityUnlocked(d,a),true);assert.equal(changeRank(d,'b',1),false);
- for(let i=0;i<31;i++)assert.equal(changeRank(d,'a',1),true);assert.equal(changeRank(d,'b',1),true);assert.equal(changeRank(d,'a',-1),false);assert.equal(changeRank(d,'b',-1),true);assert.equal(changeRank(d,'a',-1),true);assert.equal(validBuild(d,d.build),true);
+function spec(){const d=blank();d.specialization={requiredPoints:31};d.primaryBranchEnabled=true;d.branches[0].talents=[{id:'a',name:'A',row:0,col:0,icon:'inv_misc_book_09',maxRank:31,descriptions:Array(31).fill('A'),requires:''}];d.branches[1].talents=[{id:'b',name:'B',row:0,col:0,icon:'inv_misc_book_09',maxRank:5,descriptions:Array(5).fill('B'),requires:''}];return d;}
+test('Cata primary grants abilities without restricting any talent tree or requiring a primary choice',()=>{
+ const d=spec(),a={branchId:d.branches[0].id,learningMode:'specialization'};
+ assert.equal(changeRank(d,'b',1),true);assert.equal(changeRank(d,'a',1),true);assert.equal(abilityUnlocked(d,a),false);
+ d.primaryBranchId=d.branches[0].id;assert.equal(abilityUnlocked(d,a),true);assert.equal(changeRank(d,'b',1),true);
+ assert.equal(changeRank(d,'a',-1),true);assert.equal(validBuild(d,d.build),true);
+ d.primaryBranchId=d.branches[1].id;assert.equal(abilityUnlocked(d,a),false);assert.equal(validBuild(d,d.build),true);assert.deepEqual(d.build,{a:0,b:2});
+ d.primaryBranchEnabled=false;assert.equal(abilityUnlocked(d,a),true);assert.equal(validBuild(d,d.build),true);
+});
+test('explicit toggle overrides legacy primary mode and restores mixed allocations without a stale primary',()=>{
+ const d=spec();delete d.primaryBranchEnabled;assert.equal(usesPrimaryBranch(d),true);assert.equal(usesPrimaryBranch(blank()),false);
+ d.primaryBranchId=d.branches[0].id;d.build={a:1,b:1};
+ const values=new Map(),storage={getItem:k=>values.get(k),setItem:(k,v)=>values.set(k,v)};saveBrowserBuild(d,'toggle',storage);
+ d.primaryBranchEnabled=false;
+ const restored=restoreBrowserBuild(d,'toggle',storage);assert.deepEqual(restored.build,{a:1,b:1});assert.equal(restored.primaryBranchId,undefined);
+ const a={learningMode:'specialization',branchId:d.branches[0].id};assert.equal(abilityUnlocked(restored,a),true);
+ const linked={branchOnly:true,learningMode:'talent',talentId:'a',branchId:d.branches[0].id};assert.equal(abilityUnlocked(restored,linked),true);restored.build.a=0;assert.equal(abilityUnlocked(restored,linked),false);
+ assert.equal(withoutBuild(d).primaryBranchEnabled,false);for(const flag of [1,'true',null])assert.throws(()=>normalize({...d,primaryBranchEnabled:flag}),/настройку/);
 });
 test('primary choice and points stay browser-local; other visitors and exports start empty',()=>{
  const d=spec();d.primaryBranchId=d.branches[0].id;d.build={a:4};const map=new Map(),storage={getItem:k=>map.get(k),setItem:(k,v)=>map.set(k,v)};saveBrowserBuild(d,'share:one',storage);

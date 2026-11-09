@@ -158,6 +158,7 @@ def validate(document):
     if 'specialization' in document:
         spec=document['specialization']
         if not isinstance(spec,dict) or type(spec.get('requiredPoints')) is not int or not 1<=spec['requiredPoints']<=100000:raise ValueError('Неверные правила специализации')
+    if 'primaryBranchEnabled' in document and type(document['primaryBranchEnabled']) is not bool:raise ValueError('Проверь настройку основной ветки')
     if 'classIcon' in document:
         validate_class_icon(document['classIcon'])
     branches = document.get('branches')

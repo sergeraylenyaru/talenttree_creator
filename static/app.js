@@ -13,7 +13,7 @@ import {classEmblem,defaultClassIcon} from './class-emblem.js';
 import {glyph,initUI,notify,notificationUser,closeMenus} from './ui.js';
 import {publicationRow} from './publication-view.js';
 import {createRankEditor} from './rank-editor.js';
-import {blank,branch,total,validBuild,changeRank,normalize,route,reserved,moveTalent,defaultBudget,abilityTalentDraft,placeAbilityTalent,synchronizeAbilityTalents,abilityUnlocked,removeAbility,dependencyRoutes,talentState,branchIcon,groupedAbilities} from './engine.js';
+import {blank,branch,total,validBuild,changeRank,normalize,route,reserved,moveTalent,defaultBudget,abilityTalentDraft,placeAbilityTalent,synchronizeAbilityTalents,abilityUnlocked,usesPrimaryBranch,removeAbility,dependencyRoutes,talentState,branchIcon,groupedAbilities} from './engine.js';
 import {icons,iconURL} from './icons.js';
 const $=s=>document.querySelector(s);
 const confirm=message=>window.confirm(t(message));
@@ -64,6 +64,7 @@ function render() {if(!$('#aboutPage').hidden&&aboutContent)$('#aboutContent').i
  for(const id of ['className','budget','rowCost']) $('#'+id).disabled=mode!=='edit';
  const foreign=!!activeShare&&!activePublication?.isOwner;$('#editMode').hidden=foreign;$('#copyToSelf').hidden=!foreign;
  $('#editMode').classList.toggle('selected',mode==='edit');$('#playMode').classList.toggle('selected',mode==='play');$('#editMode').setAttribute('aria-pressed',String(mode==='edit'));$('#playMode').setAttribute('aria-pressed',String(mode==='play'));
+ $('#primaryBranchSetting').hidden=mode!=='edit';$('#primaryBranchEnabled').checked=usesPrimaryBranch(doc);$('#primaryBranchEnabled').disabled=mode!=='edit';$('#primaryBranchModeLabel').textContent=usesPrimaryBranch(doc)?'С основной веткой':'Без основной ветки';
  $('#addBranch').hidden=mode!=='edit';$('#addBranch').disabled=doc.branches.length>=4;$('#addAbility').hidden=mode!=='edit';
  $('#hint').hidden=mode==='play';$('#hint').textContent=doc.branches.length>4?'В старом классе пять веток. Удали лишнюю перед сохранением; данные пока сохранены.':'Нажми на пустую ячейку, чтобы создать талант.';
  $('#trees').innerHTML=doc.branches.map(b=>`<article class="tree" ${branchTint(b)} data-branch="${esc(b.id)}"><div class="tree-header"><button class="branch-icon-button" data-action="branch-icon" title="Выбрать иконку ветки" aria-label="Иконка ветки ${esc(b.name)}" ${mode!=='edit'?'disabled':''}>${image(branchIcon(b))}</button><input aria-label="Название ветки" value="${esc(b.name)}" maxlength="80" ${mode!=='edit'?'disabled':''}><span>${b.talents.reduce((s,t)=>s+(doc.build[t.id]||0),0)} очк.</span>${mode==='edit'?'<button data-action="branch-color" aria-label="Цвет фона ветки" title="Цвет фона ветки">◐</button><button data-action="delete-branch" aria-label="Удалить ветку">×</button>':''}</div><div class="talent-grid">${Array.from({length:b.rows*4},(_,i)=>{
@@ -77,19 +78,22 @@ function render() {if(!$('#aboutPage').hidden&&aboutContent)$('#aboutContent').i
  requestAnimationFrame(drawDependencies);
 }
 function renderSpecialization(){
- const panel=$('#specializationChoice');panel.hidden=mode!=='play';if(panel.hidden)return;
- const primary=doc.branches.find(b=>b.id===doc.primaryBranchId),points=primary?.talents.reduce((n,t)=>n+(doc.build[t.id]||0),0)||0;
- panel.innerHTML=`<div class="primary-choice-heading"><strong>Основная ветка</strong>${doc.specialization?`<span>${primary?points+' / '+doc.specialization.requiredPoints+' очк.':'Выбери основную ветку. Её способности станут доступны сразу; другие ветки — после '+doc.specialization.requiredPoints+' очк.'}</span>`:'<span>Выбери ветку, чтобы открыть её особые способности.</span>'}</div><div class="primary-choice-options" role="group" aria-label="Основная ветка">${doc.branches.map(b=>`<button type="button" data-select-primary="${esc(b.id)}" class="primary-choice-option ${doc.primaryBranchId===b.id?'selected':''}" aria-pressed="${doc.primaryBranchId===b.id}">${image(branchIcon(b))}<span data-user-content>${esc(b.name)}</span></button>`).join('')}</div>`;
- if(primary){panel.insertAdjacentHTML('beforeend',`<div class="specialization-grants" aria-label="Способности специализации">${doc.abilities.filter(a=>(a.learningMode==='specialization'||a.branchOnly)&&a.branchId===primary.id).map(a=>`<button type="button" data-ability="${esc(a.id)}" aria-label="${esc(a.name)}" class="specialization-grant"><span aria-hidden="true">✦</span>${image(a.icon)}</button>`).join('')}</div>`);}
+ const panel=$('#specializationChoice');panel.hidden=mode!=='play'||!usesPrimaryBranch(doc);if(panel.hidden)return;
+ const primary=doc.branches.find(b=>b.id===doc.primaryBranchId);
+ panel.innerHTML=`<div class="primary-choice-heading"><strong>Основная ветка</strong><span>Выбор основной ветки открывает её особые способности. Таланты всех веток доступны.</span></div><div class="primary-choice-options" role="group" aria-label="Основная ветка">${doc.branches.map(b=>`<button type="button" data-select-primary="${esc(b.id)}" class="primary-choice-option ${doc.primaryBranchId===b.id?'selected':''}" aria-pressed="${doc.primaryBranchId===b.id}">${image(branchIcon(b))}<span data-user-content>${esc(b.name)}</span></button>`).join('')}</div>`;
+ if(primary){panel.insertAdjacentHTML('beforeend',`<div class="specialization-grants" aria-label="Способности специализации">${doc.abilities.filter(a=>(a.learningMode==='specialization'||a.branchOnly)&&a.branchId===primary.id&&abilityUnlocked(doc,a)).map(a=>`<button type="button" data-ability="${esc(a.id)}" aria-label="${esc(a.name)}" class="specialization-grant"><span aria-hidden="true">✦</span>${image(a.icon)}</button>`).join('')}</div>`);}
  panel.onclick=e=>{const primary=e.target.closest('[data-select-primary]');if(primary){choosePrimaryBranch(primary.dataset.selectPrimary);return;}const target=e.target.closest('[data-ability]');if(target){const ability=doc.abilities.find(a=>a.id===target.dataset.ability);if(ability)editAbility(ability);}};
 }
 function choosePrimaryBranch(id){
- if(mode!=='play'||doc.primaryBranchId===id)return;
- const selected=doc.branches.find(b=>b.id===id);if(!selected)return;
- const apply=()=>{doc.primaryBranchId=id;if(doc.specialization)doc.build={};changed(false);render();};
- if(!doc.specialization||!total(doc)){apply();return;}
- modal('Сменить основную ветку?',`<p>Распределённые очки будут сброшены. Новая основная ветка: <strong data-user-content>${esc(selected.name)}</strong>.</p>`,()=>{apply();$('#modal').close();});$('#submitModal').textContent='Сменить и сбросить очки';
+ if(mode!=='play'||!usesPrimaryBranch(doc)||doc.primaryBranchId===id||!doc.branches.some(b=>b.id===id))return;
+ doc.primaryBranchId=id;changed(false);render();
 }
+$('#primaryBranchEnabled').onchange=()=>{
+ if(mode!=='edit')return;
+ doc.primaryBranchEnabled=$('#primaryBranchEnabled').checked;
+ if(!doc.primaryBranchEnabled)delete doc.primaryBranchId;
+ changed();render();
+};
 function renderAbilities(){
  const compact=abilityView==='icons';$('#abilityViewControls').hidden=false;
  for(const button of document.querySelectorAll('[data-ability-view]')){const selected=button.dataset.abilityView===abilityView;button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));}
@@ -189,7 +193,7 @@ function editAbility(existing,onSaved=null,onCancel=null){
  const costs=`<div id="abilityResourceCosts"></div><div class="ability-numbers">${['cast','cooldown','range'].map((key,i)=>`<div>${field(key,['ВРЕМЯ ПРИМЕНЕНИЯ, СЕК.','ПЕРЕЗАРЯДКА, СЕК.','ДАЛЬНОСТЬ, М'][i],numericValue(a[key]),'number','min="0" max="1000000000" step="any" required')}</div>`).join('')}</div>`;
  let readCosts;
  const requirements=`<label for="abilityRequirements">Требуется:</label><input id="abilityRequirements" type="text" maxlength="1000" value="${esc(abilityRequirementsText(a))}">`;
- modal(existing?'Редактировать способность':'Новая способность',identity+`<div class="ability-editor-layout"><div>${selectors}<label class="ability-branch-only"><input type="checkbox" id="abilityBranchOnly" ${a.branchOnly||a.learningMode==='specialization'?'checked':''}>Способность только для ветки</label><label for="abilityDescription">ОПИСАНИЕ</label><textarea id="abilityDescription" maxlength="10000" rows="8">${esc(a.description)}</textarea></div><div>${costs}${requirements}<label for="abilityLearning">ИЗУЧЕНИЕ СПОСОБНОСТИ</label><select id="abilityLearning"><option value="base" ${learning==='base'?'selected':''}>Изучается без таланта</option><option value="talent" ${learning==='talent'?'selected':''}>Требуется талант</option></select><div id="talentLinkField" ${learning!=='talent'?'hidden':''}><label for="talentLink">ОТКРЫВАЕТСЯ ТАЛАНТОМ</label><select id="talentLink"><option value="">По размещению в дереве</option>${doc.branches.flatMap(b=>b.talents).map(t=>`<option data-user-content value="${esc(t.id)}" ${a.talentId===t.id?'selected':''}>${esc(t.name)}</option>`).join('')}</select></div><p class="muted compact-field-help">0 м — ближний бой. 0 сек. — мгновенное применение.</p></div></div>`,()=>{
+ modal(existing?'Редактировать способность':'Новая способность',identity+`<div class="ability-editor-layout"><div>${selectors}<label class="ability-branch-only" ${!usesPrimaryBranch(doc)?'title="Включи основную ветку в настройках дерева"':''}><input type="checkbox" id="abilityBranchOnly" ${!usesPrimaryBranch(doc)?'disabled':''} ${a.branchOnly||a.learningMode==='specialization'?'checked':''}>Способность только для ветки</label><label for="abilityDescription">ОПИСАНИЕ</label><textarea id="abilityDescription" maxlength="10000" rows="8">${esc(a.description)}</textarea></div><div>${costs}${requirements}<label for="abilityLearning">ИЗУЧЕНИЕ СПОСОБНОСТИ</label><select id="abilityLearning"><option value="base" ${learning==='base'?'selected':''}>Изучается без таланта</option><option value="talent" ${learning==='talent'?'selected':''}>Требуется талант</option></select><div id="talentLinkField" ${learning!=='talent'?'hidden':''}><label for="talentLink">ОТКРЫВАЕТСЯ ТАЛАНТОМ</label><select id="talentLink"><option value="">По размещению в дереве</option>${doc.branches.flatMap(b=>b.talents).map(t=>`<option data-user-content value="${esc(t.id)}" ${a.talentId===t.id?'selected':''}>${esc(t.name)}</option>`).join('')}</select></div><p class="muted compact-field-help">0 м — ближний бой. 0 сек. — мгновенное применение.</p></div></div>`,()=>{
   const updated={...a,name:$('#abilityName').value.trim(),description:$('#abilityDescription').value,icon:readIcon(),learningMode:$('#abilityLearning').value,talentId:$('#abilityLearning').value==='talent'?$('#talentLink').value:'',kind:$('#abilityKind').value,branchOnly:$('#abilityBranchOnly').checked,branchId:$('#abilityBranch').value,requirements:$('#abilityRequirements').value.trim()};
   if(!updated.name)throw Error('Введи название');
   if(updated.branchOnly&&!doc.branches.some(b=>b.id===updated.branchId))throw Error('Выбери ветку для способности');
@@ -204,7 +208,7 @@ $('#trees').addEventListener('change',e=>{if(e.target.matches('.tree-header inpu
 function treeClick(e){
  const tree=e.target.closest('.tree');if(!tree)return;const b=doc.branches.find(b=>b.id===tree.dataset.branch),btn=e.target.closest('button');if(!btn)return;
  if(btn.dataset.selectPrimary){choosePrimaryBranch(btn.dataset.selectPrimary);return;}
- if(btn.dataset.talent){const t=b.talents.find(t=>t.id===btn.dataset.talent);if(mode==='edit'){editTalent(b,t.row,t.col,t);}else if(e.altKey){readOnlyTalent(t);}else{if(changeRank(doc,t.id,e.type==='contextmenu'||e.shiftKey?-1:1)){if(e.type!=='contextmenu'&&!e.shiftKey)trackAllocation();changed(false);render();}else toast(doc.specialization&&!doc.primaryBranchId?'Сначала выбери основную ветку.':'Не хватает очков, не выполнены требования или от таланта зависят другие.');}return;}
+ if(btn.dataset.talent){const t=b.talents.find(t=>t.id===btn.dataset.talent);if(mode==='edit'){editTalent(b,t.row,t.col,t);}else if(e.altKey){readOnlyTalent(t);}else{if(changeRank(doc,t.id,e.type==='contextmenu'||e.shiftKey?-1:1)){if(e.type!=='contextmenu'&&!e.shiftKey)trackAllocation();changed(false);render();}else toast('Не хватает очков, не выполнены требования или от таланта зависят другие.');}return;}
  if(mode!=='edit')return;
  if(btn.dataset.row!==undefined){if(reserved(b,Number(btn.dataset.row),Number(btn.dataset.col))){toast('Здесь проходит стрелка. Сначала убери зависимость.');return;}if(favoritePlacement){placeFavorite(favoritePlacement,{branchId:b.id,row:Number(btn.dataset.row),col:Number(btn.dataset.col)});return;}editTalent(b,Number(btn.dataset.row),Number(btn.dataset.col));return;}
  switch(btn.dataset.action){

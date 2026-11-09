@@ -97,3 +97,15 @@ class EditorMetadataAPI(unittest.TestCase):
         d['abilities'][0]['branchId']='auto';self.assertEqual(self.request(a,'/api/projects',{'document':d})[0],400)
         d['abilities'][0]['branchId']='a';self.assertEqual(self.request(a,'/api/favorites',{'kind':'ability','item':d['abilities'][0]})[0],200)
         item=self.request(a,'/api/favorites')[1]['favorites'][0]['item'];self.assertFalse(item['branchOnly']);self.assertEqual(item['branchId'],'')
+
+    def test_primary_tree_toggle_persists_and_is_validated(self):
+        a=self.client();self.register(a,'primary_toggle')
+        d=copy.deepcopy(base.DOCUMENT)
+        for enabled in (True,False):
+            d.update(name='Toggle '+str(enabled),primaryBranchEnabled=enabled)
+            status,result,_=self.request(a,'/api/projects',{'document':d});self.assertEqual(status,200)
+            pid=result['id'];stored=self.request(a,'/api/projects/'+pid)[1]['document'];self.assertEqual(stored['primaryBranchEnabled'],enabled)
+            token=self.request(a,'/api/publish',{'projectId':pid,'visibility':'public'})[1]['token']
+            self.assertEqual(self.request(self.client(),'/api/shared/'+token)[1]['document']['primaryBranchEnabled'],enabled)
+        for invalid in (0,1,None,'true',{}):
+            d['primaryBranchEnabled']=invalid;self.assertEqual(self.request(a,'/api/projects',{'document':d})[0],400)
