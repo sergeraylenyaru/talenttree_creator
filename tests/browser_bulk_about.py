@@ -1,5 +1,5 @@
 """Bulk icon review and administrator-editable About, temporary database/files."""
-from browser_helpers import open_icons
+from browser_helpers import open_icons, close_icons
 import base64,sys,tempfile,threading,os
 from pathlib import Path
 from unittest.mock import patch
@@ -92,7 +92,7 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
             m.locator('#accountMenu').click();m.locator('#profileSettings').click();m.locator('#profileLanguage').select_option('en');m.locator('#submitModal').click()
             expect(m.locator('.about-description')).to_contain_text('Create your own class.')
             m.locator('#aboutReturnEditor').click();m.locator('#className').fill('Unsaved local idea');m.locator('#className').dispatch_event('change');m.locator('#about').click();m.locator('#aboutReturnEditor').click();expect(m.locator('#className')).to_have_value('Unsaved local idea')
-            m.locator('#classIcon').click();m.locator('[data-emblem-layer="0"]').click();open_icons(m);m.locator('#iconSearch').fill('лед mage');expect(m.locator('#iconGrid [data-icon]')).to_have_count(1);expect(m.locator('#iconGrid button')).to_have_attribute('title',__import__('re').compile('Blue comet.*burst'));open_icons(m);m.locator('#iconSearch').fill('poison яд');expect(m.locator('#iconGrid [data-icon]')).to_have_count(1);expect(m.locator('#iconGrid button')).to_have_attribute('title',__import__('re').compile('Emerald comet'));m.locator('#closeModal').click();m.wait_for_selector('#emblemOpacity');m.locator('#closeModal').click()
+            m.locator('#classIcon').click();m.locator('[data-emblem-layer="0"]').click();open_icons(m);m.locator('#iconSearch').fill('лед mage');expect(m.locator('#iconGrid [data-icon]')).to_have_count(1);expect(m.locator('#iconGrid button')).to_have_attribute('title',__import__('re').compile('Blue comet.*burst'));open_icons(m);m.locator('#iconSearch').fill('poison яд');expect(m.locator('#iconGrid [data-icon]')).to_have_count(1);expect(m.locator('#iconGrid button')).to_have_attribute('title',__import__('re').compile('Emerald comet'));close_icons(m);m.locator('#closeModal').click();m.wait_for_selector('#emblemOpacity');close_icons(m);m.locator('#closeModal').click()
             # Reload reads persistent settings, not the in-memory editor draft.
             a.set_viewport_size({'width':1440,'height':1000});a.reload();a.locator('#projectTab').click();expect(a.locator('#projectDescription')).to_have_value('Create your own class.\nA community workshop for talent trees.')
             assert not errors,errors

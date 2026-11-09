@@ -8,13 +8,13 @@ export function restoreBrowserBuild(document,id,storage=localStorage) {
  const result=withoutBuild(document);
  try {
   const saved=JSON.parse(storage.getItem(key(id)));
-  const build=result.specialization&&saved?.build?saved.build:saved;
-  if(result.specialization&&saved?.primaryBranchId&&result.branches.some(b=>b.id===saved.primaryBranchId))result.primaryBranchId=saved.primaryBranchId;
+  const build=saved?.build&&typeof saved.build==='object'?saved.build:saved;
+  if(saved?.primaryBranchId&&result.branches.some(b=>b.id===saved.primaryBranchId))result.primaryBranchId=saved.primaryBranchId;
   if(build&&typeof build==='object'&&!Array.isArray(build)&&validBuild(result,build))result.build={...build};
  } catch {}
  return result;
 }
 
 export function saveBrowserBuild(document,id,storage=localStorage) {
- storage.setItem(key(id),JSON.stringify(document.specialization?{build:document.build,primaryBranchId:document.primaryBranchId||''}:document.build));
+ storage.setItem(key(id),JSON.stringify(document.specialization||document.primaryBranchId||document.abilities?.some(a=>a.branchOnly)?{build:document.build,primaryBranchId:document.primaryBranchId||''}:document.build));
 }

@@ -1,5 +1,5 @@
 """English/Russian profile, draft decisions and compact character constructor."""
-from browser_helpers import open_icons
+from browser_helpers import open_icons, close_icons
 import sys,tempfile,threading,json
 from pathlib import Path
 from playwright.sync_api import sync_playwright,expect

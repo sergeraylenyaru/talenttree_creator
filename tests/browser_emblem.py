@@ -1,5 +1,5 @@
 """Optional integration check: python3 tests/browser_emblem.py (Playwright + Chromium)."""
-from browser_helpers import open_icons
+from browser_helpers import open_icons, close_icons
 import sys,tempfile,threading,json
 from pathlib import Path
 from urllib.parse import urlparse,parse_qs
@@ -22,12 +22,12 @@ with tempfile.TemporaryDirectory() as tmp:
    saved=ctx.request.get(base+'/api/projects/'+pid).json()['document'];assert 'glow' not in saved['classIcon'];assert [(l['icon'],l['opacity']) for l in saved['classIcon']['layers']]==[('inv_sword_04',.65),('inv_axe_01',.35)]
    with page.expect_download() as download:page.locator('#export').click()
    exported=json.loads(Path(download.value.path()).read_text());assert exported['classIcon']==saved['classIcon'];assert exported['build']==saved['build']=={}
-   page.locator('#share').click();page.locator('#publicationVisibility').select_option('private');page.locator('#submitModal').click();page.wait_for_selector('#shareURL');token=parse_qs(urlparse(page.locator('#shareURL').input_value()).query)['share'][0];assert 'Только мне' in page.locator('#modalBody').inner_text();page.locator('#closeModal').click()
+   page.locator('#share').click();page.locator('#publicationVisibility').select_option('private');page.locator('#submitModal').click();page.wait_for_selector('#shareURL');token=parse_qs(urlparse(page.locator('#shareURL').input_value()).query)['share'][0];assert 'Только мне' in page.locator('#modalBody').inner_text();close_icons(page);page.locator('#closeModal').click()
    page.locator('#publications').click();page.wait_for_selector('[data-visibility]');assert page.locator('[data-visibility]').input_value()=='private';assert page.locator('.publication-class .class-emblem img').count()==2;assert 'Только мне' in page.locator('.visibility-badge').inner_text();assert page.locator('.visibility-badge .ui-icon').count()==1
    guest=browser.new_context();assert guest.request.get(base+'/api/shared/'+token).status==404;assert guest.request.post(base+'/api/shared/'+token+'/interact',data={}).status==404;assert guest.request.get(base+'/api/rankings').json()['publications']==[]
    page.locator('[data-visibility]').select_option('unlisted');page.wait_for_function("document.querySelector('[data-visibility]')?.value==='unlisted' && document.querySelector('.visibility-badge.unlisted')");assert guest.request.get(base+'/api/shared/'+token).ok
    page.locator('[data-visibility]').select_option('private');page.wait_for_selector('.visibility-badge.private');assert guest.request.get(base+'/api/shared/'+token).status==404
-   page.locator('[data-edit-project]').click();page.wait_for_selector('#classIcon');page.locator('#classIcon').click();page.set_viewport_size({'width':320,'height':900});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth');assert page.locator('#modal').evaluate('el=>el.scrollWidth<=el.clientWidth+1');page.locator('#closeModal').click()
+   page.locator('[data-edit-project]').click();page.wait_for_selector('#classIcon');page.locator('#classIcon').click();page.set_viewport_size({'width':320,'height':900});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth');assert page.locator('#modal').evaluate('el=>el.scrollWidth<=el.clientWidth+1');close_icons(page);page.locator('#closeModal').click()
    page.set_viewport_size({'width':1440,'height':1000});page.locator('#publications').click();page.wait_for_selector('[data-open-publication]');page.locator('[data-open-publication]').first.click();page.wait_for_selector('#publicationBar');assert 'Только мне' in page.locator('#publicationBar').inner_text();page.locator('#accountMenu').click();page.locator('#logout').click();page.wait_for_function("document.querySelector('#user').textContent===''");assert page.locator('#className').input_value()=='Новый класс';assert '?share=' not in page.url
    page.goto(base+'/?share='+token);page.locator('#auth').click();page.locator('#login').fill('emblem_author');page.locator('#password').fill('test-password-123');page.locator('#submitModal').click();page.wait_for_function("document.querySelector('#className').value==='Клинок рассвета' && !document.querySelector('#publicationBar').hidden");assert 'Только мне' in page.locator('#publicationBar').inner_text()
    assert not errors,errors

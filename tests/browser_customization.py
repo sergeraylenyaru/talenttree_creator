@@ -1,5 +1,5 @@
 """Avatar composer, branch tints and navigation; temporary database only."""
-from browser_helpers import open_icons
+from browser_helpers import open_icons, close_icons
 import json
 import sys
 import tempfile
@@ -37,7 +37,7 @@ with tempfile.TemporaryDirectory() as tmp:
             page.locator('#projects').click();page.locator('[data-open]').first.click()
             page.wait_for_function("document.querySelector('#className').value==='Звёздный страж'")
             assert page.locator('.emblem-glow').count()==0
-            page.locator('#classIcon').click();assert page.locator('#emblemGlowColor').count()==0;page.locator('#closeModal').click()
+            page.locator('#classIcon').click();assert page.locator('#emblemGlowColor').count()==0;close_icons(page);page.locator('#closeModal').click()
             page.locator('#profileAvatar').click();assert page.locator('#modalTitle').inner_text()=='Аватар профиля'
             page.locator('#emblemOpacity').fill('70');page.locator('#emblemScale').fill('150');page.locator('#emblemX').fill('12')
             page.locator('#toggleEmblemLayer').click();page.locator('#emblemOpacity').fill('40');page.locator('#emblemRotation').fill('45')

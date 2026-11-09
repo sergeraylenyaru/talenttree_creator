@@ -73,3 +73,27 @@ class EditorMetadataAPI(unittest.TestCase):
         self.assertEqual(self.request(a,'/api/profile/avatar',{'avatar':d['classIcon']})[0],200)
         d['classIcon']['layers'][0]['icon']='retail:unknown'
         self.assertEqual(self.request(a,'/api/projects',{'document':d})[0],400)
+
+    def test_preset_catalog_recovers_cata_from_files_with_an_outdated_manifest(self):
+        import json,tempfile
+        from pathlib import Path
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);directory=root/'static'/'presets';directory.mkdir(parents=True)
+            (directory/'index.json').write_text(json.dumps([{'id':'cata-warrior','name':'Воин','version':'3.3.5a','talents':0}]))
+            d=copy.deepcopy(base.DOCUMENT);d.update(name='Воин · 4.3.4',source={'version':'4.3.4'})
+            (directory/'cata-warrior.json').write_text(json.dumps(d))
+            with patch.object(server,'ROOT',root):
+                status,result,headers=self.request(self.client(),'/api/presets');self.assertEqual(status,200);self.assertEqual(headers.get('Cache-Control'),'no-store');self.assertEqual(result['classes'][0]['version'],'4.3.4')
+                (directory/'index.json').write_text('[]')
+                self.assertEqual(self.request(self.client(),'/api/presets')[1]['classes'][0]['id'],'cata-warrior')
+
+    def test_branch_only_checkbox_validation_and_portable_favorite(self):
+        a=self.client();self.register(a,'branch_only')
+        d=copy.deepcopy(base.DOCUMENT);d['abilities']=[{'id':'skill','name':'Навык','icon':'inv_misc_book_09','description':'Описание','branchId':'a','branchOnly':True,'learningMode':'base'}]
+        self.assertEqual(self.request(a,'/api/projects',{'document':d})[0],200)
+        for value in ('yes',1,None):
+            bad=copy.deepcopy(d);bad['abilities'][0]['branchOnly']=value;self.assertEqual(self.request(a,'/api/projects',{'document':bad})[0],400)
+        d['abilities'][0]['branchId']='auto';self.assertEqual(self.request(a,'/api/projects',{'document':d})[0],400)
+        d['abilities'][0]['branchId']='a';self.assertEqual(self.request(a,'/api/favorites',{'kind':'ability','item':d['abilities'][0]})[0],200)
+        item=self.request(a,'/api/favorites')[1]['favorites'][0]['item'];self.assertFalse(item['branchOnly']);self.assertEqual(item['branchId'],'')

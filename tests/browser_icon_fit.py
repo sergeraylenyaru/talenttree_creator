@@ -1,5 +1,5 @@
 """Icon artwork scales up/down in previews, existing uploads and main picker."""
-from browser_helpers import open_icons
+from browser_helpers import open_icons, close_icons
 import base64,sys,tempfile,threading,os
 from pathlib import Path
 from unittest.mock import patch
@@ -43,7 +43,7 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
             page.goto(base);expect(page.locator('#user')).to_have_text('icon_admin');page.locator('#classIcon').click();page.locator('[data-emblem-layer="0"]').click()
             for name,_,ident in fixtures:
                 open_icons(page);page.locator('#iconSearch').fill(name);expect(page.locator('[data-icon="custom:'+ident+'"]')).to_be_visible();filled('[data-icon="custom:'+ident+'"] img')
-            page.locator('#closeModal').click();page.wait_for_selector('#emblemOpacity');page.locator('#closeModal').click()
+            close_icons(page);page.locator('#closeModal').click();page.wait_for_selector('#emblemOpacity');close_icons(page);page.locator('#closeModal').click()
             icon='custom:'+fixtures[-1][2]
             inline='data:image/png;base64,'+base64.b64encode(fixtures[-1][1].read_bytes()).decode()
             cdn='https://wow.zamimg.com/images/wow/icons/large/inv_sword_04.jpg'
@@ -54,11 +54,11 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
             page.locator('#projects').click();page.locator('[data-open="'+pid+'"]').click();filled('#trees .slot.filled img');filled('#trees .branch-icon-button img')
             page.locator('[data-talent="fitted"]').click();open_icons(page);page.locator('#iconSearch').fill('#tagtoken_black_padding');expect(page.locator('#iconGrid [data-icon]')).to_have_count(1);filled('#liveRankIcon img');filled('#iconPreview')
             assert page.locator('#liveRankIcon').evaluate('button=>{const b=button.getBoundingClientRect(),i=button.querySelector("img").getBoundingClientRect();return Math.abs(i.width-(b.width-4))<1&&Math.abs(i.height-(b.height-4))<1}')
-            page.locator('#liveRankIcon').click();filled('#liveRankIcon img');page.locator('#closeModal').click();page.locator('#playMode').click();filled('#trees .slot.filled img')
+            close_icons(page);page.locator('#liveRankIcon').click();filled('#liveRankIcon img');close_icons(page);page.locator('#closeModal').click();page.locator('#playMode').click();filled('#trees .slot.filled img')
             assert page.locator('#trees .slot.filled').evaluate_all('buttons=>buttons.every(button=>{const b=button.getBoundingClientRect(),i=button.querySelector("img").getBoundingClientRect();return Math.abs(i.width-(b.width-4))<1&&Math.abs(i.height-(b.height-4))<1})')
             page.screenshot(path='work/fitted-talent-calculator.png',full_page=True)
-            page.locator('#editMode').click();page.locator('[data-talent="source1"]').click();filled('#liveRankIcon img');page.locator('#liveRankIcon').click();filled('#liveRankIcon img');page.locator('#closeModal').click()
-            page.locator('[data-talent="source2"]').click();filled('#liveRankIcon img');page.locator('#closeModal').click()
+            page.locator('#editMode').click();page.locator('[data-talent="source1"]').click();filled('#liveRankIcon img');close_icons(page);page.locator('#liveRankIcon').click();filled('#liveRankIcon img');close_icons(page);page.locator('#closeModal').click()
+            page.locator('[data-talent="source2"]').click();filled('#liveRankIcon img');close_icons(page);page.locator('#closeModal').click()
             # Uploaded tags remain searchable in the actual talent editor when static catalogs fail.
             page.route('**/icon-catalog.json',lambda route:route.fulfill(status=503,json={'error':'unavailable'}));page.route('**/weapon-icons.json',lambda route:route.fulfill(status=503,json={'error':'unavailable'}));page.reload();expect(page.locator('#user')).to_have_text('icon_admin')
             page.locator('[data-talent="fitted"]').click();open_icons(page);page.locator('#iconSearch').fill('#tagtoken_black_padding');expect(page.locator('#iconGrid [data-icon]')).to_have_count(1);page.locator('#iconGrid [data-icon]').click();filled('#liveRankIcon img');page.locator('#submitModal').click();filled('[data-talent="fitted"] img')

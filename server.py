@@ -113,6 +113,17 @@ def duplicate_draft(db,uid,document,exclude=None):
     return None
 
 
+def preset_catalog():
+    directory=ROOT/'static'/'presets'
+    try:index=json.loads((directory/'index.json').read_text(encoding='utf-8'))
+    except (OSError,ValueError):index=[]
+    known={item['id']:item for item in index if isinstance(item,dict) and isinstance(item.get('id'),str) and (directory/(item['id']+'.json')).is_file()}
+    for path in sorted(directory.glob('*.json')):
+        if path.stem=='index':continue
+        document=json.loads(path.read_text(encoding='utf-8'));version=document.get('source',{}).get('version','3.3.5a')
+        known[path.stem]={'id':path.stem,'name':known.get(path.stem,{}).get('name') or document['name'].removesuffix(' · '+version),'version':version,'talents':sum(len(b['talents']) for b in document['branches'])}
+    return list(known.values())
+
 def validate_class_icon(value):
     color=lambda c:isinstance(c,str) and re.fullmatch(r'#[0-9a-fA-F]{6}',c)
     number=lambda v,lo,hi:type(v) in (int,float) and math.isfinite(v) and lo<=v<=hi
@@ -222,6 +233,8 @@ def validate(document):
         if 'learningMode' in ability and ability['learningMode'] not in ('base','talent','specialization'):raise ValueError('Неверный способ изучения способности')
         if 'requirements' in ability and ((len(ability['requirements'])>1000) if isinstance(ability['requirements'],str) else (not isinstance(ability['requirements'],list) or len(ability['requirements'])>40 or any(not isinstance(item,str) or not item.strip() or len(item)>100 for item in ability['requirements']) or len(set(ability['requirements']))!=len(ability['requirements']))):raise ValueError('Проверь требования способности')
         if ability.get('learningMode')=='specialization' and ('specialization' not in document or ability.get('branchId') not in branch_ids):raise ValueError('Выбери ветку для способности специализации')
+        if 'branchOnly' in ability and type(ability['branchOnly']) is not bool:raise ValueError('Проверь ограничение способности по ветке')
+        if ability.get('branchOnly') and ability.get('branchId') not in branch_ids:raise ValueError('Выбери ветку для способности')
         if 'resourceUnit' in ability and ability['resourceUnit'] not in ('points','percent','count'):raise ValueError('Неверные единицы ресурса')
         if 'kind' in ability and ability['kind'] not in ('active', 'passive'):
             raise ValueError('Неверный тип способности')
@@ -350,6 +363,7 @@ class Handler(SimpleHTTPRequestHandler):
                 if accounts.admin_route(self,db,method,parsed.path,data,password_hash,profile_info):return
                 if accounts.email_route(self,db,method,parsed.path,data,password_hash,uid):return
                 if parsed.path=='/api/about' and method=='GET':return self.reply(200,site_content.content(db))
+                if parsed.path=='/api/presets' and method=='GET':return self.reply(200,{'classes':preset_catalog()})
                 if parsed.path=='/api/icons' and method=='GET':return self.reply(200,{'icons':accounts.public_icons(db),'categories':accounts.categories(db)})
                 if parsed.path == '/api/rankings' and method == 'GET':
                     query = parse_qs(parsed.query)
@@ -516,6 +530,11 @@ class Handler(SimpleHTTPRequestHandler):
                     else:
                         item['talentId'] = ''
                         item['branchId'] = ''
+                        item['branchOnly'] = False
+                        item['learningMode'] = 'base'
+                        if isinstance(item.get('resourceCosts'),list):
+                            refs={cost['resourceId']:cost for cost in item['resourceCosts'] if isinstance(cost,dict) and isinstance(cost.get('resourceId'),str) and cost['resourceId']!='health'}
+                            check['character']={'hp':100,'race':'Человек','gender':'Мужской','armory':'','resources':[{'id':rid,'name':cost.get('resourceName') or rid,'max':100,'current':100,'unit':'points','display':'bar','shape':'circle','color':'#397de1'} for rid,cost in refs.items()]}
                         check['abilities'] = [item]
                     validate(check)
                     fid = secrets.token_hex(12)
