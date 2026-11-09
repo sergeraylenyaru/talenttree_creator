@@ -1,0 +1,330 @@
+[
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-1-ru_ru.xml",
+    "file": "wotlk-warrior-ru.xml",
+    "sha": "2ce9624063410721dc7fced0c654a77f7f095ca8",
+    "sha256": "9be23e7f64c361c8a00cab70f0fd858d9258da47ce731f2061edbf620cabdae3",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/2ce9624063410721dc7fced0c654a77f7f095ca8"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-1-en_gb.xml",
+    "file": "wotlk-warrior-en.xml",
+    "sha": "109ab01a6a124d45fa07d8fa9b8d8a18ddebce13",
+    "sha256": "6faf5cba3065c28fd946369263e7ca9832408f542dec631fbdbe9050c6c8b8c4",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/109ab01a6a124d45fa07d8fa9b8d8a18ddebce13"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-1-8.js",
+    "file": "cata-warrior-ru.js",
+    "sha": "6e5823ad5205bf8ec3678eee8552e441496d223f",
+    "sha256": "db9f15a7a4882c35402a998ca99609feb7ce489d73ca6a5e74358c148a6e03e3",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/6e5823ad5205bf8ec3678eee8552e441496d223f"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-1-0.js",
+    "file": "cata-warrior-en.js",
+    "sha": "4e82e6c2aad8f0714d0ad863154f6e1727f2c68a",
+    "sha256": "757ac7a2a0acbbf9323433ba401d45c1ddb49a84b69a7329a38af06a6e8304c9",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/4e82e6c2aad8f0714d0ad863154f6e1727f2c68a"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-2-ru_ru.xml",
+    "file": "wotlk-paladin-ru.xml",
+    "sha": "dca1eb26c7c814ff77fbc32f547ef7c8926c33b3",
+    "sha256": "60e47f000318d35ce5a8af371ff0878f21ecf94f9ec636fe208652d2901fb794",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/dca1eb26c7c814ff77fbc32f547ef7c8926c33b3"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-2-en_gb.xml",
+    "file": "wotlk-paladin-en.xml",
+    "sha": "46d86df05d638d8c7b10cb51c1dabd6c0f112c3a",
+    "sha256": "94442cf2e43b49d6e8495b9cc7471a69f8652b6da989e5fe4007442fbf9bc1f2",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/46d86df05d638d8c7b10cb51c1dabd6c0f112c3a"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-2-8.js",
+    "file": "cata-paladin-ru.js",
+    "sha": "5b029c5165e11bd39a09282cb547812b4a702ff0",
+    "sha256": "7249ee307fdcbd0b7a986c372241bafc25d4e9dcb81025e349ffe3f6902d6d65",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/5b029c5165e11bd39a09282cb547812b4a702ff0"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-2-0.js",
+    "file": "cata-paladin-en.js",
+    "sha": "1e1e87eb42aa2c7fce3934979e07838e6e62d223",
+    "sha256": "2c2cede29888fbf4c3166bf6b7778ec77623ca818fb7b2b493b3f807b4794be8",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/1e1e87eb42aa2c7fce3934979e07838e6e62d223"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-3-ru_ru.xml",
+    "file": "wotlk-hunter-ru.xml",
+    "sha": "94ffeff074b5d780ce8eb6dcd03e51d2b045f713",
+    "sha256": "a9cf996e73c12a8eb9958a6f9eed43e842904b16d23f53928474051ab60101ad",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/94ffeff074b5d780ce8eb6dcd03e51d2b045f713"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-3-en_gb.xml",
+    "file": "wotlk-hunter-en.xml",
+    "sha": "55e2d10aec05833c2dce073056caaaa0d49be74b",
+    "sha256": "bf42f1da48ff63667fa356d129dfd99a4327c989312802cd2b3cdb8ee1e84ea7",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/55e2d10aec05833c2dce073056caaaa0d49be74b"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-3-8.js",
+    "file": "cata-hunter-ru.js",
+    "sha": "893dd73eb7b34efcb5c4924d42bf04b396ad255e",
+    "sha256": "84f00d28839e4337b7d93c52b1ed2e3601990286b99c036c6d39f0f39a484d8d",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/893dd73eb7b34efcb5c4924d42bf04b396ad255e"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-3-0.js",
+    "file": "cata-hunter-en.js",
+    "sha": "fa7c478958d69214ba129741a1ae30708f0ab532",
+    "sha256": "fc33414bf578ec499de9e556c743040685c5c37806ab9f7484960533089b265e",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/fa7c478958d69214ba129741a1ae30708f0ab532"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-4-ru_ru.xml",
+    "file": "wotlk-rogue-ru.xml",
+    "sha": "38c3119c10d249bd22da5dd4fa018f442b43e117",
+    "sha256": "cdf3b11af8474d64cc43dc9b8aad5e18110e0ddb7341078c58a288fcb105acf1",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/38c3119c10d249bd22da5dd4fa018f442b43e117"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-4-en_gb.xml",
+    "file": "wotlk-rogue-en.xml",
+    "sha": "348c31ec3a9ea87def02fc96db4a072f2028a080",
+    "sha256": "5a0aa6f085b563797475000b63220988155bc0283d9dc99d847864d357911a07",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/348c31ec3a9ea87def02fc96db4a072f2028a080"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-4-8.js",
+    "file": "cata-rogue-ru.js",
+    "sha": "b4ad486b58aa1997bedaa89be48404f1e4bd73cd",
+    "sha256": "7625437f894f163a5ce974baf253233b4c41a2fee108923f697de19e1958a5ea",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/b4ad486b58aa1997bedaa89be48404f1e4bd73cd"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-4-0.js",
+    "file": "cata-rogue-en.js",
+    "sha": "5721100e4ba8661a2820de4b4e3b2da9d0c94d01",
+    "sha256": "b52e142407f1e41e31570b8a17ac42cf8c904bf04801cc994dd6eb7d0dcab57a",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/5721100e4ba8661a2820de4b4e3b2da9d0c94d01"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-5-ru_ru.xml",
+    "file": "wotlk-priest-ru.xml",
+    "sha": "e1cc6a02635818c26c4197105a4602697c1c7c2b",
+    "sha256": "a6266b2ffeaa9d18e9e11d8569104931ed62addcfef4da929ebcc0c4bc6aa485",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/e1cc6a02635818c26c4197105a4602697c1c7c2b"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-5-en_gb.xml",
+    "file": "wotlk-priest-en.xml",
+    "sha": "e3ad8e317081ed6a6d54363f771cd0ef30e827da",
+    "sha256": "a79d82b9a6a1931d1d0d545f54c677838bd55fe634b1f4ea4398e3ab1e6fbdd2",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/e3ad8e317081ed6a6d54363f771cd0ef30e827da"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-5-8.js",
+    "file": "cata-priest-ru.js",
+    "sha": "10004e3bfd8d7bcce7564134c8563adb3b3061ee",
+    "sha256": "f0b3ff1a77a46f3e0e0c858e17136dd968be8c521ecb6ddbbb0bcf552379dbe7",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/10004e3bfd8d7bcce7564134c8563adb3b3061ee"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-5-0.js",
+    "file": "cata-priest-en.js",
+    "sha": "a90cdee1a6e56f20d34f19fca5fb3685e328bf32",
+    "sha256": "befec777844997c0f9e417180f2150690649168bfc9ba9434f5bfd0ba5d7932a",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/a90cdee1a6e56f20d34f19fca5fb3685e328bf32"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-6-ru_ru.xml",
+    "file": "wotlk-deathknight-ru.xml",
+    "sha": "1bc04ed117a8d0a9e43dc3b7242ce4fe686f7861",
+    "sha256": "8b5ed16b9b658b6820bf9e62fabbcfdb862ca6951e289ff0df0b839b168d6411",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/1bc04ed117a8d0a9e43dc3b7242ce4fe686f7861"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-6-en_gb.xml",
+    "file": "wotlk-deathknight-en.xml",
+    "sha": "84c79d47af76e87091eaced919f3d5c1e47dc4e8",
+    "sha256": "0139e09b1287349cc74d8d171b7c6e672b7f14b9abeaac12be5d597b7854274d",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/84c79d47af76e87091eaced919f3d5c1e47dc4e8"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-6-8.js",
+    "file": "cata-deathknight-ru.js",
+    "sha": "7858a4ec515dae9ebba5e3e17c02f5339ceb3d32",
+    "sha256": "91b8d7ea6d77d8c22d48fc1b659807a2e2a70cf8722bb03e2527763544b7e8c4",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/7858a4ec515dae9ebba5e3e17c02f5339ceb3d32"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-6-0.js",
+    "file": "cata-deathknight-en.js",
+    "sha": "f349111c29d353dca68fa55bf943e6231c12cfa7",
+    "sha256": "44842adb90df8ed3e56f0397c875f56bbcf4410b857b49887b3cc351372fa121",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/f349111c29d353dca68fa55bf943e6231c12cfa7"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-7-ru_ru.xml",
+    "file": "wotlk-shaman-ru.xml",
+    "sha": "4c01b4cf2452f857bb91e486d6fcd9fa38e11adb",
+    "sha256": "707ee2338621ddb1d26d13f7de10d49b8bdf64a0b9aac32983935ca590080d84",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/4c01b4cf2452f857bb91e486d6fcd9fa38e11adb"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-7-en_gb.xml",
+    "file": "wotlk-shaman-en.xml",
+    "sha": "da9d6d0c472b6d95b3dd3baf46a101ec400718a5",
+    "sha256": "e90c2bc78384cee5425b16becd8e235c2745af0d4fe671508f04ea1e1eaa048a",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/da9d6d0c472b6d95b3dd3baf46a101ec400718a5"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-7-8.js",
+    "file": "cata-shaman-ru.js",
+    "sha": "185d5ffc783566ce0dd2ca9f40fb6c23a536f1d6",
+    "sha256": "4904000d9541de32321f92d8a51f0ae8442aa7bac6815088c2e11bee3995c16e",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/185d5ffc783566ce0dd2ca9f40fb6c23a536f1d6"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-7-0.js",
+    "file": "cata-shaman-en.js",
+    "sha": "e7817fe2bda65e35793622c6a268c39b275df417",
+    "sha256": "9c3c802f5066799650922efc35ae77d1c7aaf69304b09cc65f924b4d6bf1b77d",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/e7817fe2bda65e35793622c6a268c39b275df417"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-8-ru_ru.xml",
+    "file": "wotlk-mage-ru.xml",
+    "sha": "80b5812ae6f37ca83617bb765c062c0c6cb4dbc2",
+    "sha256": "a5b0da27b5d08b4bfcc36070fa3d454ef80980908a8942e6a350d43e77b75281",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/80b5812ae6f37ca83617bb765c062c0c6cb4dbc2"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-8-en_gb.xml",
+    "file": "wotlk-mage-en.xml",
+    "sha": "9b3740a324f4f1c40e41b7a154d406a7bb6ff7a7",
+    "sha256": "18f576cd45d9c37b57c7179f944d221149b19f2e27f216c0a690efa4a13f05bc",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/9b3740a324f4f1c40e41b7a154d406a7bb6ff7a7"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-8-8.js",
+    "file": "cata-mage-ru.js",
+    "sha": "a1eb0085bbc26a79e1388f1de2674b7850eca5fb",
+    "sha256": "bafd92403e9cbb142cb8f3d73d23d55a8589012c3bd06d04d3de4c5a801beee9",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/a1eb0085bbc26a79e1388f1de2674b7850eca5fb"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-8-0.js",
+    "file": "cata-mage-en.js",
+    "sha": "f25c0fea1b1e980852c88b397a53857948cece44",
+    "sha256": "023243a802768cbdfc801ecff045163f3eddd834a9508a1f64d74d499061aeff",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/f25c0fea1b1e980852c88b397a53857948cece44"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-9-ru_ru.xml",
+    "file": "wotlk-warlock-ru.xml",
+    "sha": "ac194568919488196821725e4a23b7be158aad1e",
+    "sha256": "a2fd8939080ac1b97cdc551dd531d4c0cc4f4555dede2253882ba0b94184c42f",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/ac194568919488196821725e4a23b7be158aad1e"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-9-en_gb.xml",
+    "file": "wotlk-warlock-en.xml",
+    "sha": "18c38fdbf57eb11e76b0b2cabe8424586a4eb45a",
+    "sha256": "3bd0ee2c62801636e8bd87308cfe1cc1fa13fbcdd7176a31b3ad656d6440f3da",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/18c38fdbf57eb11e76b0b2cabe8424586a4eb45a"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-9-8.js",
+    "file": "cata-warlock-ru.js",
+    "sha": "447ad0f7d62bb4b3efbc38f41d7d7dbbdb96a1ee",
+    "sha256": "3cdfcc3bd6bdc186e0bef78286e078b42492b034d01a890eb965c0ce81babb82",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/447ad0f7d62bb4b3efbc38f41d7d7dbbdb96a1ee"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-9-0.js",
+    "file": "cata-warlock-en.js",
+    "sha": "c32c2b90ce00943e413ad2fab1fc322315e11b5b",
+    "sha256": "1cd3597b69b25121b9358ea7ace691b9fd55ea1acfc66daad742ff9bb66236a0",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/c32c2b90ce00943e413ad2fab1fc322315e11b5b"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-11-ru_ru.xml",
+    "file": "wotlk-druid-ru.xml",
+    "sha": "69142bc30a9e81816404422b05cab10bdc7b86f9",
+    "sha256": "8fea5c59741f0548d35b6ac6ac5269dfb7d8d922db98b82e49798371081cdedc",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/69142bc30a9e81816404422b05cab10bdc7b86f9"
+  },
+  {
+    "repo": "Shadez/wowarmory",
+    "path": "data/talent-tree-11-en_gb.xml",
+    "file": "wotlk-druid-en.xml",
+    "sha": "85ca7132c379c982d9262e9e9ef6ca7a856bdd13",
+    "sha256": "71eb00b86bc3a4bd410aa54d921a13c4ca1b896fb5511b5d7b76278a821aab6d",
+    "url": "https://api.github.com/repos/Shadez/wowarmory/git/blobs/85ca7132c379c982d9262e9e9ef6ca7a856bdd13"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-11-8.js",
+    "file": "cata-druid-ru.js",
+    "sha": "6ce8aefc967d67757ae856e25558cfa64c3160e8",
+    "sha256": "019a50ae63daa600b2a32b36b390d51033065f88f8d1d800e754290cb20f4b1a",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/6ce8aefc967d67757ae856e25558cfa64c3160e8"
+  },
+  {
+    "repo": "Shadez/wowhead",
+    "path": "data/talents-11-0.js",
+    "file": "cata-druid-en.js",
+    "sha": "b56aa7ab121230abf0752272da660224fb44f5c3",
+    "sha256": "e3ef9e7bf12edd889a075105b41c54fa2ca5d55b2a92d2466ef443f38b705fc1",
+    "url": "https://api.github.com/repos/Shadez/wowhead/git/blobs/b56aa7ab121230abf0752272da660224fb44f5c3"
+  },
+  {
+    "repo": "wowgaming/addon-archive",
+    "path": "ZHunterMod/Libs/LibBabble-Spell-3.0/ruRU.lua",
+    "file": "spell-names-ru.lua",
+    "sha": "8bbaa00fb3e633358955513a953b19dfc85a6035",
+    "sha256": "d5552b0c648c22a0a4f2106742f997e5e1728b01642fccbc7a936c340db1c975",
+    "url": "https://api.github.com/repos/wowgaming/addon-archive/git/blobs/8bbaa00fb3e633358955513a953b19dfc85a6035"
+  }
+]

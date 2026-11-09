@@ -1,3 +1,4 @@
+import {presetClassName,applyPresetLocale} from './preset-locales.js';
 import {createIconBrowser} from './icon-browser.js';
 import {resourceCostEditor} from './resource-cost-editor.js';
 import {classResources,abilityResourceCosts,reconcileResourceCosts,adaptResourceCosts} from './resource-costs.js';
@@ -312,15 +313,15 @@ $('#preset').onclick=async()=>{
  try{
   const {classes}=await api('/presets');
   let version='Forever',selected=classes.find(c=>c.version===version)?.id;
-  modal('Стандартные деревья',`<div id="versionFilters" class="version-filters">${[['Forever','Forever'],['2.4.3','TBC'],['3.3.5a','WotLK'],['4.3.4','Cataclysm']].map(([v,n])=>`<button type="button" data-version="${v}">${n}</button>`).join('')}</div><input type="hidden" id="presetClass"><div id="classCards" class="class-cards"></div><p class="muted">Тексты стандартных наборов на английском. Forever — снимок 1.60.1.69876, возможны отличия от текущего Wowhead.</p>`,async()=>{
+  modal('Стандартные деревья',`<div id="versionFilters" class="version-filters">${[['Forever','Forever'],['2.4.3','TBC'],['3.3.5a','WotLK'],['4.3.4','Cataclysm']].map(([v,n])=>`<button type="button" data-version="${v}">${n}</button>`).join('')}</div><input type="hidden" id="presetClass"><div id="classCards" class="class-cards"></div><p class="muted">Стандартный набор будет скопирован на языке интерфейса. Forever — снимок 1.60.1.69876, возможны отличия от текущего Wowhead.${getLanguage()==='ru'?' Русские тексты: игровые данные и перевод проекта.':''}</p>`,async()=>{
    if(!selected)throw Error('Выбери класс');if(!await askToLeave())return;
-   const response=await fetch(`presets/${selected}.json`,{cache:'no-store'});if(!response.ok)throw Error('Не удалось загрузить класс');doc=normalize(await response.json());showWorkspace();projectId=null;activeShare=null;favoriteTreeId=null;allocationSent=false;$('#shareStats').hidden=true;mode=user?'edit':'play';changed();render();$('#modal').close();toast(doc.source?.notice||'Класс загружен');
+   const response=await fetch(`presets/${selected}.json`,{cache:'no-store'});if(!response.ok)throw Error('Не удалось загрузить класс');const original=await response.json(),language=getLanguage();let locale=null;if(language==='ru'){const translated=await fetch(`preset-locales/ru/${selected}.json`,{cache:'no-store'});if(!translated.ok)throw Error('Не удалось загрузить русский набор талантов');locale=await translated.json();}doc=normalize(applyPresetLocale(original,selected,language,locale));showWorkspace();projectId=null;activeShare=null;favoriteTreeId=null;allocationSent=false;$('#shareStats').hidden=true;mode=user?'edit':'play';changed();render();$('#modal').close();toast(doc.source?.notice||'Класс загружен');
   });
   function drawClasses(){
    for(const b of document.querySelectorAll('[data-version]')){b.classList.toggle('selected',b.dataset.version===version);b.setAttribute('aria-pressed',String(b.dataset.version===version));}
    const filtered=classes.filter(c=>(c.version||'3.3.5a')===version);if(!filtered.some(c=>c.id===selected))selected=filtered[0]?.id;
    $('#presetClass').value=selected||'';
-   $('#submitModal').disabled=!filtered.length;$('#classCards').innerHTML=filtered.map(c=>`<button type="button" data-class="${esc(c.id)}" class="class-card ${c.id===selected?'selected':''}" aria-pressed="${c.id===selected}">${image('class_'+c.id.replace(/^(forever|tbc|cata)-/,''))}<strong>${esc(c.name)}</strong><small>${c.talents} талантов</small></button>`).join('')||'<p class="muted">Наборы этой версии отсутствуют на сервере. Обнови файлы проекта и перезапусти сервер.</p>';
+   $('#submitModal').disabled=!filtered.length;$('#classCards').innerHTML=filtered.map(c=>`<button type="button" data-class="${esc(c.id)}" class="class-card ${c.id===selected?'selected':''}" aria-pressed="${c.id===selected}">${image('class_'+c.id.replace(/^(forever|tbc|cata)-/,''))}<strong data-user-content>${esc(presetClassName(c.id,getLanguage()))}</strong><small>${c.talents} талантов</small></button>`).join('')||'<p class="muted">Наборы этой версии отсутствуют на сервере. Обнови файлы проекта и перезапусти сервер.</p>';
    for(const b of document.querySelectorAll('[data-class]'))b.onclick=()=>{selected=b.dataset.class;drawClasses();};
   }
   for(const b of document.querySelectorAll('[data-version]'))b.onclick=()=>{version=b.dataset.version;drawClasses();};drawClasses();$('#submitModal').textContent=user?'Загрузить класс':'Открыть калькулятор';
@@ -472,7 +473,7 @@ function numericValue(value){const n=Number.parseFloat(value);return Number.isFi
 
 function abilityStats(a){return abilityStatLines(a,abilityCost(a));}
 function abilityStatsMarkup(a,separator=''){return abilityStats(a).map(line=>line.startsWith('Стоимость: ')?`<span>Стоимость: <span data-user-content>${esc(abilityCost(a))}</span></span>`:line.startsWith('Требуется: ')?`<span>Требуется: <span data-user-content>${esc(abilityRequirementsText(a))}</span></span>`:`<span>${esc(line)}</span>`).join(separator);}
-function abilityCost(a){if(a.resourceCosts||a.resourceType){const choices=classResources(character());return abilityResourceCosts(a,character()).map(c=>`${c.amount}${c.unit==='percent'?'%':c.unit==='count'?' '+t('шт.'):' '+t('ед.')} ${(c.resourceId==='health'?t('Здоровье'):choices.find(r=>r.id===c.resourceId)?.name)||c.resourceName}`).join(' + ')||t('Нет');}return a.resource||t('Нет');}
+function abilityCost(a){if(a.resourceCosts||a.resourceType){const choices=classResources(character());return abilityResourceCosts(a,character()).filter(c=>c.amount>0).map(c=>`${c.amount}${c.unit==='percent'?'%':c.unit==='count'?' '+t('шт.'):' '+t('ед.')} ${(c.resourceId==='health'?t('Здоровье'):choices.find(r=>r.id===c.resourceId)?.name)||c.resourceName}`).join(' + ');}return a.resource&&Number.parseFloat(a.resource)!==0?a.resource:'';}
 let draggedTalent=null,draggedAbility=null,abilityDragIcon=null;
 $('#trees').addEventListener('dragstart',e=>{const slot=e.target.closest('[data-talent]');if(mode!=='edit'||!slot){e.preventDefault();return;}draggedTalent=slot.dataset.talent;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',draggedTalent);});
 $('#trees').addEventListener('dragover',e=>{if(mode==='edit'&&(draggedTalent||draggedAbility)&&e.target.closest('.slot')){e.preventDefault();e.dataTransfer.dropEffect=draggedAbility?'copy':'move';}});

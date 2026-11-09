@@ -46,3 +46,5 @@ addTranslations([['С основной веткой','With a primary tree'],['Б
 addTranslations([['Общие','Common'],['Уникальные','Unique'],['Поддерживаемое заклинание','Channeled spell'],['Поддерживаемое','Channeled'],['ДЛИТЕЛЬНОСТЬ ПОДДЕРЖАНИЯ, СЕК.','CHANNEL DURATION, SEC'],['Проверь настройку поддерживаемого заклинания','Check the channeled spell setting']]);
 
 addTranslations([['0 м — ближний бой. Укажи длительность поддержания в секундах.','0 yd means melee. Enter the channel duration in seconds.']]);
+
+addTranslations([['Стандартный набор будет скопирован на языке интерфейса. Forever — снимок 1.60.1.69876, возможны отличия от текущего Wowhead.','Standard trees are copied in the interface language. Forever is snapshot 1.60.1.69876 and may differ from current Wowhead.'],['Не удалось загрузить русский набор талантов','Could not load the Russian talent preset'],['Русский набор не соответствует дереву','The Russian preset does not match this tree']]);

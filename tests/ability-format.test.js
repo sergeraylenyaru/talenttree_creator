@@ -7,6 +7,10 @@ test('zero range/cast show melee and instant, and requirements are shown',()=>{
  assert.ok(lines.includes('Дальность: Ближний бой'));assert.ok(lines.includes('Применение: Мгновенное'));assert.ok(lines.includes('Требуется: Кинжалы, Латы'));
  assert.ok(abilityStatLines({range:30,cast:1.5},'10').includes('Дальность: 30 м'));
 });
+test('free and zero-cost abilities omit cost while keeping all other spell details',()=>{
+ for(const cost of [undefined,'',0,'0','0%','0 Мана']){const lines=abilityStatLines({range:0,cast:0,cooldown:5},cost);assert.ok(!lines.some(s=>s.startsWith('Стоимость:')));assert.ok(lines.includes('Применение: Мгновенное'));assert.ok(lines.includes('Восстановление: 5 сек.'));}
+ assert.ok(abilityStatLines({},'25% Мана').includes('Стоимость: 25% Мана'));
+});
 test('class metadata, resource descriptions and ability requirements round-trip',()=>{
  const d=blank();d.subtitle='v1 воин света';d.description='История';d.character={hp:100,hpDescription:'Сила жизни',race:'Человек',gender:'Мужской',armory:'',resources:[{name:'Кровь',description:'За удары',max:100,current:0,unit:'points',display:'bar',shape:'circle',color:'#ff0000'}]};d.abilities=[{id:'a',name:'Удар',icon:'inv_misc_book_09',description:'Текст',requirements:['Кинжалы']}];
  assert.equal(normalize(structuredClone(d)).character.resources[0].description,'За удары');assert.equal(groupedAbilities(d).at(-1).icon,'inv_misc_book_09');
