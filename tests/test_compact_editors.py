@@ -109,3 +109,15 @@ class EditorMetadataAPI(unittest.TestCase):
             self.assertEqual(self.request(self.client(),'/api/shared/'+token)[1]['document']['primaryBranchEnabled'],enabled)
         for invalid in (0,1,None,'true',{}):
             d['primaryBranchEnabled']=invalid;self.assertEqual(self.request(a,'/api/projects',{'document':d})[0],400)
+
+    def test_channeled_ability_persists_in_draft_publication_and_favorite(self):
+        a=self.client();self.register(a,'channel_author')
+        d=copy.deepcopy(base.DOCUMENT);d['abilities']=[{'id':'channel','name':'Луч','icon':'inv_misc_book_09','description':'Описание','cast':4.5,'channeled':True}]
+        status,result,_=self.request(a,'/api/projects',{'document':d});self.assertEqual(status,200)
+        pid=result['id'];self.assertTrue(self.request(a,'/api/projects/'+pid)[1]['document']['abilities'][0]['channeled'])
+        token=self.request(a,'/api/publish',{'projectId':pid,'visibility':'public'})[1]['token']
+        self.assertTrue(self.request(self.client(),'/api/shared/'+token)[1]['document']['abilities'][0]['channeled'])
+        self.assertEqual(self.request(a,'/api/favorites',{'kind':'ability','item':d['abilities'][0]})[0],200)
+        self.assertTrue(self.request(a,'/api/favorites')[1]['favorites'][0]['item']['channeled'])
+        for flag in (0,1,None,'true',[]):
+            d['abilities'][0]['channeled']=flag;self.assertEqual(self.request(a,'/api/projects',{'document':d})[0],400)

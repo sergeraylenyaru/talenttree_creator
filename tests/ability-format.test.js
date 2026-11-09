@@ -30,3 +30,21 @@ test('free-text requirements preserve arbitrary prose and support legacy choices
  assert.equal(abilityRequirementsText({requirements:''}),'');
  d.abilities[0].requirements='x'.repeat(1001);assert.throws(()=>normalize(d),/требования/);
 });
+test('common and unique abilities each contain active then passive without changing branch grouping',()=>{
+ const d=blank(),branchId=d.branches[0].id;
+ d.abilities=[{id:'ca',branchId},{id:'cp',branchId,kind:'passive'},{id:'ua',branchId,branchOnly:true},{id:'up',branchId,branchOnly:true,kind:'passive'},{id:'legacy',branchId,learningMode:'specialization'},{id:'general',branchId:''}];
+ const rows=groupedAbilities(d),first=rows[0];
+ assert.deepEqual(first.common.active.map(a=>a.id),['ca']);assert.deepEqual(first.common.passive.map(a=>a.id),['cp']);
+ assert.deepEqual(first.unique.active.map(a=>a.id),['ua','legacy']);assert.deepEqual(first.unique.passive.map(a=>a.id),['up']);
+ assert.deepEqual(rows.at(-1).common.active.map(a=>a.id),['general']);assert.equal(rows.at(-1).unique.active.length,0);
+ assert.equal(d.abilities.length,6);
+});
+test('channeled spells show channel duration instead of instant and preserve their flag in JSON',()=>{
+ assert.ok(abilityStatLines({channeled:true,cast:4.5}).includes('Применение: Поддерживаемое (4.5 сек.)'));
+ assert.ok(abilityStatLines({channeled:true,cast:0}).includes('Применение: Поддерживаемое'));
+ assert.ok(!abilityStatLines({channeled:true,cast:0}).some(s=>s.includes('Мгновенное')));
+ assert.deepEqual(abilityStatLines({channeled:true,kind:'passive'}),['Пассивная способность']);
+ const d=blank();d.abilities=[{id:'channel',name:'Луч',description:'Описание',icon:'spell_holy_holybolt',channeled:true}];
+ assert.equal(normalize(JSON.parse(JSON.stringify(d))).abilities[0].channeled,true);
+ for(const flag of [1,'true',null]){d.abilities[0].channeled=flag;assert.throws(()=>normalize(d),/поддерживаемого/);}
+});

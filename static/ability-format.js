@@ -3,7 +3,7 @@ export function abilityRequirementsText(ability){return Array.isArray(ability.re
 export function abilityStatLines(ability,cost='0'){
  const lines=ability.kind==='passive'?['Пассивная способность']:[
   'Стоимость: '+cost,
-  'Применение: '+(ability.cast?ability.cast+' сек.':'Мгновенное'),
+  'Применение: '+(ability.channeled?'Поддерживаемое'+(ability.cast?' ('+ability.cast+' сек.)':''):ability.cast?ability.cast+' сек.':'Мгновенное'),
   'Восстановление: '+(ability.cooldown?ability.cooldown+' сек.':'Нет'),
   'Дальность: '+(ability.range?ability.range+' м':'Ближний бой')
  ];

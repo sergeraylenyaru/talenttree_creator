@@ -64,6 +64,7 @@ export function normalize(doc,{allowLegacy=false}={}) {
   for(const a of doc.abilities)if(a.requirements!==undefined&&(typeof a.requirements==='string'?a.requirements.length>1000:(!Array.isArray(a.requirements)||a.requirements.length>40||a.requirements.some(v=>typeof v!=='string'||!v.trim()||v.length>100)||new Set(a.requirements).size!==a.requirements.length)))throw Error('Проверь требования способности');
   for(const a of doc.abilities){validateResourceCosts(a,doc.character);if(a.resourceCosts&&['cast','cooldown','range'].some(k=>!Number.isFinite(a[k])||a[k]<0||a[k]>1e9))throw Error('Неверные числовые параметры способности');}
   for(const a of doc.abilities)if(a.learningMode!==undefined&&!['base','talent','specialization'].includes(a.learningMode))throw Error('Неверный способ изучения способности');
+  for(const a of doc.abilities)if(a.channeled!==undefined&&typeof a.channeled!=='boolean')throw Error('Проверь настройку поддерживаемого заклинания');
   for(const a of doc.abilities){if(a.branchOnly!==undefined&&typeof a.branchOnly!=='boolean')throw Error('Проверь ограничение способности по ветке');if(a.branchOnly&&!branchIds.has(a.branchId))throw Error('Выбери ветку для способности');if(a.learningMode==='specialization'&&(!doc.specialization||!branchIds.has(a.branchId)))throw Error('Выбери ветку для способности специализации');if(a.kind!==undefined&&!['active','passive'].includes(a.kind))throw Error('Неверный тип способности');if(a.branchId!==undefined&&!['','auto'].includes(a.branchId)&&!branchIds.has(a.branchId))throw Error('Ветка способности не найдена');}
   for(const a of doc.abilities)if(a.resourceUnit!==undefined&&!['points','percent','count'].includes(a.resourceUnit))throw Error('Неверные единицы ресурса');
   for(const a of doc.abilities)if(a.resourceType!==undefined){if(typeof a.resourceType!=='string'||!a.resourceType||a.resourceType.length>100||['resource','cast','cooldown','range'].some(k=>!Number.isFinite(a[k])||a[k]<0||a[k]>1e9))throw Error('Неверные числовые параметры способности');}
@@ -170,5 +171,7 @@ export function abilityBranchIds(doc,ability){
 export function groupedAbilities(doc){
  const rows=doc.branches.map(b=>({id:b.id,name:b.name,icon:branchIcon(b),abilities:doc.abilities.filter(a=>abilityBranchIds(doc,a).includes(b.id))}));
  const general=doc.abilities.filter(a=>!abilityBranchIds(doc,a).length);if(general.length)rows.push({id:'general',name:'Общие способности',icon:'inv_misc_book_09',abilities:general});
- return rows.map(row=>({...row,active:row.abilities.filter(a=>a.kind!=='passive'),passive:row.abilities.filter(a=>a.kind==='passive')}));
+ const byKind=abilities=>({active:abilities.filter(a=>a.kind!=='passive'),passive:abilities.filter(a=>a.kind==='passive')});
+ const unique=a=>!!a.branchOnly||a.learningMode==='specialization';
+ return rows.map(row=>({...row,...byKind(row.abilities),common:byKind(row.abilities.filter(a=>!unique(a))),unique:byKind(row.abilities.filter(unique))}));
 }

@@ -42,3 +42,7 @@ addTranslations([['Способность только для ветки','Abili
 addTranslations([['Выбрать','Choose'],['Каталог:','Catalog:'],['иконок','icons']]);
 
 addTranslations([['С основной веткой','With a primary tree'],['Без основной ветки','Without a primary tree'],['Дерево с основной веткой','Use a primary tree'],['Выбор основной ветки открывает её особые способности. Таланты всех веток доступны.','Choosing a primary tree unlocks its exclusive abilities. Talents in every tree remain available.'],['Включи основную ветку в настройках дерева','Enable the primary tree in the tree settings'],['Проверь настройку основной ветки','Check the primary tree setting']]);
+
+addTranslations([['Общие','Common'],['Уникальные','Unique'],['Поддерживаемое заклинание','Channeled spell'],['Поддерживаемое','Channeled'],['ДЛИТЕЛЬНОСТЬ ПОДДЕРЖАНИЯ, СЕК.','CHANNEL DURATION, SEC'],['Проверь настройку поддерживаемого заклинания','Check the channeled spell setting']]);
+
+addTranslations([['0 м — ближний бой. Укажи длительность поддержания в секундах.','0 yd means melee. Enter the channel duration in seconds.']]);
