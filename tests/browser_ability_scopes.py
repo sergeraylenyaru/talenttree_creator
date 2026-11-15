@@ -5,11 +5,12 @@ from unittest.mock import patch
 from playwright.sync_api import sync_playwright, expect
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import server
+from server_lifecycle import temporary_database, start_server, stop_server
 
-with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
+with temporary_database() as tmp, patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
     server.DB=str(Path(tmp)/'scopes.sqlite');server.initialize()
     http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler)
-    threading.Thread(target=http.serve_forever,daemon=True).start()
+    start_server(http)
     base=f'http://127.0.0.1:{http.server_port}'
     try:
         with sync_playwright() as p:
@@ -76,4 +77,4 @@ with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ,{'SMTP_HOST':''
             print('PASS: common/unique scopes, right-to-left icon wrapping, active/passive order, icons/details and mobile layout; compact channeled editor, duration labels, saved/exported/published flag and instant tooltips.')
             browser.close()
     finally:
-        http.shutdown();http.server_close()
+        stop_server(http)

@@ -1,3 +1,4 @@
+from contextlib import closing
 import copy
 import time
 from unittest.mock import patch
@@ -375,13 +376,12 @@ class PublicationAPI(unittest.TestCase):
 class PublicationMigration(unittest.TestCase):
     def test_existing_shares_stay_unlisted_without_claimed_owner(self):
         with tempfile.TemporaryDirectory() as tmp:
-            db=sqlite3.connect(str(Path(tmp)/'old.sqlite'))
-            db.execute('CREATE TABLE shares(token TEXT PRIMARY KEY,document TEXT,created INTEGER)')
-            db.execute('INSERT INTO shares VALUES(?,?,?)',('old',json.dumps(base.DOCUMENT),123))
-            publications.migrate(db);publications.migrate(db)
-            row=db.execute('SELECT visibility,owner_id,published_at,document FROM shares').fetchone()
-            self.assertEqual(row[:3],('unlisted',None,123));self.assertEqual(json.loads(row[3]),base.DOCUMENT)
-            db.close()
+            with closing(sqlite3.connect(str(Path(tmp)/'old.sqlite'))) as db:
+                db.execute('CREATE TABLE shares(token TEXT PRIMARY KEY,document TEXT,created INTEGER)')
+                db.execute('INSERT INTO shares VALUES(?,?,?)',('old',json.dumps(base.DOCUMENT),123))
+                publications.migrate(db);publications.migrate(db)
+                row=db.execute('SELECT visibility,owner_id,published_at,document FROM shares').fetchone()
+                self.assertEqual(row[:3],('unlisted',None,123));self.assertEqual(json.loads(row[3]),base.DOCUMENT)
 
 class AvatarMigration(unittest.TestCase):
     def test_existing_users_get_default_avatar_without_password_changes(self):
@@ -389,9 +389,9 @@ class AvatarMigration(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             try:
                 server.DB=str(Path(tmp)/'old-users.sqlite')
-                db=sqlite3.connect(server.DB)
-                db.execute('CREATE TABLE users(id INTEGER PRIMARY KEY,login TEXT UNIQUE COLLATE NOCASE,salt TEXT,password TEXT)')
-                db.execute('INSERT INTO users VALUES(1,?,?,?)',('old_author','old_salt','old_hash'));db.commit();db.close()
+                with closing(sqlite3.connect(server.DB)) as db:
+                    db.execute('CREATE TABLE users(id INTEGER PRIMARY KEY,login TEXT UNIQUE COLLATE NOCASE,salt TEXT,password TEXT)')
+                    db.execute('INSERT INTO users VALUES(1,?,?,?)',('old_author','old_salt','old_hash'));db.commit()
                 server.initialize();server.initialize()
                 with server.connect() as db:
                     self.assertEqual(db.execute('SELECT login,salt,password,avatar FROM users').fetchone(),('old_author','old_salt','old_hash','inv_misc_questionmark'))

@@ -9,13 +9,14 @@ from playwright.sync_api import sync_playwright, expect
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import server
+from server_lifecycle import temporary_database, start_server, stop_server
 
-with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, {
+with temporary_database() as tmp, patch.dict(os.environ, {
         'SMTP_HOST':'', 'SMTP_FROM':'', 'APP_URL':'', 'REQUIRE_EMAIL_VERIFICATION':'0'}):
     server.DB = str(Path(tmp) / 'talent-regression.sqlite')
     server.initialize()
     http = server.ArchiveHTTPServer(('127.0.0.1', 0), server.Handler)
-    threading.Thread(target=http.serve_forever, daemon=True).start()
+    start_server(http)
     base = f'http://127.0.0.1:{http.server_port}'
     try:
         with sync_playwright() as p:
@@ -144,6 +145,5 @@ with tempfile.TemporaryDirectory() as tmp, patch.dict(os.environ, {
             assert not errors, errors
             browser.close()
     finally:
-        http.shutdown()
-        http.server_close()
+        stop_server(http)
 print('PASS: regular talent create/edit/save, ranks/dependencies, ability create/edit, multiple effects, synchronization, no browser errors')

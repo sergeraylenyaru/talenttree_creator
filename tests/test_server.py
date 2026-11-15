@@ -3,14 +3,13 @@ import http.cookiejar
 import json
 from pathlib import Path
 import sys
-import tempfile
-import threading
 import unittest
 import urllib.error
 import urllib.request
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import server
+from server_lifecycle import temporary_database, start_server, stop_server
 
 DOCUMENT = {'version': 1, 'name': 'Тестовый класс', 'budget': 71, 'rowCost': 5,
             'branches': [{'id': 'a', 'name': 'Ветка', 'rows': 5, 'talents': []}], 'abilities': [], 'build': {}}
@@ -18,19 +17,18 @@ DOCUMENT = {'version': 1, 'name': 'Тестовый класс', 'budget': 71, '
 class API(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.temp = tempfile.TemporaryDirectory()
-        server.DB = str(Path(cls.temp.name) / 'test.sqlite3')
+        cls.database_context = temporary_database()
+        temporary = cls.database_context.__enter__()
+        cls.addClassCleanup(cls.database_context.__exit__, None, None, None)
+        server.DB = str(Path(temporary) / 'test.sqlite3')
         server.initialize()
         cls.http = server.ThreadingHTTPServer(('127.0.0.1', 0), server.Handler)
         cls.url = f'http://127.0.0.1:{cls.http.server_port}'
-        cls.thread = threading.Thread(target=cls.http.serve_forever, daemon=True)
-        cls.thread.start()
+        cls.thread = start_server(cls.http)
 
     @classmethod
     def tearDownClass(cls):
-        cls.http.shutdown()
-        cls.http.server_close()
-        cls.temp.cleanup()
+        stop_server(cls.http)
 
     def client(self):
         return urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
@@ -44,7 +42,8 @@ class API(unittest.TestCase):
             with client.open(req) as response:
                 return response.status, json.load(response), response.headers
         except urllib.error.HTTPError as error:
-            return error.code, json.load(error), error.headers
+            with error:
+                return error.code, json.load(error), error.headers
 
     def register(self, client, name):
         status, _, headers = self.request(client, '/api/register', {'login': name, 'email': name+'@example.test', 'password': 'test-password-123'})

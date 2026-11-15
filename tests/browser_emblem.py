@@ -5,8 +5,9 @@ from pathlib import Path
 from urllib.parse import urlparse,parse_qs
 from playwright.sync_api import sync_playwright
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]));import server
-with tempfile.TemporaryDirectory() as tmp:
- server.DB=str(Path(tmp)/'emblem.sqlite');server.initialize();http=server.ThreadingHTTPServer(('127.0.0.1',0),server.Handler);threading.Thread(target=http.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{http.server_port}'
+from server_lifecycle import temporary_database, start_server, stop_server
+with temporary_database() as tmp:
+ server.DB=str(Path(tmp)/'emblem.sqlite');server.initialize();http=server.ThreadingHTTPServer(('127.0.0.1',0),server.Handler);start_server(http);base=f'http://127.0.0.1:{http.server_port}'
  try:
   with sync_playwright() as p:
    browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);ctx=browser.new_context(viewport={'width':1440,'height':1000});ctx.route('https://**/*',lambda r:r.abort());ctx.request.post(base+'/api/register',data={'login':'emblem_author', 'email': 'emblem_author@example.test','password':'test-password-123'});ctx.request.post(base+'/api/profile/settings',data={'language':'ru'})
@@ -32,4 +33,4 @@ with tempfile.TemporaryDirectory() as tmp:
    page.goto(base+'/?share='+token);page.locator('#auth').click();page.locator('#login').fill('emblem_author');page.locator('#password').fill('test-password-123');page.locator('#submitModal').click();page.wait_for_function("document.querySelector('#className').value==='Клинок рассвета' && !document.querySelector('#publicationBar').hidden");assert 'Только мне' in page.locator('#publicationBar').inner_text()
    assert not errors,errors
    print('PASS: private publish + revocation + guest denial; editor rank-one tips; two-layer emblem, weapon filter, live opacity, JSON export, server persistence, publication metadata, mobile modal.');browser.close()
- finally:http.shutdown();http.server_close()
+ finally:stop_server(http)

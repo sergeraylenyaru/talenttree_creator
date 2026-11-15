@@ -4,8 +4,9 @@ import sys,tempfile,threading,json
 from pathlib import Path
 from playwright.sync_api import sync_playwright,expect
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]));import server
-with tempfile.TemporaryDirectory() as tmp:
- server.DB=str(Path(tmp)/'international.sqlite');server.initialize();http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);threading.Thread(target=http.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{http.server_port}'
+from server_lifecycle import temporary_database, start_server, stop_server
+with temporary_database() as tmp:
+ server.DB=str(Path(tmp)/'international.sqlite');server.initialize();http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);start_server(http);base=f'http://127.0.0.1:{http.server_port}'
  try:
   with sync_playwright() as p:
    browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);ctx=browser.new_context(viewport={'width':1440,'height':1000});ctx.route('https://**/*',lambda route:route.abort());ctx.request.post(base+'/api/register',data={'login':'international', 'email': 'international@example.test','password':'test-password-123'})
@@ -30,4 +31,4 @@ with tempfile.TemporaryDirectory() as tmp:
    guest=browser.new_context();g=guest.new_page();g.goto(base+'/?share='+token);expect(g.locator('#playMode')).to_have_text('Calculator');assert g.locator('#treeTitle').inner_text()=='Другое дерево'
    assert not errors,errors
    print('PASS: English default and RU profile persistence; authored content preserved; all draft decisions; compact builder across five viewports; units, armor/weapons and custom icon saved.');browser.close()
- finally:http.shutdown();http.server_close()
+ finally:stop_server(http)

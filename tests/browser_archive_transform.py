@@ -4,8 +4,9 @@ from pathlib import Path
 from urllib.parse import urlparse,parse_qs
 from playwright.sync_api import sync_playwright
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]));import server
-with tempfile.TemporaryDirectory() as tmp:
- server.DB=str(Path(tmp)/'new.sqlite');server.initialize();http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);threading.Thread(target=http.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{http.server_port}'
+from server_lifecycle import temporary_database, start_server, stop_server
+with temporary_database() as tmp:
+ server.DB=str(Path(tmp)/'new.sqlite');server.initialize();http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);start_server(http);base=f'http://127.0.0.1:{http.server_port}'
  try:
   with sync_playwright() as p:
    browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);ctx=browser.new_context(viewport={'width':1440,'height':1100});ctx.request.post(base+'/api/register',data={'login':'archive_owner', 'email': 'archive_owner@example.test','password':'test-password-123'});ctx.request.post(base+'/api/profile/settings',data={'language':'ru'})
@@ -30,4 +31,4 @@ with tempfile.TemporaryDirectory() as tmp:
     page.locator('#projects').click();page.wait_for_selector('[data-open]');page.locator('[data-open]').first.click();page.wait_for_function("document.querySelector('#library').hidden");assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width;assert page.locator('#classIcon .class-emblem').evaluate('el=>Math.abs(el.getBoundingClientRect().width-el.getBoundingClientRect().height)<1')
    page.locator('#classIcon').click();page.locator('[data-active-emblem="1"]').click();page.locator('#emblemScale').fill('110');assert page.locator('#modal').evaluate('el=>el.scrollWidth<=el.clientWidth+1');page.locator('#closeModal').click();assert not errors,errors
    print('PASS: independent drag/rotation/scale and persistence; tree hero desktop/mobile; archive/restore; favorites copied from foreign public tree, including guest registration, source untouched.');browser.close()
- finally:http.shutdown();http.server_close()
+ finally:stop_server(http)

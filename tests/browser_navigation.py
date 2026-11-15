@@ -12,16 +12,15 @@ from playwright.sync_api import sync_playwright
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import server
+from server_lifecycle import temporary_database, start_server, stop_server
 
 
 def run():
-    previous_db = server.DB
-    with tempfile.TemporaryDirectory() as tmp:
+    with temporary_database() as tmp:
         server.DB = str(Path(tmp) / 'navigation.sqlite')
         server.initialize()
         http = server.ThreadingHTTPServer(('127.0.0.1', 0), server.Handler)
-        thread = threading.Thread(target=http.serve_forever, daemon=True)
-        thread.start()
+        start_server(http)
         try:
             with sync_playwright() as playwright:
                 browser = playwright.chromium.launch(
@@ -102,10 +101,7 @@ def run():
                 browser.close()
                 print('PASS: saved tree and copy open from rankings; row opens calculator; switching back clears publication state.')
         finally:
-            http.shutdown()
-            http.server_close()
-            thread.join()
-            server.DB = previous_db
+            stop_server(http)
 
 
 if __name__ == '__main__':

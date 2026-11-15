@@ -3,8 +3,9 @@ import sys,tempfile,threading
 from pathlib import Path
 from playwright.sync_api import sync_playwright,expect
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]));import server
-with tempfile.TemporaryDirectory() as tmp:
- server.DB=str(Path(tmp)/'equipment.sqlite');server.initialize();http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);threading.Thread(target=http.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{http.server_port}'
+from server_lifecycle import temporary_database, start_server, stop_server
+with temporary_database() as tmp:
+ server.DB=str(Path(tmp)/'equipment.sqlite');server.initialize();http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);start_server(http);base=f'http://127.0.0.1:{http.server_port}'
  try:
   with sync_playwright() as p:
    browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);ctx=browser.new_context(viewport={'width':1440,'height':1000});ctx.route('https://**/*',lambda route:route.abort());ctx.request.post(base+'/api/register',data={'login':'equipment_owner', 'email': 'equipment_owner@example.test','password':'test-password-123'})
@@ -28,4 +29,4 @@ with tempfile.TemporaryDirectory() as tmp:
    pid=ctx.request.get(base+'/api/projects').json()['projects'][0]['id'];c=ctx.request.get(base+'/api/projects/'+pid).json()['document']['character'];assert c['resources'][1]['unit']=='percent';assert c['resources'][1]['max']<=20;assert c['customWeaponTypes'][0]['name']=='Astral blade';assert c['customArmorTypes'][0]['name']=='Astral cloth';assert c['weaponTypes']==['wand']
    assert not errors,errors
    print('PASS: standard WoW icons; all weapons visible when they fit; automatic compact pages on resize; custom save-and-return; percent defaults and twenty-symbol bounds.');browser.close()
- finally:http.shutdown();http.server_close()
+ finally:stop_server(http)

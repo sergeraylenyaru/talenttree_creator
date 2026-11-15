@@ -4,8 +4,9 @@ from pathlib import Path
 from unittest.mock import patch
 from playwright.sync_api import sync_playwright,expect
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]));import server
-with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
- server.DB=str(Path(tmp)/'cata-resources.sqlite');server.initialize();http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);threading.Thread(target=http.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{http.server_port}'
+from server_lifecycle import temporary_database, start_server, stop_server
+with temporary_database() as tmp,patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
+ server.DB=str(Path(tmp)/'cata-resources.sqlite');server.initialize();http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);start_server(http);base=f'http://127.0.0.1:{http.server_port}'
  try:
   with sync_playwright() as p:
    browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);ctx=browser.new_context(viewport={'width':1440,'height':1000},accept_downloads=True);ctx.route('https://**/*',lambda route:route.abort());ctx.request.post(base+'/api/register',data={'login':'cost_author','email':'cost@example.test','password':'test-password-123'});ctx.request.post(base+'/api/profile/settings',data={'language':'ru'})
@@ -31,4 +32,4 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
    # Modern icons have a full continuous catalog with a bounded rendered window.
    page.locator('[data-talent]').first.click();page.locator('#toggleIconPicker').click();page.wait_for_function('()=>{const text=document.querySelector("#iconCount").textContent;const n=text.match(/Каталог: (\\d+)/);return n&&Number(n[1])>33000;}');expect(page.locator('#iconDialog')).to_be_visible();assert page.locator('#iconDialog').bounding_box()['width']>=1000;assert page.locator('#moreIcons').count()==0;page.locator('#iconGrid').evaluate('el=>el.scrollTop=el.scrollHeight');page.wait_for_function('()=>{const grid=document.querySelector("#iconGrid"),last=grid.querySelector("[data-icon-index]:last-child");return last&&Number(last.dataset.iconIndex)===Number(grid.dataset.total)-1;}');page.locator('#iconSearch').fill('inv_stegodonprimalmount_blue');expect(page.locator('[data-icon="inv_stegodonprimalmount_blue"]')).to_be_visible();page.locator('[data-icon="inv_stegodonprimalmount_blue"]').click();page.locator('#submitModal').click();page.locator('#save').click();expect(page.locator('#saveState')).to_have_text('Сохранено в аккаунте');assert ctx.request.get(base+'/api/projects/'+cataid).json()['document']['branches'][0]['talents'][0]['icon']=='inv_stegodonprimalmount_blue'
    assert not errors,errors;print('PASS: simultaneous class-only costs and health, rename/delete protection, ten Cata presets, primary bonuses with unrestricted other trees and preserved points, local-only primary choice and full icon scrolling/search/save.');browser.close()
- finally:http.shutdown();http.server_close()
+ finally:stop_server(http)

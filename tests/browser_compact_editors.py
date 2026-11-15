@@ -4,9 +4,10 @@ from pathlib import Path
 from unittest.mock import patch
 from playwright.sync_api import sync_playwright,expect
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]));import server
+from server_lifecycle import temporary_database, start_server, stop_server
 
-with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
-    server.DB=str(Path(tmp)/'editors.sqlite');server.initialize();http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);threading.Thread(target=http.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{http.server_port}'
+with temporary_database() as tmp,patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
+    server.DB=str(Path(tmp)/'editors.sqlite');server.initialize();http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);start_server(http);base=f'http://127.0.0.1:{http.server_port}'
     try:
         with sync_playwright() as p:
             browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);ctx=browser.new_context(viewport={'width':1440,'height':1000});ctx.route('https://**/*',lambda route:route.abort())
@@ -54,4 +55,4 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
             ctx.request.post(base+'/api/register',data={'login':'other_author','email':'other@example.test','password':'test-password-123'});page.reload();expect(page.locator('#user')).to_have_text('other_author');page.locator('#save').click();expect(page.locator('#saveState')).to_have_text('Saved to account');assert len(ctx.request.get(base+'/api/projects').json()['projects'])==1
             assert not errors,errors
             print('PASS: compact ability/talent dialogs, larger description and right preview, collapsed icon picker, sticky close buttons, metadata/resource descriptions, requirements, icons/details, and independent branch/base/talent learning.');browser.close()
-    finally:http.shutdown();http.server_close()
+    finally:stop_server(http)
