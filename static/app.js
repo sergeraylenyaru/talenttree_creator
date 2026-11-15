@@ -172,7 +172,6 @@ function editTalent(b,row,col,existing,draft){
   const maxRank=Number($('#maxRank').value),rankResult=rankEditor.result();
   const updated={...t,name:$('#talentName').value.trim(),icon:readIcon(),maxRank,requires:$('#requires').value,descriptions:rankResult.descriptions};
   if(rankResult.rankTemplate)updated.rankTemplate=rankResult.rankTemplate;else delete updated.rankTemplate;
-  const effects=readEffects();if(effects!==undefined)updated.combatEffects=effects;
   if(!updated.name)throw Error('Введи название');
   if([...dependencyRoutes({...b,talents:b.talents.filter(x=>x.id!==updated.id).concat(updated)}).values()].some(p=>!p))throw Error('Стрелки пересекаются или нет свободного пути. Измени зависимость.');
   if(existing)b.talents[b.talents.indexOf(existing)]=updated;else b.talents.push(updated);
