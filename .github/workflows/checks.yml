@@ -29,3 +29,5 @@ jobs:
           python3 tests/browser_talent_regression.py
           python3 tests/browser_combat_effects.py
           python3 tests/browser_ability_scopes.py
+          python3 tests/browser_calculator_layout.py
+          python3 tests/browser_tree_archive_copy.py

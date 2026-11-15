@@ -51,6 +51,11 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
             page.locator('#toggleTreeArchive').click();expect(page.locator(f'[data-open="{pid}"]')).to_be_visible()
             # Keyboard opens the same whole-card target.
             page.locator(f'[data-open="{pid}"]').focus();page.keyboard.press('Enter');expect(page.locator('#className')).to_have_value(document['name'])
+            # Restoring/opening the current tree may invoke existing draft protection.
+            page.wait_for_function("document.querySelector('#library').hidden || document.querySelector('#draftDialog').open")
+            if page.locator('#draftDialog').is_visible():
+                page.locator('#discardDraft').click()
+            expect(page.locator('#library')).not_to_be_visible()
             page.locator('#publications').click();page.locator('[data-archive-publication]').click();page.locator('#submitModal').click()
             expect(page.locator('[data-archive-publication]')).to_have_count(0)
             page.locator('#archivedPublications').click();expect(page.locator('[data-archive-expires]')).to_contain_text('До удаления:')
