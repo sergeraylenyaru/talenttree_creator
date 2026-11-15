@@ -406,3 +406,42 @@ python3 -m venv .venv
 В редакторе строки **Затраты ресурсов** помещаются по ширине, включая кнопку удаления и длинные названия; при большом числе строк используется вертикальная прокрутка. В карточках, подсказках и окне просмотра строка стоимости появляется только при положительных затратах. При смешанных затратах нулевые ресурсы пропускаются; нули в настройках сохраняются для дальнейшего редактирования.
 
 Проверки: `python3 tests/browser_preset_locales_costs.py`, `node --test tests/preset-locales.test.js`. Повторная сборка русских текстов: `python3 tools/build_preset_locales.py`; исходные файлы из `tools/preset-locale-sources.json` предварительно положить в `work/sources/locales/` с указанными именами. Скрипт проверяет SHA-256 источников и использует сохранённый проверенный словарь `tools/preset-locale-translations.json` и ручные уточнения. Новые строки без перевода останавливают сборку.
+
+### Боевые эффекты / Combat effects
+
+В редакторе способности раздел **БОЕВЫЕ ЭФФЕКТЫ / COMBAT EFFECTS** позволяет добавлять, менять и удалять эффекты урона и лечения. Подписи доступны на русском и английском. Школа урона показывается только для урона; критический флаг подписан отдельно для урона и лечения. Это декларативные настройки: расчётов и исполнения эффектов пока нет.
+
+The ability editor supports adding, editing and deleting damage and healing effects with Russian and English labels. Damage school appears only for damage; critical strike/heal labels follow the effect type. Effects are declarative data; no combat calculations or execution are included.
+
+Необязательный массив `abilities[].combatEffects` сохраняется в формате документа v1. Его отсутствие сохраняет прежнее поведение; пустой массив означает отсутствие эффектов. Пример / Optional `abilities[].combatEffects` keeps document version 1 and legacy behavior when absent; an empty array means no effects:
+
+```json
+{
+  "combatEffects": [
+    {"id":"effect-1","type":"damage","trigger":"onHit","school":"fire","baseAmount":120,"scalingStat":"spellPower","coefficient":0.65,"canCrit":true},
+    {"id":"effect-2","type":"healing","trigger":"onCast","baseAmount":80,"scalingStat":"none","coefficient":0,"canCrit":false}
+  ]
+}
+```
+
+- `id`: уникальный в пределах способности, 1–100 символов ASCII: буквы, цифры, `_`, `-`. / Unique within the ability, 1–100 ASCII letters, digits, `_`, `-`.
+- `type`: `damage` или / or `healing`.
+- `trigger`: `onCast` или / or `onHit`.
+- `school`: только для урона / damage only: `physical`, `fire`, `frost`, `arcane`, `nature`, `shadow`, `holy`.
+- `baseAmount`: число 0–1 000 000 000 / number from 0 to 1,000,000,000.
+- `scalingStat`: `none`, `spellPower`, `attackPower`.
+- `coefficient`: число 0–1000, в том числе при `none` / number from 0 to 1000, including with `none`.
+- `canCrit`: строго логическое значение / boolean only.
+
+Все перечисленные поля обязательны, кроме `school`, которое запрещено для лечения. До 32 эффектов на способность. Клиент и сервер отклоняют неверные значения, дубли ID, лишние поля и бесконечные числа. ID эффектов принадлежат способности: копия способности из избранного может сохранять их. JSON, публикации и избранное сохраняют массив без преобразования. Отдельная версия боевой схемы сейчас не требуется.
+
+All listed fields are required except `school`, which is forbidden for healing. Maximum 32 effects per ability. Both client and server reject invalid values, duplicate IDs, unknown fields and non-finite numbers. Effect IDs belong to their ability, so favorite copies can retain them. JSON, publications and favorites preserve the array without conversion. No separate combat schema version is needed yet.
+
+Проверки / Checks:
+
+```sh
+python3 -m unittest discover -s tests -p 'test_*.py'
+node --test tests/*.test.js
+# Требует Playwright и Chromium / Requires Playwright and Chromium:
+python3 tests/browser_combat_effects.py
+```

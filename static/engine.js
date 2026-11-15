@@ -62,6 +62,7 @@ export function normalize(doc,{allowLegacy=false}={}) {
   if(!allowLegacy)for(const b of doc.branches)if([...dependencyRoutes(b).values()].some(path=>!path))throw Error('Стрелки зависимостей пересекаются или нет свободного пути. Убери или измени зависимость.');
   if(!Array.isArray(doc.abilities)||doc.abilities.some(a=>!a||typeof a.id!=='string'||typeof a.name!=='string'||typeof a.description!=='string')) throw Error('Неверный список способностей');
   for(const a of doc.abilities)if(a.requirements!==undefined&&(typeof a.requirements==='string'?a.requirements.length>1000:(!Array.isArray(a.requirements)||a.requirements.length>40||a.requirements.some(v=>typeof v!=='string'||!v.trim()||v.length>100)||new Set(a.requirements).size!==a.requirements.length)))throw Error('Проверь требования способности');
+  for(const a of doc.abilities)validateCombatEffects(a);
   for(const a of doc.abilities){validateResourceCosts(a,doc.character);if(a.resourceCosts&&['cast','cooldown','range'].some(k=>!Number.isFinite(a[k])||a[k]<0||a[k]>1e9))throw Error('Неверные числовые параметры способности');}
   for(const a of doc.abilities)if(a.learningMode!==undefined&&!['base','talent','specialization'].includes(a.learningMode))throw Error('Неверный способ изучения способности');
   for(const a of doc.abilities)if(a.channeled!==undefined&&typeof a.channeled!=='boolean')throw Error('Проверь настройку поддерживаемого заклинания');
@@ -174,4 +175,22 @@ export function groupedAbilities(doc){
  const byKind=abilities=>({active:abilities.filter(a=>a.kind!=='passive'),passive:abilities.filter(a=>a.kind==='passive')});
  const unique=a=>!!a.branchOnly||a.learningMode==='specialization';
  return rows.map(row=>({...row,...byKind(row.abilities),common:byKind(row.abilities.filter(a=>!unique(a))),unique:byKind(row.abilities.filter(unique))}));
+}
+
+// Optional declarative combat schema; limits must match server.py.
+export function validateCombatEffects(ability) {
+ if(!Object.hasOwn(ability,'combatEffects'))return;
+ const effects=ability.combatEffects,ids=new Set();
+ const invalid=()=>{throw Error('Проверь боевые эффекты');};
+ if(!Array.isArray(effects)||effects.length>32)invalid();
+ for(const e of effects){
+  if(!e||typeof e!=='object'||Array.isArray(e))invalid();
+  if(typeof e.id!=='string'||! /^[A-Za-z0-9_-]{1,100}$/.test(e.id)||ids.has(e.id))invalid();
+  ids.add(e.id);
+  if(!['damage','healing'].includes(e.type)||!['onCast','onHit'].includes(e.trigger)||!['none','spellPower','attackPower'].includes(e.scalingStat))invalid();
+  if(e.type==='damage'&&!['physical','fire','frost','arcane','nature','shadow','holy'].includes(e.school))invalid();
+  if(e.type==='healing'&&Object.hasOwn(e,'school'))invalid();
+  if(!Number.isFinite(e.baseAmount)||e.baseAmount<0||e.baseAmount>1e9||!Number.isFinite(e.coefficient)||e.coefficient<0||e.coefficient>1000||typeof e.canCrit!=='boolean')invalid();
+  if(Object.keys(e).some(k=>!['id','type','trigger','school','baseAmount','scalingStat','coefficient','canCrit'].includes(k)))invalid();
+ }
 }

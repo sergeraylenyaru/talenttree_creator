@@ -148,6 +148,37 @@ def validate_class_icon(value):
     return value
 
 
+def validate_combat_effects(ability):
+    """Optional declarative combat schema; limits must match engine.js."""
+    if 'combatEffects' not in ability:
+        return
+    effects = ability['combatEffects']
+    def invalid():
+        raise ValueError('Проверь боевые эффекты')
+    if not isinstance(effects, list) or len(effects) > 32:
+        invalid()
+    ids = set()
+    for effect in effects:
+        if not isinstance(effect, dict):
+            invalid()
+        eid = effect.get('id')
+        if not isinstance(eid, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,100}', eid) or eid in ids:
+            invalid()
+        ids.add(eid)
+        if effect.get('type') not in ('damage', 'healing') or effect.get('trigger') not in ('onCast', 'onHit') or effect.get('scalingStat') not in ('none', 'spellPower', 'attackPower'):
+            invalid()
+        if effect['type'] == 'damage' and effect.get('school') not in ('physical', 'fire', 'frost', 'arcane', 'nature', 'shadow', 'holy'):
+            invalid()
+        if effect['type'] == 'healing' and 'school' in effect:
+            invalid()
+        for key, limit in (('baseAmount', 1e9), ('coefficient', 1000)):
+            value = effect.get(key)
+            if type(value) not in (int, float) or not 0 <= value <= limit:
+                invalid()
+        if type(effect.get('canCrit')) is not bool or set(effect) - {'id', 'type', 'trigger', 'school', 'baseAmount', 'scalingStat', 'coefficient', 'canCrit'}:
+            invalid()
+
+
 def validate(document):
     if not isinstance(document, dict):
         raise ValueError('Неверный документ')
@@ -231,6 +262,7 @@ def validate(document):
     if document.get('version') != 1 or not isinstance(abilities, list) or any(not isinstance(a, dict) or any(not isinstance(a.get(k), str) for k in ('id', 'name', 'description', 'icon')) for a in abilities):
         raise ValueError('Неверный формат класса или способностей')
     for ability in abilities:
+        validate_combat_effects(ability)
         if 'channeled' in ability and type(ability['channeled']) is not bool:raise ValueError('Проверь настройку поддерживаемого заклинания')
         if 'learningMode' in ability and ability['learningMode'] not in ('base','talent','specialization'):raise ValueError('Неверный способ изучения способности')
         if 'requirements' in ability and ((len(ability['requirements'])>1000) if isinstance(ability['requirements'],str) else (not isinstance(ability['requirements'],list) or len(ability['requirements'])>40 or any(not isinstance(item,str) or not item.strip() or len(item)>100 for item in ability['requirements']) or len(set(ability['requirements']))!=len(ability['requirements']))):raise ValueError('Проверь требования способности')

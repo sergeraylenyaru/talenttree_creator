@@ -1,0 +1,14 @@
+{
+ "valid": [
+  [],
+  [{"id":"effect-1","type":"damage","trigger":"onHit","school":"fire","baseAmount":120,"scalingStat":"spellPower","coefficient":0.65,"canCrit":true}],
+  [{"id":"heal-1","type":"healing","trigger":"onCast","baseAmount":80,"scalingStat":"attackPower","coefficient":1,"canCrit":false}]
+ ],
+ "invalidPatches": [
+  {"id":""},{"id":"bad id"},{"id":12},
+  {"type":"buff"},{"trigger":"onTick"},{"school":"chaos"},{"scalingStat":"haste"},
+  {"baseAmount":-1},{"baseAmount":1000000001},{"baseAmount":"120"},{"baseAmount":true},
+  {"coefficient":-0.1},{"coefficient":1001},{"coefficient":"0.65"},{"coefficient":null},
+  {"canCrit":"true"},{"canCrit":1},{"script":"alert(1)"}
+ ]
+}
