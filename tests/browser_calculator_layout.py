@@ -24,6 +24,13 @@ with tempfile.TemporaryDirectory() as tmp:
             pid=owner.request.post(base+'/api/projects',data={'document':d}).json()['id']
             token=owner.request.post(base+'/api/publish',data={'projectId':pid,'visibility':'public'}).json()['token']
             page=owner.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.on('dialog',lambda dialog:dialog.accept())
+            def open_favorite(selector):
+                page.locator(selector).click()
+                # Existing draft protection also applies when opening a favorite tree.
+                page.wait_for_function("document.querySelector('#library').hidden || document.querySelector('#draftDialog').open")
+                if page.locator('#draftDialog').is_visible():
+                    page.locator('#discardDraft').click()
+                page.wait_for_function("document.querySelector('#library').hidden")
             page.goto(base+'/?share='+token);page.wait_for_function("/Версия|Version/.test(document.querySelector('#publicationBar').textContent)")
             page.wait_for_function("document.querySelector('#user').textContent==='layout_author'")
             for selector in ['#treeActions','#characterSettings','#undo','#redo','#share','#export','#import','#save','#hint','.tree-section-title']:
@@ -35,8 +42,7 @@ with tempfile.TemporaryDirectory() as tmp:
             page.locator('#chooseFavorite').click();page.wait_for_function("document.querySelector('#toast').textContent==='Дерево добавлено в избранное'")
             page.locator('#chooseFavorite').click()
             assert len(owner.request.get(base+'/api/favorites').json()['favorites'])==1
-            page.locator('#favorites').click();page.wait_for_selector('[data-kind="tree"]');page.locator('[data-kind="tree"]').click();page.locator('[data-use]').click()
-            page.wait_for_function("document.querySelector('#library').hidden")
+            page.locator('#favorites').click();page.wait_for_selector('[data-kind="tree"]');page.locator('[data-kind="tree"]').click();open_favorite('[data-use]')
             assert page.locator('#treeTitle').inner_text()==name
             for width in [1440,1024,768,390,320]:
                 page.set_viewport_size({'width':width,'height':1100})
@@ -52,9 +58,9 @@ with tempfile.TemporaryDirectory() as tmp:
             assert page.locator('.model-placeholder').count()==0
             snapshot=dict(d,name='Личная копия')
             fid=owner.request.post(base+'/api/favorites',data={'kind':'tree','item':{'document':snapshot}}).json()['id']
-            page.locator('#favorites').click();page.wait_for_selector('[data-use="'+fid+'"]');page.locator('[data-use="'+fid+'"]').click()
+            page.locator('#favorites').click();page.wait_for_selector('[data-use="'+fid+'"]');open_favorite('[data-use="'+fid+'"]')
             page.locator('[data-talent="t"]').click();assert page.locator('#points').inner_text()=='1 / 41'
-            page.locator('#favorites').click();page.wait_for_selector('[data-use="'+fid+'"]');page.locator('[data-use="'+fid+'"]').click()
+            page.locator('#favorites').click();page.wait_for_selector('[data-use="'+fid+'"]');open_favorite('[data-use="'+fid+'"]')
             assert page.locator('#points').inner_text()=='1 / 41'
             assert '?share=' not in page.url
             page.locator('#editMode').click();assert page.locator('#save').is_visible();assert page.locator('#characterSettings').is_visible()

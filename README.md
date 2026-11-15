@@ -445,3 +445,34 @@ node --test tests/*.test.js
 # Требует Playwright и Chromium / Requires Playwright and Chromium:
 python3 tests/browser_combat_effects.py
 ```
+
+### Combat Calculation Engine v1 / Расчёт боевых эффектов v1
+
+Независимая библиотека `static/combat/calculation-engine.js` рассчитывает урон и лечение с масштабированием, критическим исходом, множителями, бронёй и сопротивлением. Поддерживает браузер и Node.js 22+, не меняет входные данные. Она не подключена к интерфейсу и не запускает бой. Формулы, значения по умолчанию, проверка данных и примеры всех пяти функций: [docs/combat-calculation.md](docs/combat-calculation.md).
+
+The independent calculation library supports damage/healing, scaling, explicit critical outcomes, multipliers and mitigation in browsers and Node.js 22+. It does not mutate inputs or execute combat. See the bilingual [API and formula reference](docs/combat-calculation.md).
+
+### GitHub Codespaces
+
+1. На GitHub выберите ветку `codex/combat-calculation-engine`, затем **Code → Codespaces → Create codespace**. Если создаёте через расширенные настройки, явно выберите эту ветку. / Select the feature branch, then **Code → Codespaces → Create codespace**; select this branch explicitly in advanced creation options.
+2. Дождитесь сборки контейнера. Настроены Python 3.12, Node.js 22 и автоматическая установка `requirements.txt`. / Wait for the container setup: Python 3.12, Node.js 22 and automatic Python requirements installation.
+3. В терминале Codespaces выполните / Run in its terminal:
+
+   ```sh
+   HOST=0.0.0.0 PORT=8000 python3 server.py
+   ```
+
+4. Порт **8000 — Talent Forge** перенаправляется и открывается в браузере. При необходимости откройте вкладку **Ports** и нажмите **Open in Browser**. / Port **8000 — Talent Forge** opens in the browser; alternatively use **Ports → Open in Browser**.
+
+Проверки / Tests:
+
+```sh
+python3 -m unittest discover -s tests -p 'test_*.py'
+node --test tests/*.test.js
+node --check static/combat/calculation-engine.js
+node --check static/combat/effect-validation.js
+```
+
+Конфигурация находится в `.devcontainer/devcontainer.json`. Сборка и запуск настоящего Codespace не проверялись. База создаётся в игнорируемой папке `data/`; не добавляйте в Git базы, `.env` и секреты.
+
+Configuration is in `.devcontainer/devcontainer.json`. An actual Codespace has not been launched or tested. The database is stored in ignored `data/`; never commit databases, `.env` or credentials.
