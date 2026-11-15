@@ -7,8 +7,9 @@ from PIL import Image,PngImagePlugin
 from playwright.sync_api import sync_playwright,expect
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import server,accounts
+from server_lifecycle import temporary_database, start_server, stop_server
 
-with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
+with temporary_database() as tmp,patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
     tmp=Path(tmp);server.DB=str(tmp/'bulk-about.sqlite');server.initialize()
     def image(name,color,size=(64,64),metadata=''):
         path=tmp/name;info=PngImagePlugin.PngInfo();info.add_text('Comment',metadata)
@@ -19,7 +20,7 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
     blue=image('spell_blue.png','blue');green=image('spell_green.png','green');repeat=image('blue_renamed.png','blue',metadata='new metadata')
     duplicate=image('renamed_existing.png','gold',metadata='different metadata');invalid=tmp/'invalid.svg';invalid.write_text('<svg onload="alert(1)"></svg>')
     banner=image('project-banner.png','#b88236',(640,180))
-    http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);threading.Thread(target=http.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{http.server_port}'
+    http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);start_server(http);base=f'http://127.0.0.1:{http.server_port}'
     try:
         with sync_playwright() as p:
             browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
@@ -97,4 +98,4 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
             a.set_viewport_size({'width':1440,'height':1000});a.reload();a.locator('#projectTab').click();expect(a.locator('#projectDescription')).to_have_value('Create your own class.\nA community workshop for talent trees.')
             assert not errors,errors
             browser.close();print('PASS: multi-file review, names/categories/tags, admin editing and tag search, DB and selection duplicates, invalid file, retry, project text/links/linked images, card order, bilingual persistence, guest access and mobile widths down to 320px.')
-    finally:http.shutdown();http.server_close()
+    finally:stop_server(http)

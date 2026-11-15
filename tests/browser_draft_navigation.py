@@ -4,10 +4,11 @@ from pathlib import Path
 from unittest.mock import patch
 from playwright.sync_api import sync_playwright,expect
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]));import server
+from server_lifecycle import temporary_database, start_server, stop_server
 
-with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
+with temporary_database() as tmp,patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
     server.DB=str(Path(tmp)/'draft-navigation.sqlite');server.initialize()
-    http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);threading.Thread(target=http.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{http.server_port}'
+    http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);start_server(http);base=f'http://127.0.0.1:{http.server_port}'
     try:
         with sync_playwright() as p:
             browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);ctx=browser.new_context(viewport={'width':1440,'height':1000});ctx.route('https://**/*',lambda route:route.abort())
@@ -51,4 +52,4 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
             for width in [1440,768,390,320]:page.set_viewport_size({'width':width,'height':900});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
             page.screenshot(path='work/draft-navigation-list.png',full_page=True);assert not errors,errors
             print('PASS: X/Escape preserve the draft list, save/no-op/revert/build do not falsely warn, real and in-flight edits stay protected, text requirements and title hierarchy persist.');browser.close()
-    finally:http.shutdown();http.server_close()
+    finally:stop_server(http)

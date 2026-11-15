@@ -6,10 +6,11 @@ from unittest.mock import patch
 from PIL import Image
 from playwright.sync_api import sync_playwright,expect
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]));import server,accounts
-with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
+from server_lifecycle import temporary_database, start_server, stop_server
+with temporary_database() as tmp,patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
  server.DB=str(Path(tmp)/'accounts.sqlite');server.initialize()
  with server.connect() as db:accounts.register(db,{'login':'admin_owner','email':'admin@example.test','password':'admin-password-123'},server.password_hash,bootstrap=True)
- http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);threading.Thread(target=http.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{http.server_port}'
+ http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);start_server(http);base=f'http://127.0.0.1:{http.server_port}'
  try:
   with sync_playwright() as p:
    browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);main=browser.new_context(viewport={'width':1440,'height':1000});main.route('https://**/*',lambda route:route.abort());page=main.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.goto(base);page.locator('#auth').click();page.locator('#switchAuth').click();expect(page.locator('#submitModal')).to_have_text('Sign up');page.locator('#email').fill('member@example.test');page.locator('#login').fill('member');page.locator('#password').fill('member-password-123');page.locator('#repeatPassword').fill('member-password-123');page.locator('#submitModal').click();expect(page.locator('#user')).to_have_text('member');assert main.request.get(base+'/api/me').json()['user']['email']=='member@example.test';assert not page.locator('#adminLink').is_visible()
@@ -37,4 +38,4 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
     v.goto(base+'/account.html');v.locator('#accountEmail').fill('verify@example.test');v.locator('#accountSubmit').click();expect(v.locator('#accountMessage')).to_have_text('If an account exists with that email, a reset link has been sent.');reset=re.search(r'#reset=([\w-]+)',mailbox[-1][2])[1];v.goto(base+'/account.html#reset='+reset);v.locator('#accountPassword').fill('new-password-123');v.locator('#accountRepeat').fill('new-password-123');v.locator('#accountSubmit').click();expect(v.locator('#accountMessage')).to_have_text('Password updated. Your previous sessions have ended. You can now log in.')
    assert not errors,errors
    print('PASS: email signup, email login, separate admin realm, block/unblock, category creation/rename/reassignment/filter/deletion, image upload/picker/removal/restore, mobile admin, verify/reset mail links.');browser.close()
- finally:http.shutdown();http.server_close()
+ finally:stop_server(http)

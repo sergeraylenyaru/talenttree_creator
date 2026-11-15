@@ -9,11 +9,12 @@ from playwright.sync_api import sync_playwright
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import server
+from server_lifecycle import temporary_database, start_server, stop_server
 
-with tempfile.TemporaryDirectory() as tmp:
+with temporary_database() as tmp:
     server.DB=str(Path(tmp)/'custom.sqlite');server.initialize()
     http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler)
-    threading.Thread(target=http.serve_forever,daemon=True).start()
+    start_server(http)
     base=f'http://127.0.0.1:{http.server_port}'
     try:
         with sync_playwright() as p:
@@ -76,4 +77,4 @@ with tempfile.TemporaryDirectory() as tmp:
             print('PASS: shared avatar composer, independent layers and reload; no glow; return beside Create; branch tints in editor, abilities and public calculator; mobile layout.')
             browser.close()
     finally:
-        http.shutdown();http.server_close()
+        stop_server(http)

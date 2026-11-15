@@ -23,9 +23,22 @@ from pathlib import Path
 ROOT = Path(__file__).parent
 DB = os.environ.get('TALENT_DB', str(ROOT / 'data' / 'talents.sqlite3'))
 
+class ClosingConnection(sqlite3.Connection):
+    """Keep SQLite commit/rollback semantics and release the file on context exit."""
+    def __exit__(self, *exc):
+        try:
+            return super().__exit__(*exc)
+        finally:
+            self.close()
+
+
 def connect():
-    db = sqlite3.connect(DB)
-    db.execute('PRAGMA foreign_keys=ON')
+    db = sqlite3.connect(DB, factory=ClosingConnection)
+    try:
+        db.execute('PRAGMA foreign_keys=ON')
+    except BaseException:
+        db.close()
+        raise
     return db
 
 def initialize():

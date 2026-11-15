@@ -17,3 +17,17 @@ jobs:
       - run: python3 -m unittest discover -s tests -p 'test_*.py'
       - run: node --test tests/*.test.js
       - run: node --check static/app.js
+      - run: node --check static/combat/calculation-engine.js
+      - run: node --check static/combat/effect-validation.js
+      - run: python3 -m pip install playwright
+      - run: python3 -m playwright install --with-deps chromium
+      - name: Locate Chromium for existing browser tests
+        run: sudo ln -sf "$(python3 -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')" /usr/bin/chromium
+      - name: Browser regressions
+        run: |
+          python3 tests/browser_calculation.py
+          python3 tests/browser_talent_regression.py
+          python3 tests/browser_combat_effects.py
+          python3 tests/browser_ability_scopes.py
+          python3 tests/browser_calculator_layout.py
+          python3 tests/browser_tree_archive_copy.py

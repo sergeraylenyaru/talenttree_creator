@@ -5,11 +5,12 @@ from unittest.mock import patch
 from playwright.sync_api import sync_playwright,expect
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import server
+from server_lifecycle import temporary_database, start_server, stop_server
 
-with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
+with temporary_database() as tmp,patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
     server.DB=str(Path(tmp)/'archive.sqlite');server.initialize()
     http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler)
-    threading.Thread(target=http.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{http.server_port}'
+    start_server(http);base=f'http://127.0.0.1:{http.server_port}'
     try:
         with sync_playwright() as p:
             browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
@@ -51,6 +52,11 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
             page.locator('#toggleTreeArchive').click();expect(page.locator(f'[data-open="{pid}"]')).to_be_visible()
             # Keyboard opens the same whole-card target.
             page.locator(f'[data-open="{pid}"]').focus();page.keyboard.press('Enter');expect(page.locator('#className')).to_have_value(document['name'])
+            # Restoring/opening the current tree may invoke existing draft protection.
+            page.wait_for_function("document.querySelector('#library').hidden || document.querySelector('#draftDialog').open")
+            if page.locator('#draftDialog').is_visible():
+                page.locator('#discardDraft').click()
+            expect(page.locator('#library')).not_to_be_visible()
             page.locator('#publications').click();page.locator('[data-archive-publication]').click();page.locator('#submitModal').click()
             expect(page.locator('[data-archive-publication]')).to_have_count(0)
             page.locator('#archivedPublications').click();expect(page.locator('[data-archive-expires]')).to_contain_text('До удаления:')
@@ -77,4 +83,4 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
             assert not errors,errors
             browser.close();print('PASS: card/keyboard opening, draft labels, archive warning/cancel/deadline/restoration, publication deletion, mobile layout, foreign copy and guest login continuation; original unchanged.')
     finally:
-        http.shutdown();http.server_close()
+        stop_server(http)

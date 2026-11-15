@@ -7,8 +7,9 @@ from PIL import Image,ImageDraw
 from playwright.sync_api import sync_playwright,expect
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import server,accounts
+from server_lifecycle import temporary_database, start_server, stop_server
 
-with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
+with temporary_database() as tmp,patch.dict(os.environ,{'SMTP_HOST':'','SMTP_FROM':'','APP_URL':'','REQUIRE_EMAIL_VERIFICATION':'0'}):
     tmp=Path(tmp);server.DB=str(tmp/'icons.sqlite');server.initialize()
     with server.connect() as db:accounts.register(db,{'login':'icon_admin','email':'admin@example.test','password':'test-password-123'},server.password_hash,bootstrap=True)
     fixtures=[]
@@ -19,7 +20,7 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
         with server.connect() as db:
             ident=accounts.upload_icon(db,{'name':name,'category':'general','image':base64.b64encode(path.read_bytes()).decode(),'tags':'tagtoken_'+name})
         fixtures.append((name,path,ident))
-    http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);threading.Thread(target=http.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{http.server_port}'
+    http=server.ArchiveHTTPServer(('127.0.0.1',0),server.Handler);start_server(http);base=f'http://127.0.0.1:{http.server_port}'
     try:
         with sync_playwright() as p:
             browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);ctx=browser.new_context(viewport={'width':1440,'height':1000});ctx.route('https://**/*',lambda route:route.abort())
@@ -70,4 +71,4 @@ with tempfile.TemporaryDirectory() as tmp,patch.dict(os.environ,{'SMTP_HOST':'',
             page.reload();expect(page.locator('#user')).to_have_text('icon_admin');page.locator('#projects').click();page.locator('[data-open="'+saved_pid+'"]').click();filled('#trees .slot.filled img')
             assert not errors,errors
             print('PASS: small/large icons, transparent and black padding fill frames in existing catalog, uploads, picker, talent editor, tree and calculator; inline/CDN images and tags with unavailable static catalogs; 48px frames and no overflow down to 320px.');browser.close()
-    finally:http.shutdown();http.server_close()
+    finally:stop_server(http)
