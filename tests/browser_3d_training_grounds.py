@@ -110,6 +110,7 @@ with temporary_database() as folder, sync_playwright() as playwright:
         first_canvas = canvas.element_handle()
         arena.locator('#tg-return').click()
         expect(arena).not_to_be_visible()
+        expect(canvas).to_have_count(0)
         expect(page.locator('#points')).to_have_text('1 / 41')
         assert first_canvas.evaluate(snapshot_script) is None
 

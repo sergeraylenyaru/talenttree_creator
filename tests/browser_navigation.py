@@ -80,6 +80,7 @@ def run():
                 page.locator('#save').click()
                 page.wait_for_function("document.querySelector('#saveState').textContent==='Сохранено в аккаунте'")
                 page.locator('#notifications').click()
+                page.locator('#noticeList li').first.wait_for(state='attached')
                 assert page.locator('#noticeList li').count() > 0
                 page.locator('#clearNotices').click()
                 assert page.locator('#noticeList li').count() == 0
