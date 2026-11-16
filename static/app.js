@@ -1,3 +1,5 @@
+import {openTrainingGrounds} from './training-grounds/training-grounds.js';
+import {registerTrainingTranslations} from './training-grounds/training-grounds-ui.js';
 import {combatEffectEditor} from './combat-effect-editor.js';
 import {presetClassName,applyPresetLocale} from './preset-locales.js';
 import {createIconBrowser} from './icon-browser.js';
@@ -18,6 +20,11 @@ import {createRankEditor} from './rank-editor.js';
 import {blank,branch,total,validBuild,changeRank,normalize,route,reserved,moveTalent,defaultBudget,abilityTalentDraft,placeAbilityTalent,synchronizeAbilityTalents,abilityUnlocked,usesPrimaryBranch,removeAbility,dependencyRoutes,talentState,branchIcon,groupedAbilities} from './engine.js';
 import {icons,iconURL} from './icons.js';
 const $=s=>document.querySelector(s);
+registerTrainingTranslations();
+$('#openTrainingGrounds').onclick=()=>{
+ try{closeMenus();$('#tooltip').hidden=true;openTrainingGrounds($('#trainingGrounds'),doc);}
+ catch(error){toast(t(error.message));}
+};
 const confirm=message=>window.confirm(t(message));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let aboutContent=null,aboutRequest=0;
@@ -521,7 +528,7 @@ function resetHistory(){undoStates.length=0;redoStates.length=0;historyCurrent=s
 function updateHistoryButtons(){$('#undo').disabled=!undoStates.length;$('#redo').disabled=!redoStates.length;}
 function restoreHistory(redo=false){const previousStructure=JSON.stringify(withoutBuild(doc));const from=redo?redoStates:undoStates,to=redo?undoStates:redoStates;if(!from.length)return;to.push(snapshot());const state=JSON.parse(from.pop());doc=normalize(state.document,{allowLegacy:true});projectId=state.projectId;activeShare=state.share;favoriteTreeId=state.favoriteTreeId||null;persistBrowserBuild();historyCurrent=snapshot();if(JSON.stringify(withoutBuild(doc))!==previousStructure)setDirty(true);try{persistDraft();}catch{}render();$('#saveState').textContent=dirty?'Есть несохранённые изменения':projectId?'Сохранено в аккаунте':'Локальный черновик';refreshShareStats();}
 $('#undo').onclick=()=>restoreHistory();$('#redo').onclick=()=>restoreHistory(true);
-document.addEventListener('keydown',e=>{if($('#modal').open||$('#draftDialog').open)return;if((e.ctrlKey||e.metaKey)&&!e.target.closest('input,textarea,select')&&['z','y'].includes(e.key.toLowerCase())){e.preventDefault();restoreHistory(e.key.toLowerCase()==='y'||e.shiftKey);}});
+document.addEventListener('keydown',e=>{if($('#modal').open||$('#draftDialog').open||$('#trainingGrounds').open)return;if((e.ctrlKey||e.metaKey)&&!e.target.closest('input,textarea,select')&&['z','y'].includes(e.key.toLowerCase())){e.preventDefault();restoreHistory(e.key.toLowerCase()==='y'||e.shiftKey);}});
 document.addEventListener('click',e=>{if(!user&&e.target.closest('#new,#editMode,#export,#import,#characterSettings,#addBranch,#addAbility')){e.preventDefault();e.stopImmediatePropagation();auth();}},true);
 function showShareStats(stats){$('#shareStats').hidden=!activeShare||!$('#community').hidden||!$('#library').hidden;if(activeShare&&stats)$('#shareStats').textContent=`Распределяли очки: ${stats.allocated} · Сохранили себе: ${stats.saved}`;}
 async function refreshShareStats(){if(!activeShare){$('#shareStats').hidden=true;return;}const token=activeShare,viewer=user?.login;try{const result=await api('/shared/'+encodeURIComponent(token));if(token===activeShare&&viewer===user?.login){showShareStats(result.stats);showPublication(result.publication);}}catch{}}
