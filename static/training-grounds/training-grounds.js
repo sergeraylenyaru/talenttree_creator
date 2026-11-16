@@ -1,3 +1,4 @@
+import {mountTrainingWorld} from './world-integration.js';
 import {compileCombatBuild, normalizeCombatSettings} from '../combat/build-compiler.js';
 import {createCombatRuntime} from '../combat/combat-runtime.js';
 import {renderTrainingGrounds} from './training-grounds-ui.js';
@@ -72,19 +73,24 @@ export function openTrainingGrounds(dialog, document) {
     }
   });
 
-  function tick() {
+  let world;
+
+  function tick(now) {
     if (!dialog.open) return;
     syncClock();
     view.update(runtime);
+    world?.update(now);
     frame = requestAnimationFrame(tick);
   }
 
   dialog.addEventListener('close', () => {
     cancelAnimationFrame(frame);
+    world?.dispose();
     dialog.replaceChildren();
     dialog.onkeydown = null;
   }, {once: true});
   dialog.showModal();
+  world = mountTrainingWorld(dialog);
   rebaseClock();
   view.update(runtime);
   frame = requestAnimationFrame(tick);

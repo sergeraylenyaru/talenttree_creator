@@ -1,0 +1,14 @@
+{
+  "model": "character/hero.gltf",
+  "scale": 1,
+  "rotation": 180,
+  "heightOffset": 0,
+  "animations": {
+    "idle": "Idle",
+    "walk": "Walk",
+    "run": "Run",
+    "jump": "Jump",
+    "fall": "Fall",
+    "attacks": []
+  }
+}

@@ -1,0 +1,35 @@
+#trainingGrounds:has(.tg-show-world) { width: min(1430px, calc(100vw - 24px)); }
+.tg-world-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin:8px 0 10px; }
+.tg-world-toolbar button { min-height:34px; }
+.tg-quality { display:flex; align-items:center; gap:8px; margin:0; }
+.tg-quality select { min-height:32px; width:auto; padding:2px 7px; }
+.tg-world-status { font-size:12px; }
+.tg-world-frame {
+  position:relative; width:100%; min-width:0; aspect-ratio:16/10; min-height:250px; max-height:62dvh;
+  border:1px solid #94734a; border-radius:7px; overflow:hidden; background:#121713;
+}
+.tg-world-frame canvas { position:absolute; inset:0; display:block; width:100%; height:100%; outline:none; touch-action:none; cursor:grab; }
+.tg-world-frame canvas:focus-visible { outline:2px solid var(--gold); outline-offset:-3px; }
+.tg-world-frame canvas:active { cursor:grabbing; }
+.tg-world-frame .tg-world-target {
+  position:absolute; transform:translate(-50%, -100%); white-space:nowrap;
+  min-height:0; padding:4px 7px; font-size:11px; color:#ffd892; background:#171511df;
+}
+.tg-world-target[aria-pressed=true], .tg-target-selected { outline:1px solid var(--gold); outline-offset:2px; border-radius:3px; }
+.tg-world-model {
+  position:absolute; bottom:8px; left:8px; padding:4px 7px;
+  color:#eee2cb; background:#171511df; border-radius:4px; font-size:11px; pointer-events:none;
+}
+.tg-show-world .tg-figures { display:none; }
+.tg-show-world .tg-vitals { margin-top:10px; }
+.tg-world-frame #tg-floats { inset:var(--tg-target-y, 40%) auto auto var(--tg-target-x, 50%); }
+#trainingGrounds .tg-world-keys, #trainingGrounds .tg-world-touch { font-size:11px; margin-top:7px; }
+#trainingGrounds .tg-world-touch { display:none; }
+@media (max-width:740px) {
+  #trainingGrounds:has(.tg-show-world) { width:calc(100vw - 12px); }
+  .tg-world-frame { min-height:185px; }
+}
+@media (pointer:coarse) {
+  #trainingGrounds .tg-world-keys { display:none; }
+  #trainingGrounds .tg-world-touch { display:block; }
+}

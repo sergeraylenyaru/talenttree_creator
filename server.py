@@ -6,7 +6,7 @@ import hmac
 import json
 import math
 import publications
-from urllib.parse import urlsplit, parse_qs
+from urllib.parse import urlsplit, parse_qs, unquote
 from routing import dependency_routes
 from functools import lru_cache
 import os
@@ -361,8 +361,54 @@ class Handler(SimpleHTTPRequestHandler):
             token = ''
         return db.execute('SELECT users.id, users.login, users.avatar FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>? AND users.blocked=0 AND (users.email IS NULL OR users.email_verified=1 OR ?=0)', (hashlib.sha256(token.encode()).hexdigest(), time.time(),int(accounts.verification_required()))).fetchone()
 
+    def serve_local_world_asset(self, resource_path):
+        # Local exports are opt-in and available only through a direct loopback request.
+        local_host = re.fullmatch(r'(localhost|127\.0\.0\.1|\[::1\])(?::[0-9]+)?', self.headers.get('Host', ''), re.I)
+        if (os.environ.get('TALENT_LOCAL_WOW_ASSETS') != '1'
+                or self.server.server_address[0] not in ('127.0.0.1', '::1')
+                or self.client_address[0] not in ('127.0.0.1', '::1')
+                or not local_host or any(name in self.headers for name in ('Forwarded', 'X-Forwarded-For', 'X-Forwarded-Host'))):
+            return self.send_error(404)
+        name = unquote(resource_path)
+        parts = name.split('/')
+        if (any(not segment or segment in ('.', '..') or re.search(r'[\\:\x00-\x1f]', segment) for segment in parts)
+                or name != 'manifest.json' and (parts[0] != 'character' or len(parts) < 2)):
+            return self.send_error(404)
+        types = {
+            '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.json': 'application/json',
+            '.bin': 'application/octet-stream', '.png': 'image/png', '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg', '.webp': 'image/webp',
+        }
+        extension = Path(name).suffix.lower()
+        if extension not in types or (extension == '.json' and name != 'manifest.json'):
+            return self.send_error(404)
+        root = ROOT.resolve() / 'local-assets' / 'wow'
+        try:
+            path = root.joinpath(*parts).resolve(strict=True)
+            if not path.is_relative_to(root) or not path.is_file():
+                return self.send_error(404)
+            stream = path.open('rb')
+        except (OSError, RuntimeError, ValueError):
+            return self.send_error(404)
+        with stream:
+            stat = os.fstat(stream.fileno())
+            etag = f'"{stat.st_mtime_ns:x}-{stat.st_size:x}"'
+            not_modified = self.headers.get('If-None-Match') == etag
+            self.send_response(304 if not_modified else 200)
+            self.send_header('Cache-Control', 'private, no-cache')
+            self.send_header('ETag', etag)
+            self.send_header('Cross-Origin-Resource-Policy', 'same-origin')
+            if not not_modified:
+                self.send_header('Content-Type', types[extension])
+                self.send_header('Content-Length', str(stat.st_size))
+            self.end_headers()
+            if not not_modified:
+                self.copyfile(stream, self.wfile)
+
     def do_GET(self):
         parsed=urlsplit(self.path)
+        if parsed.path.startswith('/local-world-assets/'):
+            return self.serve_local_world_asset(parsed.path.removeprefix('/local-world-assets/'))
         if parsed.path in ('/admin','/admin/'):
             self.path='/admin.html';return super().do_GET()
         match=re.fullmatch(r'/media/project/([a-f0-9]{32})\.png',parsed.path)
