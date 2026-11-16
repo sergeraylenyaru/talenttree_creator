@@ -212,7 +212,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
   function setVital(index, current, max, unit = '') {
     const {meter, fill, text} = meters[index];
     if (meter.max !== max) meter.max = max;
-    if (meter.value !== current) meter.value = current;
+    if (meter.getAttribute('value') !== String(current)) meter.value = current;
     const width = `${current / max * 100}%`;
     if (fill.style.width !== width) fill.style.width = width;
     replaceText(text, `${fmt(current)} / ${fmt(max)}${unit}`);
