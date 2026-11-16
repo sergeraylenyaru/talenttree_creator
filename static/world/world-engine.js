@@ -1,3 +1,5 @@
+import {createSpatialCombat, facingTarget, spatialDefaults} from './combat/spatial-combat.js';
+import {createCombatVisuals} from './combat/combat-visuals.js';
 import {Group, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer} from 'three';
 import {animateCharacter} from './animation-controller.js';
 import {bindMovement, createCharacter, stepCharacter} from './character-controller.js';
@@ -14,7 +16,7 @@ export function createWorld(canvas, callbacks, config = world) {
   const renderer = new WebGLRenderer({canvas, antialias: false, alpha: false});
   const lifetime = new AbortController();
   const {signal} = lifetime;
-  const {scene, dummy, obstacles, selection} = createArena(config);
+  const {scene, dummy, obstacles, selection, sightObstacles} = createArena(config);
   const camera = new PerspectiveCamera(55, 1, 0.06, 90);
   const avatar = new Group();
   scene.add(avatar);
@@ -38,6 +40,29 @@ export function createWorld(canvas, callbacks, config = world) {
   const readInput = bindMovement(canvas, document, window, signal);
   document.addEventListener('visibilitychange', () => { lastTime = null; queuedJump = false; }, {signal});
   window.addEventListener('blur', () => { queuedJump = false; }, {signal});
+
+  let pose;
+  let combatTime = 0;
+  let facing;
+  let alive = true;
+  const visuals = createCombatVisuals(scene, dummy);
+  const combatConfig = {...spatialDefaults, ...config.combat};
+  const dummyTarget = {
+    selected: () => selected,
+    read: () => ({
+      position: {x: dummy.position.x, y: combatConfig.aimHeight, z: dummy.position.z},
+      radius: config.dummy.radius ?? 0.72, alive: (callbacks.targetAlive?.() ?? alive) && !signal.aborted
+    })
+  };
+  const combat = createSpatialCombat({
+    player: () => player,
+    target: () => selected ? dummyTarget : null,
+    obstacles: sightObstacles,
+    face(position) { facing = facingTarget(player, position); player.facing = facing; },
+    animate(name, until) { pose = {name, until}; },
+    visuals,
+    config: combatConfig
+  });
 
   function setQuality(name) {
     const quality = qualities[name] || qualities.low;
@@ -79,6 +104,20 @@ export function createWorld(canvas, callbacks, config = world) {
   const controller = {
     setQuality,
     selectDummy() { setSelection(true); },
+    delivery: combat.delivery,
+    combatState(time, health) {
+      alive = health > 0;
+      combatTime = time;
+      combat.update(time);
+      dummy.scale.y = (callbacks.targetAlive?.() ?? alive) ? 1 : 0.72;
+    },
+    combatHit() { visuals.react(); },
+    clearPose() { pose = undefined; },
+    clearCombat() {
+      combat.clear();
+      visuals.clear();
+      pose = undefined;
+    },
     update(now) {
       if (signal.aborted || document.hidden) return;
       const dt = lastTime === null ? 0 : Math.min(0.1, Math.max(0, (now - lastTime) / 1000));
@@ -92,8 +131,15 @@ export function createWorld(canvas, callbacks, config = world) {
         elapsed -= config.step;
       }
       avatar.position.set(player.x, player.y, player.z);
+      if (pose && combatTime >= pose.until) pose = undefined;
+      if (pose) player.facing = facing;
       avatar.rotation.y = player.facing;
-      animation.update(player.animation, dt);
+      const clip = pose && animation.supports(pose.name);
+      animation.update(clip ? pose.name : player.animation, dt);
+      // Root tilt is a rig-independent fallback for models without attack clips.
+      const progress = pose ? Math.max(0, Math.min(1, (pose.until - combatTime) / 0.48)) : 0;
+      avatar.rotation.x = pose && !clip ? -Math.sin(progress * Math.PI) * 0.25 : 0;
+      visuals.update(dt);
       const blend = 1 - Math.exp(-21 * dt);
       const yawDelta = Math.atan2(Math.sin(orbit.yaw - view.yaw), Math.cos(orbit.yaw - view.yaw));
       view.yaw += yawDelta * blend;
@@ -117,7 +163,7 @@ export function createWorld(canvas, callbacks, config = world) {
       projectDummy();
     },
     snapshot() {
-      return {player: {...player}, orbit: {...orbit}, selected, model: modelKind,
+      return {attacks: combat.snapshot(), player: {...player}, orbit: {...orbit}, selected, model: modelKind,
         geometries: renderer.info.memory.geometries, draws: renderer.info.render.calls};
     },
     dispose() {
@@ -125,6 +171,8 @@ export function createWorld(canvas, callbacks, config = world) {
       lifetime.abort();
       activeWorlds.delete(canvas);
       animation.dispose();
+      combat.clear();
+      visuals.dispose();
       disposeObjects(scene);
       for (const light of scene.children) light.shadow?.dispose();
       renderer.dispose();

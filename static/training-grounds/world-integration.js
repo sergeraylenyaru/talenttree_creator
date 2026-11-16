@@ -13,17 +13,19 @@ addTranslations([
   ['Ошибка локальной модели', 'Local model error'],
   ['3D недоступна. Открыт боевой стенд.', '3D is unavailable. Combat view is active.'],
   ['Собери модуль командой npm run build:world.', 'Build the module with npm run build:world.'],
-  ['Манекен выбран', 'Dummy selected']
+  ['Манекен выбран', 'Dummy selected'], ['Манекен повержен', 'Dummy defeated'],
+  ['Восстановить манекен', 'Reset dummy']
 ]);
 
 const qualityKey = 'talentforge-world-quality';
 
-export function mountTrainingWorld(dialog) {
+export function mountTrainingWorld(dialog, actions) {
   const arena = dialog.querySelector('.tg-arena');
   const toolbar = document.createElement('div');
   toolbar.className = 'tg-world-toolbar';
   toolbar.innerHTML = `<button type="button" class="tg-world-toggle" aria-pressed="false">3D-сцена</button>
     <label class="tg-quality" hidden>Качество графики <select><option value="low">Низкое</option><option value="high">Высокое</option></select></label>
+    <button type="button" class="tg-target-reset" hidden>Восстановить манекен</button>
     <span class="tg-world-status muted" role="status"></span>`;
   const stage = document.createElement('div');
   stage.className = 'tg-world-stage';
@@ -38,6 +40,8 @@ export function mountTrainingWorld(dialog) {
   arena.querySelector('.tg-clock').after(toolbar, stage);
 
   const toggle = toolbar.querySelector('button');
+  const reset = toolbar.querySelector('.tg-target-reset');
+  reset.onclick = actions.resetTarget;
   const quality = toolbar.querySelector('select');
   const status = toolbar.querySelector('.tg-world-status');
   const frame = stage.querySelector('.tg-world-frame');
@@ -55,6 +59,7 @@ export function mountTrainingWorld(dialog) {
 
   function switchToCombat() {
     generation++;
+    if (controller) actions.leave();
     controller?.dispose();
     controller = undefined;
     canvas?.remove();
@@ -66,6 +71,7 @@ export function mountTrainingWorld(dialog) {
     marker.hidden = true;
     marker.removeAttribute('aria-pressed');
     quality.parentElement.hidden = true;
+    reset.hidden = true;
     toggle.disabled = false;
     toggle.setAttribute('aria-pressed', 'false');
     toggle.textContent = '3D-сцена';
@@ -92,6 +98,7 @@ export function mountTrainingWorld(dialog) {
     model.textContent = 'Учебный персонаж';
     try {
       controller = module.createWorld(canvas, {
+        targetAlive: () => actions.state().dummy.health > 0,
         marker({x, y, visible}) {
           marker.hidden = !visible;
           if (!visible) return;
@@ -115,11 +122,14 @@ export function mountTrainingWorld(dialog) {
           status.textContent = '3D недоступна. Открыт боевой стенд.';
         }
       });
+      actions.enter();
       controller.setQuality(quality.value);
       frame.append(floats);
       arena.classList.add('tg-show-world');
       stage.hidden = false;
       quality.parentElement.hidden = false;
+      reset.hidden = false;
+      updateCombat(actions.state());
       toggle.disabled = false;
       toggle.setAttribute('aria-pressed', 'true');
       toggle.textContent = 'Боевой стенд';
@@ -147,7 +157,22 @@ export function mountTrainingWorld(dialog) {
   };
   if (matchMedia('(pointer: fine) and (min-width: 760px)').matches) enter();
 
+  function updateCombat(state) {
+    if (!controller) return;
+    controller.combatState(state.combatTime, state.dummy.health);
+    const label = actions.state().dummy.health ? t('Манекен') : t('Манекен повержен');
+    if (marker.textContent !== label) marker.textContent = label;
+  }
+
   return {
+    delivery: ability => controller?.delivery(ability),
+    combatState: updateCombat,
+    clearPose() { controller?.clearPose(); },
+    clearCombat(state) {
+      controller?.clearCombat();
+      updateCombat(state);
+    },
+    hit() { controller?.combatHit(); },
     update(now) {
       if (!controller) return;
       try { controller.update(now); }

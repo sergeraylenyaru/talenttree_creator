@@ -28,7 +28,7 @@ test('local asset manifest validates model paths, transform and animation mappin
     rotation: 180, heightOffset: -0.1, animations: {run: 'Sprint', attacks: ['Slash']}});
   assert.deepEqual(manifest, {
     model: 'character/Портрет 2/Hero.glTF', scale: 0.01, rotation: 180, heightOffset: -0.1,
-    animations: {...defaultClips, run: 'Sprint', attacks: ['Slash']}
+    animations: {...defaultClips, run: 'Sprint', meleeAttack: 'Slash', attacks: ['Slash']}
   });
 });
 
@@ -46,6 +46,8 @@ test('missing animations fall back safely and a model without clips can be dispo
   assert.equal(resolveClip([idle], defaultClips, 'run'), idle);
   assert.equal(resolveClip([idle], defaultClips, 'fall'), idle);
   assert.equal(resolveClip([], defaultClips, 'jump'), null);
+  assert.equal(resolveClip([idle], defaultClips, 'meleeAttack'), null);
+  assert.equal(resolveClip([idle], {spellCast: idle.name}, 'spellCast'), idle);
   const still = animateCharacter({...model, clips: []});
   still.update('run', 1 / 60);
   still.dispose();

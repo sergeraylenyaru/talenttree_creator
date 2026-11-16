@@ -31,13 +31,20 @@ const eventLabels = {
   damage: ['Урон', 'Damage'], healing: ['Лечение игрока', 'Player healing'],
   overhealing: ['Избыточное лечение', 'Overhealing'], cooldownStarted: ['Начало перезарядки', 'Cooldown started'],
   insufficient: ['Недостаточно ресурса', 'Insufficient resource'],
-  calculationFailed: ['Ошибка расчёта эффекта', 'Effect calculation failed']
+  calculationFailed: ['Ошибка расчёта эффекта', 'Effect calculation failed'],
+  castRejected: ['Применение отклонено', 'Cast rejected'],
+  attackLaunched: ['Атака началась', 'Attack launched'],
+  attackHit: ['Попадание', 'Impact'],
+  attackMissed: ['Атака не попала', 'Attack missed']
 };
 
 const statusLabels = {
   paused: ['Бой на паузе', 'Combat paused'], casting: ['Идёт применение', 'Casting'],
   cooldown: ['Перезарядка', 'Cooldown'], gcd: ['Общая перезарядка', 'Global cooldown'],
   dummyDead: ['Манекен побеждён. Сбрось бой, чтобы продолжить.', 'Dummy defeated. Reset combat to continue.'],
+  invalidTarget: ['Выбери манекен', 'Select the dummy'],
+  outOfRange: ['Цель вне зоны действия', 'Target out of range'],
+  obstructed: ['Препятствие между игроком и целью', 'Line of sight blocked'],
   insufficient: eventLabels.insufficient, calculationFailed: eventLabels.calculationFailed
 };
 
@@ -225,7 +232,8 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
     const list = $('#tg-log');
     list.hidden = !events.length;
     list.innerHTML = events.slice(-80).reverse().map(event => {
-      const detail = event.type === 'cooldownStarted'
+      const detail = event.reason && statusLabels[event.reason] ? ' · ' + statusLabels[event.reason][0]
+        : event.type === 'cooldownStarted'
         ? ` · ${fmt(event.amount)} сек. / GCD ${fmt(event.globalCooldown)} сек.`
         : event.amount !== undefined ? ` · ${fmt(event.amount)}` : '';
       return `<li data-event="${event.type}" class="${event.isCritical ? 'tg-critical' : ''}">
@@ -237,7 +245,10 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
       if (event.id <= lastEvent) continue;
       lastEvent = event.id;
       if (event.type === 'calculationFailed') replaceText($('#tg-feedback'), t(eventLabels.calculationFailed[0]));
+      if (event.type === 'castRejected' && statusLabels[event.reason]) replaceText($('#tg-feedback'), t(statusLabels[event.reason][0]));
+      if (event.type === 'attackMissed') replaceText($('#tg-feedback'), t(eventLabels.attackMissed[0]));
       if (event.type !== 'damage' || !event.amount) continue;
+      actions.damage?.();
       const float = document.createElement('span');
       float.className = event.isCritical ? 'tg-float tg-critical' : 'tg-float';
       float.textContent = `−${fmt(event.amount)}${event.isCritical ? '!' : ''}`;
@@ -271,7 +282,10 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
       const badge = button.querySelector('.tg-cooldown');
       badge.hidden = !remaining;
       if (remaining) replaceText(badge, Math.ceil(remaining * 10) / 10 + ' s');
-      if ((button.dataset.state || undefined) !== reason) button.dataset.state = reason || '';
+      if ((button.dataset.state || undefined) !== reason) {
+        button.dataset.state = reason || '';
+        button.title = statusLabels[reason] ? t(statusLabels[reason][0]) : '';
+      }
     });
 
     const stats = combatAnalytics(state);

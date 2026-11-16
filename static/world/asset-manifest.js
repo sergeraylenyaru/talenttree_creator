@@ -16,9 +16,15 @@ export function validateManifest(value) {
     if (typeof animations[state] !== 'string' || animations[state].length > 200) throw Error('Animation names must be strings');
     mapping[state] = animations[state];
   }
+  for (const state of ['meleeAttack', 'rangedAttack', 'spellCast', 'hitReaction']) {
+    if (!Object.hasOwn(animations, state)) continue;
+    if (typeof animations[state] !== 'string' || animations[state].length > 200) throw Error('Animation names must be strings');
+    mapping[state] = animations[state];
+  }
   const attacks = animations.attacks ?? [];
   if (!Array.isArray(attacks) || attacks.length > 32 || attacks.some(name => typeof name !== 'string' || name.length > 200)) {
     throw Error('Attack animations must be a list of names');
   }
+  if (!Object.hasOwn(mapping, 'meleeAttack') && attacks.length) mapping.meleeAttack = attacks[0];
   return {model, scale, rotation, heightOffset, animations: {...mapping, attacks: [...attacks]}};
 }
