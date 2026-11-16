@@ -1,4 +1,4 @@
-import {LoadingManager, MathUtils} from 'three';
+import {Box3, Group, LoadingManager, MathUtils} from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {assetRoot, validateManifest} from './asset-manifest.js';
 
@@ -30,6 +30,22 @@ export function localAssetURL(value, origin) {
     throw Error('A model dependency points outside the local character directory');
   }
   return url.href;
+}
+
+export function orientAndGroundModel(root, {scale, rotation, heightOffset}) {
+  const orientation = new Group();
+  orientation.scale.setScalar(scale);
+  orientation.rotation.y = MathUtils.degToRad(rotation);
+  orientation.add(root);
+  // Refresh bone transforms and the attached skin's inverse bind transform before sampling vertices.
+  orientation.updateMatrixWorld(true);
+  const bounds = new Box3().setFromObject(orientation, true);
+  if (bounds.isEmpty() || !bounds.min.toArray().every(Number.isFinite) || !bounds.max.toArray().every(Number.isFinite)) {
+    throw Error('Cannot align character to ground: model bounds are empty or non-finite');
+  }
+  orientation.position.y = heightOffset - bounds.min.y;
+  orientation.updateMatrixWorld(true);
+  return orientation;
 }
 
 export async function loadLocalCharacter(signal) {
@@ -65,8 +81,12 @@ export async function loadLocalCharacter(signal) {
     disposeObjects(gltf.scene);
     throw Error('The glTF scene contains no mesh');
   }
-  gltf.scene.scale.multiplyScalar(manifest.scale);
-  gltf.scene.rotation.y += MathUtils.degToRad(manifest.rotation);
-  gltf.scene.position.y += manifest.heightOffset;
-  return {root: gltf.scene, clips: gltf.animations, mapping: manifest.animations};
+  try {
+    const visual = orientAndGroundModel(gltf.scene, manifest);
+    // Bind animation tracks to the original glTF scene, beneath the correction.
+    return {root: gltf.scene, visual, clips: gltf.animations, mapping: manifest.animations};
+  } catch (error) {
+    disposeObjects(gltf.scene);
+    throw error;
+  }
 }

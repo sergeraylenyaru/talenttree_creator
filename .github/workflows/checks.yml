@@ -16,7 +16,7 @@ jobs:
       - run: python3 -m pip install -r requirements.txt
       - run: python3 -m unittest discover -s tests -p 'test_*.py'
       - run: npm ci
-      - run: npm run build:world
+      - run: npm run build
       - run: node --test tests/*.test.js
       - run: node --check static/app.js
       - run: node --check static/combat/calculation-engine.js
