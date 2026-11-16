@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "name": "Training Mage",
+  "budget": 41,
+  "rowCost": 5,
+  "build": {"fire-talent": 1},
+  "branches": [{
+    "id": "branch",
+    "name": "Training",
+    "rows": 5,
+    "talents": [
+      {"id": "fire-talent", "row": 0, "col": 0, "name": "Learn Flame", "maxRank": 1, "descriptions": ["Learn Flame."], "icon": "spell_fire_flamebolt", "grantedAbilityId": "flame"},
+      {"id": "locked-talent", "row": 0, "col": 1, "name": "Learn Locked", "maxRank": 1, "descriptions": ["Learn Locked."], "icon": "inv_misc_questionmark", "grantedAbilityId": "locked"}
+    ]
+  }],
+  "character": {
+    "hp": 1000, "race": "Human", "gender": "Male", "armory": "",
+    "resources": [
+      {"id": "mana", "name": "Mana", "max": 100, "current": 80, "unit": "points", "display": "bar", "shape": "diamond", "color": "#397de1"},
+      {"id": "charges", "name": "Runes", "max": 5, "current": 2, "unit": "count", "display": "icons", "shape": "diamond", "color": "#8455cc"},
+      {"id": "energy", "name": "Energy", "max": 100, "current": 100, "unit": "points", "display": "bar", "shape": "diamond", "color": "#caa044"},
+      {"id": "rage", "name": "Rage", "max": 100, "current": 0, "unit": "points", "display": "bar", "shape": "diamond", "color": "#e24444"}
+    ]
+  },
+  "abilities": [
+    {
+      "id": "flame", "name": "Flame", "description": "", "kind": "active", "icon": "spell_fire_flamebolt",
+      "learningMode": "talent", "talentId": "fire-talent", "cast": 0, "cooldown": 4, "range": 30,
+      "resourceCosts": [
+        {"resourceId": "mana", "amount": 20, "unit": "percent"},
+        {"resourceId": "health", "amount": 100, "unit": "points"},
+        {"resourceId": "charges", "amount": 1, "unit": "count"}
+      ],
+      "combatEffects": [
+        {"id": "fire", "type": "damage", "trigger": "onHit", "school": "fire", "baseAmount": 100, "scalingStat": "none", "coefficient": 0, "canCrit": true},
+        {"id": "physical", "type": "damage", "trigger": "onCast", "school": "physical", "baseAmount": 20, "scalingStat": "none", "coefficient": 0, "canCrit": false}
+      ]
+    },
+    {
+      "id": "heal", "name": "Renewal", "description": "", "kind": "active", "learningMode": "base",
+      "icon": "spell_holy_flashheal", "cast": 2, "cooldown": 3, "range": 0, "resourceType": "Mana", "resource": 5,
+      "combatEffects": [
+        {"id": "heal", "type": "healing", "trigger": "onCast", "baseAmount": 80, "scalingStat": "none", "coefficient": 0, "canCrit": true}
+      ]
+    },
+    {"id": "locked", "name": "Locked spell", "description": "", "learningMode": "talent", "talentId": "locked-talent"},
+    {"id": "passive", "name": "Passive aura", "description": "", "kind": "passive", "learningMode": "base"}
+  ]
+}

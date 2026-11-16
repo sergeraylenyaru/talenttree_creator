@@ -19,6 +19,12 @@ jobs:
       - run: node --check static/app.js
       - run: node --check static/combat/calculation-engine.js
       - run: node --check static/combat/effect-validation.js
+      - run: |
+          node --check static/combat/build-compiler.js
+          node --check static/combat/combat-state.js
+          node --check static/combat/combat-runtime.js
+          node --check static/training-grounds/training-grounds.js
+          node --check static/training-grounds/training-grounds-ui.js
       - run: python3 -m pip install playwright
       - run: python3 -m playwright install --with-deps chromium
       - name: Locate Chromium for existing browser tests
@@ -31,3 +37,18 @@ jobs:
           python3 tests/browser_ability_scopes.py
           python3 tests/browser_calculator_layout.py
           python3 tests/browser_tree_archive_copy.py
+          python3 tests/browser_training_grounds.py
+      - name: Additional browser scenarios
+        if: ${{ !cancelled() }}
+        run: |
+          status=0
+          for scenario in tests/browser_*.py; do
+            case "$scenario" in
+              tests/browser_helpers.py|tests/browser_calculation.py|tests/browser_talent_regression.py|tests/browser_combat_effects.py|tests/browser_ability_scopes.py|tests/browser_calculator_layout.py|tests/browser_tree_archive_copy.py|tests/browser_training_grounds.py)
+                continue ;;
+            esac
+            echo "::group::$scenario"
+            python3 "$scenario" || status=1
+            echo "::endgroup::"
+          done
+          exit "$status"

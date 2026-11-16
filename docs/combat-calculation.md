@@ -2,9 +2,9 @@
 
 ## Назначение / Purpose
 
-`static/combat/calculation-engine.js` — независимая библиотека чистых функций ES modules для браузера и Node.js 22+. Она не обращается к DOM, сети, времени или генератору случайных чисел и не изменяет входные объекты. Редактор сохраняет данные как прежде; библиотека пока не подключена к пользовательскому интерфейсу.
+`static/combat/calculation-engine.js` — независимая библиотека чистых функций ES modules для браузера и Node.js 22+. Она не обращается к DOM, сети, времени или генератору случайных чисел и не изменяет входные объекты. Редактор сохраняет данные как прежде; на [тренировочной площадке](training-grounds.md) эффекты исполняет отдельный боевой модуль.
 
-An independent ES module for browsers and Node.js 22+. Functions have no DOM, UI, runtime package, network, clock or RNG dependencies and do not mutate inputs. This library does not change the editor or automatically execute stored effects.
+An independent ES module for browsers and Node.js 22+. Functions have no DOM, UI, runtime package, network, clock or RNG dependencies and do not mutate inputs. The [Training Grounds](training-grounds.md) runtime uses this library to resolve stored effects.
 
 ## API
 
