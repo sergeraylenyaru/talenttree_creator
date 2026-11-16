@@ -10,12 +10,19 @@ export function orbitInput(orbit, delta, config) {
   };
 }
 
+// The orbit yaw points back from the subject to the camera.
+export function horizontalCameraForward(yaw) {
+  return {x: -Math.sin(yaw), z: -Math.cos(yaw)};
+}
+
 export function placeCamera(camera, target, orbit, previous, dt, obstacles) {
   const distance = previous + (orbit.distance - previous) * (1 - Math.exp(-12 * dt));
+  const forward = horizontalCameraForward(orbit.yaw);
+  const horizontalDistance = Math.cos(orbit.pitch) * distance;
   const offset = {
-    x: Math.sin(orbit.yaw) * Math.cos(orbit.pitch) * distance,
+    x: -forward.x * horizontalDistance,
     y: Math.sin(orbit.pitch) * distance,
-    z: Math.cos(orbit.yaw) * Math.cos(orbit.pitch) * distance
+    z: -forward.z * horizontalDistance
   };
   const fraction = Math.min(cameraFraction(target, offset, obstacles),
     offset.y < 0 ? (target.y - 0.24) / -offset.y : 1);

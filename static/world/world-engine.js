@@ -1,6 +1,6 @@
 import {createSpatialCombat, facingTarget, spatialDefaults} from './combat/spatial-combat.js';
 import {createCombatVisuals} from './combat/combat-visuals.js';
-import {Group, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer} from 'three';
+import {Box3, Group, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer} from 'three';
 import {animateCharacter} from './animation-controller.js';
 import {bindMovement, createCharacter, stepCharacter} from './character-controller.js';
 import {disposeObjects, loadLocalCharacter} from './model-loader.js';
@@ -20,8 +20,10 @@ export function createWorld(canvas, callbacks, config = world) {
   const camera = new PerspectiveCamera(55, 1, 0.06, 90);
   const avatar = new Group();
   scene.add(avatar);
+  const visualPivot = new Group();
+  avatar.add(visualPivot);
   let model = createPlaceholder();
-  avatar.add(model.root);
+  visualPivot.add(model.root);
   let animation = animateCharacter(model);
   let player = createCharacter(config);
   let orbit = {yaw: 0, pitch: 0.29, distance: config.camera.distance};
@@ -122,6 +124,11 @@ export function createWorld(canvas, callbacks, config = world) {
       if (signal.aborted || document.hidden) return;
       const dt = lastTime === null ? 0 : Math.min(0.1, Math.max(0, (now - lastTime) / 1000));
       lastTime = now;
+      const blend = 1 - Math.exp(-21 * dt);
+      const yawDelta = Math.atan2(Math.sin(orbit.yaw - view.yaw), Math.cos(orbit.yaw - view.yaw));
+      view.yaw += yawDelta * blend;
+      view.pitch += (orbit.pitch - view.pitch) * blend;
+      view.distance = orbit.distance;
       elapsed += dt;
       const input = readInput();
       queuedJump ||= input.jump;
@@ -138,13 +145,8 @@ export function createWorld(canvas, callbacks, config = world) {
       animation.update(clip ? pose.name : player.animation, dt);
       // Root tilt is a rig-independent fallback for models without attack clips.
       const progress = pose ? Math.max(0, Math.min(1, (pose.until - combatTime) / 0.48)) : 0;
-      avatar.rotation.x = pose && !clip ? -Math.sin(progress * Math.PI) * 0.25 : 0;
+      visualPivot.rotation.x = pose && !clip ? -Math.sin(progress * Math.PI) * 0.25 : 0;
       visuals.update(dt);
-      const blend = 1 - Math.exp(-21 * dt);
-      const yawDelta = Math.atan2(Math.sin(orbit.yaw - view.yaw), Math.cos(orbit.yaw - view.yaw));
-      view.yaw += yawDelta * blend;
-      view.pitch += (orbit.pitch - view.pitch) * blend;
-      view.distance = orbit.distance;
       target.x += (player.x - target.x) * blend;
       target.y += (player.y + 1.38 - target.y) * blend;
       target.z += (player.z - target.z) * blend;
@@ -163,7 +165,11 @@ export function createWorld(canvas, callbacks, config = world) {
       projectDummy();
     },
     snapshot() {
+      avatar.updateMatrixWorld(true);
+      const visualMinY = new Box3().setFromObject(visualPivot, true).min.y;
+      const direction = camera.getWorldDirection(new Vector3());
       return {attacks: combat.snapshot(), player: {...player}, orbit: {...orbit}, selected, model: modelKind,
+        visualMinY, activeClip: animation.activeClip, cameraForward: {x: direction.x, z: direction.z},
         geometries: renderer.info.memory.geometries, draws: renderer.info.render.calls};
     },
     dispose() {
@@ -188,11 +194,11 @@ export function createWorld(canvas, callbacks, config = world) {
       return;
     }
     animation.dispose();
-    avatar.remove(model.root);
+    visualPivot.remove(model.visual ?? model.root);
     disposeObjects(model.root);
     model = imported;
     animation = animateCharacter(model);
-    avatar.add(model.root);
+    visualPivot.add(model.visual);
     modelKind = 'imported';
     callbacks.model(modelKind);
   }).catch(error => {

@@ -12,16 +12,26 @@ import server
 from server_lifecycle import start_server, temporary_database
 
 seed = json.loads((Path(__file__).parent / 'fixtures' / 'training-grounds.json').read_text(encoding='utf-8'))
-positions = base64.b64encode(struct.pack('<9f', -0.5, 0, 0, 0.5, 0, 0, 0, 1.5, 0)).decode()
+# The mesh origin is above its feet. Animate a child node without changing its base height.
+positions = base64.b64encode(struct.pack('<17f', -0.5, -1.5, 0, 0.5, -1.5, 0, 0, 0.3, 0,
+                                        0, 1, 1, 1, 1, 1.2, 1, 1)).decode()
 fixture = {
     'asset': {'version': '2.0'},
-    'buffers': [{'uri': 'data:application/octet-stream;base64,' + positions, 'byteLength': 36}],
-    'bufferViews': [{'buffer': 0, 'byteLength': 36, 'target': 34962}],
+    'buffers': [{'uri': 'data:application/octet-stream;base64,' + positions, 'byteLength': 68}],
+    'bufferViews': [{'buffer': 0, 'byteLength': 36, 'target': 34962},
+                    {'buffer': 0, 'byteOffset': 36, 'byteLength': 8},
+                    {'buffer': 0, 'byteOffset': 44, 'byteLength': 24}],
     'accessors': [{'bufferView': 0, 'componentType': 5126, 'count': 3, 'type': 'VEC3',
-                   'min': [-0.5, 0, 0], 'max': [0.5, 1.5, 0]}],
+                   'min': [-0.5, -1.5, 0], 'max': [0.5, 0.3, 0]},
+                  {'bufferView': 1, 'componentType': 5126, 'count': 2, 'type': 'SCALAR', 'min': [0], 'max': [1]},
+                  {'bufferView': 2, 'componentType': 5126, 'count': 2, 'type': 'VEC3'}],
     'materials': [{'doubleSided': True}],
     'meshes': [{'primitives': [{'attributes': {'POSITION': 0}, 'material': 0}]}],
-    'nodes': [{'mesh': 0}], 'scenes': [{'nodes': [0]}], 'scene': 0,
+    'nodes': [{'children': [1], 'translation': [0, -0.3, 0]}, {'mesh': 0}],
+    'scenes': [{'nodes': [0]}], 'scene': 0,
+    'animations': [{'name': name, 'samplers': [{'input': 1, 'output': 2}],
+                    'channels': [{'sampler': 0, 'target': {'node': 1, 'path': 'scale'}}]}
+                   for name in ('Idle', 'Walk', 'Run', 'Jump', 'Fall')],
 }
 snapshot_script = """async (canvas) => {
     const {worldSnapshot} = await import('/world/generated/world.js');
@@ -117,7 +127,7 @@ with temporary_database() as folder, sync_playwright() as playwright:
         assert first_canvas.evaluate(snapshot_script) is None
 
         page.route('**/local-world-assets/manifest.json', lambda route: route.fulfill(json={
-            'model': 'character/fixture.gltf', 'scale': 1.2, 'rotation': 45, 'heightOffset': 0.1
+            'model': 'character/fixture.gltf', 'scale': 1.2, 'rotation': 90, 'heightOffset': 0
         }))
         page.route('**/local-world-assets/character/fixture.gltf', lambda route: route.fulfill(json=fixture))
         page.locator('#openTrainingGrounds').click()
@@ -125,6 +135,54 @@ with temporary_database() as folder, sync_playwright() as playwright:
         assert snapshot()['model'] == 'imported'
         assert snapshot()['player']['z'] == initial['z']
         assert arena.locator('canvas').count() == 1
+        arena.locator('.tg-quality select').select_option('low')
+        canvas.evaluate('(canvas) => canvas.focus({preventScroll: true})')
+        page.clock.run_for(80)
+        assert abs(snapshot()['visualMinY']) < 1e-5
+        assert snapshot()['player']['y'] == 0
+        assert snapshot()['activeClip'] == 'Idle'
+
+        def move(key, basis, sign, clip):
+            start = snapshot()['player']
+            page.keyboard.down(key)
+            page.clock.run_for(300)
+            current = snapshot()
+            page.keyboard.up(key)
+            dx = current['player']['x'] - start['x']
+            dz = current['player']['z'] - start['z']
+            fx, fz = current['cameraForward']['x'], current['cameraForward']['z']
+            forward, right = dx * fx + dz * fz, -dx * fz + dz * fx
+            measured = forward if basis == 'forward' else right
+            sideways = right if basis == 'forward' else forward
+            assert sign * measured > 0.25 and abs(sideways) < 0.08, current
+            assert current['activeClip'] == clip
+            page.clock.run_for(140)
+
+        move('w', 'forward', 1, 'Walk')
+        move('s', 'forward', -1, 'Walk')
+        move('a', 'right', -1, 'Walk')
+        move('d', 'right', 1, 'Walk')
+        bounds = canvas.bounding_box()
+        x, y = bounds['x'] + bounds['width'] * 0.7, bounds['y'] + bounds['height'] * 0.5
+        page.mouse.move(x, y)
+        page.mouse.down()
+        page.mouse.move(x - 270, y, steps=6)
+        page.mouse.up()
+        page.clock.run_for(260)
+        assert abs(snapshot()['cameraForward']['x']) > 0.8
+        page.keyboard.down('Shift')
+        move('w', 'forward', 1, 'Run')
+        page.keyboard.up('Shift')
+        page.keyboard.press('Space')
+        page.clock.run_for(160)
+        assert snapshot()['activeClip'] == 'Jump'
+        assert snapshot()['visualMinY'] > 0.5
+        page.clock.run_for(330)
+        assert snapshot()['activeClip'] == 'Fall'
+        page.clock.run_for(450)
+        assert snapshot()['activeClip'] == 'Idle'
+        assert snapshot()['player']['grounded']
+        assert abs(snapshot()['visualMinY']) < 1e-5
         canvas.evaluate('canvas => canvas.dispatchEvent(new Event("webglcontextlost", {cancelable: true}))')
         expect(canvas).not_to_be_visible()
         expect(arena.locator('.tg-world-status')).to_contain_text('3D is unavailable')
@@ -133,4 +191,4 @@ with temporary_database() as folder, sync_playwright() as playwright:
     finally:
         browser.close()
 
-print('3D Training Grounds: rendered WebGL2, input, targeting, combat HUD, glTF import, re-entry and fallback passed')
+print('3D Training Grounds: rendered WebGL2, input, targeting, combat HUD, grounded glTF import, camera-relative WASD, animation clips, re-entry and fallback passed')

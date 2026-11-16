@@ -18,6 +18,7 @@ export function animateCharacter({root, clips, mapping}) {
   let current;
   let currentClip;
   return {
+    get activeClip() { return currentClip?.name ?? null; },
     supports(state) { return Boolean(resolveClip(clips, mapping, state)); },
     update(state, dt) {
       const clip = resolveClip(clips, mapping, state);
