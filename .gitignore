@@ -5,3 +5,6 @@ __pycache__/
 .env
 .venv/
 node_modules/
+
+/local-assets/wow/
+/static/world/generated/

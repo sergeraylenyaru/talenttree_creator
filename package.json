@@ -2,5 +2,15 @@
   "name": "talent-forge",
   "private": true,
   "type": "module",
-  "scripts": {"test": "node --test tests/*.test.js", "start": "python3 server.py"}
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "start": "python3 server.py",
+    "build:world": "esbuild static/world/world-engine.js --bundle --format=esm --minify --legal-comments=eof --outfile=static/world/generated/world.js"
+  },
+  "dependencies": {
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.11"
+  }
 }

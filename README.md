@@ -15,6 +15,16 @@ python3 server.py
 
 Открыть **http://localhost:8000**. На Windows можно использовать `py server.py`.
 
+Для 3D-площадки один раз собери браузерный модуль из корня проекта (Node.js 22+):
+
+```sh
+npm ci
+npm run build:world
+python server.py
+```
+
+[Управление 3D-площадкой](docs/training-world.md) · [Подключение локального экспорта WoW](static/world/assets/README.md)
+
 SQLite автоматически создаётся в `data/talents.sqlite3`. Для резервной копии остановить сервер и скопировать этот файл. База, аккаунты и локальные файлы не входят в Git.
 
 ## Возможности
