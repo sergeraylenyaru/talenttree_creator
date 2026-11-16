@@ -18,6 +18,7 @@ export function openTrainingGrounds(dialog, document) {
   let build = compileCombatBuild(document, settings);
   let runtime = createCombatRuntime(build, settings);
   let frame = null;
+  let world;
   let realStart = performance.now();
   let combatStart = 0;
 
@@ -30,17 +31,19 @@ export function openTrainingGrounds(dialog, document) {
     if (runtime.paused) return;
     const target = combatStart + (performance.now() - realStart) / 1000;
     runtime.advance(Math.max(0, target - runtime.state.combatTime));
+    world?.combatState(runtime.state);
   }
 
   const view = renderTrainingGrounds(dialog, build, settings, {
     cast(id) {
       syncClock();
-      const result = runtime.cast(id);
+      const result = runtime.cast(id, world?.delivery);
       view.update(runtime);
       return result;
     },
     cancel() {
       syncClock();
+      if (runtime.state.activeCast?.delivery) world?.clearPose();
       runtime.cancel();
       view.update(runtime);
     },
@@ -52,6 +55,7 @@ export function openTrainingGrounds(dialog, document) {
     },
     reset() {
       runtime.reset();
+      world?.clearCombat(runtime.state);
       rebaseClock();
       view.reset(runtime);
     },
@@ -62,7 +66,9 @@ export function openTrainingGrounds(dialog, document) {
     settings(input) {
       settings = normalizeCombatSettings(input);
       build = compileCombatBuild(document, settings);
+      runtime.cancelSpatial();
       runtime = createCombatRuntime(build, settings);
+      world?.clearCombat(runtime.state);
       try {
         localStorage.setItem(storageKey, JSON.stringify(settings));
       } catch {
@@ -70,10 +76,9 @@ export function openTrainingGrounds(dialog, document) {
       }
       rebaseClock();
       view.reset(runtime);
-    }
+    },
+    damage() { world?.hit(); }
   });
-
-  let world;
 
   function tick(now) {
     if (!dialog.open) return;
@@ -90,7 +95,16 @@ export function openTrainingGrounds(dialog, document) {
     dialog.onkeydown = null;
   }, {once: true});
   dialog.showModal();
-  world = mountTrainingWorld(dialog);
+  world = mountTrainingWorld(dialog, {
+    enter() { runtime.cancel(); },
+    leave() { runtime.cancelSpatial(); },
+    resetTarget() {
+      runtime.resetTarget();
+      world.clearCombat(runtime.state);
+      view.update(runtime);
+    },
+    state: () => runtime.state
+  });
   rebaseClock();
   view.update(runtime);
   frame = requestAnimationFrame(tick);

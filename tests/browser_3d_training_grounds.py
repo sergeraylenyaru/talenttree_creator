@@ -87,7 +87,9 @@ with temporary_database() as folder, sync_playwright() as playwright:
         assert airborne['y'] > 0.5 and not airborne['grounded']
         page.clock.run_for(800)
         assert snapshot()['player']['grounded']
+        marker.click()
         page.keyboard.press('1')
+        page.clock.run_for(1100)
         expect(arena.locator('[data-event="damage"]').first).to_be_visible()
         expect(arena.locator('#tg-label-dummy')).to_be_visible()
 

@@ -40,6 +40,12 @@ with temporary_database() as tmp, sync_playwright() as playwright:
         page.locator('#openTrainingGrounds').click()
         arena = page.locator('#trainingGrounds')
         expect(arena).to_be_visible()
+        # This scenario exercises the original non-spatial combat mode.
+        toggle = arena.locator('.tg-world-toggle')
+        expect(toggle).to_be_enabled()
+        if toggle.get_attribute('aria-pressed') == 'true':
+            toggle.click()
+
         expect(arena.locator('#tg-title')).to_have_text('Training Grounds')
         expect(arena.locator('.tg-build strong')).to_have_text('Training Mage')
         expect(arena.locator('.tg-ability strong')).to_have_text(['Flame', 'Renewal'])

@@ -82,8 +82,9 @@ export function createArena(config) {
   selection.castShadow = false;
   selection.visible = false;
   scene.add(dummy);
+  const sightObstacles = obstacles.slice();
   obstacles.push(box(config.dummy.x, config.dummy.z, 1.45, 1.4, 2.15));
-  return {scene, dummy, selection, obstacles};
+  return {scene, dummy, selection, obstacles, sightObstacles};
 }
 
 export function createPlaceholder() {

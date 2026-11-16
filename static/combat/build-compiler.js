@@ -66,6 +66,7 @@ export function compileCombatBuild(document, options = {}) {
       ...ability,
       cast: duration(ability.cast),
       cooldown: duration(ability.cooldown),
+      range: duration(ability.range),
       combatEffects: ability.combatEffects ?? [],
       resourceCosts: abilityResourceCosts(ability, character).map(cost => ({
         ...cost,
