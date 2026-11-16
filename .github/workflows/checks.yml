@@ -44,7 +44,9 @@ jobs:
           python3 tests/browser_calculator_layout.py
           python3 tests/browser_tree_archive_copy.py
           python3 tests/browser_training_grounds.py
-          python3 tests/browser_3d_training_grounds.py
+      - name: 3D Training Grounds (WebGL2)
+        if: ${{ !cancelled() }}
+        run: python3 tests/browser_3d_training_grounds.py
       - name: Additional browser scenarios
         if: ${{ !cancelled() }}
         run: |

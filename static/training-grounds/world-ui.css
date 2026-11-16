@@ -5,10 +5,10 @@
 .tg-quality select { min-height:32px; width:auto; padding:2px 7px; }
 .tg-world-status { font-size:12px; }
 .tg-world-frame {
-  position:relative; aspect-ratio:16/10; min-height:250px; max-height:62dvh;
+  position:relative; width:100%; min-width:0; aspect-ratio:16/10; min-height:250px; max-height:62dvh;
   border:1px solid #94734a; border-radius:7px; overflow:hidden; background:#121713;
 }
-.tg-world-frame canvas { display:block; width:100%; height:100%; outline:none; touch-action:none; cursor:grab; }
+.tg-world-frame canvas { position:absolute; inset:0; display:block; width:100%; height:100%; outline:none; touch-action:none; cursor:grab; }
 .tg-world-frame canvas:focus-visible { outline:2px solid var(--gold); outline-offset:-3px; }
 .tg-world-frame canvas:active { cursor:grabbing; }
 .tg-world-frame .tg-world-target {
@@ -25,6 +25,10 @@
 .tg-world-frame #tg-floats { inset:var(--tg-target-y, 40%) auto auto var(--tg-target-x, 50%); }
 #trainingGrounds .tg-world-keys, #trainingGrounds .tg-world-touch { font-size:11px; margin-top:7px; }
 #trainingGrounds .tg-world-touch { display:none; }
+@media (max-width:740px) {
+  #trainingGrounds:has(.tg-show-world) { width:calc(100vw - 12px); }
+  .tg-world-frame { min-height:185px; }
+}
 @media (pointer:coarse) {
   #trainingGrounds .tg-world-keys { display:none; }
   #trainingGrounds .tg-world-touch { display:block; }
