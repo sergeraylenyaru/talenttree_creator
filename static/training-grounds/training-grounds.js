@@ -77,7 +77,7 @@ export function openTrainingGrounds(dialog, document) {
       rebaseClock();
       view.reset(runtime);
     },
-    damage() { world?.hit(); }
+    damage(critical) { world?.hit(critical); }
   });
 
   function tick(now) {

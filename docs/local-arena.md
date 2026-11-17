@@ -1,0 +1,85 @@
+# Локальная арена / Local Training Arena
+
+## Файлы и запуск
+
+Помести свои экспорты в игнорируемый каталог `local-assets/wow/`. Сохрани регистр имён.
+
+| Назначение / Role | Файл / Path |
+| --- | --- |
+| Герой / Hero | `character/hero.glb` |
+| Помещение / Environment | `world/guildhouseb.glb` |
+| Манекен / Target | `targets/Training-dummy.glb` |
+| Меч / Weapon | `weapons/sword-one-hand.glb` |
+| Настройки / Manifest | `manifest.json` |
+
+В PowerShell из корня репозитория:
+
+```powershell
+npm.cmd ci
+npm.cmd run build:world
+$env:TALENT_LOCAL_WOW_ASSETS = "1"
+$env:HOST = "127.0.0.1"
+python server.py
+```
+
+Открой [http://127.0.0.1:8000](http://127.0.0.1:8000) и тренировочную площадку. Раздел **Диагностика ассетов** показывает состояния загрузки и ошибки по ролям. JSON-отчёт содержит доступные клипы, границы, количество мешей, текстур, материалов, и суставов. Локальные экспорты раздаются только по прямому loopback-запросу при явно включённом режиме.
+
+## Настройка манифеста
+
+Сохрани настройки своего героя. Добавь объекты `environment`, `target` и `weapons.mainHand` по необходимости. Значения ниже демонстрируют формат. Координаты помещения нужно измерить для твоего экспорта.
+
+```json
+{
+  "model": "character/hero.glb",
+  "scale": 1,
+  "rotation": 180,
+  "heightOffset": 0,
+  "debug": true,
+  "animations": {
+    "idle": "Stand (ID 0 variation 0)",
+    "walk": "Walk (ID 4 variation 0)",
+    "run": "Run (ID 5 variation 0)",
+    "walkBack": "Walkbackwards (ID 13 variation 0)",
+    "runBack": "RunBackwards (ID 1146 variation 0)",
+    "strafeLeft": "ShuffleLeft (ID 11 variation 0)",
+    "strafeRight": "ShuffleRight (ID 12 variation 0)",
+    "jump": "Jump (ID 38 variation 0)",
+    "fall": "Fall (ID 40 variation 0)",
+    "meleeAttack": "Attack1H (ID 17 variation 0)",
+    "spellCast": "SpellCastDirected (ID 53 variation 0)"
+  },
+  "playerSpawn": {"x": 0, "z": 3},
+  "environment": {
+    "model": "world/guildhouseb.glb",
+    "scale": 1, "rotation": 0, "position": {"x": 0, "y": 0, "z": 0},
+    "ground": {"minX": -4, "maxX": 4, "minZ": -4, "maxZ": 4, "y": 0},
+    "walls": []
+  },
+  "target": {
+    "model": "targets/Training-dummy.glb",
+    "scale": 1, "rotation": 0, "position": {"x": 0, "z": -2}
+  },
+  "weapons": {
+    "mainHand": {
+      "model": "weapons/sword-one-hand.glb",
+      "attachmentBone": "bone_WeaponR", "enabled": true,
+      "position": [0, 0, 0], "rotation": [0, 0, 0], "scale": 1
+    }
+  }
+}
+```
+
+1. Открой гильдхаус в Blender или glTF-просмотрщике. Найди внутреннюю ровную площадку. Перенеси её границы и высоту пола в координаты сцены **после** применения масштаба, поворота и позиции из `environment`. При необходимости задай боксы стен в `walls`. Каждый бокс принимает `minX`, `maxX`, `minZ`, `maxZ`, `minY` и `maxY`. Встроенная сцена используется при ошибке загрузки или непригодном прямоугольнике.
+2. Выставь точки героя и манекена внутри пола. Координата Y обеих точек берётся из `ground.y`. Попадание в стену, в манекен или за пределы прямоугольника приводит к поиску свободной точки. Проверь отметки в режиме `debug`, границы помещения и стрелку вперёд.
+3. В **Калибровке оружия** проверь выбранный узел, сдвиг XYZ, поворот XYZ в градусах и масштаб. Кнопка **Скачать манифест** сохраняет текущие значения в JSON. Скопируй файл в `local-assets/wow/manifest.json`, чтобы они сохранились при следующем запуске. Если меч уже запечён в герое, установи `enabled: false`.
+4. Пройди к манекену, проверь прыжок и посадку, ближнее и дальнее попадание, крит, восстановление цели и повторный вход. Для манекена можно переопределить точные имена `target.animations.idle`, `hit`, `criticalHit`. Без переопределения используются имена Stand, CombatWound и CombatCritical с идентификаторами wow.export.
+
+## English
+
+Keep your character-only manifest as-is and add the optional sections above. Run the PowerShell commands and open Training Grounds from localhost. Asset Diagnostics shows per-role loading or fallback status and downloads a local JSON report with clip names, mesh and material counts, rig details and bounds.
+
+Measure an interior floor rectangle in the exported environment after its configured transform. Enter its world-space floor elevation in `environment.ground.y`, and add wall boxes for movement, camera collision and combat line of sight. Configure separate player and target X/Z spawns. Debug mode displays bounds, floor, walls, spawn markers, axes and the controller forward arrow. A single flat rectangular floor is supported. Stairs and mesh-wide automatic collision extraction are outside this setup.
+
+The existing hero rig and mixer remain in use. Optional directional clip mappings enable backward movement and strafing poses. Set `meleeAttack` or `spellCast` to a different exported clip to use that clip. The target plays idle and impact reactions from its own rig. Weapon attachment defaults to `bone_WeaponR` and falls back to `bone_HandR`. Debug calibration exports an updated manifest that you can install locally. Set the weapon's `enabled` flag to false if the hero already includes the mesh.
+
+The repository contains synthetic test models generated in tests. Check the actual exported environment, collision proxy and attachment transform on the machine that holds the game exports.

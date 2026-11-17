@@ -1,3 +1,4 @@
+import {assetPanel} from './asset-panel.js';
 import {addTranslations, t} from '../i18n.js';
 
 addTranslations([
@@ -53,12 +54,14 @@ export function mountTrainingWorld(dialog, actions) {
   let controller;
   let canvas;
   let generation = 0;
+  const assets = assetPanel(stage, () => controller);
 
   try { quality.value = localStorage.getItem(qualityKey) === 'high' ? 'high' : 'low'; }
   catch { quality.value = 'low'; }
 
   function switchToCombat() {
     generation++;
+    assets.clear();
     if (controller) actions.leave();
     controller?.dispose();
     controller = undefined;
@@ -98,6 +101,7 @@ export function mountTrainingWorld(dialog, actions) {
     model.textContent = 'Учебный персонаж';
     try {
       controller = module.createWorld(canvas, {
+        asset(role, state, detail) { assets.update(role, state, detail); },
         targetAlive: () => actions.state().dummy.health > 0,
         marker({x, y, visible}) {
           marker.hidden = !visible;
@@ -172,7 +176,7 @@ export function mountTrainingWorld(dialog, actions) {
       controller?.clearCombat();
       updateCombat(state);
     },
-    hit() { controller?.combatHit(); },
+    hit(critical) { controller?.combatHit(critical); },
     update(now) {
       if (!controller) return;
       try { controller.update(now); }

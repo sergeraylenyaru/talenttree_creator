@@ -15,7 +15,7 @@ export function horizontalCameraForward(yaw) {
   return {x: -Math.sin(yaw), z: -Math.cos(yaw)};
 }
 
-export function placeCamera(camera, target, orbit, previous, dt, obstacles) {
+export function placeCamera(camera, target, orbit, previous, dt, obstacles, floor = 0) {
   const distance = previous + (orbit.distance - previous) * (1 - Math.exp(-12 * dt));
   const forward = horizontalCameraForward(orbit.yaw);
   const horizontalDistance = Math.cos(orbit.pitch) * distance;
@@ -25,7 +25,7 @@ export function placeCamera(camera, target, orbit, previous, dt, obstacles) {
     z: -forward.z * horizontalDistance
   };
   const fraction = Math.min(cameraFraction(target, offset, obstacles),
-    offset.y < 0 ? (target.y - 0.24) / -offset.y : 1);
+    offset.y < 0 ? (target.y - floor - 0.24) / -offset.y : 1);
   const usable = Math.max(0.015, fraction);
   camera.position.set(target.x + offset.x * usable, target.y + offset.y * usable, target.z + offset.z * usable);
   camera.lookAt(target.x, target.y, target.z);

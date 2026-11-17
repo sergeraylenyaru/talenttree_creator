@@ -28,7 +28,7 @@ jobs:
           node --check static/training-grounds/training-grounds.js
           node --check static/training-grounds/training-grounds-ui.js
       - run: |
-          for module in static/world/*.js static/world/combat/*.js static/training-grounds/world-integration.js; do
+          for module in static/world/*.js static/world/combat/*.js static/training-grounds/world-integration.js static/training-grounds/asset-panel.js; do
             node --check "$module"
           done
       - run: python3 -m pip install playwright
@@ -50,13 +50,16 @@ jobs:
       - name: Spatial combat (WebGL2)
         if: ${{ !cancelled() }}
         run: python3 tests/browser_spatial_combat.py
+      - name: Local arena assets (WebGL2)
+        if: ${{ !cancelled() }}
+        run: python3 tests/browser_local_arena.py
       - name: Additional browser scenarios
         if: ${{ !cancelled() }}
         run: |
           status=0
           for scenario in tests/browser_*.py; do
             case "$scenario" in
-              tests/browser_helpers.py|tests/browser_calculation.py|tests/browser_talent_regression.py|tests/browser_combat_effects.py|tests/browser_ability_scopes.py|tests/browser_calculator_layout.py|tests/browser_tree_archive_copy.py|tests/browser_training_grounds.py|tests/browser_3d_training_grounds.py|tests/browser_spatial_combat.py)
+              tests/browser_helpers.py|tests/browser_calculation.py|tests/browser_talent_regression.py|tests/browser_combat_effects.py|tests/browser_ability_scopes.py|tests/browser_calculator_layout.py|tests/browser_tree_archive_copy.py|tests/browser_training_grounds.py|tests/browser_3d_training_grounds.py|tests/browser_spatial_combat.py|tests/browser_local_arena.py)
                 continue ;;
             esac
             echo "::group::$scenario"

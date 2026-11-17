@@ -68,14 +68,19 @@ export function createArena(config) {
     ridge.scale.setScalar(1 + (i % 4) * 0.28);
   }
 
+  const fallback = new Group();
+  for (const child of [...scene.children]) if (!child.isLight) fallback.add(child);
+  scene.add(fallback);
   const dummy = new Group();
   dummy.position.set(config.dummy.x, 0, config.dummy.z);
-  mesh(dummy, new CylinderGeometry(0.65, 0.78, 0.2, 12), iron, 0, 0.1, 0);
-  mesh(dummy, new CylinderGeometry(0.12, 0.18, 1.55, 8), wood, 0, 0.78, 0);
-  mesh(dummy, new BoxGeometry(1.4, 0.15, 0.23), wood, 0, 1.22, 0);
-  mesh(dummy, new CylinderGeometry(0.38, 0.29, 0.68, 10), straw, 0, 1.3, 0);
-  mesh(dummy, new SphereGeometry(0.24, 12, 8), straw, 0, 1.88, 0);
-  const target = mesh(dummy, new CylinderGeometry(0.28, 0.28, 0.075, 20), banner, 0, 1.33, 0.36);
+  const dummyVisual = new Group();
+  dummy.add(dummyVisual);
+  mesh(dummyVisual, new CylinderGeometry(0.65, 0.78, 0.2, 12), iron, 0, 0.1, 0);
+  mesh(dummyVisual, new CylinderGeometry(0.12, 0.18, 1.55, 8), wood, 0, 0.78, 0);
+  mesh(dummyVisual, new BoxGeometry(1.4, 0.15, 0.23), wood, 0, 1.22, 0);
+  mesh(dummyVisual, new CylinderGeometry(0.38, 0.29, 0.68, 10), straw, 0, 1.3, 0);
+  mesh(dummyVisual, new SphereGeometry(0.24, 12, 8), straw, 0, 1.88, 0);
+  const target = mesh(dummyVisual, new CylinderGeometry(0.28, 0.28, 0.075, 20), banner, 0, 1.33, 0.36);
   target.rotation.x = Math.PI / 2;
   const selection = mesh(dummy, new RingGeometry(0.83, 0.94, 36), material(0xffd175, {emissive: 0x9c5814}), 0, 0.024, 0);
   selection.rotation.x = -Math.PI / 2;
@@ -84,7 +89,7 @@ export function createArena(config) {
   scene.add(dummy);
   const sightObstacles = obstacles.slice();
   obstacles.push(box(config.dummy.x, config.dummy.z, 1.45, 1.4, 2.15));
-  return {scene, dummy, selection, obstacles, sightObstacles};
+  return {scene, dummy, dummyVisual, fallback, selection, obstacles, sightObstacles};
 }
 
 export function createPlaceholder() {

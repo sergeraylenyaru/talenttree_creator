@@ -372,7 +372,7 @@ class Handler(SimpleHTTPRequestHandler):
         name = unquote(resource_path)
         parts = name.split('/')
         if (any(not segment or segment in ('.', '..') or re.search(r'[\\:\x00-\x1f]', segment) for segment in parts)
-                or name != 'manifest.json' and (parts[0] != 'character' or len(parts) < 2)):
+                or name != 'manifest.json' and (parts[0] not in ('character', 'targets', 'weapons', 'world') or len(parts) < 2)):
             return self.send_error(404)
         types = {
             '.glb': 'model/gltf-binary', '.gltf': 'model/gltf+json', '.json': 'application/json',
@@ -385,7 +385,10 @@ class Handler(SimpleHTTPRequestHandler):
         root = ROOT.resolve() / 'local-assets' / 'wow'
         try:
             path = root.joinpath(*parts).resolve(strict=True)
-            if not path.is_relative_to(root) or not path.is_file():
+            allowed = root / parts[0]
+            if ((name == 'manifest.json' and path != allowed)
+                    or (name != 'manifest.json' and not path.is_relative_to(allowed))
+                    or path.suffix.lower() != extension or not path.is_file()):
                 return self.send_error(404)
             stream = path.open('rb')
         except (OSError, RuntimeError, ValueError):

@@ -23,7 +23,7 @@ npm run build:world
 python server.py
 ```
 
-[Управление 3D-площадкой](docs/training-world.md) · [Подключение локального экспорта WoW](static/world/assets/README.md)
+[Локальная арена и калибровка (RU / EN)](docs/local-arena.md) · [Управление 3D-площадкой](docs/training-world.md) · [Подключение локального экспорта WoW](static/world/assets/README.md)
 
 SQLite автоматически создаётся в `data/talents.sqlite3`. Для резервной копии остановить сервер и скопировать этот файл. База, аккаунты и локальные файлы не входят в Git.
 

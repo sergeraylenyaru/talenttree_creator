@@ -1,6 +1,6 @@
 import {Box3, Group, LoadingManager, MathUtils} from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import {assetRoot, validateManifest} from './asset-manifest.js';
+import {assetDirectories, assetRoot, validateManifest} from './asset-manifest.js';
 
 export function disposeObjects(root) {
   const geometries = new Set(), materials = new Set(), textures = new Set(), skeletons = new Set();
@@ -25,9 +25,15 @@ export function disposeObjects(root) {
 
 export function localAssetURL(value, origin) {
   if (/^(data|blob):/.test(value)) return value;
+  const rawPath = decodeURIComponent(value.split(/[?#]/, 1)[0]);
+  if (rawPath.split('/').some(part => part === '..') || rawPath.includes('\\')) {
+    throw Error('A model dependency points outside the local character directory or other allowed asset roots');
+  }
   const url = new URL(value, origin);
-  if (url.origin !== origin || !url.pathname.startsWith(assetRoot + 'character/')) {
-    throw Error('A model dependency points outside the local character directory');
+  const parts = decodeURIComponent(url.pathname).slice(assetRoot.length).split('/');
+  if (url.origin !== origin || !url.pathname.startsWith(assetRoot) || !assetDirectories.includes(parts[0]) ||
+      parts.length < 2 || parts.some(part => !part || part === '..' || part === '.' || /[\\:\x00-\x1f]/.test(part))) {
+    throw Error('A model dependency points outside the local character directory or other allowed asset roots');
   }
   return url.href;
 }
@@ -48,24 +54,62 @@ export function orientAndGroundModel(root, {scale, rotation, heightOffset}) {
   return orientation;
 }
 
-export async function loadLocalCharacter(signal) {
+export async function loadLocalManifest(signal) {
   const response = await fetch(assetRoot + 'manifest.json', {signal});
   if (response.status === 404) return null;
   if (!response.ok) throw Error('Could not read the local asset manifest');
-  const manifest = validateManifest(await response.json());
+  return validateManifest(await response.json());
+}
+
+async function readModel(response, signal, progress) {
+  const length = Number(response.headers.get('Content-Length'));
+  if (!response.body || !length || !progress) return response.arrayBuffer();
+  const reader = response.body.getReader();
+  const chunks = [];
+  let read = 0;
+  try {
+    while (true) {
+      signal.throwIfAborted();
+      const {done, value} = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      read += value.length;
+      progress(Math.min(100, Math.floor(read / length * 100)));
+    }
+    const bytes = new Uint8Array(read);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return bytes.buffer;
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+export async function loadLocalModel(manifest, signal, progress) {
   const modelURL = assetRoot + manifest.model.split('/').map(encodeURIComponent).join('/');
   const modelResponse = await fetch(modelURL, {signal});
   if (!modelResponse.ok) throw Error('Could not open ' + manifest.model);
-  const bytes = await modelResponse.arrayBuffer();
+  const bytes = await readModel(modelResponse, signal, progress);
   signal.throwIfAborted();
 
+  progress?.('parsing');
   const manager = new LoadingManager();
   manager.setURLModifier(url => {
     if (signal.aborted && !url.startsWith('blob:')) signal.throwIfAborted();
     return localAssetURL(url, location.origin);
   });
   const directory = new URL(modelURL.slice(0, modelURL.lastIndexOf('/') + 1), location.origin).href;
-  const gltf = await new GLTFLoader(manager).parseAsync(bytes, directory);
+  const abort = () => manager.abort();
+  signal.addEventListener('abort', abort, {once: true});
+  let gltf;
+  try {
+    gltf = await new GLTFLoader(manager).parseAsync(bytes, directory);
+  } finally {
+    signal.removeEventListener('abort', abort);
+  }
   if (signal.aborted) {
     disposeObjects(gltf.scene);
     signal.throwIfAborted();
@@ -81,12 +125,14 @@ export async function loadLocalCharacter(signal) {
     disposeObjects(gltf.scene);
     throw Error('The glTF scene contains no mesh');
   }
+  return {root: gltf.scene, clips: gltf.animations, mapping: manifest.animations};
+}
+
+export function groundLocalModel(asset, manifest) {
   try {
-    const visual = orientAndGroundModel(gltf.scene, manifest);
-    // Bind animation tracks to the original glTF scene, beneath the correction.
-    return {root: gltf.scene, visual, clips: gltf.animations, mapping: manifest.animations};
+    return {...asset, visual: orientAndGroundModel(asset.root, manifest)};
   } catch (error) {
-    disposeObjects(gltf.scene);
+    disposeObjects(asset.root);
     throw error;
   }
 }

@@ -14,7 +14,9 @@ export function moveOnGround(player, dx, dz, obstacles, config) {
     ['z', 'x', 'minZ', 'maxZ', 'minX', 'maxX', dz]
   ]) {
     const start = position[axis];
-    let end = clamp(start + delta, -limit, limit);
+    const region = config.ground;
+    let end = region ? clamp(start + delta, region[min] + radius, region[max] - radius)
+      : clamp(start + delta, -limit, limit);
     for (const obstacle of obstacles) {
       if (position[other] <= obstacle[otherMin] - radius || position[other] >= obstacle[otherMax] + radius) continue;
       const lower = obstacle[min] - radius;

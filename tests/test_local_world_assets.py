@@ -17,6 +17,10 @@ class LocalWorldAssetsTest(unittest.TestCase):
             (root / 'manifest.json').write_text('{"model":"character/hero.glb"}', encoding='utf-8')
             (character / 'Hero Test.glb').write_bytes(b'fixture')
             (character / 'private.js').write_text('private', encoding='utf-8')
+            for directory in ('targets', 'weapons', 'world'):
+                nested = root / directory / 'nested'
+                nested.mkdir(parents=True)
+                (nested / 'Model.glb').write_bytes(directory.encode())
             server.DB = str(Path(folder) / 'test.sqlite3')
             server.initialize()
             http_server = server.ArchiveHTTPServer(('127.0.0.1', 0), server.Handler)
@@ -40,6 +44,10 @@ class LocalWorldAssetsTest(unittest.TestCase):
                 self.assertEqual(get('manifest.json', {'X-Forwarded-For': '203.0.113.5'})[0], 404)
                 for path in ('character/%2e%2e/manifest.json', 'character%5cHero%20Test.glb', 'character/private.js', 'character/'):
                     self.assertEqual(get(path)[0], 404)
+                for directory in ('targets', 'weapons', 'world'):
+                    self.assertEqual(get(f'{directory}/nested/Model.glb')[2], directory.encode())
+                for invalid in ('world/%2fabsolute.glb', 'world/nested/../../manifest.json', 'world/https:%2F%2Fevil.glb', 'other/model.glb'):
+                    self.assertEqual(get(invalid)[0], 404)
                 status, headers, data = get('character/Hero%20Test.glb')
                 self.assertEqual((status, data), (200, b'fixture'))
                 self.assertEqual(headers['Content-Type'], 'model/gltf-binary')

@@ -4,7 +4,7 @@ import {horizontalCameraForward} from './third-person-camera.js';
 const approach = (value, target, step) => value + Math.max(-step, Math.min(step, target - value));
 
 export function createCharacter(config) {
-  return {...config.spawn, y: 0, vx: 0, vy: 0, vz: 0, facing: 0, grounded: true, animation: 'idle'};
+  return {...config.spawn, y: config.ground?.y ?? 0, vx: 0, vy: 0, vz: 0, facing: 0, grounded: true, animation: 'idle'};
 }
 
 export function stepCharacter(player, input, yaw, dt, config, obstacles) {
@@ -28,8 +28,9 @@ export function stepCharacter(player, input, yaw, dt, config, obstacles) {
   const desired = moving >= 0.08 ? Math.atan2(-dx, -dz) : player.facing;
   const angle = Math.atan2(Math.sin(desired - player.facing), Math.cos(desired - player.facing));
   const initialVy = input.jump && player.grounded ? jumpSpeed : player.vy;
-  const y = Math.max(0, player.y + initialVy * dt - gravity * dt * dt / 2);
-  const grounded = y === 0;
+  const floor = config.ground?.y ?? 0;
+  const y = Math.max(floor, player.y + initialVy * dt - gravity * dt * dt / 2);
+  const grounded = y === floor;
   const vy = grounded ? 0 : initialVy - gravity * dt;
   return {
     ...horizontal, y, vx, vy, vz, grounded,

@@ -241,6 +241,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
         ${userText(event.abilityName)}${detail}${event.resourceName ? ' ' + userText(event.resourceName) : ''}
         ${event.isCritical ? '<b>Крит</b>' : ''}</li>`;
     }).join('');
+    let hit;
     for (const event of events) {
       if (event.id <= lastEvent) continue;
       lastEvent = event.id;
@@ -248,7 +249,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
       if (event.type === 'castRejected' && statusLabels[event.reason]) replaceText($('#tg-feedback'), t(statusLabels[event.reason][0]));
       if (event.type === 'attackMissed') replaceText($('#tg-feedback'), t(eventLabels.attackMissed[0]));
       if (event.type !== 'damage' || !event.amount) continue;
-      actions.damage?.();
+      hit = Boolean(hit || event.isCritical);
       const float = document.createElement('span');
       float.className = event.isCritical ? 'tg-float tg-critical' : 'tg-float';
       float.textContent = `−${fmt(event.amount)}${event.isCritical ? '!' : ''}`;
@@ -257,6 +258,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
       float.addEventListener('animationend', () => float.remove(), {once: true});
       floats.append(float);
     }
+    if (hit !== undefined) actions.damage?.(hit);
   }
 
   function update(runtime) {
