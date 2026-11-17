@@ -192,8 +192,7 @@ export function createWorld(canvas, callbacks, config = world) {
       const progress = pose ? Math.max(0, Math.min(1, (pose.until - combatTime) / 0.48)) : 0;
       visualPivot.rotation.x = pose && !clip ? -Math.sin(progress * Math.PI) * 0.25 : 0;
       visuals.update(dt);
-      reactionTime -= dt;
-      if (reactionTime <= 0) reaction = undefined;
+      if (reaction && (reactionTime -= dt) <= 0) reaction = undefined;
       dummyAnimation?.update(reaction ?? 'idle', dt);
       target.x += (player.x - target.x) * blend;
       target.y += (player.y + 1.38 - target.y) * blend;

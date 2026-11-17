@@ -5,7 +5,7 @@ const roles = {manifest: 'Манифест', environment: 'Окружение', 
 const states = {loading: 'Загрузка', ready: 'Готово', fallback: 'Встроенная сцена', error: 'Ошибка',
   parsing: 'Подготовка геометрии и анимаций'};
 addTranslations([
-  ['Диагностика ассетов', 'Asset diagnostics'], ['Скачать отчёт', 'Download report'],
+  ['Диагностика ассетов', 'Asset diagnostics'], ['Подробности моделей', 'Model details'], ['Скачать отчёт', 'Download report'],
   ['Скачать манифест', 'Download manifest'], ['Сбросить калибровку', 'Reset calibration'],
   ['Калибровка оружия', 'Weapon calibration'], ['Манифест', 'Manifest'], ['Окружение', 'Environment'],
   ['Персонаж', 'Character'], ['Оружие', 'Weapon'], ['Сцена', 'Scene'], ['Загрузка', 'Loading'],
@@ -27,6 +27,7 @@ export function assetPanel(stage, controller) {
   panel.className = 'tg-asset-panel';
   panel.innerHTML = `<summary>Диагностика ассетов</summary><ul aria-live="polite"></ul>
     <button type="button" data-report>Скачать отчёт</button>
+    <details data-info><summary>Подробности моделей</summary><pre></pre></details>
     <fieldset hidden><legend>Калибровка оружия</legend><p data-bone></p>
     <div class="tg-fields"></div>
     <button type="button" data-reset>Сбросить калибровку</button>
@@ -34,6 +35,8 @@ export function assetPanel(stage, controller) {
   stage.append(panel);
   const list = panel.querySelector('ul');
   const calibration = panel.querySelector('fieldset');
+  const info = panel.querySelector('[data-info]');
+  const infoText = info.querySelector('pre');
   let statuses = {};
   let original;
   const fields = ['X', 'Y', 'Z', 'RX °', 'RY °', 'RZ °', 'Scale'].map((label, index) => {
@@ -60,8 +63,12 @@ export function assetPanel(stage, controller) {
   }
   for (const input of fields) input.oninput = () => {
     const values = current();
-    if (values) controller()?.weaponTransform(values);
+    if (values && controller()?.weaponTransform(values)) showDetails();
   };
+  function showDetails() {
+    if (info.open) infoText.textContent = JSON.stringify(controller()?.assetReport()?.assets ?? {}, null, 2);
+  }
+  info.ontoggle = showDetails;
   panel.querySelector('[data-report]').onclick = () => {
     const report = controller()?.assetReport();
     if (report) download('talentforge-asset-report.json', {...report, statuses});
@@ -93,6 +100,7 @@ export function assetPanel(stage, controller) {
       item.textContent = [t(roles[role]), t(states[state]),
         typeof detail === 'number' ? detail + '%' : detail].filter(Boolean).join(' · ');
       if (state === 'error') panel.open = true;
+      if (state === 'ready') showDetails();
       if (role === 'weapon' && state === 'ready') {
         const report = controller()?.assetReport();
         if (!report?.manifest?.debug) return;
@@ -109,6 +117,8 @@ export function assetPanel(stage, controller) {
       calibration.hidden = true;
       panel.open = false;
       list.replaceChildren();
+      info.open = false;
+      infoText.textContent = '';
     }
   };
 }

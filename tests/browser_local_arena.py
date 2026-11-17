@@ -99,12 +99,12 @@ with temporary_database() as folder, sync_playwright() as playwright:
         assert set(snapshot()['assets']) == {'hero', 'environment', 'weapon', 'target'}
         assert snapshot()['player']['y'] == 2
         assert abs(snapshot()['visualMinY'] - 2) < 1e-5
-        panel.locator('summary').click()
+        panel.locator(':scope > summary').click()
         expect(panel.locator('[data-bone]')).to_have_text('bone_WeaponR')
         panel.locator('input').first.fill('0.2')
         panel.locator('[data-reset]').click()
         expect(panel.locator('input').first).to_have_value('0')
-        panel.locator('summary').click()
+        panel.locator(':scope > summary').click()
         page.clock.run_for(100)
         assert snapshot()['targetClip'] == target_clips[0]
         arena.locator('.tg-world-target').click()
