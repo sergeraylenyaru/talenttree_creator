@@ -18,6 +18,8 @@ const schoolLabels = [
   ['Природа', 'Nature'], ['Тьма', 'Shadow'], ['Свет', 'Holy']
 ];
 
+addTranslations([['Подготовка', 'Preparing'], ['Поддержание', 'Channeling']]);
+
 const metrics = {
   dps: ['DPS', 'DPS'], totalDamage: ['Всего урона', 'Total damage'],
   totalHealing: ['Всего лечения', 'Total healing'], effectiveHealing: ['Эффективное лечение', 'Effective healing'],
@@ -142,7 +144,7 @@ function abilityMarkup(ability, index) {
       ${index < 9 ? `<kbd>${index + 1}</kbd>` : ''}<span class="tg-cooldown" hidden></span></span>
     <span class="tg-ability-info"><strong data-user-content>${escapeHTML(ability.name)}</strong>
       <small>${cost || 'Бесплатно'}</small>
-      <small>${ability.cast ? `${ability.cast} сек.` : 'Мгновенное'}${ability.combatEffects.length ? '' : ' · Нет эффектов'}</small>
+      <small>${ability.cast + (ability.channelDuration ?? 0) ? `${ability.cast + (ability.channelDuration ?? 0)} сек.` : 'Мгновенное'}${ability.combatEffects.length ? '' : ' · Нет эффектов'}</small>
     </span>
   </button>`;
 }
@@ -172,7 +174,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
           <div class="tg-figures">
             <div class="tg-player">${classEmblem(build.icon)}<strong data-user-content>${escapeHTML(build.name)}</strong></div>
             <div class="tg-dummy"><div class="tg-target" aria-hidden="true"></div><strong>Манекен</strong>
-              <div id="tg-floats" aria-hidden="true"></div></div>
+              <div id="tg-floats" aria-hidden="true"></div><div id="tg-heals" aria-hidden="true"></div></div>
           </div>
           <div class="tg-vitals">
             <div>${bar('Здоровье', 'player', '#459254')}
@@ -180,7 +182,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
             </div>
             <div>${bar('Манекен', 'dummy', '#bd5157')}</div>
           </div>
-          <div id="tg-cast" hidden><strong id="tg-cast-name" data-user-content></strong>
+          <div id="tg-cast" hidden><div class="tg-cast-heading"><strong id="tg-cast-name" data-user-content></strong><span id="tg-cast-phase"></span></div>
             <progress id="tg-progress" aria-labelledby="tg-cast-name"></progress>
             <button type="button" id="tg-cancel">Отменить применение</button></div>
         </section>
@@ -188,7 +190,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
           <div class="tg-actions">${abilities.map(abilityMarkup).join('')}</div>
           ${abilities.length ? '' : '<p class="muted">Нет открытых активных способностей.</p>'}
           ${abilities.length && abilities.every(a => !a.combatEffects.length) ? '<p class="muted">Добавь боевые эффекты в редакторе способностей.</p>' : ''}
-          ${abilities.some(a => a.channeled) ? '<p class="muted">Поддерживаемые способности срабатывают один раз при завершении.</p>' : ''}
+          ${abilities.some(a => a.channelDuration) ? '<p class="muted">Поддерживаемые способности срабатывают один раз при завершении.</p>' : ''}
           ${build.passiveAbilities.length ? `<details><summary>Пассивные способности</summary><ul>${build.passiveAbilities.map(a => `<li>${userText(a.name)}</li>`).join('')}</ul></details>` : ''}
           <p class="tg-feedback" role="status" id="tg-feedback"></p>
         </section>
@@ -241,24 +243,27 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
         ${userText(event.abilityName)}${detail}${event.resourceName ? ' ' + userText(event.resourceName) : ''}
         ${event.isCritical ? '<b>Крит</b>' : ''}</li>`;
     }).join('');
-    let hit;
     for (const event of events) {
       if (event.id <= lastEvent) continue;
       lastEvent = event.id;
       if (event.type === 'calculationFailed') replaceText($('#tg-feedback'), t(eventLabels.calculationFailed[0]));
       if (event.type === 'castRejected' && statusLabels[event.reason]) replaceText($('#tg-feedback'), t(statusLabels[event.reason][0]));
       if (event.type === 'attackMissed') replaceText($('#tg-feedback'), t(eventLabels.attackMissed[0]));
-      if (event.type !== 'damage' || !event.amount) continue;
-      hit = Boolean(hit || event.isCritical);
+      const healing = event.type === 'healing';
+      if (!healing && event.type !== 'damage') continue;
+      const amount = healing ? event.effective : event.amount;
+      if (!amount) continue;
+      if (!healing) actions.damage?.(event.isCritical,
+        abilities.find(ability => ability.id === event.abilityId)?.presentation?.hitReaction);
       const float = document.createElement('span');
       float.className = event.isCritical ? 'tg-float tg-critical' : 'tg-float';
-      float.textContent = `−${fmt(event.amount)}${event.isCritical ? '!' : ''}`;
-      const floats = $('#tg-floats');
+      if (healing) float.classList.add('tg-healing');
+      float.textContent = `${healing ? '+' : '−'}${fmt(amount)}${event.isCritical ? '!' : ''}`;
+      const floats = $(healing ? '#tg-heals' : '#tg-floats');
       if (floats.childElementCount >= 6) floats.firstElementChild.remove();
       float.addEventListener('animationend', () => float.remove(), {once: true});
       floats.append(float);
     }
-    if (hit !== undefined) actions.damage?.(hit);
   }
 
   function update(runtime) {
@@ -274,8 +279,11 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
     if (activeCast) {
       replaceText($('#tg-cast-name'), activeCast.ability.name);
       const progress = $('#tg-progress');
-      progress.max = activeCast.ability.cast;
-      progress.value = state.combatTime - activeCast.start;
+      const start = activeCast.channeling ? activeCast.castEnd : activeCast.start;
+      const end = activeCast.channeling ? activeCast.end : activeCast.castEnd;
+      replaceText($('#tg-cast-phase'), t(activeCast.channeling ? 'Поддержание' : 'Подготовка'));
+      progress.max = end - start;
+      progress.value = state.combatTime - start;
     }
     buttons.forEach((button, index) => {
       const {reason, remaining} = runtime.availability(abilities[index].id);
@@ -323,6 +331,11 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
 
   buttons.forEach((button, index) => button.onclick = () => cast(index));
   dialog.onkeydown = event => {
+    if (event.key === 'Escape' && !$('#tg-cast').hidden) {
+      event.preventDefault();
+      if (!event.repeat) actions.cancel();
+      return;
+    }
     if (event.repeat || event.altKey || event.ctrlKey || event.metaKey ||
         event.target.closest('input, textarea, select, [contenteditable]')) return;
     if (/^[1-9]$/.test(event.key)) {
@@ -347,6 +360,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
     reset(runtime) {
       $('#tg-feedback').replaceChildren();
       $('#tg-floats').replaceChildren();
+      $('#tg-heals').replaceChildren();
       lastEvent = 0;
       update(runtime);
     }

@@ -1,7 +1,11 @@
 import {AnimationMixer, LoopOnce, LoopRepeat} from 'three';
 
-export function resolveClip(clips, mapping, state) {
-  const combat = ['meleeAttack', 'rangedAttack', 'spellCast', 'hitReaction', 'hit', 'criticalHit'];
+export function resolveClip(clips, mapping, state, override) {
+  if (override) {
+    const configured = clips.find(clip => clip.name === override);
+    if (configured) return configured;
+  }
+  const combat = ['meleeAttack', 'rangedAttack', 'spellCast', 'hitReaction', 'hit', 'criticalHit', 'channel'];
   const candidates = {
     idle: ['idle'], walk: ['walk', 'idle'], run: ['run', 'walk', 'idle'],
     walkBack: ['walkBack'], runBack: ['runBack', 'walkBack'], strafeLeft: ['strafeLeft'], strafeRight: ['strafeRight'],
@@ -21,17 +25,17 @@ export function animateCharacter({root, clips, mapping}) {
   return {
     get activeDuration() { return currentClip?.duration ?? 0; },
     get activeClip() { return currentClip?.name ?? null; },
-    supports(state) { return Boolean(resolveClip(clips, mapping, state)); },
-    update(state, dt, restart = false, duration) {
-      const clip = resolveClip(clips, mapping, state);
+    supports(state, override) { return Boolean(resolveClip(clips, mapping, state, override)); },
+    update(state, dt, restart = false, duration, override, loop = false) {
+      const clip = resolveClip(clips, mapping, state, override);
       if (clip !== currentClip || restart) {
         current?.fadeOut(0.16);
         current = clip ? mixer.clipAction(clip) : null;
         currentClip = clip;
         if (current) {
-          const airborne = !['idle', 'walk', 'run', 'walkBack', 'runBack', 'strafeLeft', 'strafeRight'].includes(state) && clip.name !== mapping.idle;
-          current.setLoop(airborne ? LoopOnce : LoopRepeat, airborne ? 1 : Infinity);
-          current.clampWhenFinished = airborne;
+          const once = !loop && !['idle', 'walk', 'run', 'walkBack', 'runBack', 'strafeLeft', 'strafeRight'].includes(state) && clip.name !== mapping.idle;
+          current.setLoop(once ? LoopOnce : LoopRepeat, once ? 1 : Infinity);
+          current.clampWhenFinished = once;
           current.reset().setEffectiveTimeScale(duration > 0 ? clip.duration / duration : 1).fadeIn(0.16).play();
         }
       }

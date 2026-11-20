@@ -94,3 +94,11 @@ Measure an interior floor rectangle in the exported environment after its config
 The existing hero rig and mixer remain in use. Optional directional clip mappings enable backward movement and strafing poses. Set `meleeAttack` or `spellCast` to a different exported clip to use that clip. The target plays idle and impact reactions from its own rig. Weapon attachment defaults to `bone_WeaponR` and falls back to `bone_HandR`. Debug calibration exports an updated manifest that you can install locally. Set the weapon's `enabled` flag to false if the hero already includes the mesh.
 
 The repository contains synthetic test models generated in tests. Check the actual exported environment, collision proxy and attachment transform on the machine that holds the game exports.
+
+## Оформление способностей в бою
+
+В редакторе способности раскрой **Оформление в бою**. Пресеты подбирают клипы, тип доставки, визуальные эффекты и звук. Урон, лечение, стоимость и перезарядка по-прежнему настраиваются в существующих полях редактора. Нулевая дальность выбирает стандарт профиля. Для ближнего боя это 2 м, для дальнего — 30 м, для области — 8 м. Защитный пресет даёт анимацию блока и эффект, а перемещение использует прыжок героя. Способность области проверяет расстояние и видимость единственного манекена вокруг героя без предварительного выбора цели.
+
+Поле **Поддержание, сек.** добавляет отдельную фазу после подготовки. Эффект срабатывает один раз при завершении поддержания. Применение можно отменить кнопкой или клавишей Escape. Отмена или потеря допустимой цели до выпуска оставляет ресурс и перезарядку без изменений. После выпуска снаряд проверяет столкновение с моделью цели и препятствиями. Урон при попадании рассчитывает прежний боевой модуль.
+
+Звуки синтезируются в браузере при ручном применении, если браузер разрешил звук. Цвета, импульсы и кольца создаются процедурно. Направленные, поддерживаемые и оружейные клипы берутся из установленной локальной модели, при отсутствии клипа применяется запасной вариант.

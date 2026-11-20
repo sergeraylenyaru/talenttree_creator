@@ -40,6 +40,17 @@ class CombatEffects(unittest.TestCase):
             with self.subTest(effects=effects), self.assertRaises(ValueError):
                 server.validate(document(effects))
 
+    def test_optional_presentation(self):
+        doc = document([DAMAGE])
+        values = {'projectile': 'homing', 'projectileSpeed': 12, 'channelDuration': 2.5, 'attackAnimation': 'cast'}
+        doc['abilities'][0]['presentation'] = values
+        self.assertEqual(server.validate(doc)['abilities'][0]['presentation'], values)
+        for invalid in (None, [], {'projectileSpeed': True}, {'channelDuration': 121},
+                        {'impact': 'external.svg'}, {'extra': 'value'}):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                doc['abilities'][0]['presentation'] = invalid
+                server.validate(doc)
+
     def test_limits_and_schools(self):
         server.validate(document([dict(DAMAGE, id=f'e-{i}', school=school, baseAmount=1e9, coefficient=1000)
                                   for i, school in enumerate(('physical','fire','frost','arcane','nature','shadow','holy'))]))

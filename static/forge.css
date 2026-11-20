@@ -659,3 +659,10 @@ button[aria-busy="true"]::after{content:"";width:12px;height:12px;flex:0 0 12px;
 
 /* Cost rows shrink with the editor; fixed-size delete controls stay inside their track. */
 #abilityResourceCosts,.resource-cost-row,.resource-cost-list{min-width:0;max-width:100%}.resource-cost-list{overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable}.resource-cost-row .icon-button{width:100%;max-width:100%;min-width:0;padding:0;display:grid;place-items:center}.cost-heading{flex-wrap:wrap}.cost-heading>*{min-width:0}
+
+#abilityPresentation {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 0.5rem;
+}
+#abilityPresentation select, #abilityPresentation input { width: 100%; }

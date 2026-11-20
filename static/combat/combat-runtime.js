@@ -41,24 +41,34 @@ export function createCombatRuntime(build, options = {}) {
     });
     const payment = spendResources(state.player, costs);
     if (payment.failedCost) return {reason: 'insufficient', ...payment};
-    return {ability, costs, player: payment.player};
+    return {ability, costs};
   }
 
-  function finish({ability, costs, player, delivery}) {
+  function finish({ability, costs, delivery}) {
     const rejection = delivery?.validate();
     if (rejection) {
       state = {...state, activeCast: null};
+      delivery?.cancel?.();
       log([entry('castRejected', ability, {reason: rejection})]);
       return {ok: false, reason: rejection};
     }
+    const payment = spendResources(state.player, costs);
+    if (payment.failedCost) {
+      state = {...state, activeCast: null};
+      delivery?.cancel?.();
+      log([entry('insufficient', ability, payment.failedCost)]);
+      return {ok: false, reason: 'insufficient', failedCost: payment.failedCost};
+    }
     const ordered = ['onCast', 'onHit'].flatMap(trigger =>
       ability.combatEffects.filter(effect => effect.trigger === trigger));
-    const delayed = delivery ? ordered.filter(effect => effect.type === 'damage') : [];
+    const spatialDamage = delivery && !delivery.utility;
+    const delayed = spatialDamage ? ordered.filter(effect => effect.type === 'damage') : [];
     let results;
     try {
-      results = calculate(delivery ? ordered.filter(effect => effect.type !== 'damage') : ordered);
+      results = calculate(spatialDamage ? ordered.filter(effect => effect.type !== 'damage') : ordered);
     } catch (error) {
       state = {...state, activeCast: null};
+      delivery?.cancel?.();
       log([entry('calculationFailed', ability, {message: error.message})]);
       return {ok: false, reason: 'calculationFailed'};
     }
@@ -68,7 +78,7 @@ export function createCombatRuntime(build, options = {}) {
       if (cost.amount) events.push(entry('resourceSpent', ability, cost));
     }
     state = {
-      ...state, player, activeCast: null,
+      ...state, player: payment.player, activeCast: null,
       globalCooldownUntil: state.combatTime + settings.globalCooldown,
       cooldowns: {...state.cooldowns, [ability.id]: state.combatTime + ability.cooldown},
       statistics: {...state.statistics, casts: state.statistics.casts + 1}
@@ -77,9 +87,10 @@ export function createCombatRuntime(build, options = {}) {
     if (ability.cooldown || settings.globalCooldown) {
       events.push(entry('cooldownStarted', ability, {amount: ability.cooldown, globalCooldown: settings.globalCooldown}));
     }
-    if (delivery) events.push(entry('attackLaunched', ability));
+    if (spatialDamage) events.push(entry('attackLaunched', ability));
     log(events);
-    if (delivery) {
+    if (delivery?.utility) delivery.launch(state.combatTime);
+    if (spatialDamage) {
       const token = {};
       pending.add(token);
       delivery.launch(state.combatTime, outcome => {
@@ -88,7 +99,9 @@ export function createCombatRuntime(build, options = {}) {
         const entries = [entry(impact ? 'attackHit' : 'attackMissed', ability)];
         if (impact) {
           try {
-            applyResults(calculate(delayed), ability, entries);
+            const results = calculate(delayed);
+            applyResults(results, ability, entries);
+            if (results.some(result => result.isCritical)) delivery.critical?.();
           } catch (error) {
             entries.push(entry('calculationFailed', ability, {message: error.message}));
           }
@@ -141,16 +154,25 @@ export function createCombatRuntime(build, options = {}) {
       }
       status.delivery = delivery;
       log([entry('castStarted', ability)]);
-      if (!ability.cast) return finish(status);
-      state = {...state, activeCast: {...status, start: state.combatTime, end: state.combatTime + ability.cast}};
-      delivery?.prepare?.(ability.cast, state.combatTime);
+      const channel = ability.channelDuration ?? 0;
+      if (!ability.cast && !channel) return finish(status);
+      const castEnd = state.combatTime + ability.cast;
+      state = {...state, activeCast: {...status, start: state.combatTime, castEnd,
+        end: castEnd + channel, channeling: !ability.cast}};
+      if (ability.cast) delivery?.prepare?.(ability.cast, state.combatTime);
+      else delivery?.channel?.(channel, state.combatTime);
       return {ok: true};
     },
     advance(deltaSeconds) {
       if (!Number.isFinite(deltaSeconds) || deltaSeconds < 0) throw new RangeError('Invalid combat time delta');
       if (paused) return;
       const end = state.combatTime + deltaSeconds;
-      const cast = state.activeCast;
+      let cast = state.activeCast;
+      if (cast && cast.end > cast.castEnd && !cast.channeling && cast.castEnd <= end) {
+        cast = {...cast, channeling: true};
+        state = {...state, activeCast: cast};
+        if (end < cast.end) cast.delivery?.channel?.(cast.end - end, end);
+      }
       if (cast && cast.end <= end) {
         state = {...state, combatTime: cast.end};
         finish(cast);
@@ -159,7 +181,8 @@ export function createCombatRuntime(build, options = {}) {
     },
     cancel() {
       if (!state.activeCast) return;
-      const {ability} = state.activeCast;
+      const {ability, delivery} = state.activeCast;
+      delivery?.cancel?.();
       state = {...state, activeCast: null};
       log([entry('castCancelled', ability)]);
     },

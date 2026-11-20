@@ -38,11 +38,17 @@ with temporary_database() as tmp, patch.dict(os.environ, {'SMTP_HOST':'','SMTP_F
             expect(rows.nth(1)).to_contain_text('Can critically heal')
             rows.nth(1).locator('[data-key="trigger"]').select_option('onCast')
             rows.nth(1).locator('[data-key="baseAmount"]').fill('80')
+            page.locator('summary').filter(has_text='Combat presentation').click()
+            page.locator('[data-presentation="preset"]').select_option('fire')
+            page.locator('[data-presentation="channelDuration"]').fill('2.5')
+            expect(page.locator('[data-presentation="projectile"]')).to_have_value('straight')
             page.locator('#submitModal').click();expect(page.locator('#modal')).not_to_be_visible()
             page.locator('#save').click();expect(page.locator('#saveState')).to_have_text('Saved to account')
             ability=ctx.request.get(base+'/api/projects/'+pid).json()['document']['abilities'][0]
             assert ability['requirements']=='Keep me' and ability['resourceCosts']==[]
             assert len(ability['combatEffects'])==2
+            assert ability['presentation']['channelDuration']==2.5
+            assert ability['presentation']['impact']=='fire'
             damage,heal=ability['combatEffects']
             assert damage['school']=='fire' and damage['baseAmount']==120 and damage['coefficient']==0.65 and damage['canCrit'] is True
             assert heal['type']=='healing' and heal['trigger']=='onCast' and 'school' not in heal
@@ -59,6 +65,7 @@ with temporary_database() as tmp, patch.dict(os.environ, {'SMTP_HOST':'','SMTP_F
             with page.expect_download() as download:page.locator('#export').click()
             exported=json.loads(Path(download.value.path()).read_text())
             assert exported['abilities'][0]['combatEffects']==ability['combatEffects']
+            assert exported['abilities'][0]['presentation']==ability['presentation']
             assert not errors,errors
             browser.close()
     finally:

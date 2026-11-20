@@ -43,7 +43,6 @@ export function openTrainingGrounds(dialog, document) {
     },
     cancel() {
       syncClock();
-      if (runtime.state.activeCast?.delivery) world?.clearPose();
       runtime.cancel();
       view.update(runtime);
     },
@@ -77,7 +76,7 @@ export function openTrainingGrounds(dialog, document) {
       rebaseClock();
       view.reset(runtime);
     },
-    damage(critical) { world?.hit(critical); }
+    damage(critical, reaction) { world?.hit(critical, reaction); }
   });
 
   function tick(now) {

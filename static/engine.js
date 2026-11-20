@@ -1,3 +1,4 @@
+import {validatePresentation} from './combat/presentation.js';
 import {validateCombatEffects} from './combat/effect-validation.js';
 export {validateCombatEffects} from './combat/effect-validation.js';
 import {validateResourceCosts} from './resource-costs.js';
@@ -64,7 +65,7 @@ export function normalize(doc,{allowLegacy=false}={}) {
   if(!allowLegacy)for(const b of doc.branches)if([...dependencyRoutes(b).values()].some(path=>!path))throw Error('Стрелки зависимостей пересекаются или нет свободного пути. Убери или измени зависимость.');
   if(!Array.isArray(doc.abilities)||doc.abilities.some(a=>!a||typeof a.id!=='string'||typeof a.name!=='string'||typeof a.description!=='string')) throw Error('Неверный список способностей');
   for(const a of doc.abilities)if(a.requirements!==undefined&&(typeof a.requirements==='string'?a.requirements.length>1000:(!Array.isArray(a.requirements)||a.requirements.length>40||a.requirements.some(v=>typeof v!=='string'||!v.trim()||v.length>100)||new Set(a.requirements).size!==a.requirements.length)))throw Error('Проверь требования способности');
-  for(const a of doc.abilities)validateCombatEffects(a);
+  for(const a of doc.abilities){validateCombatEffects(a);validatePresentation(a);}
   for(const a of doc.abilities){validateResourceCosts(a,doc.character);if(a.resourceCosts&&['cast','cooldown','range'].some(k=>!Number.isFinite(a[k])||a[k]<0||a[k]>1e9))throw Error('Неверные числовые параметры способности');}
   for(const a of doc.abilities)if(a.learningMode!==undefined&&!['base','talent','specialization'].includes(a.learningMode))throw Error('Неверный способ изучения способности');
   for(const a of doc.abilities)if(a.channeled!==undefined&&typeof a.channeled!=='boolean')throw Error('Проверь настройку поддерживаемого заклинания');

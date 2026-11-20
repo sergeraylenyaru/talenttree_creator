@@ -87,6 +87,7 @@ export function mountTrainingWorld(dialog, actions) {
     ].join('\n');
   }
   const floats = arena.querySelector('#tg-floats');
+  const heals = arena.querySelector('#tg-heals');
   const originalFloatParent = floats.parentElement;
   const dummyVital = arena.querySelector('#tg-label-dummy').closest('.tg-vital');
   let controller;
@@ -105,7 +106,7 @@ export function mountTrainingWorld(dialog, actions) {
     controller = undefined;
     canvas?.remove();
     canvas = undefined;
-    originalFloatParent.append(floats);
+    originalFloatParent.append(floats, heals);
     dummyVital.classList.remove('tg-target-selected');
     arena.classList.remove('tg-show-world');
     stage.hidden = true;
@@ -153,6 +154,10 @@ export function mountTrainingWorld(dialog, actions) {
           floats.style.setProperty('--tg-target-x', marker.style.left);
           floats.style.setProperty('--tg-target-y', marker.style.top);
         },
+        playerMarker({x, y}) {
+          heals.style.setProperty('--tg-player-x', x + '%');
+          heals.style.setProperty('--tg-player-y', y + '%');
+        },
         selection(selected) {
           marker.setAttribute('aria-pressed', String(selected));
           dummyVital.classList.toggle('tg-target-selected', selected);
@@ -170,7 +175,7 @@ export function mountTrainingWorld(dialog, actions) {
       });
       actions.enter();
       controller.setQuality(quality.value);
-      frame.append(floats);
+      frame.append(floats, heals);
       arena.classList.add('tg-show-world');
       stage.hidden = false;
       quality.parentElement.hidden = false;
@@ -214,12 +219,11 @@ export function mountTrainingWorld(dialog, actions) {
   return {
     delivery: ability => controller?.delivery(ability),
     combatState: updateCombat,
-    clearPose() { controller?.clearPose(); },
     clearCombat(state) {
       controller?.clearCombat();
       updateCombat(state);
     },
-    hit(critical) { controller?.combatHit(critical); },
+    hit(critical, reaction) { controller?.combatHit(critical, reaction); },
     update(now) {
       if (!controller) return;
       try {

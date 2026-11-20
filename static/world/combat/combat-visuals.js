@@ -1,21 +1,32 @@
-import {Mesh, MeshBasicMaterial, SphereGeometry} from 'three';
+import {ConeGeometry, Mesh, MeshBasicMaterial, RingGeometry, SphereGeometry, Vector3} from 'three';
 
-const palette = {fire: 0xff6b22, arcane: 0xca80ff};
-const color = profile => palette[profile.school] ?? 0xffdf90;
+const palette = {
+  melee: 0xffdf90, physical: 0xffdf90, fire: 0xff6b22, frost: 0x82dcff,
+  arcane: 0xca80ff, holy: 0xfff5ba, nature: 0x8de65a, shadow: 0xa567e1,
+  healing: 0x63f6c1, defense: 0x8bb9ff
+};
+const tones = {strike: [145, 65, 'triangle'], spark: [520, 185, 'sine'], chime: [480, 780, 'sine']};
 
 export function createCombatVisuals(scene, dummy) {
-  const geometry = new SphereGeometry(1, 10, 8);
+  const sphere = new SphereGeometry(1, 10, 8);
+  const ring = new RingGeometry(0.2, 0.31, 24);
+  const arrow = new ConeGeometry(0.23, 4, 6);
+  const up = new Vector3(0, 1, 0);
+  const direction = new Vector3();
   const materials = new Map();
   const free = [];
   const bursts = [];
   let reaction = 0;
+  let audio;
 
-  function spawn(position, profile, radius) {
-    const tint = color(profile);
+  function createMesh(position, profile, radius, geometry) {
+    const tint = palette[profile.impact] ?? palette[profile.school] ?? palette.physical;
     if (!materials.has(tint)) materials.set(tint, new MeshBasicMaterial({color: tint}));
-    const mesh = free.pop() || new Mesh(geometry, materials.get(tint));
+    const mesh = free.pop() || new Mesh();
+    mesh.geometry = geometry;
     mesh.material = materials.get(tint);
     mesh.position.set(position.x, position.y, position.z);
+    mesh.rotation.set(geometry === ring ? -Math.PI / 2 : 0, 0, 0);
     mesh.scale.setScalar(radius);
     scene.add(mesh);
     return mesh;
@@ -27,19 +38,60 @@ export function createCombatVisuals(scene, dummy) {
   }
 
   return {
-    spawn, remove,
-    move(mesh, position) { mesh.position.set(position.x, position.y, position.z); },
+    spawn(position, profile, radius, heading) {
+      const geometry = (profile.attackAnimation ?? profile.animation) === 'bow' ? arrow : sphere;
+      const mesh = createMesh(position, profile, radius, geometry);
+      if (geometry === arrow && heading) mesh.quaternion.setFromUnitVectors(up, heading);
+      return mesh;
+    },
+    remove,
+    move(mesh, position) {
+      if (mesh.geometry === arrow) {
+        direction.set(position.x, position.y, position.z).sub(mesh.position).normalize();
+        if (direction.lengthSq()) mesh.quaternion.setFromUnitVectors(up, direction);
+      }
+      mesh.position.set(position.x, position.y, position.z);
+    },
     impact(position, profile) {
-      if (bursts.length === 16) remove(bursts.shift().mesh);
-      bursts.push({mesh: spawn(position, profile, 0.14), age: 0});
+      if (profile.impact === 'none') return;
+      if (bursts.length === 24) remove(bursts.shift().mesh);
+      const size = profile.area ? 2.5 : profile.critical ? 1.1 : 0.65;
+      const geometry = profile.area || profile.critical || ['healing', 'defense'].includes(profile.impact ?? profile.school)
+        ? ring : sphere;
+      const mesh = createMesh(position, profile, geometry === ring ? size : size * 0.3, geometry);
+      bursts.push({mesh, age: 0, size: mesh.scale.x, lifetime: profile.critical ? 0.38 : 0.25});
+    },
+    prepareSound() {
+      if (!globalThis.AudioContext) return;
+      try {
+        audio ??= new AudioContext();
+        if (audio.state === 'suspended') audio.resume().catch(() => {});
+      } catch {
+        // Presentation is optional when audio is unavailable.
+      }
+    },
+    sound(id) {
+      if (audio?.state !== 'running' || !Object.hasOwn(tones, id)) return;
+      const [start, end, wave] = tones[id];
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      const time = audio.currentTime;
+      oscillator.type = wave;
+      oscillator.frequency.setValueAtTime(start, time);
+      oscillator.frequency.exponentialRampToValueAtTime(end, time + 0.14);
+      gain.gain.setValueAtTime(0.075, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.14);
+      oscillator.connect(gain).connect(audio.destination);
+      oscillator.start(time);
+      oscillator.stop(time + 0.15);
     },
     react() { reaction = 0.22; },
     update(dt) {
       for (let i = bursts.length - 1; i >= 0; i--) {
         const burst = bursts[i];
         burst.age += dt;
-        burst.mesh.scale.setScalar(0.14 + burst.age * 1.7);
-        if (burst.age >= 0.18) {
+        burst.mesh.scale.setScalar(burst.size + burst.age * 4);
+        if (burst.age >= burst.lifetime) {
           remove(burst.mesh);
           bursts.splice(i, 1);
         }
@@ -55,8 +107,11 @@ export function createCombatVisuals(scene, dummy) {
     },
     dispose() {
       this.clear();
-      geometry.dispose();
+      sphere.dispose();
+      ring.dispose();
+      arrow.dispose();
       for (const material of materials.values()) material.dispose();
+      if (audio && audio.state !== 'closed') audio.close().catch(() => {});
       free.length = 0;
     }
   };

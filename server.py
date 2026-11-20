@@ -161,6 +161,38 @@ def validate_class_icon(value):
     return value
 
 
+PRESENTATION_ANIMATIONS = ('sword', 'twoHand', 'bow', 'cast', 'area', 'channel', 'guard', 'movement', 'hurt')
+PRESENTATION_OPTIONS = {
+    'category': ('attack', 'spell', 'healing', 'area', 'defense', 'movement'),
+    'delivery': ('melee', 'ranged'),
+    'animation': PRESENTATION_ANIMATIONS,
+    'castingAnimation': PRESENTATION_ANIMATIONS,
+    'attackAnimation': PRESENTATION_ANIMATIONS,
+    'projectile': ('none', 'straight', 'homing'),
+    'impact': ('none', 'melee', 'fire', 'frost', 'arcane', 'holy', 'nature', 'shadow', 'healing', 'defense'),
+    'hitReaction': ('normal', 'heavy', 'none'),
+    'sound': ('strike', 'spark', 'chime'),
+    'targeting': ('dummy', 'self', 'area'),
+}
+PRESENTATION_LIMITS = {'projectileSpeed': (1, 100), 'channelDuration': (0, 120)}
+
+
+def validate_presentation(ability):
+    if 'presentation' not in ability:
+        return
+    data = ability['presentation']
+    if not isinstance(data, dict):
+        raise ValueError('Проверь оформление способности')
+    for key, value in data.items():
+        if key in PRESENTATION_OPTIONS and value in PRESENTATION_OPTIONS[key]:
+            continue
+        if key in PRESENTATION_LIMITS and type(value) in (int, float):
+            lo, hi = PRESENTATION_LIMITS[key]
+            if lo <= value <= hi:
+                continue
+        raise ValueError('Проверь оформление способности')
+
+
 def validate_combat_effects(ability):
     """Optional declarative combat schema; limits must match engine.js."""
     if 'combatEffects' not in ability:
@@ -276,6 +308,7 @@ def validate(document):
         raise ValueError('Неверный формат класса или способностей')
     for ability in abilities:
         validate_combat_effects(ability)
+        validate_presentation(ability)
         if 'channeled' in ability and type(ability['channeled']) is not bool:raise ValueError('Проверь настройку поддерживаемого заклинания')
         if 'learningMode' in ability and ability['learningMode'] not in ('base','talent','specialization'):raise ValueError('Неверный способ изучения способности')
         if 'requirements' in ability and ((len(ability['requirements'])>1000) if isinstance(ability['requirements'],str) else (not isinstance(ability['requirements'],list) or len(ability['requirements'])>40 or any(not isinstance(item,str) or not item.strip() or len(item)>100 for item in ability['requirements']) or len(set(ability['requirements']))!=len(ability['requirements']))):raise ValueError('Проверь требования способности')

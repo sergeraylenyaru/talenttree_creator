@@ -49,6 +49,7 @@ export function createWorld(canvas, callbacks, config = world) {
   const target = {x: player.x, y: 1.38, z: player.z};
   const ray = new Raycaster();
   const dummyPoint = new Vector3();
+  const playerPoint = new Vector3();
   const readInput = bindMovement(canvas, document, window, signal);
   document.addEventListener('visibilitychange', () => { lastTime = null; queuedJump = false; }, {signal});
   window.addEventListener('blur', () => { queuedJump = false; }, {signal});
@@ -68,19 +69,33 @@ export function createWorld(canvas, callbacks, config = world) {
   const combatConfig = {...spatialDefaults, ...config.combat};
   const dummyTarget = {
     selected: () => selected,
-    read: () => ({
-      position: {x: dummy.position.x, y: dummy.position.y + combatConfig.aimHeight, z: dummy.position.z},
-      radius: config.dummy.radius ?? 0.72, alive: (callbacks.targetAlive?.() ?? alive) && !signal.aborted
-    })
+    read() {
+      const position = dummy.position.toArray();
+      const bounds = diagnostics.target?.bounds;
+      return {
+        position: {x: position[0], y: position[1] + combatConfig.aimHeight, z: position[2]},
+        bounds: bounds && {
+          min: bounds.min.map((value, i) => value + position[i]),
+          max: bounds.max.map((value, i) => value + position[i])
+        },
+        radius: config.dummy.radius ?? 0.72, alive: (callbacks.targetAlive?.() ?? alive) && !signal.aborted
+      };
+    }
   };
   const combat = createSpatialCombat({
     player: () => player,
     target: () => selected ? dummyTarget : null,
+    areaTarget: () => dummyTarget,
+    move() { queuedJump = true; },
     obstacles: sightObstacles,
-    face(position) { facing = facingTarget(player, position); player.facing = facing; },
-    animate(name, until) {
+    face(position) {
+      facing = position ? facingTarget(player, position) : undefined;
+      if (facing !== undefined) player.facing = facing;
+    },
+    stopAnimation() { controller.clearPose(); },
+    animate(name, until, override, loop = false, duration) {
       const minimum = name === 'meleeAttack' ? combatConfig.windup + 0.18 : 0.18;
-      pose = {name, until, minimum, elapsed: 0, pending: true};
+      pose = {name, until, minimum, elapsed: 0, pending: true, override, loop, duration};
     },
     visuals,
     config: combatConfig
@@ -138,8 +153,9 @@ export function createWorld(canvas, callbacks, config = world) {
       combat.update(time);
       dummy.scale.y = (callbacks.targetAlive?.() ?? alive) ? 1 : 0.72;
     },
-    combatHit(critical) {
-      const state = critical && dummyAnimation?.supports('criticalHit') ? 'criticalHit' : 'hit';
+    combatHit(critical, reactionStyle) {
+      if (reactionStyle === 'none') return;
+      const state = (reactionStyle === 'heavy' || (critical && reactionStyle !== 'normal')) && dummyAnimation?.supports('criticalHit') ? 'criticalHit' : 'hit';
       if (!dummyAnimation?.supports(state)) {
         visuals.react();
         return;
@@ -173,11 +189,12 @@ export function createWorld(canvas, callbacks, config = world) {
         dummyDistance: Math.hypot(player.x - dummy.position.x, player.z - dummy.position.z)
       };
     },
-    clearPose() { pose = undefined; },
+    clearPose() { pose = undefined; facing = undefined; },
     clearCombat() {
       combat.clear();
       visuals.clear();
       pose = undefined;
+      facing = undefined;
       reaction = undefined;
       reactionTime = 0;
     },
@@ -203,7 +220,7 @@ export function createWorld(canvas, callbacks, config = world) {
       // enough rendered time to be seen without delaying the combat result.
       if (pose && !pose.pending) {
         pose.elapsed += dt;
-        if (combatTime >= pose.until && pose.elapsed >= pose.minimum) pose = undefined;
+        if (combatTime >= pose.until && pose.elapsed >= pose.minimum) controller.clearPose();
       }
       const lateral = player.grounded && player.animation !== 'idle'
         ? input.forward < 0 ? (input.sprint ? 'runBack' : 'walkBack')
@@ -217,12 +234,12 @@ export function createWorld(canvas, callbacks, config = world) {
         strafeFacing += Math.max(-12 * dt, Math.min(12 * dt, turn));
         player.facing = strafeFacing;
       } else strafeFacing = undefined;
-      if (pose) player.facing = facing;
+      if (pose && facing !== undefined) player.facing = facing;
       avatar.rotation.y = player.facing;
-      const clip = pose && animation.supports(pose.name);
-      const swingDuration = pose?.name === 'meleeAttack' ? pose.minimum : undefined;
+      const clip = pose && animation.supports(pose.name, pose.override);
+      const swingDuration = pose?.duration;
       animation.update(clip ? pose.name : directionalClip ? lateral : player.animation, dt,
-        Boolean(clip && pose.pending), swingDuration);
+        Boolean(clip && pose.pending), swingDuration, pose?.override, pose?.loop);
       if (weapon) for (const {finger, rotation} of weapon.grip) finger.quaternion.fromArray(rotation);
       if (pose) pose.pending = false;
       // Root tilt is a rig-independent fallback for models without attack clips.
@@ -254,6 +271,13 @@ export function createWorld(canvas, callbacks, config = world) {
       visualPivot.visible = cameraState.clearance >= (config.camera.hideAvatarDistance ?? world.camera.hideAvatarDistance);
       renderer.render(scene, camera);
       projectDummy();
+      if (callbacks.playerMarker) {
+        const point = playerPoint.set(player.x, player.y + 2.2, player.z).project(camera);
+        callbacks.playerMarker({
+          x: Math.max(10, Math.min(90, (point.x + 1) * 50)),
+          y: Math.max(15, Math.min(85, (1 - point.y) * 50))
+        });
+      }
     },
     snapshot() {
       avatar.updateMatrixWorld(true);

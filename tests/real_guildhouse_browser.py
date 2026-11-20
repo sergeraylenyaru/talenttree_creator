@@ -23,6 +23,12 @@ MELEE = {**SEED['abilities'][0], 'id': 'sword-test', 'name': 'Sword strike', 'le
          'range': 0, 'resourceCosts': [], 'cooldown': 1,
          'combatEffects': [SEED['abilities'][0]['combatEffects'][0]]}
 SEED['abilities'][0]['cast'] = 1
+SEED['abilities'][0]['presentation'] = {
+    'category': 'spell', 'delivery': 'ranged', 'castingAnimation': 'cast',
+    'projectile': 'homing', 'projectileSpeed': 5, 'impact': 'fire', 'channelDuration': 6
+}
+MELEE['presentation'] = {'category': 'attack', 'delivery': 'melee',
+                         'attackAnimation': 'twoHand', 'impact': 'melee'}
 SEED['abilities'].insert(1, MELEE)
 
 
@@ -121,8 +127,12 @@ def verify(page, port, screenshots):
         return animated
 
     arena.locator('.tg-world-target').click()
-    ranged = cast('Flame', 'SpellCast')
+    ranged = cast('Flame', ('SpellCast', 'ChannelCastDirected'))
     grip(ranged)
+    channel = wait_for(lambda s: (s['activeClip'] or '').startswith('ChannelCastDirected'), 'channel animation')
+    grip(channel)
+    expect(arena.locator('#tg-cast-phase')).to_have_text('Channeling')
+    shot('05-channeling')
     wait_for(lambda s: 'CombatWound' in s['targetClip'], 'ranged impact')
     expect(arena.locator('[data-event=damage].tg-critical').first).to_be_visible()
     wait_for(lambda s: s['targetClip'].startswith('Stand'), 'dummy recovered')
@@ -132,11 +142,11 @@ def verify(page, port, screenshots):
     page.keyboard.up('KeyW')
     grip(walking)
     wait_for(lambda s: s['activeClip'].startswith('Stand'), 'idle after movement')
-    melee = cast('Sword strike', 'Attack1H')
+    melee = cast('Sword strike', 'Attack2H')
     grip(melee)
     assert math.dist(melee['weaponPosition'], walking['weaponPosition']) > 0.08
     wait_for(lambda s: 'CombatWound' in s['targetClip'], 'melee impact')
-    print('Manual ranged and one-handed melee combat verified', flush=True)
+    print('Manual ranged and two-handed melee combat verified', flush=True)
 
     canvas.focus()
     page.keyboard.down('ShiftLeft')

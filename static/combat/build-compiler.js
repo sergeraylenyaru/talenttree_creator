@@ -64,7 +64,8 @@ export function compileCombatBuild(document, options = {}) {
     ids.add(ability.id);
     const compiled = {
       ...ability,
-      cast: duration(ability.cast),
+      cast: ability.channeled && ability.presentation?.channelDuration === undefined ? 0 : duration(ability.cast),
+      channelDuration: ability.presentation?.channelDuration ?? (ability.channeled ? duration(ability.cast) : 0),
       cooldown: duration(ability.cooldown),
       range: duration(ability.range),
       combatEffects: ability.combatEffects ?? [],
