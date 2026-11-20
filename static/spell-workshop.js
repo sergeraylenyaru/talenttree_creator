@@ -101,6 +101,7 @@ export function workshopOptions(root, ability) {
     const target = get('targeting');
     const byKey = {
       radius:['area','targetArea','ground'].includes(target), areaShape:target==='area',
+      minRange:target!=='area'&&target!=='self', facing:target!=='area'&&target!=='self',
       homingStrength:projectile==='homing', projectileLifetime:['straight','homing'].includes(projectile),
       collisionRadius:['straight','homing'].includes(projectile), projectileSize:['straight','homing'].includes(projectile),
       projectileEffect:['straight','homing'].includes(projectile), flightDirection:projectile==='straight'

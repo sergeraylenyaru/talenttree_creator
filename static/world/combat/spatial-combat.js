@@ -109,6 +109,8 @@ export function createSpatialCombat({animationAvailable, autoAnimate, player, ta
       const ground = profile.targeting === 'ground';
       const zone = area || ground || profile.targeting === 'targetArea';
       const locked = area || ground ? areaTarget?.() : self ? null : target();
+      const turnToTarget = !area && !ground && !forwardShot;
+      const inFront = point => Math.cos(player().facing - facingTarget(player(), point)) >= .5;
       function validate() {
         if (animationAvailable && animationFields.some(key=>isLocalClip(profile[key]) && !animationAvailable(profile[key].slice(5)))) return 'animationMissing';
         if (self) return;
@@ -116,14 +118,14 @@ export function createSpatialCombat({animationAvailable, autoAnimate, player, ta
           if (!groundPoint) return 'groundTarget';
           // Aim above the clicked floor to avoid treating the floor as a wall.
           const point = {...groundPoint, y: groundPoint.y + .15};
-          return validateAttack(origin(), {position: point, alive: true, radius: 0}, profile, obstacles, occlusion);
+          const rejection = validateAttack(origin(), {position: point, alive: true, radius: 0}, profile, obstacles, occlusion);
+          return rejection || (profile.facing && !inFront(point) ? 'facing' : undefined);
         }
         if (area && ability.workshop) return;
         const victim = area || locked?.selected() ? locked?.read() : null;
         const rejection = validateAttack(origin(), victim, profile, obstacles, occlusion);
-        if (rejection || !profile.facing) return rejection;
-        const delta = player().facing - facingTarget(player(), victim.position);
-        if (Math.cos(delta) < .5) return 'facing';
+        if (rejection) return rejection;
+        if (profile.facing && !inFront(victim.position)) return 'facing';
       }
       function zoneImpact(victim) {
         const center = ground ? groundPoint : area ? player() : victim.position;
@@ -163,13 +165,13 @@ export function createSpatialCombat({animationAvailable, autoAnimate, player, ta
         },
         cancel: stopAnimation,
         prepare(duration, now) {
-          if (locked && !forwardShot && locked.read()) face(locked.read().position);
+          if (locked && turnToTarget && locked.read()) face(locked.read().position);
           else if (self) face(null);
           if (profile.casterEffect) visuals.impact(origin(), {...profile, impact: profile.casterEffect});
           pose('spellCast', now, duration, profile.castingAnimation ?? profile.animation);
         },
         channel(duration, now) {
-          if (locked && !forwardShot && locked.read()) face(locked.read().position);
+          if (locked && turnToTarget && locked.read()) face(locked.read().position);
           else if (self) face(null);
           pose('channel', now, duration, profile.castingAnimation ?? 'channel');
         },
@@ -178,7 +180,7 @@ export function createSpatialCombat({animationAvailable, autoAnimate, player, ta
         },
         launch(now, resolve) {
           const victim = locked?.read();
-          if (victim && !forwardShot) face(victim.position);
+          if (victim && turnToTarget) face(victim.position);
           else if (self) face(null);
           const {kind} = profile;
           const state = kind === 'melee' ? 'meleeAttack' : profile.school === 'physical' ? 'rangedAttack' : 'spellCast';

@@ -130,3 +130,19 @@ test('a ground zone placed on empty floor hits only on eligible ticks and cleans
   assert.equal(runtime.statuses.length,0);
   assert.equal(active,0);
 });
+
+test('player-centered cones honor real facing instead of turning to the dummy',()=>{
+  const cone=ability('Cone',[effect()],{presentation:{targeting:'area',projectile:'none',delivery:'ranged'},
+    workshop:{version:1,radius:6,areaShape:'cone'}});
+  const runtime=make([cone]);
+  const player={x:0,y:0,z:0,facing:Math.PI};
+  const dummy={position:{x:0,y:1,z:-5},radius:.5,alive:true};
+  const world=createSpatialCombat({player:()=>player,areaTarget:()=>({read:()=>dummy}),
+    obstacles:[],animate(){},face(){player.facing=0;},visuals:{impact(){}}});
+  runtime.cast(cone.id,world.delivery);
+  assert.equal(player.facing,Math.PI);
+  assert.equal(runtime.state.statistics.totalDamage,0);
+  player.facing=0;
+  runtime.cast(cone.id,world.delivery);
+  assert.equal(runtime.state.statistics.totalDamage,50);
+});
