@@ -71,7 +71,7 @@ export function mountFloatingCombatText(frame) {
         const horizontal = slot.offset * (0.84 + progress * 0.16);
         const rise = 18 + 56 * progress + slot.row * 30;
         slot.anchor.style.left = point.x + '%';
-        slot.anchor.style.top = `max(${52 + rise}px, ${point.y}%)`;
+        slot.anchor.style.top = `max(${155 + rise}px, ${point.y}%)`;
         slot.number.style.transform = `translate(calc(-50% + ${horizontal}px), calc(-100% - ${rise}px))`;
         slot.number.style.opacity = String(Math.min(1, (1 - progress) * 2.7));
       }
