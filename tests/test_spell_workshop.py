@@ -43,6 +43,20 @@ class WorkshopValidation(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     server.validate(invalid)
 
+    def test_instance_provenance_and_owned_rules_round_trip(self):
+        ability = self.doc['abilities'][0]
+        ability['templateSource'] = {'id': 'fireball-template', 'name': 'Fireball'}
+        self.doc['rpg'] = {'version': 1, 'bonuses': [
+            {'id': 'bonus', 'owner': {'kind': 'ability', 'id': ability['id']},
+             'spell': ability['id'], 'stat': 'damage', 'amount': 10}
+        ]}
+        saved = server.validate(copy.deepcopy(self.doc))
+        self.assertEqual(saved['abilities'][0]['templateSource'], ability['templateSource'])
+        self.assertEqual(saved['rpg'], self.doc['rpg'])
+        ability['templateSource']['id'] = None
+        with self.assertRaises(ValueError):
+            server.validate(self.doc)
+
     def test_linked_ids_remain_distinct_with_matching_metadata(self):
         original = self.doc['abilities'][0]
         copy_ability = copy.deepcopy(original)

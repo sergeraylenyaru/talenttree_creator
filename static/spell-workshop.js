@@ -1,3 +1,4 @@
+import {abilityTemplateSnapshot} from './combat/ability-instance.js';
 import {addTranslations, t} from './i18n.js';
 import {workshopFlags, workshopNumbers, soundNames} from './combat/workshop-rules.js';
 import {presentationOptions, presentationPresets} from './combat/presentation.js';
@@ -141,7 +142,7 @@ const templates = [
   ['Быстрый удар','Quick Strike','steel',0,0,{...presentationPresets.sword},[damage('physical',55,{attackCoefficient:.15})]],
   ['Тяжёлый удар','Heavy Strike','steel',0,.5,presentationPresets.twoHand,[damage('physical',140,{attackCoefficient:.35})]],
   ['Выстрел','Physical Shot','steel',24,0,presentationPresets.bow,[damage('physical',75)]],
-  ['Огненный шар','Fireball','ember',26,1.25,presentationPresets.fire,[damage('fire',180,{spellCoefficient:.45})]],
+  ['Огненный шар','Fireball','ember',26,1.25,presentationPresets.fire,[damage('fire',150,{spellCoefficient:.45})]],
   ['Ледяная стрела','Frost Bolt','frost',26,.8,presentationPresets.frost,[damage('frost',110,{spellCoefficient:.35})]],
   ['Удар Света','Holy Strike','light',0,0,{...presentationPresets.sword,impact:'holy'},[damage('holy',110)]],
   ['Свет исцеления','Healing Light','light',0,1,presentationPresets.healing,[healing(220)]],
@@ -158,28 +159,39 @@ const templates = [
 ];
 addTranslations(templates.map(([ru,en])=>[ru,en]));
 
-export function workshopTemplates(resource) {
-  const builtIn = templates.map(([ru,,icon,range,cast,presentation,effects,rules]) => ({
-    name:t(ru),description:'', icon:'forge-'+icon, kind:'active', learningMode:'base', range,cast,cooldown:2,resourceCosts:[],
+export function workshopTemplates(resource, owner = '') {
+  const builtIn = templates.map(([ru,,icon,range,cast,presentation,effects,rules],index) => ({
+    id:'tf-workshop-'+icon+'-'+index,name:t(ru),description:'', icon:'forge-'+icon, kind:'active', learningMode:'base', range,cast,cooldown:2,resourceCosts:[],
     presentation:Object.fromEntries(Object.entries(presentation).filter(([,v])=>v!==undefined)), combatEffects:effects, workshop:{version:1,...rules}
   }));
-  if(resource&&resource.id!=='health')builtIn.push({name:t('Всплеск ресурса'),description:'',icon:'forge-arcane',
+  if(resource&&resource.id!=='health')builtIn.push({id:'tf-workshop-resource',name:t('Всплеск ресурса'),description:'',icon:'forge-arcane',
     kind:'active',learningMode:'base',range:0,cast:0,cooldown:2,resourceCosts:[],workshop:{version:1},
     presentation:{targeting:'self',category:'support',impact:'arcane'},
     combatEffects:[{id:'gain',type:'resource',trigger:'onCast',resourceId:resource.id,unit:'percent',amount:10}]});
-  return [...builtIn,...personalTemplates()];
+  return structuredClone([...builtIn,...personalTemplates(owner)]);
 }
 addTranslations([['Всплеск ресурса','Resource Surge']]);
 const templateKey = 'talentforge-spell-templates-v1';
-export function personalTemplates() {
+function ownerTemplateKey(owner) {
+  if (!owner) return templateKey;
+  // Legacy browser templates had no owner. Preserve them for the first account using them.
+  const legacyOwner = templateKey + ':legacy-owner';
+  if (localStorage.getItem(templateKey) && !localStorage.getItem(legacyOwner)) localStorage.setItem(legacyOwner,owner);
+  const key = templateKey + ':' + owner;
+  if (!localStorage.getItem(key) && localStorage.getItem(legacyOwner) === owner) {
+    localStorage.setItem(key,localStorage.getItem(templateKey));
+  }
+  return key;
+}
+export function personalTemplates(owner = '') {
   try {
-    const list = JSON.parse(localStorage.getItem(templateKey));
-    return Array.isArray(list) ? list.filter(item=>item && typeof item.name==='string') : [];
+    const list = JSON.parse(localStorage.getItem(ownerTemplateKey(owner)));
+    return Array.isArray(list) ? list.filter(item=>item && typeof item.name==='string').map(item=>({...item,id:item.id??'legacy-template:'+item.name})) : [];
   } catch { return []; }
 }
-export function rememberTemplate(ability) {
-  const {id, talentId, branchId, branchOnly, ...template} = ability;
-  const list = personalTemplates().filter(item=>item.name!==ability.name);
+export function rememberTemplate(ability, owner = '', document = {abilities:[]}) {
+  const template = abilityTemplateSnapshot(document,ability);
+  const list = personalTemplates(owner).filter(item=>item.name!==ability.name);
   list.push({...template,learningMode:'base'});
-  localStorage.setItem(templateKey,JSON.stringify(list.slice(-40)));
+  localStorage.setItem(ownerTemplateKey(owner),JSON.stringify(list.slice(-40)));
 }

@@ -1,3 +1,4 @@
+import {validateTemplateSource} from './combat/ability-instance.js';
 import {validateRpg,removeRpgReferences,level60Primary,level60PrimaryBudget} from './combat/rpg-profile.js';
 import {validateWorkshop} from './combat/workshop-rules.js';
 import {validatePresentation} from './combat/presentation.js';
@@ -51,6 +52,7 @@ export function normalize(doc,{allowLegacy=false}={}) {
   for(const key of ['budget','rowCost']) if(!Number.isInteger(doc[key])||doc[key]<0||doc[key]>100000) throw Error('Неверные правила очков');
   if(!Array.isArray(doc.abilities)||doc.abilities.some(a=>!a||typeof a.id!=='string'||!a.id||typeof a.name!=='string'||typeof a.description!=='string')) throw Error('Неверный список способностей');
   if(new Set(doc.abilities.map(a=>a.id)).size!==doc.abilities.length)throw Error('Повторяющийся идентификатор способности');
+  for(const ability of doc.abilities)validateTemplateSource(ability);
   synchronizeAbilityTalents(doc);
   const ids=new Set(),branchIds=new Set();
   for(const b of doc.branches) {

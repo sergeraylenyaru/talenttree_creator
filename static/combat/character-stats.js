@@ -1,3 +1,4 @@
+import {abilityUnlocked} from '../engine.js';
 import {calculateMitigation} from './calculation-engine.js';
 import {combatSchools} from './effect-validation.js';
 import {equippedItems, primaryStats} from './rpg-profile.js';
@@ -9,6 +10,7 @@ export function compileProfile(document, passiveAbilities) {
   const equipment=equippedItems(profile);
   const selected=new Set(passiveAbilities.map(ability=>ability.id));
   const active=owner=>owner.kind==='talent'?(document.build[owner.id]??0)>=(owner.rank??1)
+    :owner.kind==='ability'?document.abilities.some(ability=>ability.id===owner.id&&abilityUnlocked(document,ability))
     :owner.kind==='passive'?selected.has(owner.id):Object.values(equipment).some(item=>item.id===owner.id);
   const passiveStats=passiveAbilities.flatMap(ability=>ability.combatEffects.filter(effect=>
     effect.type==='status'&&effect.target==='player'&&!effect.consumeOnHit));

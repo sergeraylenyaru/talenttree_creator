@@ -1,3 +1,4 @@
+import {copyAbility,copyAbilityIntoDocument,appendAbilityInstance} from './combat/ability-instance.js';
 import {classSpellTemplates,classTemplateLabels,installStarterLibrary,templateClassForPreset} from './combat/class-spell-templates.js';
 import {combatSchools} from './combat/effect-validation.js';
 import {abilityReadiness} from './combat/ability-readiness.js';
@@ -261,9 +262,9 @@ function editAbilityPlacement(b,t,existing){
  };
 }
 function commitTalentAbility(branch,talent,existing,ability,edit=false){
- const next=structuredClone(doc);
+ let next=structuredClone(doc);
  const index=next.abilities.findIndex(entry=>entry.id===ability.id);
- if(index<0)next.abilities.push(ability);
+ if(index<0)next=appendAbilityInstance(doc,ability).document;
  else if(edit)next.abilities[index]=ability;
  doc=placeAbilityTalent(next,ability.id,branch.id,talent.row,talent.col,Boolean(existing),talent);
  changed();render();$('#modal').close();
@@ -283,7 +284,7 @@ function editAbility(existing,onSaved=null,onCancel=null,draft=null,savePlacemen
  const presetClass=selectedTemplateClass();
  const language=getLanguage(),classIds=Object.keys(classTemplateLabels);
  if(presetClass)classIds.unshift(...classIds.splice(classIds.indexOf(presetClass),1));
- const general=workshopTemplates(resource),templates=[...general];
+ const general=workshopTemplates(resource,user?.login),templates=[...general];
  const option=(item,index)=>`<option value="${index}" data-user-content>${esc(item.name)}</option>`;
  const classOptions=classIds.map(classId=>{
   const entries=classSpellTemplates(classId,character(),language),start=templates.length;
@@ -334,7 +335,8 @@ function editAbility(existing,onSaved=null,onCancel=null,draft=null,savePlacemen
  function save(reopen=true){
   const updated=readDraft();
   if(savePlacement){savePlacement(updated);return;}
-  if(existing)doc.abilities[doc.abilities.indexOf(existing)]=updated;else doc.abilities.push(updated);
+  if(existing)doc.abilities[doc.abilities.indexOf(existing)]=updated;
+  else doc=appendAbilityInstance(doc,updated).document;
   changed();render();$('#modal').close();if(reopen&&onSaved)setTimeout(()=>onSaved(updated),0);
  }
  modal('Мастерская заклинаний',body,save,existing?()=>{if(confirm('Удалить способность и её размещения в деревьях?')){doc=removeAbility(doc,a.id);changed();render();$('#modal').close();}}:null);
@@ -371,14 +373,14 @@ function editAbility(existing,onSaved=null,onCancel=null,draft=null,savePlacemen
  $('#applySpellTemplate').onclick=attempt(()=>{
   const index=$('#workshopTemplate').value;
   if(index==='')return;
-  const preset=structuredClone(templates[Number(index)]);
+  const preset=copyAbility(templates[Number(index)],a.id);
   const identity=existing?{name:$('#abilityName').value,description:$('#abilityDescription').value,icon:readIcon()}:null;
   const staged={...a,...preset,...identity,id:a.id,learningMode:$('#abilityLearning').value,talentId:$('#talentLink').value,
    branchId:$('#abilityBranch').value,branchOnly:$('#abilityBranchOnly').checked,channeled:false};
   $('#modal').close();
   editAbility(existing,onSaved,onCancel,staged,savePlacement);
  });
- $('#rememberSpellTemplate').onclick=attempt(()=>{rememberTemplate(readDraft());toast(t('Настройки сохранены как шаблон'));});
+ $('#rememberSpellTemplate').onclick=attempt(()=>{rememberTemplate(readDraft(),user?.login,doc);toast(t('Настройки сохранены как шаблон'));});
  $('#previewSpell').onclick=attempt(()=>{
   const edited=readDraft();
   if(!edited.combatEffects?.length&&edited.presentation?.category!=='movement')throw Error('Нет исполняемых боевых эффектов');
@@ -525,8 +527,9 @@ function openSpellLibrary(){
     });
     modalCancel=openSpellLibrary;break;
    }
-   case 'duplicate': reopenEditor(null,{...structuredClone(ability),id:crypto.randomUUID(),
-     name:ability.name.slice(0,85)+' · '+t('Копия')});break;
+   case 'duplicate': {
+    reopenEditor(null,{...copyAbility(ability),
+     name:ability.name.slice(0,85)+' · '+t('Копия')});break;}
    case 'delete':
     if(confirm('Удалить способность и её размещения в деревьях?')){doc=removeAbility(doc,ability.id);changed();render();refresh();}
     break;
@@ -736,7 +739,7 @@ async function openLibrary(scope,archived=false){
    if(button.dataset.copy){await loadWorkingProject(button.dataset.copy,true);return;}
    if(button.dataset.restoreTree){await api('/projects/'+encodeURIComponent(button.dataset.restoreTree)+'/restore',{});items=items.filter(item=>item.id!==button.dataset.restoreTree);paint();toast('Дерево восстановлено');return;}
    if(button.dataset.remove){const item=items.find(item=>item.id===button.dataset.remove);if(favorites?!confirm('Удалить из избранного?'):!await confirmArchive(item.name))return;await api((favorites?'/favorites/':'/projects/')+encodeURIComponent(button.dataset.remove),{},'DELETE');if(!favorites&&projectId===button.dataset.remove)projectId=null;items=items.filter(item=>item.id!==button.dataset.remove);paint();toast(favorites?'Удалено из избранного':'Дерево отправлено в архив');return;}
-   if(button.dataset.use){const favorite=items.find(item=>item.id===button.dataset.use);if(favorite.kind==='tree'){await openFavoriteTree(favorite);return;}showWorkspace();mode='edit';if(favorite.kind==='ability'){doc.abilities.push({...adaptResourceCosts(structuredClone(favorite.item),character()),id:crypto.randomUUID(),talentId:'',branchId:'',branchOnly:false,learningMode:'base'});changed();render();toast('Способность добавлена');}else{favoritePlacement=structuredClone(favorite.item);render();toast('Нажми на пустую ячейку для размещения таланта');}}
+   if(button.dataset.use){const favorite=items.find(item=>item.id===button.dataset.use);if(favorite.kind==='tree'){await openFavoriteTree(favorite);return;}showWorkspace();mode='edit';if(favorite.kind==='ability'){doc.abilities.push({...adaptResourceCosts(copyAbility(favorite.item),character()),talentId:'',branchId:'',branchOnly:false,learningMode:'base'});changed();render();toast('Способность добавлена');}else{favoritePlacement=structuredClone(favorite.item);render();toast('Нажми на пустую ячейку для размещения таланта');}}
   }catch(error){toast(error.message);}finally{if(button)button.disabled=false;}};
  }catch(error){if(request===libraryRequest&&!$('#library').hidden){$('#libraryItems').setAttribute('aria-busy','false');$('#libraryItems').textContent=error.message;}}
 }
@@ -807,7 +810,7 @@ document.addEventListener('click',()=>{hoverTarget=null;$('#tooltip').hidden=tru
 function pickAbilityForTalent(onPick,onBack,node){
  modal('Добавить способность в талант',`<p class="muted">Выбери способность. Её название, иконка и описание станут основой таланта; способность откроется при изучении таланта.</p><div class="ability-picker-grid">${doc.abilities.map(a=>`<button type="button" data-pick-ability="${esc(a.id)}">${image(a.icon)}<span>${esc(a.name)}</span></button>`).join('')||'<p class="muted">Способностей пока нет. Создай первую ниже.</p>'}</div><div class="talent-source-actions"><button type="button" id="newPickerAbility" class="primary">＋ Добавить способность</button><button type="button" id="backToTalent">← К таланту</button></div>`,null);
  modalCancel=onBack;
- for(const button of document.querySelectorAll('[data-pick-ability]'))button.onclick=()=>{const ability=doc.abilities.find(a=>a.id===button.dataset.pickAbility);$('#modal').close();setTimeout(()=>onPick(ability),0);};
+ for(const button of document.querySelectorAll('[data-pick-ability]'))button.onclick=()=>{const ability=doc.abilities.find(a=>a.id===button.dataset.pickAbility);$('#modal').close();setTimeout(()=>onPick(copyAbility(ability),true),0);};
  $('#backToTalent').onclick=()=>{$('#modal').close();setTimeout(onBack,0);};
  $('#newPickerAbility').onclick=()=>{$('#modal').close();setTimeout(()=>editAbility(null,null,()=>pickAbilityForTalent(onPick,onBack,node),
    {id:crypto.randomUUID(),name:node?.name||'',description:node?.descriptions?.[0]||'',icon:node?.icon||'forge-arcane',
@@ -822,7 +825,7 @@ function abilityCost(a){if(a.resourceCosts||a.resourceType){const choices=classR
 let draggedTalent=null,draggedAbility=null,abilityDragIcon=null;
 $('#trees').addEventListener('dragstart',e=>{const slot=e.target.closest('[data-talent]');if(mode!=='edit'||!slot){e.preventDefault();return;}draggedTalent=slot.dataset.talent;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',draggedTalent);});
 $('#trees').addEventListener('dragover',e=>{if(mode==='edit'&&(draggedTalent||draggedAbility)&&e.target.closest('.slot')){e.preventDefault();e.dataTransfer.dropEffect=draggedAbility?'copy':'move';}});
-$('#trees').addEventListener('drop',e=>{const slot=e.target.closest('.slot');if(mode!=='edit'||(!draggedTalent&&!draggedAbility)||!slot)return;e.preventDefault();try{if(draggedAbility){if(slot.dataset.talent&&!confirm('Заменить талант выбранной способностью?'))return;doc=placeAbilityTalent(doc,draggedAbility,slot.closest('.tree').dataset.branch,Number(slot.dataset.row),Number(slot.dataset.col),!!slot.dataset.talent);}else doc=moveTalent(doc,draggedTalent,slot.closest('.tree').dataset.branch,Number(slot.dataset.row),Number(slot.dataset.col));changed();render();}catch(err){toast(err.message);}finally{draggedTalent=null;draggedAbility=null;abilityDragIcon?.remove();abilityDragIcon=null;}});
+$('#trees').addEventListener('drop',e=>{const slot=e.target.closest('.slot');if(mode!=='edit'||(!draggedTalent&&!draggedAbility)||!slot)return;e.preventDefault();try{if(draggedAbility){if(slot.dataset.talent&&!confirm('Заменить талант выбранной способностью?'))return;const source=doc.abilities.find(ability=>ability.id===draggedAbility);const copied=copyAbilityIntoDocument(doc,source);doc=placeAbilityTalent(copied.document,copied.ability.id,slot.closest('.tree').dataset.branch,Number(slot.dataset.row),Number(slot.dataset.col),!!slot.dataset.talent);}else doc=moveTalent(doc,draggedTalent,slot.closest('.tree').dataset.branch,Number(slot.dataset.row),Number(slot.dataset.col));changed();render();}catch(err){toast(err.message);}finally{draggedTalent=null;draggedAbility=null;abilityDragIcon?.remove();abilityDragIcon=null;}});
 $('#trees').addEventListener('dragend',()=>draggedTalent=null);$('#abilities').addEventListener('dragstart',e=>{const card=e.target.closest('[data-ability]');if(mode!=='edit'||!card){e.preventDefault();return;}draggedAbility=card.dataset.ability;e.dataTransfer.effectAllowed='copy';e.dataTransfer.setData('text/plain',draggedAbility);const img=card.querySelector('img');abilityDragIcon=document.createElement('canvas');abilityDragIcon.width=48;abilityDragIcon.height=48;abilityDragIcon.style.cssText='position:fixed;left:-1000px;top:0;width:48px;height:48px;pointer-events:none';const context=abilityDragIcon.getContext('2d');context.fillStyle='#151a1f';context.fillRect(0,0,48,48);if(img?.complete&&img.naturalWidth)context.drawImage(img,2,2,44,44);else{context.fillStyle='#d6ad66';context.font='28px serif';context.fillText('✦',10,34);}context.strokeStyle='#d6ad66';context.strokeRect(1,1,46,46);document.body.append(abilityDragIcon);e.dataTransfer.setDragImage(abilityDragIcon,24,24);});$('#abilities').addEventListener('dragend',()=>{draggedAbility=null;abilityDragIcon?.remove();abilityDragIcon=null;});
 let iconCatalog=[...icons],iconPromise=null,iconCategories=[],coreIconCatalog=[],customIconCatalog=[],iconCatalogRequest=0,coreIconSources=new Map();
 async function loadIconCatalog(onUpdate=()=>{}){
@@ -849,7 +852,7 @@ async function showFavorites(target=null){
  if(!user){auth();return;}
  try{const {favorites}=await api('/favorites');modal('Избранные таланты и способности',`<p class="muted">Добавляются независимые копии. Зависимости от исходного дерева не переносятся.</p><div class="favorite-list">${favorites.filter(f=>f.kind!=='tree'&&(!target||f.kind==='talent')).map(f=>`<div class="favorite-row">${image(f.item.icon)}<span><strong>${esc(f.item.name)}</strong><br><small>${f.kind==='talent'?'Талант':'Способность'}</small></span><button type="button" data-use-favorite="${esc(f.id)}">Добавить</button><button type="button" data-delete-favorite="${esc(f.id)}" aria-label="Удалить из избранного">×</button></div>`).join('')||'<p>Здесь пока пусто. Открой талант или способность и нажми «В избранное».</p>'}</div>`,null);
  for(const button of document.querySelectorAll('[data-delete-favorite]'))button.onclick=async()=>{try{await api('/favorites/'+button.dataset.deleteFavorite,{},'DELETE');button.closest('.favorite-row').remove();}catch(e){toast(e.message);}};
- for(const button of document.querySelectorAll('[data-use-favorite]'))button.onclick=()=>{const f=favorites.find(f=>f.id===button.dataset.useFavorite);$('#modal').close();showWorkspace();if(mode!=='edit'){mode='edit';render();}if(f.kind==='ability'){doc.abilities.push({...adaptResourceCosts(structuredClone(f.item),character()),id:crypto.randomUUID(),talentId:'',branchId:'',branchOnly:false,learningMode:'base'});changed();render();toast('Способность добавлена');}else if(target){placeFavorite(f.item,target);}else{favoritePlacement=structuredClone(f.item);toast('Нажми на пустую ячейку для размещения таланта');}};
+ for(const button of document.querySelectorAll('[data-use-favorite]'))button.onclick=()=>{const f=favorites.find(f=>f.id===button.dataset.useFavorite);$('#modal').close();showWorkspace();if(mode!=='edit'){mode='edit';render();}if(f.kind==='ability'){doc.abilities.push({...adaptResourceCosts(copyAbility(f.item),character()),talentId:'',branchId:'',branchOnly:false,learningMode:'base'});changed();render();toast('Способность добавлена');}else if(target){placeFavorite(f.item,target);}else{favoritePlacement=structuredClone(f.item);toast('Нажми на пустую ячейку для размещения таланта');}};
  }catch(err){toast(err.message);}
 }
 function placeFavorite(item,target){const b=doc.branches.find(b=>b.id===target.branchId);if(!b||b.talents.some(t=>t.row===target.row&&t.col===target.col)||reserved(b,target.row,target.col)){toast('Ячейка занята талантом или стрелкой');return;}const copy={...structuredClone(item),id:crypto.randomUUID(),row:target.row,col:target.col,requires:''};delete copy.grantedAbilityId;b.talents.push(copy);favoritePlacement=null;changed();render();toast('Талант добавлен из избранного');}

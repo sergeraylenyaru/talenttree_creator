@@ -202,8 +202,8 @@ export function validateRpg(document, resources) {
 
 function validateOwner(owner,talents,abilities,items=[]){
   schema(owner,['kind','id','rank'],'Invalid passive source');
-  const source=owner.kind==='talent'?talents.get(owner.id):owner.kind==='passive'?abilities.get(owner.id):items.find(item=>item.id===owner.id);
-  if(!source||!['talent','passive','item'].includes(owner.kind)||
+  const source=owner.kind==='talent'?talents.get(owner.id):['passive','ability'].includes(owner.kind)?abilities.get(owner.id):items.find(item=>item.id===owner.id);
+  if(!source||!['talent','passive','ability','item'].includes(owner.kind)||
     owner.kind==='passive'&&source.kind!=='passive'||
     owner.rank!==undefined&&(owner.kind!=='talent'||!Number.isInteger(owner.rank)||!number(owner.rank,1,source.maxRank)))fail('Invalid passive source reference');
 }
@@ -211,7 +211,7 @@ function validateOwner(owner,talents,abilities,items=[]){
 export function removeRpgReferences(profile, kind, id){
   if(!profile)return;
   for(const list of ['bonuses','procs'])if(profile[list])profile[list]=profile[list].filter(rule=>
-    !(rule.owner.kind===kind&&rule.owner.id===id)&&!(kind==='passive'&&rule.spell===id));
+    !(rule.owner.kind===kind&&rule.owner.id===id)&&!(kind==='passive'&&(rule.spell===id||rule.owner.kind==='ability'&&rule.owner.id===id)));
   if(kind==='talent')for(const build of profile.builds??[])delete build.talents[id];
   if(kind==='item')for(const equipped of [profile.equipped,...(profile.builds??[]).map(build=>build.equipped)]) {
     for(const [slot,value] of Object.entries(equipped??{}))if(value===id)delete equipped[slot];

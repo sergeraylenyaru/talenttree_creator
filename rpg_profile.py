@@ -195,6 +195,7 @@ def validate_rpg(document, resources):
         if not isinstance(owner_id, str):
             raise ValueError('Invalid passive source reference')
         valid = ((kind == 'talent' and owner_id in talents)
+                 or (kind == 'ability' and owner_id in abilities)
                  or (kind == 'passive' and abilities.get(owner_id, {}).get('kind') == 'passive')
                  or (kind == 'item' and owner_id in library))
         if not valid or 'rank' in owner and (kind != 'talent' or not integer(owner['rank'], 1, talents[owner_id]['maxRank'])):

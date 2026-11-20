@@ -454,6 +454,11 @@ def validate(document):
     if document.get('version') != 1 or not isinstance(abilities, list) or any(not isinstance(a, dict) or any(not isinstance(a.get(k), str) for k in ('id', 'name', 'description', 'icon')) for a in abilities):
         raise ValueError('Неверный формат класса или способностей')
     for ability in abilities:
+        if 'templateSource' in ability:
+            source = ability['templateSource']
+            if (not isinstance(source, dict) or set(source) != {'id', 'name'}
+                    or any(not isinstance(source[key], str) or not 1 <= len(source[key]) <= 200 for key in ('id', 'name'))):
+                raise ValueError('Проверь источник шаблона способности')
         validate_combat_effects(ability)
         validate_workshop(ability)
         validate_presentation(ability)

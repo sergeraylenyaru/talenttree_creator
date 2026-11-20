@@ -298,11 +298,11 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
   }
 
   function sources(kind){
-    return kind==='talent'?talents:kind==='passive'?passive:profile.items;
+    return kind==='talent'?talents:kind==='passive'?passive:kind==='ability'?abilities:profile.items;
   }
   function ownerFields(rule){
     return grid(field('Source type',rule.owner.kind,value=>{rule.owner={kind:value,id:sources(value)[0]?.id??''};render();},
-      {choices:['talent','passive','item']}),
+      {choices:['talent','passive','ability','item']}),
       field('Source',rule.owner.id,change(rule.owner,'id'),{choices:[['','Choose source'],...sources(rule.owner.kind).map(item=>[item.id,item.name])]}),
       ...(rule.owner.kind==='talent'?[field('Minimum talent rank',rule.owner.rank??1,change(rule.owner,'rank'),{...number,min:1,max:100,step:1})]:[]));
   }
@@ -313,7 +313,7 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
   function rendersRules(){
     const root=element('div');
     const type=page==='Talents'?'talent':page==='Abilities'?'passive':null;
-    const matches=rule=>!type||rule.owner.kind===type;
+    const matches=rule=>!type||rule.owner.kind===type||page==='Abilities'&&rule.owner.kind==='ability';
     const bonuses=section('Passive and talent bonuses',
       element('p','Attribute bonuses are added as written. Ability modifiers are percent changes. A passive ability can also contain permanent player stat effects.'));
     for(const rule of profile.bonuses.filter(matches)){
