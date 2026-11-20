@@ -1,3 +1,5 @@
+import {weaponTiming} from '../combat/character-stats.js';
+import {openCombatReview} from './combat-review.js';
 import {createAutoAttack, trainingWeapon} from '../combat/auto-attack.js';
 import {practiceAbilities} from './world-hud.js';
 import {mountTrainingWorld} from './world-integration.js';
@@ -31,22 +33,55 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
   let build = compile();
   const practice = practiceAbilities(build.activeAbilities, build.resources);
   const arenaBuild = () => ({...build, activeAbilities: [...build.activeAbilities, ...practice]});
-  let runtime = createCombatRuntime(arenaBuild(), settings);
-  let auto = createAutoAttack();
-  let basic = practice[0];
-  let swingDelivery;
-  const report = (type, details) => runtime.autoEvent(basic, type, details);
-  function startAuto() {
-    if (auto.status.active || !runtime.state.dummy.health) return;
-    const weapon = world?.weaponCombat();
-    auto = createAutoAttack({...trainingWeapon, swingSeconds: weapon?.swingSeconds ?? trainingWeapon.swingSeconds});
-    basic = {...practice[0], combatEffects: practice[0].combatEffects.map(effect => ({
-      ...effect, baseAmount: weapon?.damage ?? trainingWeapon.damage
-    }))};
-    swingDelivery = world?.delivery(basic);
+  const newRuntime=()=>createCombatRuntime(arenaBuild(),{...settings,seed:build.profile?.seed});
+  let runtime = newRuntime();
+  let auto=createAutoAttack(), offhand, basic=practice[0], swingDelivery, generation=0;
+  const report=(type,details)=>runtime.autoEvent(basic,type,details);
+
+  function stopAuto(){
+    auto.stop();offhand?.clock.stop();
+    generation++;
+  }
+
+  function autoAbility(weapon,off=false){
+    const ranged=weapon.ranged&&!off;
+    return {...practice[0],...(off?{id:practice[0].id+'_off',name:practice[0].name+' · Off hand'}:{}),isAuto:true,weaponType:weapon.type,
+      ...(ranged?{range:24,presentation:{delivery:'ranged',projectile:'straight',attackAnimation:'bow',impact:'melee'}}:{}),
+      combatEffects:practice[0].combatEffects.map(effect=>({...effect,baseAmount:weapon.minDamage,
+        ...(weapon.maxDamage>weapon.minDamage?{minAmount:weapon.minDamage,maxAmount:weapon.maxDamage}:{}),
+        ...(off?{multiplier:.5}:{})}))};
+  }
+
+  function startAuto(){
+    if(auto.status.active||!runtime.state.dummy.health||!runtime.state.player.health)return;
+    const local=world?.weaponCombat();
+    const fallback={swingSeconds:local?.swingSeconds??trainingWeapon.swingSeconds,damage:local?.damage??trainingWeapon.damage};
+    const values=runtime.sheet();
+    const weapon=weaponTiming(values,fallback);
+    auto=createAutoAttack({...trainingWeapon,swingSeconds:weapon.swingSeconds});
+    basic=autoAbility(weapon);
+    swingDelivery=world?.delivery(basic);
+    const extra=build.profile?.equipment?.offHand;
+    offhand=extra?.speed&&!weapon.ranged?(()=>{
+      const ability=autoAbility(extra,true);
+      return {ability,delivery:world?.delivery(ability),
+        clock:createAutoAttack({...trainingWeapon,swingSeconds:extra.speed/values.swingSpeed}),speed:extra.speed};
+    })():undefined;
     auto.start(report);
+    offhand?.clock.start((type,details)=>runtime.autoEvent(offhand.ability,type,details));
     syncClock();
     view.update(runtime);
+  }
+
+  function swing(ability,delivery,startedAt){
+    if(!delivery.projectile){runtime.autoImpact(ability,delivery,startedAt);return;}
+    const token=generation;
+    runtime.autoEvent(ability,'projectileLaunched');
+    delivery.launch(runtime.state.combatTime,(outcome,reason)=>{
+      if(token!==generation)return;
+      runtime.autoEvent(ability,outcome==='hit'?'projectileHit':'projectileMissed',{reason});
+      if(outcome==='hit')runtime.autoImpact(ability,delivery,startedAt);
+    });
   }
   let frame = null;
   let world;
@@ -61,15 +96,28 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
 
   function syncClock() {
     if (runtime.paused) return;
-    const target = combatStart + (performance.now() - realStart) / 1000;
+    const end=preview?Infinity:build.profile?.testDuration??Infinity;
+    const target = Math.min(end,combatStart + (performance.now() - realStart) / 1000);
     runtime.advance(Math.max(0, target - runtime.state.combatTime));
     world?.combatState(runtime.state);
     if (auto.status.active) {
-      auto.update(runtime.state.combatTime, swingDelivery, report,
-        (delivery, startedAt) => runtime.autoImpact(basic, delivery, startedAt));
-      if (!runtime.state.dummy.health) auto.stop();
+      const time=runtime.state.combatTime,values=runtime.sheet();
+      const speed=weaponTiming(values,{swingSeconds:world?.weaponCombat()?.swingSeconds??trainingWeapon.swingSeconds,damage:0}).swingSeconds;
+      auto.update(time,swingDelivery,report,(delivery,start)=>swing(basic,delivery,start),speed);
+      if(offhand)offhand.clock.update(time,offhand.delivery,(type,details)=>runtime.autoEvent(offhand.ability,type,details),
+        (delivery,start)=>swing(offhand.ability,delivery,start),offhand.speed/values.swingSpeed);
+      if(!runtime.state.dummy.health||!runtime.state.player.health)stopAuto();
     }
+    if(target>=end){stopAuto();runtime.setPaused(true);}
     world?.updateHUD();
+  }
+
+  function incoming(){
+    syncClock();
+    if(runtime.incoming()){
+      world?.playerHit();
+      view.update(runtime);
+    }
   }
 
   const view = renderTrainingGrounds(dialog, build, settings, {
@@ -106,7 +154,7 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
     },
     reset() {
       if (picking) { world.pickGround(null); picking = false; }
-      auto.stop();
+      stopAuto();
       runtime.reset();
       world?.clearCombat(runtime.state);
       rebaseClock();
@@ -119,9 +167,9 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
     settings(input) {
       settings = normalizeCombatSettings(input);
       build = compile();
-      auto.stop();
+      stopAuto();
       runtime.cancelSpatial();
-      runtime = createCombatRuntime(arenaBuild(), settings);
+      runtime = newRuntime();
       world?.clearCombat(runtime.state);
       try {
         if (!preview) localStorage.setItem(storageKey, JSON.stringify(settings));
@@ -130,6 +178,12 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
       }
       rebaseClock();
       view.reset(runtime);
+    },
+    review() {
+      if (!preview) openCombatReview({runtime:()=>runtime, portrait:()=>world?.heroPortrait(),
+        weaponBone:()=>world?.weaponBone(), key:layoutId??document.name,
+        incoming:build.profile?.incoming, onIncoming:incoming,
+        pause:()=>dialog.querySelector('#tg-pause').click(),reset:()=>dialog.querySelector('#tg-reset').click()});
     },
     combatText(event) {
       return world?.combatText(event);
@@ -154,22 +208,24 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
   dialog.showModal();
   world = mountTrainingWorld(dialog, {
     preview,
+    review:()=>view.review(),
+    incoming:build.profile?.incoming&&!preview?incoming:undefined,
     movementScale: () => runtime.movementScale(),
     move: () => runtime.moved(),
     enter() { runtime.cancel(); },
-    leave() { picking = false; auto.stop(); runtime.cancelSpatial(); },
-    deselect() { auto.stop(); world?.updateHUD(); },
+    leave() { picking = false; stopAuto(); runtime.cancelSpatial(); },
+    deselect() { stopAuto(); world?.updateHUD(); },
     startAuto,
     autoStatus: () => auto.status,
     toggleAuto() {
-      if (auto.status.active) auto.stop();
+      if (auto.status.active) stopAuto();
       else {
         world.selectDummy();
         startAuto();
       }
     },
     resetTarget() {
-      auto.stop();
+      stopAuto();
       runtime.resetTarget();
       world.clearCombat(runtime.state);
       view.update(runtime);
@@ -193,7 +249,7 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
         view.castAbility(preview);
       }],
       ['Остановить предпросмотр', () => {
-        auto.stop();
+        stopAuto();
         runtime.cancel(true);
         runtime.cancelSpatial();
         runtime.setPaused(true);

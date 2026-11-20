@@ -155,10 +155,11 @@ export function createSpatialCombat({animationAvailable, autoAnimate, player, ta
           return true;
         },
         autoPose(now, duration) {
-          autoAnimate?.(locked.read().position, now + duration, duration);
+          if (profile.kind !== 'projectile') autoAnimate?.(locked.read().position, now + duration, duration);
         },
         autoContact() {
           if (validate()) return false;
+          if (profile.kind === 'projectile') return true;
           launch = {impactPosition: locked.read().position};
           visuals.impact(launch.impactPosition, profile);
           return true;
@@ -173,7 +174,8 @@ export function createSpatialCombat({animationAvailable, autoAnimate, player, ta
         channel(duration, now) {
           if (locked && turnToTarget && locked.read()) face(locked.read().position);
           else if (self) face(null);
-          pose('channel', now, duration, profile.castingAnimation ?? 'channel');
+          const castingAnimation = profile.castingAnimation;
+          pose('channel', now, duration, !castingAnimation || castingAnimation === 'cast' ? 'channel' : castingAnimation);
         },
         critical() {
           if (launch?.impactPosition) visuals.impact(launch.impactPosition, {...profile, critical: true});

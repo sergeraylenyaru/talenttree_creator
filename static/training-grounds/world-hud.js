@@ -193,12 +193,12 @@ export function mountWorldHUD(frame, build, practice, cast, preview) {
     const present = new Set();
     for (const status of runtime.statuses) {
       const {ability,effect,expires,stacks,target} = status;
-      const key=ability.id+'|'+effect.id;
+      const key=JSON.stringify([ability.id,effect.id,status.instance]);
       present.add(key);
       let badge=activeStatuses.get(key);
       if(!badge) {
         badge=document.createElement('span');
-        badge.className='tg-status-effect';
+        badge.className='tg-status-effect';badge.dataset.target=target;
         badge.tabIndex=0;
         const icon=document.createElement('img');
         const iconSrc=iconURL(effect.icon??ability.icon);
@@ -211,10 +211,10 @@ export function mountWorldHUD(frame, build, practice, cast, preview) {
         activeStatuses.set(key,badge);
       }
       const time=Math.max(0,Math.ceil(expires-runtime.state.combatTime));
-      const label=(stacks>1?stacks+'× ':'')+time+' s';
+      const label=(stacks>1?stacks+'× ':'')+time+' s'+(status.remaining==null?'':(' · '+status.remaining));
       if(badge.lastChild.textContent!==label) {
         badge.lastChild.textContent=label;
-        badge.title=(effect.name??ability.name)+' · '+label;
+        badge.title=(effect.name??ability.name)+' · '+label+(effect.description?' · '+effect.description:'');
         badge.setAttribute('aria-label',badge.title);
       }
     }

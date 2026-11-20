@@ -44,7 +44,7 @@ export function mountFloatingCombatText(frame) {
       const slot = slots[index];
       next = (index + 1) % slots.length;
       const healing = event.type === 'healing';
-      slot.healing = healing;
+      slot.healing = healing || event.target==='player';
       slot.expires = now + lifetime;
       slot.anchor.dataset.school = healing ? 'healing' : event.school;
       slot.anchor.classList.toggle('tg-text-critical', event.isCritical);

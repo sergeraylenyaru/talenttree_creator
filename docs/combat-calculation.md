@@ -58,7 +58,8 @@ Dedicated damage/healing functions reject the other effect type. The dispatcher 
 
 ```text
 scalingAmount = (scalingStat == none ? 0 : source[scalingStat]) * coefficient
-rawAmount = baseAmount + scalingAmount
+rawAmount = rolledBaseAmount + scalingAmount + flatBonus
+            + (damage ? flatDamage + weaponDamage * weaponCoefficient : 0)
 
 Damage:
 modifiedAmount = rawAmount * damageMultiplier
@@ -119,3 +120,5 @@ Intermediate overflow and rounded results outside JavaScript safe integer precis
 `calculateMitigation` возвращает только базовые поля mitigation, без `preventedAmount`, поскольку величина эффекта ему не передаётся. У лечения kind=`none`, constant=`null`, reduction=0, multiplier=1, preventedAmount=0.
 
 `calculateMitigation` returns the mitigation fields without preventedAmount, since it receives no effect amount. Healing uses kind=none, constant=null, reduction=0, multiplier=1 and preventedAmount=0.
+
+The arena integration, equipment formulas and shield ordering are documented in [Character Lab and combat analysis](rpg-combat.md).

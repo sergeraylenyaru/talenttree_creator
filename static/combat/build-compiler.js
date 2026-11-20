@@ -1,3 +1,4 @@
+import {compileProfile,deriveCharacterStats} from './character-stats.js';
 import {abilityUnlocked, normalize, total, validBuild} from '../engine.js';
 import {abilityResourceCosts, classResources} from '../resource-costs.js';
 
@@ -84,11 +85,19 @@ export function compileCombatBuild(document, options = {}) {
     (ability.kind === 'passive' ? passiveAbilities : activeAbilities).push(compiled);
   }
 
-  return {
+  const compiled = {
     name: doc.name, icon: doc.classIcon, health: maxHealth, maxHealth, resources,
     knownAbilityIds: doc.abilities.map(ability => ability.id),
     points: total(doc), budget: doc.budget,
     primaryBranch: doc.branches.find(branch => branch.id === doc.primaryBranchId)?.name,
-    stats: normalizeCombatSettings(options).stats, activeAbilities, passiveAbilities
+    stats: normalizeCombatSettings(options).stats, activeAbilities, passiveAbilities,
+    talentBuild: {...doc.build}, baseHealth: maxHealth, baseResources: resources,
+    profile: compileProfile(doc,passiveAbilities)
   };
+  if(compiled.profile){
+    const sheet=deriveCharacterStats(compiled);
+    compiled.health=compiled.maxHealth=sheet.maxHealth;
+    compiled.resources=sheet.resources;
+  }
+  return compiled;
 }

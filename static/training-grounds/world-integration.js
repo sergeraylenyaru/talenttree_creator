@@ -52,6 +52,17 @@ export function mountTrainingWorld(dialog, actions) {
   arena.querySelector('.tg-clock').after(toolbar, stage);
 
   const toggle = toolbar.querySelector('button');
+  if(!actions.preview){
+    const review=document.createElement('button');
+    review.type='button';review.className='tg-rpg-review';review.textContent='Combat analysis';
+    review.onclick=actions.review;toolbar.append(review);
+  }
+  if(actions.incoming){
+    const strike=document.createElement('button');
+    strike.type='button';strike.className='tg-test-incoming';strike.textContent='Test dummy strike';
+    strike.onclick=actions.incoming;toolbar.append(strike);
+  }
+  let heroPortrait;
   const reset = toolbar.querySelector('.tg-target-reset');
   reset.onclick = actions.resetTarget;
   const quality = toolbar.querySelector('select');
@@ -188,7 +199,7 @@ export function mountTrainingWorld(dialog, actions) {
           marker.style.top = y.toFixed(2) + '%';
         },
         combatProjection: combatText.project,
-        portrait(role,url) { hud.portrait(role,url); },
+        portrait(role,url) { if(role==='hero')heroPortrait=url; hud.portrait(role,url); },
         autoAttack: actions.startAuto,
         selection(selected,unit) {
           if (!selected) actions.deselect();
@@ -262,6 +273,9 @@ export function mountTrainingWorld(dialog, actions) {
   }
 
   return {
+    heroPortrait:()=>heroPortrait,
+    weaponBone:()=>controller?.assetReport().assets.weapon?.bone,
+    playerHit:()=>controller?.playerHit(),
     weaponCombat: () => controller?.weaponCombat(),
     selectDummy: () => controller?.selectDummy(),
     updateHUD,

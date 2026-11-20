@@ -9,6 +9,7 @@ import math
 import publications
 from urllib.parse import urlsplit, parse_qs, unquote
 from routing import dependency_routes
+from rpg_profile import validate_rpg
 from functools import lru_cache
 import os
 import re
@@ -202,7 +203,7 @@ def validate_combat_effects(ability):
         return
     effects = ability['combatEffects']
     common = {'id', 'type', 'trigger'}
-    timing = {'duration', 'interval', 'stacks', 'refresh'}
+    timing = {'duration', 'interval', 'stacks', 'refresh', 'snapshot'}
     bonuses = {'flatBonus', 'multiplier', 'critMultiplier', 'attackCoefficient', 'spellCoefficient'}
     def invalid():
         raise ValueError('Проверь боевые эффекты')
@@ -224,29 +225,37 @@ def validate_combat_effects(ability):
         if kind in ('damage', 'healing'):
             fields = {'baseAmount', 'scalingStat', 'coefficient', 'canCrit'} | timing | bonuses
             if kind == 'damage':
-                fields.update(('school', 'minAmount', 'maxAmount'))
+                fields.update(('school', 'minAmount', 'maxAmount','weaponCoefficient'))
                 lo = effect.get('minAmount', effect.get('baseAmount'))
                 hi = effect.get('maxAmount', effect.get('baseAmount'))
                 if (effect.get('school') not in ('physical', 'fire', 'frost', 'arcane', 'nature', 'shadow', 'holy')
                         or not bounded(lo, 0, 1e9) or not bounded(hi, lo, 1e9)):
                     invalid()
-            if (effect.get('scalingStat') not in ('none', 'spellPower', 'attackPower')
+            if (effect.get('scalingStat') not in ('none', 'spellPower', 'attackPower','healingPower')
                     or not bounded(effect.get('baseAmount'), 0, 1e9) or not bounded(effect.get('coefficient'), 0, 1000)
                     or type(effect.get('canCrit')) is not bool):
                 invalid()
             for key in bonuses & effect.keys():
                 if not bounded(effect[key], 0, 1e9 if key == 'flatBonus' else 1000):
                     invalid()
+            if ('weaponCoefficient' in effect and not bounded(effect['weaponCoefficient'],0,1000)
+                    or 'snapshot' in effect and (type(effect['snapshot']) is not bool or 'interval' not in effect)):
+                invalid()
             if ('duration' in effect) != ('interval' in effect):
                 invalid()
             if 'interval' in effect and (not bounded(effect.get('duration'), .25, 300)
                                          or not bounded(effect['interval'], .25, effect['duration'])):
                 invalid()
         elif kind == 'status':
-            fields = {'target', 'name', 'icon', 'stat', 'amount', 'duration', 'stacks', 'refresh'}
+            fields = {'target', 'name', 'description','icon', 'stat', 'amount', 'duration', 'stacks', 'refresh','school','consumeOnHit'}
             target = effect.get('target')
-            stats = ('armor', 'damageTaken') if target == 'dummy' else (
-                'attackPower', 'spellPower', 'critChance', 'movementSpeed', 'healingTaken')
+            stats = ('armor','damageTaken','physicalTaken','magicalTaken') if target == 'dummy' else (
+                'attackPower','spellPower','healingPower','critChance','haste','movementSpeed','healingTaken',
+                'armor','damageTaken','healthRegen','resourceRegen','maxHealth','maxResource','damageDone')
+            if ('school' in effect and (effect.get('stat') != 'damageDone'
+                    or effect['school'] not in ('physical', 'fire', 'frost', 'arcane', 'nature', 'shadow', 'holy'))
+                    or 'consumeOnHit' in effect and (effect.get('stat') != 'damageDone' or type(effect['consumeOnHit']) is not bool)):
+                invalid()
             if 'icon' in effect and (not isinstance(effect['icon'], str) or not re.fullmatch(r'[a-zA-Z0-9_-]{1,100}', effect['icon'])):
                 invalid()
             if (target not in ('player', 'dummy') or effect.get('stat') not in stats
@@ -254,17 +263,28 @@ def validate_combat_effects(ability):
                     or not isinstance(effect.get('name'), str) or not 1 <= len(effect['name'].strip()) <= 100
                     or len(effect['name']) > 100):
                 invalid()
+        elif kind == 'shield':
+            fields = {'name','description','icon','amount','fraction','coefficient','priority','duration','stacks','refresh'}
+            if (not isinstance(effect.get('name'),str) or not effect['name'].strip() or len(effect['name'])>100
+                    or not bounded(effect.get('amount'),0,1e9) or not bounded(effect.get('fraction'),.01,1)
+                    or not bounded(effect.get('coefficient'),0,1000) or type(effect.get('priority')) is not int
+                    or not bounded(effect['priority'],0,100) or not bounded(effect.get('duration'),.25,300)):
+                invalid()
         elif kind == 'resource':
-            fields = {'resourceId', 'amount', 'unit'}
+            fields = {'resourceId', 'amount', 'unit', 'direction'}
             if (not isinstance(effect.get('resourceId'), str) or not 1 <= len(effect['resourceId']) <= 100
                     or effect['resourceId'] == 'health' or effect.get('unit') not in ('points', 'percent', 'count')
-                    or not bounded(effect.get('amount'), 0, 1e9)):
+                    or not bounded(effect.get('amount'), 0, 1e9) or effect.get('direction', 'gain') not in ('gain', 'drain')):
                 invalid()
         else:
             invalid()
+        if 'description' in effect and (not isinstance(effect['description'],str) or len(effect['description'])>3000):
+            invalid()
+        if 'icon' in effect and (not isinstance(effect['icon'],str) or not re.fullmatch(r'[a-zA-Z0-9_-]{1,100}',effect['icon'])):
+            invalid()
         if 'stacks' in effect and (type(effect['stacks']) is not int or not 1 <= effect['stacks'] <= 10):
             invalid()
-        if 'refresh' in effect and effect['refresh'] not in ('refresh', 'keep', 'replace'):
+        if 'refresh' in effect and effect['refresh'] not in ('refresh','refreshOnly','keep','replace','extend','independent'):
             invalid()
         if set(effect) - common - fields:
             invalid()
@@ -479,6 +499,7 @@ def validate(document):
         for field in ('cast','cooldown','range'):
             value=ability.get(field)
             if type(value) not in (int,float) or not math.isfinite(value) or not 0<=value<=1000000000:raise ValueError('Параметры способности должны быть неотрицательными числами')
+    validate_rpg(document,resource_ids)
     return publications.without_build(document)
 
 class Handler(SimpleHTTPRequestHandler):

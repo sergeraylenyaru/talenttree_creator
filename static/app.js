@@ -1,3 +1,5 @@
+import {characterLab} from './character-lab.js';
+import {removeRpgReferences} from './combat/rpg-profile.js';
 import {workshopOptions, workshopTemplates, rememberTemplate} from './spell-workshop.js';
 import {validateWorkshop} from './combat/workshop-rules.js';
 import {presentationEditor} from './ability-presentation-editor.js';
@@ -78,7 +80,7 @@ function render() {if(!$('#aboutPage').hidden&&aboutContent)$('#aboutContent').i
  const foreign=!!activeShare&&!activePublication?.isOwner;$('#editMode').hidden=foreign;$('#copyToSelf').hidden=!foreign;
  $('#editMode').classList.toggle('selected',mode==='edit');$('#playMode').classList.toggle('selected',mode==='play');$('#editMode').setAttribute('aria-pressed',String(mode==='edit'));$('#playMode').setAttribute('aria-pressed',String(mode==='play'));
  $('#primaryBranchSetting').hidden=mode!=='edit';$('#primaryBranchEnabled').checked=usesPrimaryBranch(doc);$('#primaryBranchEnabled').disabled=mode!=='edit';$('#primaryBranchModeLabel').textContent=usesPrimaryBranch(doc)?'С основной веткой':'Без основной ветки';
- $('#addBranch').hidden=mode!=='edit';$('#addBranch').disabled=doc.branches.length>=4;$('#addAbility').hidden=mode!=='edit';$('#spellLibrary').hidden=mode!=='edit';
+ $('#addBranch').hidden=mode!=='edit';$('#addBranch').disabled=doc.branches.length>=4;$('#addAbility').hidden=mode!=='edit';$('#characterLab').hidden=mode!=='edit';$('#spellLibrary').hidden=mode!=='edit';
  $('#hint').hidden=mode==='play';$('#hint').textContent=doc.branches.length>4?'В старом классе пять веток. Удали лишнюю перед сохранением; данные пока сохранены.':'Нажми на пустую ячейку, чтобы создать талант.';
  $('#trees').innerHTML=doc.branches.map(b=>`<article class="tree" ${branchTint(b)} data-branch="${esc(b.id)}"><div class="tree-header"><button class="branch-icon-button" data-action="branch-icon" title="Выбрать иконку ветки" aria-label="Иконка ветки ${esc(b.name)}" ${mode!=='edit'?'disabled':''}>${image(branchIcon(b))}</button><input aria-label="Название ветки" value="${esc(b.name)}" maxlength="80" ${mode!=='edit'?'disabled':''}><span>${b.talents.reduce((s,t)=>s+(doc.build[t.id]||0),0)} очк.</span>${mode==='edit'?'<button data-action="branch-color" aria-label="Цвет фона ветки" title="Цвет фона ветки">◐</button><button data-action="delete-branch" aria-label="Удалить ветку">×</button>':''}</div><div class="talent-grid">${Array.from({length:b.rows*4},(_,i)=>{
  const row=Math.floor(i/4),col=i%4,t=b.talents.find(t=>t.row===row&&t.col===col);
@@ -141,7 +143,7 @@ function drawDependencies(){
 window.addEventListener('resize',drawDependencies);
 function modal(title, body, save, remove) {
  if($('#iconDialog').open)$('#iconDialog').close();
- $('#modal').classList.remove('avatar-picker','compact-emblem-dialog','character-builder-dialog','auth-dialog','ability-editor-dialog','talent-editor-dialog');modalCancel=null;$('#favoriteItem').hidden=true;
+ $('#modal').classList.remove('avatar-picker','compact-emblem-dialog','character-builder-dialog','auth-dialog','ability-editor-dialog','talent-editor-dialog','rpg-lab-dialog');modalCancel=null;$('#favoriteItem').hidden=true;
  $('#modalTitle').toggleAttribute('data-user-content',[...doc.branches.flatMap(b=>b.talents),...doc.abilities].some(x=>x.name===title));$('#modalTitle').textContent=title;$('#modalBody').innerHTML=body;$('#formError').textContent='';modalSave=save;modalDelete=remove;
  $('#submitModal').textContent='Сохранить';$('#submitModal').hidden=!save;$('#deleteItem').hidden=!remove;$('#modal').showModal();
 }
@@ -189,7 +191,7 @@ function editTalent(b,row,col,existing,draft){
   if(!validBuild(doc,doc.build)) doc.build={};changed();render();$('#modal').close();
  },existing?()=>{
   if(!confirm('Удалить талант? Зависимости от него будут сняты.'))return;
-  b.talents=b.talents.filter(x=>x.id!==t.id);for(const x of b.talents)if(x.requires===t.id)x.requires='';for(const a of doc.abilities)if(a.talentId===t.id)a.talentId='';doc.build={};changed();render();$('#modal').close();
+  removeRpgReferences(doc.rpg,'talent',t.id);b.talents=b.talents.filter(x=>x.id!==t.id);for(const x of b.talents)if(x.requires===t.id)x.requires='';for(const a of doc.abilities)if(a.talentId===t.id)a.talentId='';doc.build={};changed();render();$('#modal').close();
  }:null);
  $('#modal').classList.add('talent-editor-dialog');$('#modalBody').insertAdjacentHTML('afterbegin','<div class="talent-source-actions"><button type="button" id="pickFavorite">★ Взять из избранного</button><button type="button" id="pickAbility">＋ Добавить способность</button></div>');
  $('#pickFavorite').hidden=!!existing;$('#pickFavorite').onclick=()=>{$('#modal').close();showFavorites({branchId:b.id,row,col});};
@@ -199,7 +201,7 @@ function editTalent(b,row,col,existing,draft){
 function editAbilityPlacement(b,t,existing){
  const ability=doc.abilities.find(a=>a.id===t.grantedAbilityId);if(!ability){toast('Способность не найдена');return;}
  function eligible(p){if(p.id===t.id||p.row>t.row)return false;let current=p;const seen=new Set();while(current.requires){if(current.requires===t.id||seen.has(current.id))return false;seen.add(current.id);current=b.talents.find(x=>x.id===current.requires);if(!current)return false;}return !!route(b,p,t);}
- modal('Зависимость: '+ability.name,`<label for="requires">ТРЕБУЕТ ТАЛАНТ (ПОЛНЫЙ РАНГ)</label><select id="requires"><option value="">Без зависимости</option>${t.requires&&!b.talents.filter(eligible).some(p=>p.id===t.requires)?`<option value="${esc(t.requires)}" selected>Текущая зависимость: нужно изменить маршрут</option>`:''}${b.talents.filter(eligible).map(p=>`<option data-user-content value="${esc(p.id)}" ${t.requires===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select><p class="muted">Название, иконка и описание берутся из способности и изменяются в списке способностей.</p>`,()=>{const updated=abilityTalentDraft(ability,{...t,requires:$('#requires').value});if([...dependencyRoutes({...b,talents:b.talents.filter(x=>x.id!==updated.id).concat(updated)}).values()].some(p=>!p))throw Error('Стрелки пересекаются или нет свободного пути. Измени зависимость.');if(existing)b.talents[b.talents.indexOf(existing)]=updated;else b.talents.push(updated);if(!existing){ability.learningMode='talent';ability.talentId='';}if(!validBuild(doc,doc.build))doc.build={};changed();render();$('#modal').close();},existing?()=>{if(!confirm('Убрать способность из этой ячейки?'))return;b.talents=b.talents.filter(x=>x.id!==t.id);for(const p of b.talents)if(p.requires===t.id)p.requires='';for(const a of doc.abilities)if(a.talentId===t.id)a.talentId='';doc.build={};changed();render();$('#modal').close();}:null);
+ modal('Зависимость: '+ability.name,`<label for="requires">ТРЕБУЕТ ТАЛАНТ (ПОЛНЫЙ РАНГ)</label><select id="requires"><option value="">Без зависимости</option>${t.requires&&!b.talents.filter(eligible).some(p=>p.id===t.requires)?`<option value="${esc(t.requires)}" selected>Текущая зависимость: нужно изменить маршрут</option>`:''}${b.talents.filter(eligible).map(p=>`<option data-user-content value="${esc(p.id)}" ${t.requires===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select><p class="muted">Название, иконка и описание берутся из способности и изменяются в списке способностей.</p>`,()=>{const updated=abilityTalentDraft(ability,{...t,requires:$('#requires').value});if([...dependencyRoutes({...b,talents:b.talents.filter(x=>x.id!==updated.id).concat(updated)}).values()].some(p=>!p))throw Error('Стрелки пересекаются или нет свободного пути. Измени зависимость.');if(existing)b.talents[b.talents.indexOf(existing)]=updated;else b.talents.push(updated);if(!existing){ability.learningMode='talent';ability.talentId='';}if(!validBuild(doc,doc.build))doc.build={};changed();render();$('#modal').close();},existing?()=>{if(!confirm('Убрать способность из этой ячейки?'))return;removeRpgReferences(doc.rpg,'talent',t.id);b.talents=b.talents.filter(x=>x.id!==t.id);for(const p of b.talents)if(p.requires===t.id)p.requires='';for(const a of doc.abilities)if(a.talentId===t.id)a.talentId='';doc.build={};changed();render();$('#modal').close();}:null);
 }
 function editAbility(existing,onSaved=null,onCancel=null,draft=null){
  const a=draft||existing||{id:crypto.randomUUID(),name:'',description:'',icon:'forge-arcane',workshop:{version:1},resourceUnit:'percent',resource:'',cast:'',cooldown:'',range:'',talentId:'',requirements:'',learningMode:'base'};
@@ -230,6 +232,13 @@ function editAbility(existing,onSaved=null,onCancel=null,draft=null){
   if(updated.branchOnly&&!doc.branches.some(b=>b.id===updated.branchId))throw Error('Выбери ветку для способности');
   for(const key of ['cast','cooldown','range']){updated[key]=Number($('#'+key).value);if(!Number.isFinite(updated[key])||updated[key]<0||updated[key]>1e9)throw Error('Характеристики должны быть неотрицательными числами');}updated.resourceCosts=readCosts();delete updated.resource;delete updated.resourceType;delete updated.resourceUnit;
   validateWorkshop(updated);
+  for(const proc of doc.rpg?.procs??[])if(proc.spell===updated.id&&!updated.combatEffects?.some(effect=>effect.id===proc.effect)){
+    throw Error('Remove the combat trigger that uses this effect before deleting it.');
+  }
+  if(updated.kind!=='passive'&&[...(doc.rpg?.procs??[]),...(doc.rpg?.bonuses??[])]
+    .some(rule=>rule.owner.kind==='passive'&&rule.owner.id===updated.id)){
+    throw Error('Remove the combat rules owned by this passive ability before changing its kind.');
+  }
   const talent=doc.branches.flatMap(b=>b.talents).find(t=>t.id===updated.talentId);
   if(talent&&(rules?.talentRank??1)>talent.maxRank)throw Error('Требуемый ранг превышает максимум таланта');
   if(effects?.some(effect=>effect.type==='resource'&&!classResources(character()).some(r=>r.id===effect.resourceId))) {
@@ -268,6 +277,10 @@ function editAbility(existing,onSaved=null,onCancel=null,draft=null){
     workshop:edited.workshop?{...edited.workshop,hidden:false,disabled:false}:undefined}];
   if(!isolated.abilities[0].workshop)delete isolated.abilities[0].workshop;
   for(const branch of isolated.branches)for(const talent of branch.talents)delete talent.grantedAbilityId;
+  if(isolated.rpg){
+   isolated.rpg.bonuses=(isolated.rpg.bonuses??[]).filter(rule=>rule.owner.kind!=='passive'&&(!rule.spell||rule.spell===edited.id));
+   isolated.rpg.procs=[];
+  }
   openTrainingGrounds($('#trainingGrounds'),isolated,{preview:edited.id});
  });
  $('#saveTestSpell').onclick=attempt(()=>{save(false);$('#openTrainingGrounds').click();});
@@ -294,9 +307,9 @@ function treeClick(e){
    const removed=new Set(doc.branches.flatMap(x=>x.talents.filter(t=>t.row>=rows-1).map(t=>t.id)));
    if(removed.size&&!confirm('Последний ряд содержит таланты. Удалить его во всех ветках вместе с талантами?'))return;
    for(const x of doc.branches){x.rows=rows-1;x.talents=x.talents.filter(t=>!removed.has(t.id));}
-   for(const a of doc.abilities)if(removed.has(a.talentId))a.talentId='';if(doc.budgetAuto)doc.budget=defaultBudget(doc);doc.build={};break;
+   for(const a of doc.abilities)if(removed.has(a.talentId))a.talentId='';for(const tid of removed)removeRpgReferences(doc.rpg,'talent',tid);if(doc.budgetAuto)doc.budget=defaultBudget(doc);doc.build={};break;
   }
-  case 'delete-branch':if(doc.branches.length===1){toast('Нужна хотя бы одна ветка.');return;}if(!confirm(`Удалить ветку «${b.name}» и её таланты?`))return;{const removed=new Set(b.talents.map(t=>t.id));doc.branches=doc.branches.filter(x=>x!==b);if(doc.primaryBranchId===b.id)doc.primaryBranchId='';for(const a of doc.abilities)if(a.branchId===b.id){a.branchId='';a.branchOnly=false;if(a.learningMode==='specialization')a.learningMode='base';}for(const a of doc.abilities)if(removed.has(a.talentId))a.talentId='';doc.build={};}break;
+  case 'delete-branch':if(doc.branches.length===1){toast('Нужна хотя бы одна ветка.');return;}if(!confirm(`Удалить ветку «${b.name}» и её таланты?`))return;{const removed=new Set(b.talents.map(t=>t.id));doc.branches=doc.branches.filter(x=>x!==b);if(doc.primaryBranchId===b.id)doc.primaryBranchId='';for(const saved of doc.rpg?.builds??[])if(saved.primaryBranchId===b.id)saved.primaryBranchId='';for(const a of doc.abilities)if(a.branchId===b.id){a.branchId='';a.branchOnly=false;if(a.learningMode==='specialization')a.learningMode='base';}for(const a of doc.abilities)if(removed.has(a.talentId))a.talentId='';for(const tid of removed)removeRpgReferences(doc.rpg,'talent',tid);doc.build={};}break;
   default:return;
  }
  changed();render();
@@ -574,6 +587,18 @@ function renderCharacter(){
  requestAnimationFrame(()=>{if(!panel.hidden)$('.calc-layout').style.minHeight=Math.ceil(panel.getBoundingClientRect().height+40)+'px';});
 }
 function safeArmory(value){try{const u=new URL(value);return u.protocol==='https:'&&(u.hostname==='wowhead.com'||u.hostname.endsWith('.wowhead.com')||u.hostname==='worldofwarcraft.blizzard.com');}catch{return false;}}
+$('#characterLab').onclick=()=>{
+ const panel=characterLab(doc,{
+  key:projectId?'project:'+projectId:doc.name,
+  save(next){doc=normalize(next,{allowLegacy:true});changed();render();$('#modal').close();},
+  library:()=>{$('#modal').close();openSpellLibrary();},
+  resourcesEditor:()=>{$('#modal').close();$('#characterSettings').click();},
+  training:()=>{$('#modal').close();$('#openTrainingGrounds').click();}
+ });
+ modal('Character Lab','',panel.save);
+ $('#modal').classList.add('rpg-lab-dialog');
+ $('#modalBody').append(panel.root);
+};
 $('#characterSettings').onclick=()=>{
  const builder=characterBuilder({character:character(),budget:doc.budget,automatic:doc.budgetAuto,defaultBudget:defaultBudget(doc),onChooseIcon:(current,onPick)=>{$('#modal').close();modal('Выбрать иконку',iconPicker(current),()=>{onPick(readIcon());openBuilder();});modalCancel=openBuilder;bindPicker();},onSave:(c,budget,automatic)=>{
  if(c.armory&&!safeArmory(c.armory))throw Error(t('Нужна HTTPS-ссылка на Wowhead или официальный сайт World of Warcraft'));
@@ -659,7 +684,7 @@ function updateHistoryButtons(){$('#undo').disabled=!undoStates.length;$('#redo'
 function restoreHistory(redo=false){const previousStructure=JSON.stringify(withoutBuild(doc));const from=redo?redoStates:undoStates,to=redo?undoStates:redoStates;if(!from.length)return;to.push(snapshot());const state=JSON.parse(from.pop());doc=normalize(state.document,{allowLegacy:true});projectId=state.projectId;activeShare=state.share;favoriteTreeId=state.favoriteTreeId||null;persistBrowserBuild();historyCurrent=snapshot();if(JSON.stringify(withoutBuild(doc))!==previousStructure)setDirty(true);try{persistDraft();}catch{}render();$('#saveState').textContent=dirty?'Есть несохранённые изменения':projectId?'Сохранено в аккаунте':'Локальный черновик';refreshShareStats();}
 $('#undo').onclick=()=>restoreHistory();$('#redo').onclick=()=>restoreHistory(true);
 document.addEventListener('keydown',e=>{if($('#modal').open||$('#draftDialog').open||$('#trainingGrounds').open)return;if((e.ctrlKey||e.metaKey)&&!e.target.closest('input,textarea,select')&&['z','y'].includes(e.key.toLowerCase())){e.preventDefault();restoreHistory(e.key.toLowerCase()==='y'||e.shiftKey);}});
-document.addEventListener('click',e=>{if(!user&&e.target.closest('#new,#editMode,#export,#import,#characterSettings,#addBranch,#addAbility')){e.preventDefault();e.stopImmediatePropagation();auth();}},true);
+document.addEventListener('click',e=>{if(!user&&e.target.closest('#new,#editMode,#export,#import,#characterSettings,#characterLab,#addBranch,#addAbility')){e.preventDefault();e.stopImmediatePropagation();auth();}},true);
 function showShareStats(stats){$('#shareStats').hidden=!activeShare||!$('#community').hidden||!$('#library').hidden;if(activeShare&&stats)$('#shareStats').textContent=`Распределяли очки: ${stats.allocated} · Сохранили себе: ${stats.saved}`;}
 async function refreshShareStats(){if(!activeShare){$('#shareStats').hidden=true;return;}const token=activeShare,viewer=user?.login;try{const result=await api('/shared/'+encodeURIComponent(token));if(token===activeShare&&viewer===user?.login){showShareStats(result.stats);showPublication(result.publication);}}catch{}}
 async function trackAllocation(){if(!activeShare||allocationSent)return;allocationSent=true;const token=activeShare;try{const result=await api('/shared/'+encodeURIComponent(token)+'/interact',{});if(activeShare===token){showShareStats(result.stats);showPublication(result.publication);}}catch{allocationSent=false;}}

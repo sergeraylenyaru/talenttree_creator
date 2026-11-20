@@ -50,9 +50,9 @@ function targetContext(value) {
 function calculationContext(value) {
   keys(value, ['source', 'target', 'rules', 'outcome'], 'context');
   const source = read(value, 'source', {});
-  keys(source, ['spellPower', 'attackPower', 'critChance', 'critMultiplier', 'damageMultiplier', 'healingMultiplier', 'schoolDamageMultipliers'], 'source');
+  keys(source, ['spellPower', 'attackPower','healingPower','weaponDamage','flatDamage', 'critChance', 'critMultiplier', 'damageMultiplier', 'healingMultiplier', 'schoolDamageMultipliers'], 'source');
   const normalized = {};
-  for (const key of ['spellPower', 'attackPower', 'critChance']) {
+  for (const key of ['spellPower', 'attackPower','healingPower','weaponDamage','flatDamage', 'critChance']) {
     normalized[key] = number(read(source, key, 0), key, 0, key==='critChance' ? 1 : Number.MAX_VALUE);
   }
   for (const key of ['critMultiplier', 'damageMultiplier', 'healingMultiplier']) {
@@ -101,7 +101,8 @@ function calculate(effect, context, expectedType) {
   const minimum = effect.minAmount ?? effect.baseAmount;
   const maximum = effect.maxAmount ?? effect.baseAmount;
   const rolledAmount = minimum + (maximum - minimum) * outcome.amountRoll;
-  const rawAmount = number(rolledAmount+scalingAmount+(effect.flatBonus ?? 0), 'rawAmount');
+  const rawAmount = number(rolledAmount+scalingAmount+(effect.flatBonus ?? 0)+
+    (damage ? source.flatDamage + source.weaponDamage*(effect.weaponCoefficient??0) : 0), 'rawAmount');
   const isCritical = effect.canCrit && outcome.isCritical;
   const multipliers = {
     source:(damage ? source.damageMultiplier : source.healingMultiplier)*(effect.multiplier ?? 1),

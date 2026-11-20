@@ -1,7 +1,8 @@
 export const trainingWeapon = {swingSeconds: 2, windupSeconds: 0.3, damage: 55};
 
 export function createAutoAttack(weapon = trainingWeapon) {
-  const {swingSeconds, windupSeconds} = weapon;
+  let {swingSeconds} = weapon;
+  const {windupSeconds} = weapon;
   let status = {active: false};
   let due;
   let winding;
@@ -20,7 +21,11 @@ export function createAutoAttack(weapon = trainingWeapon) {
       status = {active: true, remaining: swingSeconds, progress: 0};
       report('autoStarted');
     },
-    update(now, delivery, report, impact) {
+    update(now, delivery, report, impact, interval = swingSeconds) {
+      if(Number.isFinite(interval)&&interval>0&&interval!==swingSeconds){
+        if(due!==undefined&&due>now)due=now+(due-now)*interval/swingSeconds;
+        swingSeconds=interval;
+      }
       if (!status.active) return;
       const reason = delivery ? delivery.validate() : 'invalidTarget';
       if (reason === 'invalidTarget' || reason === 'dummyDead') {

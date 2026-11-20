@@ -251,6 +251,11 @@ export function createWorld(canvas, callbacks, config = world) {
       combat.update(time);
       dummy.scale.y = (callbacks.targetAlive?.() ?? alive) ? 1 : 0.72;
     },
+    playerHit() {
+      if(pose)return;
+      pose={name:'hitReaction',until:combatTime+.35,minimum:.35,elapsed:0,pending:true,
+        override:'CombatWound (ID 9 variation 0)'};
+    },
     combatHit(critical, reactionStyle) {
       if (reactionStyle === 'none') return;
       const state = (reactionStyle === 'heavy' || (critical && reactionStyle !== 'normal')) && dummyAnimation?.supports('criticalHit') ? 'criticalHit' : 'hit';

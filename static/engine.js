@@ -1,3 +1,4 @@
+import {validateRpg,removeRpgReferences} from './combat/rpg-profile.js';
 import {validateWorkshop} from './combat/workshop-rules.js';
 import {validatePresentation} from './combat/presentation.js';
 import {validateCombatEffects} from './combat/effect-validation.js';
@@ -91,6 +92,8 @@ export function normalize(doc,{allowLegacy=false}={}) {
   }
   doc.build=doc.build&&typeof doc.build==='object'&&!Array.isArray(doc.build)?doc.build:{};
   if(!validBuild(doc,doc.build)) doc.build={};
+  validateRpg(doc,classResources(doc.character));
+  if(doc.rpg?.builds?.some(item=>!validBuild(doc,item.talents)))throw Error('Saved build violates talent dependencies');
   return doc;
 }
 
@@ -170,7 +173,7 @@ export function synchronizeAbilityTalents(doc){
  return doc;
 }
 export function abilityUnlocked(doc,ability){if(ability.workshop?.disabled||ability.workshop?.hidden)return false;const rank=ability.workshop?.talentRank??1;if(usesPrimaryBranch(doc)&&ability.branchOnly&&doc.primaryBranchId!==ability.branchId)return false;if(ability.learningMode==='specialization')return !usesPrimaryBranch(doc)||!!doc.primaryBranchId&&doc.primaryBranchId===ability.branchId;if(ability.learningMode==='base')return true;if(ability.learningMode==='talent'&&ability.talentId)return (doc.build[ability.talentId]||0)>=rank;const ids=new Set(doc.branches.flatMap(b=>b.talents).filter(t=>t.grantedAbilityId===ability.id).map(t=>t.id));if(ability.talentId)ids.add(ability.talentId);return (!ids.size&&ability.learningMode!=='talent')||[...ids].some(id=>(doc.build[id]||0)>=rank);}
-export function removeAbility(document,id){const next=structuredClone(document),removed=new Set();next.abilities=next.abilities.filter(a=>a.id!==id);for(const b of next.branches){for(const t of b.talents)if(t.grantedAbilityId===id)removed.add(t.id);b.talents=b.talents.filter(t=>!removed.has(t.id));}for(const b of next.branches)for(const t of b.talents)if(removed.has(t.requires))t.requires='';for(const a of next.abilities)if(removed.has(a.talentId))a.talentId='';next.build={};return next;}
+export function removeAbility(document,id){const next=structuredClone(document),removed=new Set();removeRpgReferences(next.rpg,'passive',id);next.abilities=next.abilities.filter(a=>a.id!==id);for(const b of next.branches){for(const t of b.talents)if(t.grantedAbilityId===id)removed.add(t.id);b.talents=b.talents.filter(t=>!removed.has(t.id));}for(const b of next.branches)for(const t of b.talents)if(removed.has(t.requires))t.requires='';for(const a of next.abilities)if(removed.has(a.talentId))a.talentId='';for(const tid of removed)removeRpgReferences(next.rpg,'talent',tid);next.build={};return next;}
 
 export function branchIcon(branch){return branch.icon||branch.talents[0]?.icon||'inv_misc_questionmark';}
 export function abilityBranchIds(doc,ability){

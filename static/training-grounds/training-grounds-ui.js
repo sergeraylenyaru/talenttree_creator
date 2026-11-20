@@ -41,6 +41,10 @@ const eventLabels = {
   projectileHit: ['Снаряд попал', 'Projectile hit'],
   projectileMissed: ['Снаряд не попал', 'Projectile missed'],
   attackMissed: ['Атака не попала', 'Attack missed'],
+  incomingDamage:['Входящий урон','Incoming damage'], absorbed:['Поглощено щитом','Shield absorbed'],
+  statusExpired:['Эффект завершён','Status expired'], cooldownCompleted:['Перезарядка завершена','Cooldown completed'],
+  procTriggered:['Сработал триггер','Proc triggered'], resourceLost:['Потерян ресурс','Resource lost'],
+  healthRegen:['Восстановлено здоровье','Health regenerated'],
   resourceGained: ['Получен ресурс', 'Resource gained'],
   statusApplied: ['Наложен эффект', 'Status applied'],
   autoStarted: ['Автоатака началась', 'Autoattack started'],
@@ -56,6 +60,7 @@ const statusLabels = {
   dummyDead: ['Манекен побеждён. Сбрось бой, чтобы продолжить.', 'Dummy defeated. Reset combat to continue.'],
   invalidTarget: ['Выбери манекен', 'Select the dummy'],
   animationMissing: ['Выбранная анимация отсутствует в локальной модели', 'The selected animation is missing from the local model'],
+  playerDead:['Герой повержен','Hero defeated'],
   facing: ['Повернись к цели', 'Face the target'],
   tooNear: ['Цель слишком близко', 'Target too close'],
   groundTarget: ['Выбери точку на земле', 'Choose a point on the ground'],
@@ -256,8 +261,8 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
         ? ` · ${fmt(event.amount)} сек. / GCD ${fmt(event.globalCooldown)} сек.`
         : event.amount !== undefined ? ` · ${fmt(event.amount)}` : '';
       return `<li data-event="${event.type}" class="${event.isCritical ? 'tg-critical' : ''}">
-        <time>${event.time.toFixed(1)}</time> <strong>${eventLabels[event.type][0]}</strong>
-        ${userText(event.abilityName)}${detail}${event.resourceName || event.statusName ? ' ' + userText(event.resourceName ?? event.statusName) : ''}
+        <time>${event.time.toFixed(1)}</time> <strong>${(eventLabels[event.type]?.[0] ?? event.type)}</strong>
+        ${userText(event.abilityName)}${detail}${event.resourceName || event.statusName || event.procName ? ' ' + userText(event.resourceName ?? event.statusName ?? event.procName) : ''}
         ${event.isCritical ? '<b>Крит</b>' : ''}</li>`;
     }).join('');
     for (const event of events) {
@@ -269,6 +274,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
         replaceText($('#tg-feedback'), t((statusLabels[event.reason] ?? eventLabels[event.type])[0]));
       }
       const healing = event.type === 'healing';
+      if (event.type==='incomingDamage'&&event.amount) actions.combatText?.(event);
       if (!healing && event.type !== 'damage') continue;
       const amount = healing ? event.effective : event.amount;
       if (!amount) continue;
@@ -293,7 +299,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
     replaceText($('#tg-time'), state.combatTime.toFixed(1) + ' s');
     setVital(0, player.health, player.maxHealth);
     build.resources.forEach((resource, index) => setVital(index + 1, player.resources[resource.id].current,
-      resource.max, resource.unit === 'percent' ? '%' : ''));
+      player.resources[resource.id].max, resource.unit === 'percent' ? '%' : ''));
     setVital(meters.length - 1, dummy.health, dummy.maxHealth);
     $('#tg-cast').hidden = !activeCast;
     if (activeCast) {
@@ -385,7 +391,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
   };
 
   return {
-    update, castAbility,
+    update, castAbility, review:actions.review,
     reset(runtime) {
       $('#tg-feedback').replaceChildren();
       $('#tg-floats').replaceChildren();

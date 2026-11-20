@@ -21,12 +21,12 @@ function arena({range = 0, health = 1000, obstacles = [], cast = 0, trigger = 'o
   const player = {x: 0, y: 0, z: 0};
   const victim = {position: {x: 0, y: 1.25, z: -2.5}, radius: 0.72};
   let selected = true, exists = true;
-  const view = {animations: [], hits: 0, removed: 0, facing: null};
+  const view = {animations: [], clips: [], hits: 0, removed: 0, facing: null};
   const target = {selected: () => selected, read: () => exists ? {...victim, alive: runtime.state.dummy.health > 0} : null};
   const world = createSpatialCombat({
     player: () => player, target: () => selected ? target : null, areaTarget: () => target, obstacles,
     face: position => { view.facing = facingTarget(player, position); },
-    animate: name => view.animations.push(name),
+    animate(name, until, clip) { view.animations.push(name); view.clips.push(clip); },
     visuals: {
       spawn: () => ({}), remove: () => view.removed++, move() {},
       impact: () => view.hits++
@@ -167,6 +167,7 @@ test('preparation and channeling keep payment deferred and cancellation releases
   assert.equal(a.castAbility().ok, true);
   a.advance(0.6);
   assert.deepEqual(a.view.animations, ['spellCast', 'channel']);
+  assert.deepEqual(a.view.clips, ['SpellCastDirected (ID 53 variation 0)', 'ChannelCastDirected (ID 124 variation 0)']);
   assert.equal(a.runtime.state.player.resources.mana.current, 80);
   a.runtime.cancel();
   a.advance(3);
