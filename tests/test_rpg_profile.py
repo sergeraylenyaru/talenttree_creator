@@ -23,6 +23,17 @@ class RpgProfileValidation(unittest.TestCase):
         del legacy['rpg']
         self.assertNotIn('rpg', server.validate(legacy))
 
+    def test_explicit_cataclysm_profile_and_rating_fields(self):
+        self.doc['rpg']['combatRules'] = {'version': 'cataclysm-4.3.4', 'classId': 'mage',
+                                          'targetLevel': 88, 'position': 'behind'}
+        self.doc['rpg']['attributes']['spellHitRating'] = 1741.582
+        self.assertEqual(server.validate(copy.deepcopy(self.doc))['rpg'], self.doc['rpg'])
+        for field, value in [('version', 'retail'), ('classId', 'monk'), ('targetLevel', True), ('ratingScale', 0)]:
+            bad = copy.deepcopy(self.doc)
+            bad['rpg']['combatRules'][field] = value
+            with self.assertRaises(ValueError):
+                server.validate(bad)
+
     def test_primary_budget_only_limits_base_attributes(self):
         self.doc['rpg']['primaryBudget'] = 30
         self.item['stats']['stamina'] = 100

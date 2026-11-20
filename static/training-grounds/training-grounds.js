@@ -1,3 +1,4 @@
+import {createCombatClock} from '../combat/combat-clock.js';
 import {weaponTiming} from '../combat/character-stats.js';
 import {openCombatReview} from './combat-review.js';
 import {createAutoAttack, trainingWeapon} from '../combat/auto-attack.js';
@@ -86,18 +87,16 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
   let frame = null;
   let world;
   let picking = false;
-  let realStart = performance.now();
-  let combatStart = 0;
+  const clock=createCombatClock(performance.now());
 
   function rebaseClock() {
-    realStart = performance.now();
-    combatStart = runtime.state.combatTime;
+    clock.rebase(performance.now(),runtime.state.combatTime);
   }
 
   function syncClock() {
     if (runtime.paused) return;
     const end=preview?Infinity:build.profile?.testDuration??Infinity;
-    const target = Math.min(end,combatStart + (performance.now() - realStart) / 1000);
+    const target = Math.min(end,clock.time(performance.now()));
     runtime.advance(Math.max(0, target - runtime.state.combatTime));
     world?.combatState(runtime.state);
     if (auto.status.active) {
@@ -149,6 +148,10 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
       if (picking) { world.pickGround(null); picking = false; }
       runtime.cancel();
       view.update(runtime);
+    },
+    speed(value) {
+      syncClock();
+      clock.setRate(value,performance.now(),runtime.state.combatTime);
     },
     pause() {
       syncClock();

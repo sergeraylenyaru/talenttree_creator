@@ -1,3 +1,4 @@
+import {ratingStats,validateCombatRules} from './rulesets.js';
 import {combatSchools} from './effect-validation.js';
 
 export const primaryStats = ['strength','agility','intellect','stamina','spirit'];
@@ -10,7 +11,7 @@ export function primaryPointsUsed(stats){
 
 export const level60PrimaryBudget = primaryPointsUsed(level60Primary);
 export const secondaryStats = [
-  'attackPower','spellPower','healingPower','critChance','critMultiplier','haste','mastery','versatility',
+  ...ratingStats,'attackPower','spellPower','healingPower','critChance','critMultiplier','haste','mastery','versatility',
   'armor','physicalResistance',...combatSchools.filter(school=>school!=='physical').map(school=>school+'Resistance'),
   'maxHealth','healthRegen','resourceRegen','movementSpeed','meleePower','rangedPower','spellDamage','cooldownRecovery'
 ];
@@ -109,7 +110,8 @@ export function validateRpg(document, resources) {
   const resourceIds=resources.filter(resource=>resource.id!=='health').map(resource=>resource.id);
   const targets=[...secondaryStats,...resourceIds.map(id=>'resource:'+id)];
   schema(profile,['version','level','primaryBudget','attributes','formulas','items','equipped','restrictions','hasteUses','autoSlot',
-    'resources','bonuses','procs','builds','incoming','seed','testDuration'],'Invalid RPG profile fields');
+    'resources','bonuses','procs','builds','incoming','seed','testDuration','combatRules'],'Invalid RPG profile fields');
+  validateCombatRules(profile);
   if(profile.version!==1)fail('Unsupported RPG profile version');
   if(profile.seed!==undefined&&(!Number.isInteger(profile.seed)||!number(profile.seed,0,4294967295)))fail('Invalid test seed');
   if(profile.testDuration!==undefined&&!number(profile.testDuration,1,3600))fail('Invalid measurement duration');

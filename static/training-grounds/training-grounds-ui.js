@@ -74,7 +74,7 @@ export function registerTrainingTranslations() {
   addTranslations([
     ...Object.values(statLabels), ...schoolLabels, ...Object.values(metrics), ...Object.values(eventLabels),
     ...Object.values(statusLabels),
-    ['Тренировочная площадка', 'Training Grounds'], ['Вернуться к дереву', 'Return to tree'],
+    ['Скорость боя','Combat speed'],['Тренировочная площадка', 'Training Grounds'], ['Вернуться к дереву', 'Return to tree'],
     ['Пауза', 'Pause'], ['Продолжить бой', 'Resume combat'], ['Сбросить бой', 'Reset combat'],
     ['Манекен', 'Training dummy'], ['Боевой таймер', 'Combat timer'],
     ['Отменить применение', 'Cancel cast'], ['Боевые способности', 'Combat abilities'],
@@ -185,6 +185,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
         <span>Очки билда · ${build.points} / ${build.budget}</span>
         ${build.primaryBranch ? userText(build.primaryBranch) : ''}</p></div>
       <div class="tg-controls"><button type="button" id="tg-pause"></button>
+        <label>Скорость боя<select id="tg-speed"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
         <button type="button" id="tg-reset">Сбросить бой</button></div>
     </div>
     <div class="tg-layout">
@@ -230,6 +231,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
 
   const $ = selector => dialog.querySelector(selector);
   const buttons = [...dialog.querySelectorAll('.tg-ability')];
+  $('#tg-speed').onchange=event=>actions.speed(Number(event.target.value));
   const castIcon = $('#tg-cast-icon');
   castIcon.onload = () => { castIcon.hidden = false; };
   castIcon.onerror = () => { castIcon.hidden = true; };

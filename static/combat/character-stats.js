@@ -1,3 +1,4 @@
+import {combatRuleValues} from './rulesets.js';
 import {abilityUnlocked} from '../engine.js';
 import {calculateMitigation} from './calculation-engine.js';
 import {combatSchools} from './effect-validation.js';
@@ -46,6 +47,14 @@ export function deriveCharacterStats(build,statuses=[]){
     }
   }
   for(const rule of profile?.formulas??[])add(rule.from+' × '+rule.factor,rule.to,nonnegative(stats[rule.from]??0)*rule.factor);
+  const combatRules=combatRuleValues(profile,stats);
+  if(combatRules){
+    add('Cataclysm primary attributes','attackPower',combatRules.attackPower);
+    add('Cataclysm primary attributes','spellPower',combatRules.spellPower);
+    add('Cataclysm primary attributes','maxHealth',combatRules.health);
+    add('Cataclysm rating','haste',combatRules.haste*100);
+    add('Cataclysm rating','critChance',combatRules.crit);
+  }
   function percent(key){
     return modifier(statuses,'player',key)+(profile?.passiveStats??[]).reduce((total,effect)=>
       effect.stat===key?total+effect.amount/100:total,0);
@@ -58,11 +67,12 @@ export function deriveCharacterStats(build,statuses=[]){
   const haste=(stats.haste??0)/100+percent('haste');
   const cooldownRecovery=boosted('cooldownRecovery')/100;
   const speed=key=>profile?.hasteUses?.includes(key)?Math.max(.1,1+haste):1;
-  const versatile=boosted('versatility')/100;
-  const mastery=boosted('mastery')/100;
+  const versatile=combatRules?0:boosted('versatility')/100;
+  const mastery=combatRules?0:boosted('mastery')/100;
   const swing=equipment[profile?.autoSlot??'mainHand'];
   const maxHealth=Math.max(1,Math.round(((build.baseHealth??build.maxHealth)+(stats.maxHealth??0))*(1+percent('maxHealth'))));
   return {
+    combatRules,
     primary:Object.fromEntries(primaryStats.map(key=>[key,nonnegative(stats[key])])),
     source:{
       attackPower:boosted('attackPower'),spellPower:boosted('spellPower'),
@@ -81,7 +91,7 @@ export function deriveCharacterStats(build,statuses=[]){
     damageModifiers:[...statuses.filter(status=>status.target==='player'&&status.effect.stat==='damageDone'),
       ...(profile?.passiveStats??[]).filter(effect=>effect.stat==='damageDone').map(effect=>({effect,stacks:1}))],
     resources:(build.baseResources??build.resources).map(resource=>{
-      const max=Math.max(1,Math.round((resource.max+(stats['resource:'+resource.id]??0))*(1+percent('maxResource'))));
+      const max=Math.max(1,Math.round((resource.max+(stats['resource:'+resource.id]??0)+(combatRules&&/mana/i.test(resource.id)?combatRules.mana:0))*(1+percent('maxResource'))));
       return {...resource,max,current:Math.min(max,resource.current),...profile?.resources?.[resource.id]};
     }),
     mitigation:{physical:calculateMitigation('physical',{armor}).reduction,

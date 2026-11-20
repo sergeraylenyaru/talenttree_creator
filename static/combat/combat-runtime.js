@@ -4,7 +4,7 @@ import {createSessionReport,seededRandom} from './session-report.js';
 import {addStatus, modifier, nextStatusBoundary} from './active-effects.js';
 import {isHostileEffect} from './workshop-rules.js';
 import {normalizeCombatSettings} from './build-compiler.js';
-import {calculateCombatEffect, rollCritical} from './calculation-engine.js';
+import {calculateCombatEffect, rollCritical, rollAttackOutcome} from './calculation-engine.js';
 import {applyCombatResult, createCombatState, spendResources} from './combat-state.js';
 
 export function createCombatRuntime(build, options = {}) {
@@ -151,7 +151,7 @@ export function createCombatRuntime(build, options = {}) {
   function entry(type, ability, details = {}) {
     return {
       id: ++eventId, time: state.combatTime, type, ...(procDepth?{depth:procDepth}:{}),
-      abilityId: ability.id, abilityName: ability.name, ...details
+      source:ability.id===''&&ability.name==='Training dummy'?'dummy':'player',target:type==='damage'?'dummy':'player',abilityId: ability.id, abilityName: ability.name, ...details
     };
   }
 
@@ -273,21 +273,36 @@ export function createCombatRuntime(build, options = {}) {
       const matches=effect.type==='damage'?values.damageModifiers.filter(({effect:bonus})=>
         (!bonus.school||bonus.school===effect.school)&&(!bonus.consumeOnHit||!pulse)):[];
       const damageModifier=Math.max(0,1+matches.reduce((sum,bonus)=>sum+bonus.effect.amount*bonus.stacks/100,0));
+      const rules=values.combatRules;
+      const physical=effect.school==='physical';
+      const gap=rules?Math.max(0,rules.targetLevel-rules.level):0;
+      const melee=physical&&!ranged;
+      const chances=rules&&effect.type==='damage'&&!pulse?{
+        miss:Math.max(0,(physical ? .05+gap*.01 : .04+gap*.043333333)-(physical?rules.hit:rules.spellHit)),
+        dodge:melee?Math.max(0,.05+gap*.005-rules.expertise):0,
+        parry:melee&&rules.position==='front'?Math.max(0,.05+gap*.03-rules.expertise):0,
+        block:physical&&rules.position==='front'?.05:0,
+        glancing:ability.isAuto&&melee?Math.min(.24,gap*.08):0
+      }:undefined;
+      const outcome=chances?rollAttackOutcome(chances,random()):'hit';
+      const avoided=['miss','dodge','parry'].includes(outcome);
       const result = calculateCombatEffect(effect, {
         source:{...source,damageMultiplier:source.damageMultiplier*damageModifier,
           flatDamage:effect.school==='physical'?(ranged?values.rangedPower:values.meleePower):values.spellDamage,
           weaponDamage:weapon?(weapon.minDamage+weapon.maxDamage)/2:0
         },
         target: effect.type === 'damage' ? {
-          armor: state.dummy.armor * targetModifier('armor'), resistances: state.dummy.resistances,
+          armor: state.dummy.armor * targetModifier('armor')*(1-(rules?.armorPenetration??0)),
+          resistances:Object.fromEntries(Object.entries(state.dummy.resistances).map(([school,value])=>[school,Math.max(0,value-(rules?.spellPenetration??0))])),
           damageTakenMultiplier: state.dummy.damageTakenMultiplier * targetModifier('damageTaken') * targetModifier(effect.school==='physical'?'physicalTaken':'magicalTaken')
         } : {healingTakenMultiplier: settings.healingTakenMultiplier * Math.max(0, 1 + stat('healingTaken'))},
-        outcome: {isCritical: effect.canCrit && rollCritical(source.critChance, random()),
+        ...(rules?{rules:{armorConstant:rules.armorConstant,resistanceConstant:rules.resistanceConstant}}:{}),
+        outcome: {isCritical: !avoided&&!['glancing','block'].includes(outcome)&&effect.canCrit && rollCritical(source.critChance, random()),
           ...(effect.minAmount !== undefined || effect.maxAmount !== undefined ? {amountRoll:random()} : {})}
       });
-      const finalAmount = result.finalAmount * stacked;
+      const finalAmount = avoided?0:Math.round(result.finalAmount*stacked*(outcome==='block'?.7:outcome==='glancing'?.75:1));
       if (!Number.isSafeInteger(finalAmount)) throw new RangeError('Stacked result exceeds safe integer precision');
-      return {...result, finalAmount, periodic:pulse, stacks:stacked, weaponType,
+      return {...result, outcome, blocked:outcome==='block'?result.finalAmount*stacked-finalAmount:0, finalAmount, periodic:pulse, stacks:stacked, weaponType,
         consumed:matches.filter(bonus=>bonus.effect.consumeOnHit).map(bonus=>bonus.instance)};
     });
   }
@@ -331,9 +346,12 @@ export function createCombatRuntime(build, options = {}) {
       const applied = applyCombatResult(state, ability, result, startedAt);
       state = applied.state;
       const {amount, effective, overhealing, overkill} = applied;
-      if (result.type === 'damage' && amount <= 0) continue;
+      if (result.type === 'damage' && amount <= 0) {
+        if(result.outcome!=='hit')events.push(entry(result.outcome,ability,{target:'dummy',school:result.school,amount:0}));
+        continue;
+      }
       events.push(entry(result.type, ability, {
-        amount, effective, overhealing, overkill, school: result.school, icon: ability.icon, effectId: result.effectId, isCritical: result.isCritical,
+        outcome:result.outcome,blocked:result.blocked??0,amount, effective, overhealing, overkill, school: result.school, icon: ability.icon, effectId: result.effectId, isCritical: result.isCritical,
         original:result.baseAmount*result.stacks, bonus:(result.modifiedAmount-result.baseAmount)*result.stacks,
         raw:result.rawAmount*result.stacks, modified:result.modifiedAmount*result.stacks, critical:(result.criticalAmount-result.modifiedAmount)*result.stacks,
         mitigated:result.mitigation.preventedAmount*result.stacks, absorbed:0, periodic:result.periodic, auto:Boolean(ability.isAuto),
@@ -431,16 +449,27 @@ export function createCombatRuntime(build, options = {}) {
       if(!hit||paused||!state.player.health||!state.dummy.health)return false;
       const values=sheet();
       const ability={id:'',name:'Training dummy'};
+      const rules=values.combatRules;
+      const outcome=rules&&hit.school==='physical'?rollAttackOutcome({
+        dodge:rules.dodge,parry:rules.parry,block:rules.block
+      },random()):'hit';
+      if(['dodge','parry'].includes(outcome)){
+        log([entry(outcome,ability,{target:'player',amount:0,school:hit.school})]);
+        return true;
+      }
       const result=calculateCombatEffect({id:'dummy-hit',type:'damage',trigger:'onHit',school:hit.school,
         baseAmount:hit.amount,scalingStat:'none',coefficient:0,canCrit:false},
-        {target:{armor:values.armor,resistances:values.resistance,damageTakenMultiplier:values.defense}});
+        {target:{armor:values.armor,resistances:values.resistance,damageTakenMultiplier:values.defense},
+         ...(rules?{rules:{armorConstant:rules.armorConstant,resistanceConstant:rules.resistanceConstant}}:{})});
+      const blocked=outcome==='block'?Math.round(result.finalAmount*.3):0;
+      result.finalAmount-=blocked;
       const events=[];
       const {remaining,absorbed}=absorb(result,events);
       const amount=Math.min(state.player.health,remaining);
       state={...state,player:{...state.player,health:state.player.health-amount}};
       events.push(entry('incomingDamage',ability,{target:'player',school:hit.school,amount,original:hit.amount,
         bonus:result.modifiedAmount-hit.amount,critical:0,mitigated:result.mitigation.preventedAmount,
-        absorbed,overkill:remaining-amount}));
+        outcome,blocked,absorbed,overkill:remaining-amount}));
       if(!state.player.health)cancelCast(true);
       log(events);
       return true;

@@ -4,7 +4,10 @@ import re
 
 SCHOOLS = ('physical', 'fire', 'frost', 'arcane', 'nature', 'shadow', 'holy')
 PRIMARY = ('strength', 'agility', 'intellect', 'stamina', 'spirit')
-SECONDARY = (
+RATING_STATS = ('hitRating','spellHitRating','expertiseRating','critRating','hasteRating','masteryRating',
+                'dodgeRating','parryRating','blockRating','spellPenetration','armorPenetration','hitChance',
+                'spellHitChance','expertise','dodgeChance','parryChance','blockChance')
+SECONDARY = RATING_STATS + (
     'attackPower', 'spellPower', 'healingPower', 'critChance', 'critMultiplier', 'haste', 'mastery',
     'versatility', 'armor', 'physicalResistance', 'maxHealth', 'healthRegen', 'resourceRegen',
     'movementSpeed', 'meleePower', 'rangedPower', 'spellDamage', 'cooldownRecovery'
@@ -126,7 +129,7 @@ def validate_rpg(document, resources):
     profile = document['rpg']
     record(profile, ('version', 'level', 'primaryBudget', 'attributes', 'formulas', 'items', 'equipped', 'restrictions',
                      'hasteUses', 'autoSlot', 'resources', 'bonuses', 'procs', 'builds', 'incoming', 'seed',
-                     'testDuration'), 'Invalid RPG profile fields')
+                     'testDuration', 'combatRules'), 'Invalid RPG profile fields')
     if type(profile.get('version')) is not int or profile['version'] != 1:
         raise ValueError('Unsupported RPG profile version')
     if (not integer(profile.get('level', 1), 1, 1000)
@@ -165,6 +168,16 @@ def validate_rpg(document, resources):
             or not isinstance(haste, list) or any(kind not in ('swing', 'cast', 'channel', 'gcd', 'cooldown') for kind in haste)
             or len(haste) != len(set(haste)) or profile.get('autoSlot', 'mainHand') not in ('mainHand', 'ranged')):
         raise ValueError('Invalid restrictions or attack settings')
+
+    combat_rules = profile.get('combatRules')
+    if combat_rules is not None:
+        record(combat_rules, ('version','classId','targetLevel','ratingScale','position'), 'Invalid combat rules')
+        if (combat_rules.get('version') not in ('talentforge-v1','cataclysm-4.3.4')
+                or combat_rules.get('classId') not in ('warrior','paladin','hunter','rogue','priest','shaman','mage','warlock','druid','deathknight')
+                or 'targetLevel' in combat_rules and not integer(combat_rules['targetLevel'],1,1000)
+                or 'ratingScale' in combat_rules and not bounded(combat_rules['ratingScale'],.000001,1000)
+                or combat_rules.get('position','front') not in ('front','behind')):
+            raise ValueError('Invalid combat rules')
 
     def validate_gear(mapping):
         record(mapping, SLOTS, 'Invalid equipment slots')

@@ -1,3 +1,4 @@
+import {combatClasses,rulesets} from './combat/rulesets.js';
 import {iconURL} from './icons.js';
 import {classResources} from './resource-costs.js';
 import {compileCombatBuild} from './combat/build-compiler.js';
@@ -115,6 +116,17 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
     const incoming=profile.incoming;
     compare=element('div');
     const actions=grid(
+      field('Combat rules',profile.combatRules?.version??'talentforge-v1',value=>{
+        if(value==='talentforge-v1')delete profile.combatRules;
+        else profile.combatRules={version:value,classId:'mage',targetLevel:(profile.level??85)+3};
+        render();
+      },{choices:rulesets}),
+      ...(profile.combatRules?[field('Combat class',profile.combatRules.classId,change(profile.combatRules,'classId'),{choices:combatClasses}),
+        field('Target level',profile.combatRules.targetLevel,change(profile.combatRules,'targetLevel'),{...number,min:1,max:1000,step:1}),
+        field('Attack position',profile.combatRules.position??'front',change(profile.combatRules,'position'),{choices:['front','behind']}),
+        element('p','Rating constants use level 85. Other levels require an explicit simulation scale.'),
+        field('Rating simulation scale',profile.combatRules.ratingScale??1,change(profile.combatRules,'ratingScale'),{...number,min:.000001,max:1000})
+      ]:[]),
       field('Level',profile.level??1,change(profile,'level'),{...number,min:1,max:1000,step:1}),
       field('Primary autoattack slot',profile.autoSlot??'mainHand',change(profile,'autoSlot'),{choices:['mainHand','ranged']}),
       field('Allow dual wield',profile.restrictions.dualWield,change(profile.restrictions,'dualWield'),{check:true}),
