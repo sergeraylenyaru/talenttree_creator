@@ -28,9 +28,13 @@ left-click selects a target, and the wheel zooms. S backpedals at walking speed.
 The training sword uses a two-second swing interval and 55 base physical damage
 before the normal armor and critical-hit calculations. Set optional numeric
 `swingSeconds` and `damage` on `weapons.mainHand` in the ignored local asset
-manifest to tune these values. The swing restarts when range and line of sight
-return. It runs independently of ability costs and cooldowns.
+manifest to tune these values. The first hit lands as soon as range and line of sight allow it. Subsequent hits
+respect the swing interval, including after moving briefly out of range. It runs independently of ability costs and cooldowns.
 
 Damage meter DPS uses the interval from the start of the first action that landed
 damage to the most recent damaging impact. Idle time after the final hit leaves
 the result stable. Clearing the separate combat log keeps the meter totals.
+
+In 3D, resolved damage appears above the dummy with the ability icon. Physical
+damage is white, magical damage is yellow, and effective healing is green above
+the player. The 3D range check measures to the target volume.

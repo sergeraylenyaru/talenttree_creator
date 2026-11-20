@@ -22,7 +22,6 @@
 }
 .tg-show-world .tg-figures { display:none; }
 .tg-show-world .tg-vitals { margin-top:10px; }
-.tg-world-frame #tg-floats { inset:var(--tg-target-y, 40%) auto auto var(--tg-target-x, 50%); }
 #trainingGrounds .tg-world-keys, #trainingGrounds .tg-world-touch { font-size:11px; margin-top:7px; }
 #trainingGrounds .tg-world-touch { display:none; }
 @media (max-width:740px) {
@@ -152,3 +151,16 @@
 }
 
 #trainingGrounds:has(.tg-show-world) .tg-side > section:has(.tg-stats) { display:none; }
+
+.tg-world-combat-text { position:absolute; inset:0; z-index:3; pointer-events:none; overflow:hidden; }
+.tg-world-combat-text > span { position:absolute; }
+.tg-world-combat-text b {
+  display:flex; align-items:center; gap:.25em; white-space:nowrap;
+  font-size:clamp(16px, 1.8vw, 28px); font-weight:800; color:#ffdb4d;
+  text-shadow:0 1px 2px #000, 0 0 5px #000; font-variant-numeric:tabular-nums;
+}
+.tg-world-combat-text [data-school="physical"] b { color:#fff; }
+.tg-world-combat-text [data-school="healing"] b { color:#75ef99; }
+.tg-world-combat-text .tg-text-critical b { font-size:clamp(22px, 2.4vw, 38px); }
+.tg-world-combat-text img { width:.8em; height:.8em; object-fit:cover; border:1px solid #131722; border-radius:.15em; }
+.tg-world-combat-text i { font-size:.8em; font-style:normal; }

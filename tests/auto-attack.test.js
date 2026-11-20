@@ -4,7 +4,7 @@ import {createAutoAttack} from '../static/combat/auto-attack.js';
 import {createCombatRuntime} from '../static/combat/combat-runtime.js';
 import {combatAnalytics} from '../static/combat/combat-state.js';
 
-test('swing clock waits for contact, repeats and rechecks visibility and target life', () => {
+test('swing clock hits immediately once, repeats on schedule and rechecks target validity', () => {
   let reason = 'outOfRange';
   let hits = 0;
   let poses = 0;
@@ -20,16 +20,24 @@ test('swing clock waits for contact, repeats and rechecks visibility and target 
   assert.equal(auto.status.reason, 'outOfRange');
   reason = undefined;
   advance(10);
+  assert.equal(hits, 1);
+  advance(10);
+  auto.start(report);
+  assert.equal(hits, 1);
   advance(11.8);
-  assert.equal(poses, 1);
-  assert.equal(hits, 0);
+  assert.equal(poses, 2);
+  assert.equal(hits, 1);
   reason = 'obstructed';
   advance(12);
-  assert.equal(hits, 0);
+  assert.equal(hits, 1);
   assert.ok(events.some(([type, cause]) => type === 'attackMissed' && cause === 'obstructed'));
   reason = undefined;
-  for (const time of [13, 14.8, 15, 16.8, 17]) advance(time);
+  advance(13);
   assert.equal(hits, 2);
+  advance(14.99);
+  assert.equal(hits, 2);
+  advance(15);
+  assert.equal(hits, 3);
   reason = 'dummyDead';
   advance(18);
   assert.equal(auto.status.active, false);
@@ -37,7 +45,7 @@ test('swing clock waits for contact, repeats and rechecks visibility and target 
   auto.stop();
   reason = undefined;
   advance(20);
-  assert.equal(hits, 2);
+  assert.equal(hits, 3);
 });
 
 test('actual autoattack results share damage statistics without altering cast or cooldown state', () => {

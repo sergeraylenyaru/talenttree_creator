@@ -14,17 +14,20 @@ export function createCombatVisuals(scene, dummy) {
   const up = new Vector3(0, 1, 0);
   const direction = new Vector3();
   const materials = new Map();
+  const impactMaterials = new Map();
   const free = [];
   const bursts = [];
   let reaction = 0;
   let audio;
 
-  function createMesh(position, profile, radius, geometry) {
+  function createMesh(position, profile, radius, geometry, impact = false) {
     const tint = palette[profile.impact] ?? palette[profile.school] ?? palette.physical;
-    if (!materials.has(tint)) materials.set(tint, new MeshBasicMaterial({color: tint}));
+    const cache = impact ? impactMaterials : materials;
+    if (!cache.has(tint)) cache.set(tint, new MeshBasicMaterial(impact
+      ? {color: tint, transparent: true, opacity: 0.72, depthWrite: false} : {color: tint}));
     const mesh = free.pop() || new Mesh();
     mesh.geometry = geometry;
-    mesh.material = materials.get(tint);
+    mesh.material = cache.get(tint);
     mesh.position.set(position.x, position.y, position.z);
     mesh.rotation.set(geometry === ring ? -Math.PI / 2 : 0, 0, 0);
     mesh.scale.setScalar(radius);
@@ -58,7 +61,7 @@ export function createCombatVisuals(scene, dummy) {
       const size = profile.area ? 2.5 : profile.critical ? 1.1 : 0.65;
       const geometry = profile.area || profile.critical || ['healing', 'defense'].includes(profile.impact ?? profile.school)
         ? ring : sphere;
-      const mesh = createMesh(position, profile, geometry === ring ? size : size * 0.3, geometry);
+      const mesh = createMesh(position, profile, geometry === ring ? size : size * 0.28, geometry, true);
       bursts.push({mesh, age: 0, size: mesh.scale.x, lifetime: profile.critical ? 0.38 : 0.25});
     },
     prepareSound() {
@@ -90,7 +93,7 @@ export function createCombatVisuals(scene, dummy) {
       for (let i = bursts.length - 1; i >= 0; i--) {
         const burst = bursts[i];
         burst.age += dt;
-        burst.mesh.scale.setScalar(burst.size + burst.age * 4);
+        burst.mesh.scale.setScalar(burst.size + burst.age * (burst.mesh.geometry === ring ? 2 : 0.7));
         if (burst.age >= burst.lifetime) {
           remove(burst.mesh);
           bursts.splice(i, 1);
@@ -111,6 +114,7 @@ export function createCombatVisuals(scene, dummy) {
       ring.dispose();
       arrow.dispose();
       for (const material of materials.values()) material.dispose();
+      for (const material of impactMaterials.values()) material.dispose();
       if (audio && audio.state !== 'closed') audio.close().catch(() => {});
       free.length = 0;
     }

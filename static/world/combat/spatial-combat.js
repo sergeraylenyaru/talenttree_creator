@@ -25,12 +25,17 @@ export function attackProfile(ability, config = spatialDefaults) {
   const melee = p.delivery ? p.delivery === 'melee' : !ability.range && (!p.projectile || p.projectile === 'none') && p.targeting !== 'area';
   const projectile = p.projectile ?? (damage.some(effect => effect.trigger === 'onHit') ? 'straight' : 'none');
   const kind = melee ? 'melee' : projectile === 'none' || p.targeting === 'area' ? 'instant' : 'projectile';
-  return {...p, kind, projectile, range: presentationRange(ability.range, p, melee ? config.meleeRange : 30),
+  return {...p, kind, projectile, range: melee ? Math.min(config.meleeRange, ability.range || config.meleeRange) : presentationRange(ability.range, p, 30),
     school: (damage.find(effect => effect.school !== 'physical') || damage[0]).school};
 }
 
 export const facingTarget = (player, target) => Math.atan2(player.x - target.x, player.z - target.z);
-export const distanceToTarget = (origin, target) => Math.max(0, length(difference(origin, target.position)) - target.radius);
+export function distanceToTarget(origin, target) {
+  if (!target.bounds) return Math.max(0, length(difference(origin, target.position)) - target.radius);
+  const {min, max} = target.bounds;
+  const gap = (value, axis) => Math.max(0, min[axis] - value, value - max[axis]);
+  return Math.hypot(gap(origin.x, 0), gap(origin.y, 1), gap(origin.z, 2));
+}
 
 export function validateAttack(origin, target, profile, obstacles, occlusion) {
   if (!target) return 'invalidTarget';
@@ -74,14 +79,14 @@ export function createSpatialCombat({autoAnimate, player, target, areaTarget, ob
     return {...position, y: position.y + config.launchHeight};
   };
 
-  function finish(attack, outcome, position) {
+  function finish(attack, outcome, position, reason) {
     if (!flights.delete(attack)) return;
     if (attack.visual) visuals.remove(attack.visual);
     if (position) {
       attack.impactPosition = position;
       visuals.impact(position, outcome === 'miss' ? {...attack.profile, impact: 'melee'} : attack.profile);
     }
-    attack.resolve(outcome);
+    attack.resolve(outcome, reason);
   }
 
   return {
@@ -101,7 +106,7 @@ export function createSpatialCombat({autoAnimate, player, target, areaTarget, ob
         animationClips[key], state === 'channel', state === 'meleeAttack' ? duration : undefined);
       let launch;
       return {
-        utility, validate,
+        utility, validate, projectile: profile.kind === 'projectile',
         autoPose(now, duration) {
           autoAnimate?.(locked.read().position, now + duration, duration);
         },
@@ -151,7 +156,8 @@ export function createSpatialCombat({autoAnimate, player, target, areaTarget, ob
             const heading = difference(victim.position, attack.position);
             const magnitude = length(heading);
             attack.direction = magnitude ? offset({x: 0, y: 0, z: 0}, heading, 1 / magnitude) : {x: 0, y: 0, z: 0};
-            attack.remaining = profile.range + victim.radius + config.projectileRadius;
+            attack.remaining = magnitude + Math.max(0, profile.range - distanceToTarget(attack.position, victim)) +
+              config.projectileRadius;
             attack.visual = visuals.spawn(attack.position, profile, config.projectileScale, attack.direction);
           }
           flights.add(attack);
@@ -163,13 +169,13 @@ export function createSpatialCombat({autoAnimate, player, target, areaTarget, ob
         const {profile, locked} = attack;
         const victim = locked.read();
         if (!victim?.alive) {
-          finish(attack, 'miss');
+          finish(attack, 'miss', undefined, 'dummyDead');
           continue;
         }
         if (profile.kind === 'melee') {
           if (now < attack.start + config.windup) continue;
-          const hit = !validateAttack(origin(), victim, profile, obstacles, occlusion);
-          finish(attack, hit ? 'hit' : 'miss', hit ? victim.position : undefined);
+          const reason = validateAttack(origin(), victim, profile, obstacles, occlusion);
+          finish(attack, reason ? 'miss' : 'hit', reason ? undefined : victim.position, reason);
           continue;
         }
 
@@ -182,11 +188,11 @@ export function createSpatialCombat({autoAnimate, player, target, areaTarget, ob
         const delta = offset({x: 0, y: 0, z: 0}, attack.direction, travel);
         const hit = sweptTargetImpact(attack.position, delta, victim, config.projectileRadius);
         const wall = Math.min(cameraFraction(attack.position, delta, obstacles, config.projectileRadius),
-          occlusion?.(attack.position, delta, config.projectileRadius) ?? 1);
+          occlusion?.(attack.position, delta, 0) ?? 1);
         if (hit <= wall && hit <= 1) {
           finish(attack, 'hit', offset(attack.position, delta, hit));
         } else if (wall < 1) {
-          finish(attack, 'miss', offset(attack.position, delta, wall));
+          finish(attack, 'miss', offset(attack.position, delta, wall), 'obstructed');
         } else {
           attack.position = offset(attack.position, delta, 1);
           attack.last = now;

@@ -87,16 +87,19 @@ export function createCombatRuntime(build, options = {}) {
     if (ability.cooldown || settings.globalCooldown) {
       events.push(entry('cooldownStarted', ability, {amount: ability.cooldown, globalCooldown: settings.globalCooldown}));
     }
-    if (spatialDamage) events.push(entry('attackLaunched', ability));
+    if (spatialDamage) events.push(entry(delivery.projectile ? 'projectileLaunched' : 'attackLaunched', ability));
     log(events);
     if (delivery?.utility) delivery.launch(state.combatTime);
     if (spatialDamage) {
       const token = {};
       pending.add(token);
-      delivery.launch(state.combatTime, outcome => {
+      delivery.launch(state.combatTime, (outcome, reason) => {
         if (!pending.delete(token)) return;
         const impact = outcome === 'hit' && state.dummy.health > 0;
-        const entries = [entry(impact ? 'attackHit' : 'attackMissed', ability)];
+        const type = delivery.projectile
+          ? (impact ? 'projectileHit' : 'projectileMissed')
+          : (impact ? 'attackHit' : 'attackMissed');
+        const entries = [entry(type, ability, {reason})];
         if (impact) {
           try {
             const results = calculate(delayed);
@@ -129,8 +132,9 @@ export function createCombatRuntime(build, options = {}) {
       const applied = applyCombatResult(state, ability, result, startedAt);
       state = applied.state;
       const {amount, effective, overhealing, overkill} = applied;
+      if (result.type === 'damage' && amount <= 0) continue;
       events.push(entry(result.type, ability, {
-        amount, effective, overhealing, overkill, effectId: result.effectId, isCritical: result.isCritical
+        amount, effective, overhealing, overkill, school: result.school, icon: ability.icon, effectId: result.effectId, isCritical: result.isCritical
       }));
       if (wasAlive && !state.dummy.health) events.push(entry('targetDefeated', ability));
       if (overhealing) events.push(entry('overhealing', ability, {amount: overhealing, isCritical: result.isCritical}));

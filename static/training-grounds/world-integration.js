@@ -1,3 +1,4 @@
+import {mountFloatingCombatText} from './floating-combat-text.js';
 import {mountDamageMeter} from './damage-meter.js';
 import {mountWorldHUD} from './world-hud.js';
 import {assetPanel} from './asset-panel.js';
@@ -103,9 +104,7 @@ export function mountTrainingWorld(dialog, actions) {
       t('До манекена') + ' · ' + format(state.dummyDistance)
     ].join('\n');
   }
-  const floats = arena.querySelector('#tg-floats');
-  const heals = arena.querySelector('#tg-heals');
-  const originalFloatParent = floats.parentElement;
+  const combatText = mountFloatingCombatText(frame);
   const castbar=arena.querySelector('#tg-cast');
   const castParent=castbar.parentElement;
   const hud=mountWorldHUD(frame,actions.build,actions.practice,id=>{
@@ -132,7 +131,7 @@ export function mountTrainingWorld(dialog, actions) {
     controller = undefined;
     canvas?.remove();
     canvas = undefined;
-    originalFloatParent.append(floats, heals);
+    combatText.clear();
     castParent.append(castbar);
     hud.select(false);
     dummyVital.classList.remove('tg-target-selected');
@@ -185,13 +184,8 @@ export function mountTrainingWorld(dialog, actions) {
           if (!visible) return;
           marker.style.left = x.toFixed(2) + '%';
           marker.style.top = y.toFixed(2) + '%';
-          floats.style.setProperty('--tg-target-x', marker.style.left);
-          floats.style.setProperty('--tg-target-y', marker.style.top);
         },
-        playerMarker({x, y}) {
-          heals.style.setProperty('--tg-player-x', x + '%');
-          heals.style.setProperty('--tg-player-y', y + '%');
-        },
+        combatProjection: combatText.project,
         portrait(role,url) { hud.portrait(role,url); },
         autoAttack: actions.startAuto,
         selection(selected,unit) {
@@ -213,7 +207,7 @@ export function mountTrainingWorld(dialog, actions) {
       });
       actions.enter();
       controller.setQuality(quality.value);
-      frame.append(floats, heals, castbar);
+      frame.append(castbar);
       arena.classList.add('tg-show-world');
       log.hidden=false;
       meterButton.hidden=false;
@@ -271,7 +265,13 @@ export function mountTrainingWorld(dialog, actions) {
     updateHUD,
     delivery: ability => controller?.delivery(ability),
     combatState: updateCombat,
+    combatText(event) {
+      if (!controller) return false;
+      combatText.show(event);
+      return true;
+    },
     clearCombat(state) {
+      combatText.clear();
       controller?.clearCombat();
       updateCombat(state);
       updateHUD();

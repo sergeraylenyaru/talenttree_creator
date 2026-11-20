@@ -30,22 +30,22 @@ export function createAutoAttack(weapon = trainingWeapon) {
       if (reason) {
         if (winding) report('attackMissed', {reason});
         if (status.reason !== reason) report('autoWaiting', {reason});
-        due = undefined;
         winding = false;
       } else {
-        due ??= now + swingSeconds;
+        const first = due === undefined;
+        if (first) due = now;
         if (!winding && now >= due - windupSeconds) {
           delivery.autoPose(now, windupSeconds);
           winding = true;
         }
         if (now >= due) {
-          if (delivery.autoContact()) impact(delivery, due - swingSeconds);
+          if (delivery.autoContact()) impact(delivery, first ? now : due - swingSeconds);
           due = now + swingSeconds;
           winding = false;
         }
       }
       const remaining = due === undefined ? swingSeconds : Math.max(0, due - now);
-      status = {active: true, reason, remaining, progress: 1 - remaining / swingSeconds};
+      status = {active: true, reason, remaining, progress: reason ? 0 : 1 - remaining / swingSeconds};
     }
   };
 }

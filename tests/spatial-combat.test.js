@@ -119,7 +119,7 @@ test('a moved or removed target, or an occluder, ends a projectile without damag
     if (outcome === 'blocked') wall.minX = -0.5;
     a.advance(3);
     assert.equal(a.runtime.state.dummy.health, 1000);
-    assert.equal(a.runtime.state.combatLog.at(-1).type, 'attackMissed');
+    assert.equal(a.runtime.state.combatLog.at(-1).type, 'projectileMissed');
     assert.equal(a.view.removed, 1);
   }
 });
@@ -227,4 +227,32 @@ test('manual self-targeted presentation animates without acquiring the dummy', (
   assert.equal(delivery.validate(), undefined);
   delivery.launch(0);
   assert.equal(animations[0][2], 'SpellCastOmni (ID 54 variation 0)');
+});
+
+test('instant and projectile delivery respect 2, 5, 10, 15 and maximum surface range', () => {
+  for (const projectile of ['none', 'straight']) {
+    for (const gap of [2, 5, 10, 15, 18, 18.01]) {
+      const a = arena({range: 18, presentation: {delivery: 'ranged', projectile}});
+      const z = -(gap + 0.5);
+      a.victim.position = {x: 0, y: 1.25, z};
+      a.victim.bounds = {min: [-0.5, 0, z - 0.5], max: [0.5, 2.5, z + 0.5]};
+      const accepted = gap <= 18;
+      assert.equal(a.castAbility().ok, accepted, `${projectile} at ${gap}`);
+      if (projectile === 'straight') assert.equal(a.runtime.state.dummy.health, 1000);
+      a.advance(3);
+      a.advance(3);
+      const damage = a.runtime.state.combatLog.filter(event => event.type === 'damage');
+      assert.equal(damage.length, Number(accepted));
+      assert.equal(a.runtime.state.dummy.health, accepted ? 900 : 1000);
+      assert.equal(a.runtime.state.statistics.totalDamage, accepted ? damage[0].amount : 0);
+      if (accepted) {
+        assert.equal(damage[0].school, 'fire');
+        assert.equal(damage[0].icon, 'spell_fire_flamebolt');
+        if (projectile === 'straight') assert.ok(a.runtime.state.combatLog.some(event => event.type === 'projectileHit'));
+      }
+    }
+  }
+  const melee = arena({range: 18, presentation: {delivery: 'melee'}});
+  melee.victim.position.z = -5;
+  assert.equal(melee.castAbility().reason, 'outOfRange');
 });

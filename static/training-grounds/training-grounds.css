@@ -159,6 +159,5 @@
 #trainingGrounds .tg-float.tg-healing { color: #83ecc0; }
 #tg-cast-phase { color: var(--muted); font-size: .85em; }
 
-.tg-world-frame #tg-heals { inset: var(--tg-player-y, 45%) auto auto var(--tg-player-x, 50%); }
 
 .tg-cast-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .65rem; }

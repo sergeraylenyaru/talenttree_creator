@@ -4,7 +4,7 @@ import {loadArenaAssets} from './arena-loader.js';
 import {applyWeaponTransform, attachWeapon, boundsOf, debugArena, safeArenaPositions} from './local-arena.js';
 import {createSpatialCombat, facingTarget, spatialDefaults} from './combat/spatial-combat.js';
 import {createCombatVisuals} from './combat/combat-visuals.js';
-import {ArrowHelper, Group, MathUtils, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer} from 'three';
+import {ArrowHelper, Box3, Group, MathUtils, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer} from 'three';
 import {animateCharacter} from './animation-controller.js';
 import {cameraFraction} from './collision-system.js';
 import {bindMovement, createCharacter, stepCharacter} from './character-controller.js';
@@ -51,6 +51,11 @@ export function createWorld(canvas, callbacks, config = world) {
   const target = {x: player.x, y: 1.38, z: player.z};
   const ray = new Raycaster();
   const dummyPoint = new Vector3();
+  const interactionBounds = new Box3();
+  const interactionPoint = new Vector3();
+  const aimPoint = new Vector3();
+  const targetText = {};
+  const playerText = {};
   const markerSight = new Vector3();
   const targetUnit = {id: "training-dummy", name: "Манекен", level: 1};
   const playerPoint = new Vector3();
@@ -72,17 +77,30 @@ export function createWorld(canvas, callbacks, config = world) {
   let alive = true;
   const visuals = createCombatVisuals(scene, dummy);
   const combatConfig = {...spatialDefaults, ...config.combat};
+  function targetBounds() {
+    const bounds = diagnostics.target?.bounds;
+    if (!bounds) return undefined;
+    const {x, y, z} = dummy.position;
+    const [minX, minY, minZ] = bounds.min;
+    const [maxX, maxY, maxZ] = bounds.max;
+    return {
+      min: [x + minX, y + minY * dummy.scale.y, z + minZ],
+      max: [x + maxX, y + maxY * dummy.scale.y, z + maxZ]
+    };
+  }
+
   const dummyTarget = {
     selected: () => selected,
     read() {
-      const position = dummy.position.toArray();
-      const bounds = diagnostics.target?.bounds;
+      const bounds = targetBounds();
+      const {x, y, z} = dummy.position;
+      if (bounds) {
+        interactionBounds.min.fromArray(bounds.min);
+        interactionBounds.max.fromArray(bounds.max);
+        interactionBounds.getCenter(aimPoint);
+      } else aimPoint.set(x, y + combatConfig.aimHeight, z);
       return {
-        position: {x: position[0], y: position[1] + combatConfig.aimHeight, z: position[2]},
-        bounds: bounds && {
-          min: bounds.min.map((value, i) => value + position[i]),
-          max: bounds.max.map((value, i) => value + position[i])
-        },
+        position: {x: aimPoint.x, y: aimPoint.y, z: aimPoint.z}, bounds,
         radius: config.dummy.radius ?? 0.72, alive: (callbacks.targetAlive?.() ?? alive) && !signal.aborted
       };
     }
@@ -124,15 +142,27 @@ export function createWorld(canvas, callbacks, config = world) {
     width = height = 0;
   }
 
-  function projectDummy() {
-    dummyPoint.set(dummy.position.x, dummy.position.y + 2.45, dummy.position.z);
-    markerSight.copy(dummyPoint).sub(camera.position);
-    const projected = dummyPoint.project(camera);
-    const onScreen = Math.abs(projected.x) < 0.93 && Math.abs(projected.y) < 0.90 && Math.abs(projected.z) < 1;
-    callbacks.marker({
-      x: (projected.x + 1) * 50, y: (1 - projected.y) * 50,
-      visible: onScreen && (motionConfig.collision?.fraction(camera.position, markerSight, 0) ?? 1) >= 1
-    });
+  function project(point, result, checkSight = false) {
+    markerSight.copy(point).sub(camera.position);
+    const visible = !checkSight ||
+      Math.min(cameraFraction(camera.position, markerSight, sightObstacles, 0),
+        motionConfig.collision?.fraction(camera.position, markerSight, 0) ?? 1) >= 1;
+    point.project(camera);
+    result.x = (point.x + 1) * 50;
+    result.y = (1 - point.y) * 50;
+    result.visible = visible && Math.abs(point.x) < 1 && Math.abs(point.y) < 1 && Math.abs(point.z) < 1;
+  }
+
+  function projectDummy(now) {
+    const {x, y, z} = dummy.position;
+    const bounds = diagnostics.target?.bounds;
+    // The imported silhouette includes a weapon extending well above the head.
+    const head = bounds ? MathUtils.lerp(bounds.min[1], bounds.max[1], 0.76) : 2.1;
+    project(dummyPoint.set(x, y + head * dummy.scale.y + 0.30, z), targetText, true);
+    callbacks.marker(targetText);
+    if (!callbacks.combatProjection) return;
+    project(playerPoint.set(player.x, player.y + 2.2, player.z), playerText);
+    callbacks.combatProjection(targetText, playerText, now);
   }
 
   function setSelection(value) {
@@ -144,13 +174,23 @@ export function createWorld(canvas, callbacks, config = world) {
   bindOrbit(canvas, delta => { orbit = orbitInput(orbit, delta, config.camera); }, (x, y, right, marker) => {
     const rect = canvas.getBoundingClientRect();
     ray.setFromCamera(new Vector2((x - rect.left) / rect.width * 2 - 1, 1 - (y - rect.top) / rect.height * 2), camera);
-    const hit = ray.intersectObjects(scene.children, true).find(({object}) => {
-      for (let node = object; node; node = node.parent) if (!node.visible || node === selection) return false;
-      return true;
-    });
-    let node = hit?.object;
-    while (node && node !== dummy) node = node.parent;
-    const found = marker || node === dummy;
+    const bounds = targetBounds();
+    if (bounds) {
+      interactionBounds.min.fromArray(bounds.min);
+      interactionBounds.max.fromArray(bounds.max);
+    } else {
+      const {x, y, z} = dummy.position;
+      interactionBounds.min.set(x - 0.55, y, z - 0.55);
+      interactionBounds.max.set(x + 0.55, y + 2.1, z + 0.55);
+    }
+    interactionBounds.expandByScalar(0.16);
+    const contact = ray.ray.intersectBox(interactionBounds, interactionPoint);
+    let found = marker;
+    if (contact && !found) {
+      markerSight.copy(contact).sub(camera.position);
+      found = Math.min(cameraFraction(camera.position, markerSight, sightObstacles, 0),
+        motionConfig.collision?.fraction(camera.position, markerSight, 0) ?? 1) >= 1;
+    }
     if (!right || found) setSelection(found);
     if (right && found) callbacks.autoAttack?.();
   }, signal);
@@ -297,14 +337,7 @@ export function createWorld(canvas, callbacks, config = world) {
       // In a tight obstruction the camera can be inside the avatar.
       visualPivot.visible = cameraState.clearance >= (config.camera.hideAvatarDistance ?? world.camera.hideAvatarDistance);
       renderer.render(scene, camera);
-      projectDummy();
-      if (callbacks.playerMarker) {
-        const point = playerPoint.set(player.x, player.y + 2.2, player.z).project(camera);
-        callbacks.playerMarker({
-          x: Math.max(10, Math.min(90, (point.x + 1) * 50)),
-          y: Math.max(15, Math.min(85, (1 - point.y) * 50))
-        });
-      }
+      projectDummy(now);
     },
     location() { return {...player, clip: animation.activeClip}; },
     snapshot() {

@@ -34,6 +34,8 @@ export function openTrainingGrounds(dialog, document) {
     }))};
     swingDelivery = world?.delivery(basic);
     auto.start(report);
+    syncClock();
+    view.update(runtime);
   }
   let frame = null;
   let world;
@@ -101,6 +103,9 @@ export function openTrainingGrounds(dialog, document) {
       }
       rebaseClock();
       view.reset(runtime);
+    },
+    combatText(event) {
+      return world?.combatText(event);
     },
     damage(critical, reaction) { world?.hit(critical, reaction); }
   });

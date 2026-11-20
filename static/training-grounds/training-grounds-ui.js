@@ -37,6 +37,9 @@ const eventLabels = {
   castRejected: ['Применение отклонено', 'Cast rejected'],
   attackLaunched: ['Атака началась', 'Attack launched'],
   attackHit: ['Попадание', 'Impact'],
+  projectileLaunched: ['Снаряд выпущен', 'Projectile launched'],
+  projectileHit: ['Снаряд попал', 'Projectile hit'],
+  projectileMissed: ['Снаряд не попал', 'Projectile missed'],
   attackMissed: ['Атака не попала', 'Attack missed'],
   autoStarted: ['Автоатака началась', 'Autoattack started'],
   autoHit: ['Автоатака попала', 'Autoattack hit'],
@@ -256,13 +259,16 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
       lastEvent = event.id;
       if (event.type === 'calculationFailed') replaceText($('#tg-feedback'), t(eventLabels.calculationFailed[0]));
       if (event.type === 'castRejected' && statusLabels[event.reason]) replaceText($('#tg-feedback'), t(statusLabels[event.reason][0]));
-      if (event.type === 'attackMissed') replaceText($('#tg-feedback'), t(eventLabels.attackMissed[0]));
+      if (event.type === 'attackMissed' || event.type === 'projectileMissed') {
+        replaceText($('#tg-feedback'), t((statusLabels[event.reason] ?? eventLabels[event.type])[0]));
+      }
       const healing = event.type === 'healing';
       if (!healing && event.type !== 'damage') continue;
       const amount = healing ? event.effective : event.amount;
       if (!amount) continue;
       if (!healing) actions.damage?.(event.isCritical,
         abilities.find(ability => ability.id === event.abilityId)?.presentation?.hitReaction);
+      if (actions.combatText?.(event)) continue;
       const float = document.createElement('span');
       float.className = event.isCritical ? 'tg-float tg-critical' : 'tg-float';
       if (healing) float.classList.add('tg-healing');
