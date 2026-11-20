@@ -110,6 +110,12 @@ with temporary_database() as folder, sync_playwright() as playwright:
         x, y = bounds['x'] + bounds['width'] * 0.75, bounds['y'] + bounds['height'] * 0.45
         page.mouse.move(x, y)
         page.mouse.down(button='right')
+        assert canvas.evaluate("element => getComputedStyle(element).cursor") == 'none'
+        page.keyboard.press('Escape')
+        assert canvas.evaluate("element => getComputedStyle(element).cursor") != 'none'
+        expect(arena).to_be_visible()
+        page.mouse.up(button='right')
+        page.mouse.down(button='right')
         page.mouse.move(x + 80, y + 25, steps=4)
         page.mouse.up(button='right')
         changed = snapshot()['orbit']

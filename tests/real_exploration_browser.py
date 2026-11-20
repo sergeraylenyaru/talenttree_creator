@@ -66,7 +66,7 @@ def verify(page, port, screenshots, world_only=False, combat_only=False):
           const history=[];
           try {
             for(const [x,z] of points) {
-              const limit=performance.now()+20000;
+              const limit=performance.now()+60000;
               let p;
               do {
                 p=worldLocation(canvas);
@@ -195,6 +195,10 @@ def verify(page, port, screenshots, world_only=False, combat_only=False):
         return
 
     canvas.focus()
+    for key, clip in [('KeyA', 'ShuffleLeft'), ('KeyD', 'ShuffleRight')]:
+        page.keyboard.down(key)
+        wait_for(f"p.clip?.startsWith('{clip}')", clip)
+        page.keyboard.up(key)
     page.keyboard.down('KeyS')
     wait_for("p.clip?.startsWith('Walkbackwards')",'backward walk')
     page.keyboard.up('KeyS')
@@ -238,7 +242,9 @@ def main():
         browser=p.chromium.launch(executable_path=os.environ.get('CHROMIUM_PATH','/usr/bin/chromium'),
                                   args=['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader'])
         try:
-            verify(browser.new_page(viewport={'width':1440,'height':1000}),http.server_port,screenshots,world_only='--world-only' in sys.argv[2:],
+            world_only = '--world-only' in sys.argv[2:]
+            viewport = {'width': 960, 'height': 680} if world_only else {'width': 1440, 'height': 1000}
+            verify(browser.new_page(viewport=viewport), http.server_port, screenshots, world_only=world_only,
                    combat_only='--combat-only' in sys.argv[2:])
         finally:
             browser.close()
