@@ -32,11 +32,12 @@ export function attackProfile(ability, config = spatialDefaults) {
 export const facingTarget = (player, target) => Math.atan2(player.x - target.x, player.z - target.z);
 export const distanceToTarget = (origin, target) => Math.max(0, length(difference(origin, target.position)) - target.radius);
 
-export function validateAttack(origin, target, profile, obstacles) {
+export function validateAttack(origin, target, profile, obstacles, occlusion) {
   if (!target) return 'invalidTarget';
   if (!target.alive) return 'dummyDead';
   if (distanceToTarget(origin, target) > profile.range) return 'outOfRange';
-  if (cameraFraction(origin, difference(target.position, origin), obstacles, 0) < 1) return 'obstructed';
+  if (Math.min(cameraFraction(origin, difference(target.position, origin), obstacles, 0),
+      occlusion?.(origin, difference(target.position, origin), 0) ?? 1) < 1) return 'obstructed';
 }
 
 export function sphereImpact(origin, delta, target, padding = 0) {
@@ -66,7 +67,7 @@ export function sweptTargetImpact(origin, delta, target, padding) {
 }
 
 
-export function createSpatialCombat({player, target, areaTarget, obstacles, animate, face, visuals, move, stopAnimation, config = spatialDefaults}) {
+export function createSpatialCombat({player, target, areaTarget, obstacles, occlusion, animate, face, visuals, move, stopAnimation, config = spatialDefaults}) {
   const flights = new Set();
   const origin = () => {
     const position = player();
@@ -94,7 +95,7 @@ export function createSpatialCombat({player, target, areaTarget, obstacles, anim
       // A selected cast owns its original target; area casts use the only arena opponent.
       const locked = area ? areaTarget?.() : self ? null : target();
       const validate = () => !utility && profile.targeting === 'self' ? 'invalidTarget' : self ? undefined
-        : validateAttack(origin(), area || locked?.selected() ? locked?.read() : null, profile, obstacles);
+        : validateAttack(origin(), area || locked?.selected() ? locked?.read() : null, profile, obstacles, occlusion);
       const windup = config.windup + 0.18;
       const pose = (state, now, duration, key) => animate(state, now + duration,
         animationClips[key], state === 'channel', state === 'meleeAttack' ? duration : undefined);
@@ -158,7 +159,7 @@ export function createSpatialCombat({player, target, areaTarget, obstacles, anim
         }
         if (profile.kind === 'melee') {
           if (now < attack.start + config.windup) continue;
-          const hit = !validateAttack(origin(), victim, profile, obstacles);
+          const hit = !validateAttack(origin(), victim, profile, obstacles, occlusion);
           finish(attack, hit ? 'hit' : 'miss', hit ? victim.position : undefined);
           continue;
         }
@@ -171,7 +172,8 @@ export function createSpatialCombat({player, target, areaTarget, obstacles, anim
         }
         const delta = offset({x: 0, y: 0, z: 0}, attack.direction, travel);
         const hit = sweptTargetImpact(attack.position, delta, victim, config.projectileRadius);
-        const wall = cameraFraction(attack.position, delta, obstacles, config.projectileRadius);
+        const wall = Math.min(cameraFraction(attack.position, delta, obstacles, config.projectileRadius),
+          occlusion?.(attack.position, delta, config.projectileRadius) ?? 1);
         if (hit <= wall && hit <= 1) {
           finish(attack, 'hit', offset(attack.position, delta, hit));
         } else if (wall < 1) {

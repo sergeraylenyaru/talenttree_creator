@@ -21,20 +21,25 @@ export function stepCharacter(player, input, yaw, dt, config, obstacles) {
   const ratio = Math.min(1, rate / (Math.hypot(changeX, changeZ) || 1));
   const vx = player.vx + changeX * ratio;
   const vz = player.vz + changeZ * ratio;
-  const horizontal = moveOnGround(player, vx * dt, vz * dt, obstacles, config);
-  const dx = horizontal.x - player.x;
-  const dz = horizontal.z - player.z;
-  const moving = Math.hypot(dx, dz) / dt;
-  const desired = moving >= 0.08 ? Math.atan2(-dx, -dz) : player.facing;
-  const angle = Math.atan2(Math.sin(desired - player.facing), Math.cos(desired - player.facing));
   const initialVy = input.jump && player.grounded ? jumpSpeed : player.vy;
   const nextY = player.y + initialVy * dt - gravity * dt * dt / 2;
-  const {y, grounded, blocked} = moveVertically(horizontal, player.y, nextY, obstacles, config);
+  const surface = config.collision?.move(player, vx * dt, vz * dt, nextY, initialVy > 0);
+  const horizontal = surface ?? moveOnGround(player, vx * dt, vz * dt, obstacles, config);
+  const dx = horizontal.x - player.x;
+  const dz = horizontal.z - player.z;
+  // Depenetration can move the capsule farther than the input requested.
+  // It must not turn into velocity on the next simulation step.
+  const actualX = surface ? Math.sign(vx) * Math.max(0, Math.min(Math.abs(vx), Math.sign(vx) * dx / dt)) : dx / dt;
+  const actualZ = surface ? Math.sign(vz) * Math.max(0, Math.min(Math.abs(vz), Math.sign(vz) * dz / dt)) : dz / dt;
+  const moving = Math.hypot(actualX, actualZ);
+  const desired = moving >= 0.08 ? Math.atan2(-actualX, -actualZ) : player.facing;
+  const angle = Math.atan2(Math.sin(desired - player.facing), Math.cos(desired - player.facing));
+  const {y, grounded, blocked} = surface ?? moveVertically(horizontal, player.y, nextY, obstacles, config);
   const vy = grounded || blocked ? 0 : initialVy - gravity * dt;
   return {
-    ...horizontal, y, vx: dx / dt, vy, vz: dz / dt, grounded,
+    x: horizontal.x, z: horizontal.z, y, vx: actualX, vy, vz: actualZ, grounded,
     facing: approach(0, angle, 12 * dt) + player.facing,
-    animation: !grounded ? (vy > 0 ? 'jump' : 'fall') : moving < 0.08 ? 'idle' : moving > walk + 0.2 ? 'run' : 'walk'
+    animation: !grounded ? (vy > 0 ? 'jump' : 'fall') : moving < 0.08 ? 'idle' : input.sprint ? 'run' : 'walk'
   };
 }
 
@@ -61,7 +66,7 @@ export function bindMovement(scope, document, window, signal) {
     const input = {
       side: Number(pressed.has('KeyD')) - Number(pressed.has('KeyA')),
       forward: Number(pressed.has('KeyW')) - Number(pressed.has('KeyS')),
-      sprint: pressed.has('ShiftLeft') || pressed.has('ShiftRight'), jump
+      sprint: !(pressed.has('ShiftLeft') || pressed.has('ShiftRight')), jump
     };
     jump = false;
     return input;

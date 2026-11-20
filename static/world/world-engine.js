@@ -1,3 +1,5 @@
+import {capturePortrait} from './portrait.js';
+import {createExplorationTerrain, createWorldCollision} from './exploration-world.js';
 import {loadArenaAssets} from './arena-loader.js';
 import {applyWeaponTransform, attachWeapon, boundsOf, debugArena, safeArenaPositions} from './local-arena.js';
 import {createSpatialCombat, facingTarget, spatialDefaults} from './combat/spatial-combat.js';
@@ -12,6 +14,7 @@ import {qualities, world} from './world-config.js';
 import {createArena, createPlaceholder} from './world-scene.js';
 
 const activeWorlds = new WeakMap();
+export const worldLocation = canvas => activeWorlds.get(canvas)?.location();
 export const worldSnapshot = canvas => activeWorlds.get(canvas)?.snapshot();
 
 export function createWorld(canvas, callbacks, config = world) {
@@ -49,6 +52,8 @@ export function createWorld(canvas, callbacks, config = world) {
   const target = {x: player.x, y: 1.38, z: player.z};
   const ray = new Raycaster();
   const dummyPoint = new Vector3();
+  const markerSight = new Vector3();
+  const targetUnit = {id: "training-dummy", name: "Манекен", level: 1};
   const playerPoint = new Vector3();
   const readInput = bindMovement(canvas, document, window, signal);
   document.addEventListener('visibilitychange', () => { lastTime = null; queuedJump = false; }, {signal});
@@ -88,6 +93,7 @@ export function createWorld(canvas, callbacks, config = world) {
     areaTarget: () => dummyTarget,
     move() { queuedJump = true; },
     obstacles: sightObstacles,
+    occlusion: (origin, offset, padding) => motionConfig.collision?.fraction(origin, offset, padding) ?? 1,
     face(position) {
       facing = position ? facingTarget(player, position) : undefined;
       if (facing !== undefined) player.facing = facing;
@@ -114,17 +120,20 @@ export function createWorld(canvas, callbacks, config = world) {
   }
 
   function projectDummy() {
-    const projected = dummyPoint.set(dummy.position.x, dummy.position.y + 2.45, dummy.position.z).project(camera);
+    dummyPoint.set(dummy.position.x, dummy.position.y + 2.45, dummy.position.z);
+    markerSight.copy(dummyPoint).sub(camera.position);
+    const projected = dummyPoint.project(camera);
+    const onScreen = Math.abs(projected.x) < 0.93 && Math.abs(projected.y) < 0.90 && Math.abs(projected.z) < 1;
     callbacks.marker({
       x: (projected.x + 1) * 50, y: (1 - projected.y) * 50,
-      visible: Math.abs(projected.x) < 0.93 && Math.abs(projected.y) < 0.90 && Math.abs(projected.z) < 1
+      visible: onScreen && (motionConfig.collision?.fraction(camera.position, markerSight, 0) ?? 1) >= 1
     });
   }
 
   function setSelection(value) {
     selected = value;
     selection.visible = value;
-    callbacks.selection(value);
+    callbacks.selection(value, value ? targetUnit : null);
   }
 
   bindOrbit(canvas, delta => { orbit = orbitInput(orbit, delta, config.camera); }, (x, y) => {
@@ -183,7 +192,7 @@ export function createWorld(canvas, callbacks, config = world) {
         animation: animation.activeClip ?? player.animation,
         weapon: weapon && {bone: weapon.bone, position: weapon.mount.position.toArray(),
           rotation: diagnostics.weapon.transform.rotation, scale: diagnostics.weapon.transform.scale},
-        ground: motionConfig.ground?.y ?? 0,
+        ground: motionConfig.collision?.floorAt(player.x, player.z, player.y + .1, 25) ?? motionConfig.ground?.y ?? 0,
         volumes: obstacles.length,
         obstructed: cameraState.obstructed,
         dummyDistance: Math.hypot(player.x - dummy.position.x, player.z - dummy.position.z)
@@ -238,8 +247,11 @@ export function createWorld(canvas, callbacks, config = world) {
       avatar.rotation.y = player.facing;
       const clip = pose && animation.supports(pose.name, pose.override);
       const swingDuration = pose?.duration;
+      const locomotion = directionalClip || ['walk', 'run'].includes(player.animation);
+      const stride = directionalClip ? config.movement.walk : config.movement[player.animation];
+      const pace = !pose && locomotion ? Math.max(.55, Math.min(1.7, Math.hypot(player.vx, player.vz)/stride)) : undefined;
       animation.update(clip ? pose.name : directionalClip ? lateral : player.animation, dt,
-        Boolean(clip && pose.pending), swingDuration, pose?.override, pose?.loop);
+        Boolean(clip && pose.pending), swingDuration, pose?.override, pose?.loop, pace);
       if (weapon) for (const {finger, rotation} of weapon.grip) finger.quaternion.fromArray(rotation);
       if (pose) pose.pending = false;
       // Root tilt is a rig-independent fallback for models without attack clips.
@@ -265,8 +277,11 @@ export function createWorld(canvas, callbacks, config = world) {
       // Limit follow lag to the player's side of any wall crossed by the focus.
       focus.set(player.x, player.y + 1.38, player.z);
       lag.set(target.x - focus.x, target.y - focus.y, target.z - focus.z);
-      focus.addScaledVector(lag, cameraFraction(focus, lag, sightObstacles, 0.18));
-      cameraState = placeCamera(camera, focus, view, cameraState, dt, obstacles, motionConfig.ground?.y);
+      focus.addScaledVector(lag, Math.min(
+        cameraFraction(focus, lag, sightObstacles, 0.18),
+        motionConfig.collision?.fraction(focus, lag) ?? 1
+      ));
+      cameraState = placeCamera(camera, focus, view, cameraState, dt, obstacles, motionConfig.collision ? player.y : motionConfig.ground?.y, motionConfig.collision);
       // In a tight obstruction the camera can be inside the avatar.
       visualPivot.visible = cameraState.clearance >= (config.camera.hideAvatarDistance ?? world.camera.hideAvatarDistance);
       renderer.render(scene, camera);
@@ -279,6 +294,7 @@ export function createWorld(canvas, callbacks, config = world) {
         });
       }
     },
+    location() { return {...player, clip: animation.activeClip}; },
     snapshot() {
       avatar.updateMatrixWorld(true);
       const visualMinY = renderedModelBounds(model.visual ?? model.root).min.y;
@@ -336,12 +352,17 @@ export function createWorld(canvas, callbacks, config = world) {
         throw Error('Configured floor is outside the transformed environment bounds');
       }
       const spawn = safeArenaPositions(ground, settings.walls, manifest.playerSpawn, manifest.target?.position, config.playerRadius, config.playerHeight);
-      positionArena(spawn, ground, settings.walls);
+      positionArena(spawn, ground, settings.exploration ? [] : settings.walls);
+      if (settings.exploration) {
+        const terrain = createExplorationTerrain(bounds);
+        scene.add(terrain.root);
+        motionConfig.collision = createWorldCollision(visual, terrain, config, obstacles);
+      }
       scene.add(visual);
       fallback.visible = false;
       diagnostics.environment = {...info, bounds: {min: bounds.min.toArray(), max: bounds.max.toArray()},
-        groundStatus: 'explicit collision proxy', spawn};
-      debugGeometry = debugArena(bounds, ground, [...settings.walls, spawn.collider], spawn);
+        groundStatus: settings.exploration ? 'multi-level triangle collision' : 'explicit collision proxy', spawn};
+      debugGeometry = debugArena(bounds, ground, settings.exploration ? [spawn.collider] : [...settings.walls, spawn.collider], spawn);
       debugArrow = new ArrowHelper(new Vector3(0, 0, -1), new Vector3(0, 0.15, 0), 1.5, 0x00ffff);
       debugArrow.traverse(node => { node.raycast = () => {}; });
       scene.add(debugGeometry);
@@ -358,6 +379,7 @@ export function createWorld(canvas, callbacks, config = world) {
       modelKind = 'imported';
       diagnostics.hero = {...info, forward: 'controller -Z; visual yaw ' + settings.rotation + ' degrees'};
       callbacks.model(modelKind);
+      if (callbacks.portrait) callbacks.portrait('hero',capturePortrait(renderer,model.visual,info.bounds,true));
     },
     weapon(asset, settings, info) {
       weapon = attachWeapon(model, asset, settings);
@@ -368,6 +390,7 @@ export function createWorld(canvas, callbacks, config = world) {
       dummy.add(asset.visual);
       dummyAnimation = animateCharacter(asset);
       diagnostics.target = info;
+      if (callbacks.portrait) callbacks.portrait('target',capturePortrait(renderer,asset.visual,info.bounds,false));
     }
   }, (role, status, detail) => {
     callbacks.asset?.(role, status, detail);

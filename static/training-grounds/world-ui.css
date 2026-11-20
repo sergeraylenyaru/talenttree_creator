@@ -51,3 +51,70 @@
   font: .72rem/1.35 monospace;
   pointer-events: none;
 }
+
+.tg-play-hud { position:absolute; inset:auto .6rem .65rem; display:flex; justify-content:space-between; gap:.5rem; pointer-events:none; }
+.tg-unit { display:flex; align-items:center; gap:.45rem; width:min(230px,46%); padding:.28rem .45rem; border:1px solid #a38a56; border-radius:24px 6px 6px 24px; background:linear-gradient(#22283aee,#111320ee); box-shadow:0 2px 8px #000b; }
+.tg-unit[hidden] { display:none; }
+.tg-unit-target { margin-left:auto; flex-direction:row-reverse; border-radius:6px 24px 24px 6px; }
+.tg-unit-details { flex:1; min-width:0; font-size:.72rem; }
+.tg-unit-details strong { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tg-portrait { position:relative; flex:none; width:42px; height:42px; border:2px solid #b0955c; background:#17232f; border-radius:50%; }
+.tg-portrait img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
+.tg-portrait b { position:absolute; right:-5px; bottom:-5px; color:#f5dba5; padding:1px 4px; border:1px solid #a38a56; border-radius:50%; background:#16171e; font-size:.65rem; }
+.tg-unit-bar { position:relative; height:13px; margin:2px 0; background:#15171f; border:1px solid #898474; overflow:hidden; }
+.tg-unit-bar i { display:block; height:100%; background:linear-gradient(#75b869,#377c48); transition:width .18s ease-out; }
+.tg-unit-resource i { background:linear-gradient(#559ade,#27539d); }
+.tg-unit-bar span { position:absolute; inset:0; text-align:center; color:#fff; text-shadow:0 1px 2px #000; font-size:.57rem; }
+.tg-world-frame #tg-cast { position:absolute; bottom:4.1rem; left:50%; width:min(310px,87%); transform:translateX(-50%); border:1px solid #a38a56; border-radius:.35rem; background:#131925ee; padding:.45rem .65rem; }
+#tg-cast-icon { width:22px; height:22px; border-radius:.2rem; }
+.tg-world-actions { text-align:center; margin:.5rem 0; }
+.tg-hotbar { display:flex; flex-wrap:wrap; justify-content:center; gap:.28rem; }
+.tg-hotbar button { position:relative; width:40px; height:40px; padding:0; border:1px solid #ae925d; background:#151927; }
+.tg-hotbar button img { width:100%; height:100%; object-fit:cover; }
+.tg-hotbar button kbd, .tg-hotbar button span { position:absolute; color:white; text-shadow:0 1px 3px #000; background:#0b1019b0; font-size:.65rem; }
+.tg-hotbar button kbd { top:0; left:0; }
+.tg-hotbar button span { right:0; bottom:0; }
+.tg-hotbar button[data-state]:not([data-state=""]) img { opacity:.43; }
+.tg-hotbar button[data-state="insufficient"] { border-color:#c87970; }
+.tg-hotbar .tg-basic-strike { width:auto; padding:0 .5rem; font-size:.75rem; }
+.tg-game-feedback { min-height:1.35rem; color:#f0d491; font-size:.8rem; }
+.tg-slot-settings { display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:.3rem; }
+.tg-show-world .tg-vitals { display:none; }
+
+#trainingGrounds:has(.tg-show-world) {
+  position:fixed; inset:0; margin:0; padding:0; border:0; border-radius:0;
+  width:100vw; max-width:none; height:100dvh; max-height:none; overflow:hidden;
+}
+#trainingGrounds:has(.tg-show-world) .tg-layout,
+#trainingGrounds:has(.tg-show-world) .tg-main,
+.tg-show-world, .tg-show-world .tg-world-stage { display:block; position:absolute; inset:0; margin:0; padding:0; border:0; }
+.tg-show-world .tg-world-frame { position:absolute; inset:0; width:100%; height:100%; min-height:0; max-height:none; aspect-ratio:auto; border:0; border-radius:0; }
+#trainingGrounds:has(.tg-show-world) .tg-top { position:absolute; inset:.55rem .65rem auto; z-index:5; pointer-events:none; margin:0; }
+#trainingGrounds:has(.tg-show-world) .tg-top button { pointer-events:auto; }
+#trainingGrounds:has(.tg-show-world) .tg-top h2,
+#trainingGrounds:has(.tg-show-world) .tg-build,
+#trainingGrounds:has(.tg-show-world) .tg-clock,
+#trainingGrounds:has(.tg-show-world) .tg-main > .tg-panel:not(.tg-show-world),
+#trainingGrounds:has(.tg-show-world):not(.tg-game-log-open) .tg-side { display:none; }
+#trainingGrounds:has(.tg-show-world) .tg-side { position:absolute; right:.65rem; top:6rem; bottom:6rem; width:min(320px,88vw); overflow:auto; z-index:5; }
+.tg-show-world .tg-world-toolbar { position:absolute; top:3.3rem; left:.65rem; right:.65rem; z-index:4; margin:0; pointer-events:none; }
+.tg-show-world .tg-world-toolbar button,.tg-show-world .tg-world-toolbar label { pointer-events:auto; background:#151927e8; }
+.tg-world-debug-control { display:flex; align-items:center; gap:.35rem; padding:.25rem; }
+.tg-world-debug-control input { width:1rem; height:1rem; margin:0; }
+.tg-show-world .tg-asset-panel { position:absolute; z-index:4; right:.65rem; top:5.9rem; max-width:min(330px,94vw); padding:.2rem .4rem; background:#121722e8; }
+.tg-show-world .tg-world-debug { top:7.4rem; }
+.tg-show-world .tg-world-model { top:6rem; left:.65rem; bottom:auto; }
+.tg-show-world .tg-world-keys,.tg-show-world .tg-world-touch { display:none; }
+.tg-show-world .tg-world-actions { position:absolute; bottom:.6rem; left:50%; transform:translateX(-50%); width:min(510px,96%); pointer-events:none; }
+.tg-world-actions button,.tg-world-actions details { pointer-events:auto; }
+.tg-world-actions small,.tg-game-feedback { display:block; text-shadow:0 2px 4px #000,0 0 5px #000; }
+.tg-world-actions details { display:inline-block; position:relative; padding:.12rem .35rem; background:#151927e8; }
+.tg-slot-settings { position:absolute; bottom:100%; left:50%; transform:translateX(-50%); width:min(370px,90vw); background:#151927; padding:.45rem; border:1px solid #ae925d; }
+.tg-hotbar button i { display:grid; place-content:center; position:absolute; inset:0; color:#e7b97a; font-style:normal; background:radial-gradient(#393c59,#171b29); }
+.tg-hotbar button i[hidden],.tg-hotbar button img[hidden] { display:none; }
+.tg-world-frame #tg-cast { bottom:8.6rem; }
+@media(max-width:1000px) { .tg-play-hud { bottom:6rem; } .tg-world-frame #tg-cast { bottom:9.6rem; } }
+@media(max-width:550px) { .tg-hotbar button { width:30px; height:32px; } .tg-unit { padding:.2rem; } .tg-portrait { width:34px; height:34px; } }
+
+.tg-cast-art { position:relative; display:grid; place-content:center; width:22px; height:22px; color:#f2d79a; background:#273047; border-radius:.2rem; }
+.tg-cast-art img { position:absolute; inset:0; }

@@ -1,3 +1,4 @@
+import {practiceAbilities} from './world-hud.js';
 import {mountTrainingWorld} from './world-integration.js';
 import {compileCombatBuild, normalizeCombatSettings} from '../combat/build-compiler.js';
 import {createCombatRuntime} from '../combat/combat-runtime.js';
@@ -16,7 +17,9 @@ function loadSettings() {
 export function openTrainingGrounds(dialog, document) {
   let settings = loadSettings();
   let build = compileCombatBuild(document, settings);
-  let runtime = createCombatRuntime(build, settings);
+  const practice = practiceAbilities(build.activeAbilities, build.resources);
+  const arenaBuild = () => ({...build, activeAbilities: [...build.activeAbilities, ...practice]});
+  let runtime = createCombatRuntime(arenaBuild(), settings);
   let frame = null;
   let world;
   let realStart = performance.now();
@@ -66,7 +69,7 @@ export function openTrainingGrounds(dialog, document) {
       settings = normalizeCombatSettings(input);
       build = compileCombatBuild(document, settings);
       runtime.cancelSpatial();
-      runtime = createCombatRuntime(build, settings);
+      runtime = createCombatRuntime(arenaBuild(), settings);
       world?.clearCombat(runtime.state);
       try {
         localStorage.setItem(storageKey, JSON.stringify(settings));
@@ -102,7 +105,8 @@ export function openTrainingGrounds(dialog, document) {
       world.clearCombat(runtime.state);
       view.update(runtime);
     },
-    state: () => runtime.state
+    state: () => runtime.state,
+    runtime: () => runtime, build, practice, cast: view.castAbility
   });
   rebaseClock();
   view.update(runtime);

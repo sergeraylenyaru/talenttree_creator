@@ -17,7 +17,11 @@
       "AttackUnarmed (ID 16 variation 0)",
       "Attack1H (ID 17 variation 0)",
       "Attack2H (ID 18 variation 0)"
-    ]
+    ],
+    "walkBack": "Walkbackwards (ID 13 variation 0)",
+    "runBack": "RunBackwards (ID 1146 variation 0)",
+    "strafeLeft": "ShuffleLeft (ID 11 variation 0)",
+    "strafeRight": "ShuffleRight (ID 12 variation 0)"
   },
   "debug": false,
   "environment": {
@@ -134,7 +138,8 @@
         "minY": 5.95,
         "maxY": 6.3
       }
-    ]
+    ],
+    "exploration": true
   },
   "playerSpawn": {
     "x": -25,

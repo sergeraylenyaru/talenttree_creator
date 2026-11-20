@@ -15,7 +15,7 @@ export function horizontalCameraForward(yaw) {
   return {x: -Math.sin(yaw), z: -Math.cos(yaw)};
 }
 
-export function placeCamera(camera, target, orbit, previous, dt, obstacles, floor = 0) {
+export function placeCamera(camera, target, orbit, previous, dt, obstacles, floor = 0, collision) {
   const {distance = orbit.distance, clearance = orbit.distance} = previous;
   const forward = horizontalCameraForward(orbit.yaw);
   const zoom = distance + (orbit.distance - distance) * (1 - Math.exp(-12 * dt));
@@ -25,7 +25,7 @@ export function placeCamera(camera, target, orbit, previous, dt, obstacles, floo
     y: Math.sin(orbit.pitch) * zoom,
     z: -forward.z * horizontalDistance
   };
-  const fraction = Math.min(cameraFraction(target, offset, obstacles),
+  const fraction = Math.min(cameraFraction(target, offset, obstacles), collision?.fraction(target, offset) ?? 1,
     offset.y < 0 ? (target.y - floor - 0.24) / -offset.y : 1);
   // Pull in immediately to avoid clipping, then ease back once the wall clears.
   const limit = zoom * Math.max(0, fraction);

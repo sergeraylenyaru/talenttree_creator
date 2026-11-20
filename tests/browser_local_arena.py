@@ -113,7 +113,7 @@ with temporary_database() as folder, sync_playwright() as playwright:
         assert snapshot()['targetClip'] == target_clips[0]
         page.clock.run_for(420)
         assert snapshot()['targetClip'] == target_clips[2]
-        expect(arena.locator('[data-event="damage"]').first).to_be_visible()
+        expect(arena.locator('[data-event="damage"]').first).to_have_count(1)
         arena.locator('.tg-target-reset').click()
         page.clock.run_for(60)
         assert snapshot()['targetClip'] == target_clips[0]

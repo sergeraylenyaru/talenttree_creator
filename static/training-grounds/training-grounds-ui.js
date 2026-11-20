@@ -182,7 +182,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
             </div>
             <div>${bar('Манекен', 'dummy', '#bd5157')}</div>
           </div>
-          <div id="tg-cast" hidden><div class="tg-cast-heading"><strong id="tg-cast-name" data-user-content></strong><span id="tg-cast-phase"></span></div>
+          <div id="tg-cast" hidden><div class="tg-cast-heading"><span class="tg-cast-art" aria-hidden="true">✦<img id="tg-cast-icon" alt="" hidden></span><strong id="tg-cast-name" data-user-content></strong><span id="tg-cast-phase"></span><time id="tg-cast-remaining"></time></div>
             <progress id="tg-progress" aria-labelledby="tg-cast-name"></progress>
             <button type="button" id="tg-cancel">Отменить применение</button></div>
         </section>
@@ -210,6 +210,9 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
 
   const $ = selector => dialog.querySelector(selector);
   const buttons = [...dialog.querySelectorAll('.tg-ability')];
+  const castIcon = $('#tg-cast-icon');
+  castIcon.onload = () => { castIcon.hidden = false; };
+  castIcon.onerror = () => { castIcon.hidden = true; };
   const metricValues = [...dialog.querySelectorAll('[data-metric]')];
   const meters = [...dialog.querySelectorAll('.tg-vital')].map(node => ({
     meter: node.querySelector('meter'), fill: node.querySelector('.resource-bar span'), text: node.querySelector('strong')
@@ -282,6 +285,12 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
       const start = activeCast.channeling ? activeCast.castEnd : activeCast.start;
       const end = activeCast.channeling ? activeCast.end : activeCast.castEnd;
       replaceText($('#tg-cast-phase'), t(activeCast.channeling ? 'Поддержание' : 'Подготовка'));
+      const url = iconURL(activeCast.ability.icon || 'inv_misc_questionmark');
+      if (castIcon.getAttribute('src') !== url) {
+        castIcon.hidden = true;
+        castIcon.src = url;
+      }
+      replaceText($('#tg-cast-remaining'), Math.max(0,end-state.combatTime).toFixed(1)+' s');
       progress.max = end - start;
       progress.value = state.combatTime - start;
     }
@@ -312,10 +321,9 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
     showLog(state.combatLog);
   }
 
-  function cast(index) {
-    const ability = abilities[index];
-    if (!ability) return;
-    const {ok, reason, failedCost} = actions.cast(ability.id);
+  function castAbility(id) {
+    if (!id) return;
+    const {ok, reason, failedCost} = actions.cast(id);
     const feedback = $('#tg-feedback');
     feedback.replaceChildren();
     if (!ok && statusLabels[reason]) {
@@ -329,7 +337,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
     }
   }
 
-  buttons.forEach((button, index) => button.onclick = () => cast(index));
+  buttons.forEach((button, index) => button.onclick = () => castAbility(abilities[index].id));
   dialog.onkeydown = event => {
     if (event.key === 'Escape' && !$('#tg-cast').hidden) {
       event.preventDefault();
@@ -340,7 +348,9 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
         event.target.closest('input, textarea, select, [contenteditable]')) return;
     if (/^[1-9]$/.test(event.key)) {
       event.preventDefault();
-      cast(Number(event.key) - 1);
+      const button = dialog.querySelectorAll('.tg-show-world [data-world-slot]')[Number(event.key)-1];
+      if (button) button.click();
+      else castAbility(abilities[Number(event.key) - 1]?.id);
     }
   };
   $('#tg-return').onclick = () => dialog.close();
@@ -356,7 +366,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
   };
 
   return {
-    update,
+    update, castAbility,
     reset(runtime) {
       $('#tg-feedback').replaceChildren();
       $('#tg-floats').replaceChildren();

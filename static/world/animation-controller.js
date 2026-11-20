@@ -26,7 +26,7 @@ export function animateCharacter({root, clips, mapping}) {
     get activeDuration() { return currentClip?.duration ?? 0; },
     get activeClip() { return currentClip?.name ?? null; },
     supports(state, override) { return Boolean(resolveClip(clips, mapping, state, override)); },
-    update(state, dt, restart = false, duration, override, loop = false) {
+    update(state, dt, restart = false, duration, override, loop = false, pace) {
       const clip = resolveClip(clips, mapping, state, override);
       if (clip !== currentClip || restart) {
         current?.fadeOut(0.16);
@@ -39,6 +39,7 @@ export function animateCharacter({root, clips, mapping}) {
           current.reset().setEffectiveTimeScale(duration > 0 ? clip.duration / duration : 1).fadeIn(0.16).play();
         }
       }
+      if (pace !== undefined) current?.setEffectiveTimeScale(pace);
       mixer.update(dt);
     },
     dispose() {

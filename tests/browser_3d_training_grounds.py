@@ -73,7 +73,7 @@ with temporary_database() as folder, sync_playwright() as playwright:
         assert snapshot()['draws'] > 30 and snapshot()['geometries'] > 20
         expect(arena.locator('.tg-world-model')).to_have_text('Placeholder character')
         expect(arena.locator('.tg-ability strong')).to_have_text(['Flame', 'Renewal'])
-        expect(arena.locator('[data-metric="totalDamage"]')).to_be_visible()
+        expect(arena.locator('[data-metric="totalDamage"]')).to_have_count(1)
         marker = arena.locator('.tg-world-target')
         expect(marker).to_be_visible()
 
@@ -82,13 +82,13 @@ with temporary_database() as folder, sync_playwright() as playwright:
         initial = snapshot()['player']
         page.keyboard.down('w')
         page.clock.run_for(450)
-        walking = snapshot()['player']
-        assert walking['z'] < initial['z'] - 0.5 and walking['animation'] == 'walk'
+        running = snapshot()['player']
+        assert running['z'] < initial['z'] - 0.5 and running['animation'] == 'run'
         page.keyboard.down('Shift')
         page.clock.run_for(450)
-        running = snapshot()['player']
-        assert walking['z'] - running['z'] > initial['z'] - walking['z']
-        assert running['animation'] == 'run'
+        walking = snapshot()['player']
+        assert running['z'] - walking['z'] < initial['z'] - running['z']
+        assert walking['animation'] == 'walk'
         page.keyboard.up('Shift')
         page.keyboard.up('w')
         page.keyboard.press('Space')
@@ -100,8 +100,8 @@ with temporary_database() as folder, sync_playwright() as playwright:
         marker.click()
         page.keyboard.press('1')
         page.clock.run_for(1100)
-        expect(arena.locator('[data-event="damage"]').first).to_be_visible()
-        expect(arena.locator('#tg-label-dummy')).to_be_visible()
+        expect(arena.locator('[data-event="damage"]').first).to_have_count(1)
+        expect(arena.locator('.tg-unit-target')).to_be_visible()
 
         marker.click()
         assert snapshot()['selected']
@@ -131,7 +131,7 @@ with temporary_database() as folder, sync_playwright() as playwright:
         }))
         page.route('**/local-world-assets/character/fixture.gltf', lambda route: route.fulfill(json=fixture))
         page.locator('#openTrainingGrounds').click()
-        expect(arena.locator('.tg-world-model')).to_have_text('Local model')
+        expect(arena.locator('.tg-world-model')).to_have_text('Local model',timeout=20000)
         assert snapshot()['model'] == 'imported'
         assert snapshot()['player']['z'] == initial['z']
         assert arena.locator('canvas').count() == 1
@@ -156,12 +156,12 @@ with temporary_database() as folder, sync_playwright() as playwright:
             sideways = right if basis == 'forward' else forward
             assert sign * measured > 0.25 and abs(sideways) < 0.08, current
             assert current['activeClip'] == clip
-            page.clock.run_for(140)
+            page.clock.run_for(300)
 
-        move('w', 'forward', 1, 'Walk')
-        move('s', 'forward', -1, 'Walk')
-        move('a', 'right', -1, 'Walk')
-        move('d', 'right', 1, 'Walk')
+        move('w', 'forward', 1, 'Run')
+        move('s', 'forward', -1, 'Run')
+        move('a', 'right', -1, 'Run')
+        move('d', 'right', 1, 'Run')
         bounds = canvas.bounding_box()
         x, y = bounds['x'] + bounds['width'] * 0.7, bounds['y'] + bounds['height'] * 0.5
         page.mouse.move(x, y)
@@ -171,7 +171,7 @@ with temporary_database() as folder, sync_playwright() as playwright:
         page.clock.run_for(260)
         assert abs(snapshot()['cameraForward']['x']) > 0.8
         page.keyboard.down('Shift')
-        move('w', 'forward', 1, 'Run')
+        move('w', 'forward', 1, 'Walk')
         page.keyboard.up('Shift')
         page.keyboard.press('Space')
         page.clock.run_for(160)

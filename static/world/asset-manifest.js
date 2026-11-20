@@ -39,11 +39,12 @@ export function validateManifest(value) {
   }
   if (value.environment !== undefined) {
     const asset = transform(value.environment, 'world');
-    const {ground, walls = []} = value.environment;
+    const {ground, walls = [], exploration = false} = value.environment;
+    if (typeof exploration !== 'boolean') throw Error('Invalid exploration flag');
     if (!ground || !Array.isArray(walls) || walls.length > 64) throw Error('Environment requires a ground rectangle and a wall list');
     const horizontal = rectangle(ground);
     const y = number(ground.y, 'floor height');
-    result.environment = {...asset, ground: {...horizontal, y}, walls: walls.map(wall => {
+    result.environment = {...asset, exploration, ground: {...horizontal, y}, walls: walls.map(wall => {
       const bounds = rectangle(wall);
       const minY = number(wall.minY ?? y, 'wall minimum');
       const maxY = number(wall.maxY, 'wall maximum');

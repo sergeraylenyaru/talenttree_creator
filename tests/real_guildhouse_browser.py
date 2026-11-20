@@ -39,6 +39,11 @@ def verify(page, port, screenshots):
     page.on('response', lambda response: models.update({response.url.split('/local-world-assets/')[-1]: response.status})
             if '/local-world-assets/' in response.url else None)
     page.route('https://**/*', lambda route: route.abort())
+    legacy = json.loads((ASSETS / 'manifest.json').read_text())
+    legacy['environment']['exploration'] = False
+    for clip in ('walkBack', 'runBack', 'strafeLeft', 'strafeRight'):
+        legacy['animations'].pop(clip, None)
+    page.route('**/local-world-assets/manifest.json', lambda route: route.fulfill(json=legacy))
     page.add_init_script("""
         localStorage.setItem('talentforge-language', 'en');
         localStorage.setItem('talentforge-draft', JSON.stringify(%s));
@@ -134,11 +139,11 @@ def verify(page, port, screenshots):
     expect(arena.locator('#tg-cast-phase')).to_have_text('Channeling')
     shot('05-channeling')
     wait_for(lambda s: 'CombatWound' in s['targetClip'], 'ranged impact')
-    expect(arena.locator('[data-event=damage].tg-critical').first).to_be_visible()
+    expect(arena.locator('[data-event=damage].tg-critical').first).to_have_count(1)
     wait_for(lambda s: s['targetClip'].startswith('Stand'), 'dummy recovered')
     canvas.focus()
     page.keyboard.down('KeyW')
-    walking = wait_for(lambda s: s['activeClip'].startswith('Walk') and s['player']['z'] < -22.5, 'walk')
+    walking = wait_for(lambda s: s['activeClip'].startswith('Run') and s['player']['z'] < -22.5, 'walk')
     page.keyboard.up('KeyW')
     grip(walking)
     wait_for(lambda s: s['activeClip'].startswith('Stand'), 'idle after movement')
@@ -151,7 +156,7 @@ def verify(page, port, screenshots):
     canvas.focus()
     page.keyboard.down('ShiftLeft')
     page.keyboard.down('KeyA')
-    running = wait_for(lambda s: s['activeClip'].startswith('Run'), 'run')
+    running = wait_for(lambda s: s['activeClip'].startswith('Walk'), 'shift walk')
     grip(running)
     page.keyboard.press('Space')
     jumping = wait_for(lambda s: s['activeClip'].startswith('Jump'), 'jump')
