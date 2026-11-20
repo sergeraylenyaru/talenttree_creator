@@ -279,8 +279,10 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
       if (!healing && event.type !== 'damage') continue;
       const amount = healing ? event.effective : event.amount;
       if (!amount) continue;
-      if (!healing) actions.damage?.(event.isCritical,
-        abilities.find(ability => ability.id === event.abilityId)?.presentation?.hitReaction);
+      if(!healing){
+        const presentation=abilities.find(ability=>ability.id===event.abilityId)?.presentation;
+        actions.damage?.(event.isCritical,presentation?.hitReaction,presentation?.impactAnimation);
+      }
       if (actions.combatText?.(event)) continue;
       const float = document.createElement('span');
       float.className = event.isCritical ? 'tg-float tg-critical' : 'tg-float';

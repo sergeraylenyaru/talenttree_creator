@@ -75,7 +75,7 @@ test('the catalog keeps every library ID and loads audited effects only into unc
     assert.deepEqual(parsed.abilities.map(a=>a.id),doc.abilities.map(a=>a.id));
     configured+=parsed.abilities.filter(a=>a.combatEffects?.length).length;
   }
-  assert.equal(configured,15);
+  assert.equal(configured,44);
   const mage=preset('cata-mage');
   const [barrage]=mage.abilities;
   barrage.combatEffects=[];
@@ -126,5 +126,5 @@ test('each stock active with audited effects changes actual dummy HP under its s
       executed++;
     }
   }
-  assert.equal(executed,11);
+  assert.equal(executed,23);
 });

@@ -4,7 +4,7 @@ const amounts = ['baseAmount', 'scalingStat', 'coefficient', 'canCrit'];
 const bonuses = ['flatBonus', 'multiplier', 'critMultiplier', 'attackCoefficient', 'spellCoefficient'];
 const timing = ['duration', 'interval', 'stacks', 'refresh', 'snapshot'];
 export const combatSchools = ['physical', 'fire', 'frost', 'arcane', 'nature', 'shadow', 'holy'];
-export const statusStats = ['attackPower', 'spellPower', 'critChance', 'movementSpeed', 'armor', 'damageTaken', 'healingTaken','haste','healthRegen','resourceRegen','maxHealth','maxResource','physicalTaken','magicalTaken','healingPower','damageDone'];
+export const statusStats = ['attackPower', 'spellPower', 'critChance', 'movementSpeed', 'armor', 'damageTaken', 'healingTaken','haste','healthRegen','resourceRegen','maxHealth','maxResource','physicalTaken','magicalTaken','healingPower','healingDone','damageDone'];
 
 export function validateCombatEffects(ability) {
   if (!Object.hasOwn(ability, 'combatEffects')) return;

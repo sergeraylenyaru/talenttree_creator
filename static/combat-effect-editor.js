@@ -21,7 +21,7 @@ addTranslations([
   ['Коэффициент силы заклинаний','Spell Power coefficient'], ['Единицы ресурса','Resource units'],
   ['Ранг способности','Ability rank'], ['Обновить без стека','Refresh without stacking'],
   ['Действие с ресурсом','Resource operation'], ['Восстановить','Gain'], ['Отнять','Drain'],
-  ['Наносимый урон','Damage dealt'], ['Все школы','All schools'], ['Снять после прямого попадания','Consume on direct hit']
+  ['Наносимый урон','Damage dealt'], ['Исходящее лечение','Healing done'], ['Все школы','All schools'], ['Снять после прямого попадания','Consume on direct hit']
 ]);
 
 const types = [['shield','Щит поглощения'], ['damage','Урон'], ['healing','Лечение'], ['status','Эффект состояния'], ['resource','Восстановление ресурса']];
@@ -30,7 +30,7 @@ const schools = [['physical','Физический'],['fire','Огонь'],['fro
 const scaling = [['none','Без масштабирования'],['healingPower','Сила лечения'],['spellPower','Сила заклинаний'],['attackPower','Сила атаки']];
 const stats = {
   player: [['spellPower','Сила заклинаний'],['attackPower','Сила атаки'],['healingPower','Сила лечения'],
-    ['haste','Скорость'],['armor','Броня'],['damageTaken','Получаемый урон'],['damageDone','Наносимый урон'],['healthRegen','Регенерация здоровья'],
+    ['haste','Скорость'],['armor','Броня'],['damageTaken','Получаемый урон'],['damageDone','Наносимый урон'],['healingDone','Исходящее лечение'],['healthRegen','Регенерация здоровья'],
     ['resourceRegen','Регенерация ресурсов'],['maxHealth','Максимум здоровья'],['maxResource','Максимум ресурсов'], ['critChance','Шанс крита (0–1)'], ['movementSpeed','Скорость движения'], ['healingTaken','Получаемое лечение']],
   dummy: [['armor','Броня'], ['damageTaken','Получаемый урон'],['physicalTaken','Уязвимость к физическому урону'],['magicalTaken','Уязвимость к магии']]
 };

@@ -1,3 +1,5 @@
+import {effectPresets} from './effect-presets.js';
+
 export const animationClips = {
   sword: 'Attack1H (ID 17 variation 0)',
   twoHand: 'Attack2H (ID 18 variation 0)',
@@ -16,6 +18,14 @@ export const presentationOptions = {
   animation: [...Object.keys(animationClips), 'none'],
   castingAnimation: [...Object.keys(animationClips), 'none'],
   attackAnimation: [...Object.keys(animationClips), 'none'],
+  startAnimation: [...Object.keys(animationClips), 'none'],
+  finishAnimation: [...Object.keys(animationClips), 'none'],
+  impactAnimation: [...Object.keys(animationClips), 'none'],
+  projectileOrigin: ['caster','hand','weapon'],
+  trajectory: ['linear','arc'],
+  impactAnchor: ['contact','target','caster','ground'],
+  effectPreset: Object.keys(effectPresets),
+  projectilePreset: Object.keys(effectPresets),
   projectile: ['none', 'straight', 'homing'],
   impact: ['none', 'melee', 'fire', 'frost', 'arcane', 'holy', 'nature', 'shadow', 'healing', 'defense'],
   hitReaction: ['normal', 'heavy', 'none'],
@@ -23,9 +33,9 @@ export const presentationOptions = {
   targeting: ['dummy', 'self', 'area', 'targetArea', 'ground']
 };
 
-export const presentationLimits = {projectileSpeed: [1, 100], channelDuration: [0, 120]};
+export const presentationLimits = {projectileSpeed: [1, 100], channelDuration: [0, 120], arcHeight: [0, 5]};
 
-export const animationFields = ['animation','castingAnimation','attackAnimation'];
+export const animationFields = ['animation','castingAnimation','attackAnimation','startAnimation','finishAnimation','impactAnimation'];
 export const isLocalClip = value => typeof value === 'string' && value.startsWith('clip:') && value.length > 5 &&
   value.length <= 155 && !/[\x00-\x1f\x7f]/.test(value);
 
@@ -55,9 +65,9 @@ export const presentationPresets = {
 
 
 export function presentationRange(range, presentation, meleeRange = 2) {
+  if (presentation?.delivery === 'melee') return Math.min(range||meleeRange,meleeRange);
   if (range > 0) return range;
   if (presentation?.targeting === 'area') return 8;
-  if (presentation?.delivery === 'melee') return meleeRange;
   if (presentation?.delivery === 'ranged' || ['straight', 'homing'].includes(presentation?.projectile)) return 30;
   return meleeRange;
 }

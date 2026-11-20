@@ -4,7 +4,7 @@ export const workshopNumbers = {
   tickInterval: [0.25, 120, ''], radius: [0.25, 30, 5],
   projectileLifetime: [0.25, 30, 5], collisionRadius: [.02, 1, .12],
   projectileSize: [.02, 2, .14], homingStrength: [.1, 30, 8],
-  effectScale: [.1, 4, 1], effectDuration: [.05, 5, .35], opacity: [0, 1, .72],
+  effectSpeed: [.1, 5, 1], effectIntensity: [.1, 2, 1], effectScale: [.1, 4, 1], effectDuration: [.05, 5, .35], opacity: [0, 1, .72],
   playback: [.25, 3, 1], blend: [0, 1, .16], volume: [0, 1, .65],
   variation: [0, .5, 0]
 };
@@ -24,7 +24,7 @@ export function validateWorkshop(ability) {
       if (Number.isFinite(value) && value >= min && value <= max &&
           (!['rank', 'talentRank', 'charges'].includes(key) || Number.isInteger(value))) continue;
     }
-    if (['activationSound','castSound','launchSound','impactSound','tickSound','buffSound','debuffSound','healSound'].includes(key) && soundNames.includes(value)) continue;
+    if (['activationSound','castSound','launchSound','impactSound','criticalSound','tickSound','buffSound','debuffSound','healSound'].includes(key) && soundNames.includes(value)) continue;
     if (['casterEffect','weaponEffect','projectileEffect'].includes(key) && ['none','melee','fire','frost','arcane','holy','nature','shadow','healing','defense'].includes(value)) continue;
     if (key === 'flightDirection' && ['aim','forward'].includes(value)) continue;
     if (key === 'areaShape' && ['circle','cone'].includes(value)) continue;

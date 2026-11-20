@@ -1,4 +1,5 @@
-import {ConeGeometry, Mesh, MeshBasicMaterial, RingGeometry, SphereGeometry, Vector3} from 'three';
+import {effectPresets} from '../../combat/effect-presets.js';
+import {ConeGeometry, Mesh, MeshBasicMaterial, OctahedronGeometry, RingGeometry, SphereGeometry, Vector3} from 'three';
 
 const palette = {
   melee: 0xffdf90, physical: 0xffdf90, fire: 0xff6b22, frost: 0x82dcff,
@@ -11,6 +12,9 @@ export function createCombatVisuals(scene, dummy) {
   const sphere = new SphereGeometry(1, 10, 8);
   const ring = new RingGeometry(0.2, 0.31, 24);
   const arrow = new ConeGeometry(0.23, 4, 6);
+  const shard = new OctahedronGeometry(1);
+  const slash = new RingGeometry(.30,.36,24,1,0,Math.PI*.68);
+  const shapes = {orb:sphere, ring, shard, slash, burst:shard, arrow};
   const up = new Vector3(0, 1, 0);
   const direction = new Vector3();
   const materials = new Map();
@@ -22,16 +26,16 @@ export function createCombatVisuals(scene, dummy) {
   let audio;
 
   function createMesh(position, profile, radius, geometry, impact = false) {
-    const tint = profile.color ?? palette[profile.impact] ?? palette[profile.school] ?? palette.physical;
+    const tint=profile.color??effectPresets[profile.effectPreset]?.color??palette[profile.impact]??palette[profile.school]??palette.physical;
+    const opacity=Math.min(1,(profile.opacity??(impact ? .72 : 1))*(profile.effectIntensity??1));
     const cache = impact ? impactMaterials : materials;
-    const key = impact ? `${tint}/${profile.opacity ?? .72}` : tint;
-    if (!cache.has(key)) cache.set(key, new MeshBasicMaterial(impact
-      ? {color: tint, transparent: true, opacity: profile.opacity ?? .72, depthWrite: false} : {color: tint}));
+    const key=`${tint}/${opacity}`;
+    if(!cache.has(key))cache.set(key,new MeshBasicMaterial({color:tint,opacity,transparent:opacity<1,depthWrite:opacity===1}));
     const mesh = free.pop() || new Mesh();
     mesh.geometry = geometry;
     mesh.material = cache.get(key);
     mesh.position.set(position.x, position.y, position.z);
-    mesh.rotation.set(geometry === ring ? -Math.PI / 2 : 0, 0, 0);
+    mesh.rotation.set(geometry === ring ? -Math.PI / 2 : 0, geometry===slash ? Math.PI/4 : 0, 0);
     mesh.scale.setScalar(radius);
     scene.add(mesh);
     return mesh;
@@ -44,8 +48,9 @@ export function createCombatVisuals(scene, dummy) {
 
   return {
     spawn(position, profile, radius, heading) {
-      const geometry = (profile.attackAnimation ?? profile.animation) === 'bow' ? arrow : sphere;
-      const mesh = createMesh(position, profile, radius, geometry);
+      const preset=effectPresets[profile.effectPreset];
+      const geometry=shapes[preset?.shape]??((profile.attackAnimation??profile.animation)==='bow'?arrow:sphere);
+      const mesh=createMesh(position,profile,radius*(preset?.scale??1),geometry);
       if (geometry === arrow && heading) mesh.quaternion.setFromUnitVectors(up, heading);
       return mesh;
     },
@@ -59,16 +64,29 @@ export function createCombatVisuals(scene, dummy) {
     },
     impact(position, profile) {
       if (profile.impact === 'none') return;
-      if (bursts.length === 24) remove(bursts.shift().mesh);
-      const size = (profile.area && profile.radius ? profile.radius / .31 : profile.area ? 2.5 : profile.critical ? 1.1 : .65) * (profile.effectScale ?? 1);
-      const geometry = profile.area || profile.critical || ['healing', 'defense'].includes(profile.impact ?? profile.school)
-        ? ring : sphere;
-      const mesh = createMesh(position, profile, geometry === ring ? size : size * 0.28, geometry, true);
-      bursts.push({mesh, age: 0, size: mesh.scale.x, lifetime: profile.effectDuration ?? (profile.critical ? .38 : .25)});
+      const preset=effectPresets[profile.effectPreset];
+      const area=profile.area||profile.critical;
+      const fallback=area||['healing','defense'].includes(profile.impact??profile.school)?ring:sphere;
+      const geometry=shapes[preset?.shape]??fallback;
+      const speed=profile.effectSpeed??1;
+      const intensity=profile.effectIntensity??1;
+      const size=(profile.area&&profile.radius?profile.radius/.31:profile.area?2.5:profile.critical?1.1:.65)*
+        (profile.effectScale??1)*(preset?.scale??1);
+      const count=preset?.shape==='burst'?Math.ceil(3*intensity):1;
+      const lifetime=profile.effectDuration??preset?.lifetime??(profile.critical ? .38 : .25);
+      for(let index=0;index<count;index++){
+        if(bursts.length===24)remove(bursts.shift().mesh);
+        const angle=index/count*Math.PI*2;
+        const mesh=createMesh(position,profile,geometry===ring||geometry===slash?size:size*.28,geometry,true);
+        const drift=count>1?new Vector3(Math.cos(angle),.5,Math.sin(angle)).multiplyScalar(speed):null;
+        bursts.push({mesh,age:0,size:mesh.scale.x,lifetime,drift,growth:(preset?.growth??(geometry===ring?2:.7))*speed});
+      }
     },
     zone(position, profile) {
       if (profile.impact === 'none') return;
-      const mesh = createMesh({...position,y:position.y + .025},profile,(profile.radius ?? 5) / .31,ring,true);
+      const preset=effectPresets[profile.effectPreset];
+      const size=(profile.radius??5)/.31*(profile.effectScale??1)*(preset?.scale??1);
+      const mesh=createMesh({...position,y:position.y+.025},profile,size,ring,true);
       zones.add(mesh);
       return () => { if (zones.delete(mesh)) remove(mesh); };
     },
@@ -102,7 +120,8 @@ export function createCombatVisuals(scene, dummy) {
       for (let i = bursts.length - 1; i >= 0; i--) {
         const burst = bursts[i];
         burst.age += dt;
-        burst.mesh.scale.setScalar(burst.size + burst.age * (burst.mesh.geometry === ring ? 2 : 0.7));
+        burst.mesh.scale.setScalar(burst.size+burst.age*burst.growth);
+        if(burst.drift)burst.mesh.position.addScaledVector(burst.drift,dt);
         if (burst.age >= burst.lifetime) {
           remove(burst.mesh);
           bursts.splice(i, 1);
@@ -124,6 +143,8 @@ export function createCombatVisuals(scene, dummy) {
       sphere.dispose();
       ring.dispose();
       arrow.dispose();
+      shard.dispose();
+      slash.dispose();
       for (const material of materials.values()) material.dispose();
       for (const material of impactMaterials.values()) material.dispose();
       if (audio && audio.state !== 'closed') audio.close().catch(() => {});

@@ -164,19 +164,28 @@ def validate_class_icon(value):
 
 
 PRESENTATION_ANIMATIONS = ('sword', 'twoHand', 'bow', 'cast', 'area', 'channel', 'guard', 'movement', 'hurt')
+EFFECT_PRESETS = (
+    'fireball', 'fireImpact', 'burning', 'flameBurst', 'frostbolt', 'frostImpact', 'frostNova', 'iceShards',
+    'arcaneProjectile', 'arcaneImpact', 'arcaneExplosion', 'natureProjectile', 'poisonImpact', 'natureBurst',
+    'shadowProjectile', 'shadowImpact', 'darkEnergy', 'weaponTrail', 'meleeImpact', 'heavyStrike', 'rangedProjectile',
+)
+ANIMATION_FIELDS = ('animation', 'castingAnimation', 'attackAnimation', 'startAnimation', 'finishAnimation', 'impactAnimation')
 PRESENTATION_OPTIONS = {
     'category': ('attack', 'spell', 'healing', 'area', 'defense', 'movement', 'physical', 'magical', 'support', 'utility'),
     'delivery': ('melee', 'ranged'),
-    'animation': PRESENTATION_ANIMATIONS,
-    'castingAnimation': PRESENTATION_ANIMATIONS,
-    'attackAnimation': PRESENTATION_ANIMATIONS,
+    **dict.fromkeys(ANIMATION_FIELDS, PRESENTATION_ANIMATIONS),
+    'projectileOrigin': ('caster', 'hand', 'weapon'),
+    'trajectory': ('linear', 'arc'),
+    'impactAnchor': ('contact', 'target', 'caster', 'ground'),
+    'effectPreset': EFFECT_PRESETS,
+    'projectilePreset': EFFECT_PRESETS,
     'projectile': ('none', 'straight', 'homing'),
     'impact': ('none', 'melee', 'fire', 'frost', 'arcane', 'holy', 'nature', 'shadow', 'healing', 'defense'),
     'hitReaction': ('normal', 'heavy', 'none'),
     'sound': ('strike', 'spark', 'chime'),
     'targeting': ('dummy', 'self', 'area', 'targetArea', 'ground'),
 }
-PRESENTATION_LIMITS = {'projectileSpeed': (1, 100), 'channelDuration': (0, 120)}
+PRESENTATION_LIMITS = {'projectileSpeed': (1, 100), 'channelDuration': (0, 120), 'arcHeight': (0, 5)}
 
 
 def validate_presentation(ability):
@@ -186,7 +195,7 @@ def validate_presentation(ability):
     if not isinstance(data, dict):
         raise ValueError('Проверь оформление способности')
     for key, value in data.items():
-        if key in ('animation','castingAnimation','attackAnimation') and isinstance(value,str):
+        if key in ANIMATION_FIELDS and isinstance(value,str):
             if value == 'none' or value.startswith('clip:') and 5 < len(value) <= 155 and not re.search(r'[\x00-\x1f\x7f]',value):
                 continue
         if key in PRESENTATION_OPTIONS and value in PRESENTATION_OPTIONS[key]:
@@ -251,7 +260,7 @@ def validate_combat_effects(ability):
             target = effect.get('target')
             stats = ('armor','damageTaken','physicalTaken','magicalTaken') if target == 'dummy' else (
                 'attackPower','spellPower','healingPower','critChance','haste','movementSpeed','healingTaken',
-                'armor','damageTaken','healthRegen','resourceRegen','maxHealth','maxResource','damageDone')
+                'armor','damageTaken','healthRegen','resourceRegen','maxHealth','maxResource','healingDone','damageDone')
             if ('school' in effect and (effect.get('stat') != 'damageDone'
                     or effect['school'] not in ('physical', 'fire', 'frost', 'arcane', 'nature', 'shadow', 'holy'))
                     or 'consumeOnHit' in effect and (effect.get('stat') != 'damageDone' or type(effect['consumeOnHit']) is not bool)):
@@ -295,10 +304,10 @@ WORKSHOP_LIMITS = {
     'recharge': (.25, 3600), 'gcdDuration': (0, 3), 'tickInterval': (.25, 120), 'radius': (.25, 30),
     'projectileLifetime': (.25, 30), 'collisionRadius': (.02, 1), 'projectileSize': (.02, 2),
     'homingStrength': (.1, 30), 'effectScale': (.1, 4), 'effectDuration': (.05, 5),
-    'opacity': (0, 1), 'playback': (.25, 3), 'blend': (0, 1), 'volume': (0, 1), 'variation': (0, .5),
+    'effectSpeed': (.1, 5), 'effectIntensity': (.1, 2), 'opacity': (0, 1), 'playback': (.25, 3), 'blend': (0, 1), 'volume': (0, 1), 'variation': (0, .5),
 }
 WORKSHOP_FLAGS = {'disabled', 'hidden', 'noGcd', 'interruptMovement', 'uninterruptible', 'facing', 'loopAnimation'}
-WORKSHOP_SOUNDS = {event + 'Sound' for event in ('activation', 'cast', 'launch', 'impact', 'tick', 'buff', 'debuff', 'heal')}
+WORKSHOP_SOUNDS = {event + 'Sound' for event in ('activation', 'cast', 'launch', 'impact', 'critical', 'tick', 'buff', 'debuff', 'heal')}
 
 
 def validate_workshop(ability):
@@ -572,7 +581,7 @@ class Handler(SimpleHTTPRequestHandler):
         if animation_only:
             with stream:
                 try:
-                    if parts[0] != 'character' or extension not in ('.glb', '.gltf'):
+                    if parts[0] not in ('character', 'targets') or extension not in ('.glb', '.gltf'):
                         return self.send_error(404)
                     if extension == '.glb':
                         magic, version, _, size, chunk_type = struct.unpack('<4sIIII', stream.read(20))

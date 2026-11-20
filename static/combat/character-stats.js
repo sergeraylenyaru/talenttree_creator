@@ -66,7 +66,7 @@ export function deriveCharacterStats(build,statuses=[]){
       attackPower:boosted('attackPower'),spellPower:boosted('spellPower'),
       critChance:Math.max(0,Math.min(1,(stats.critChance??0)+percent('critChance'))),
       critMultiplier:boosted('critMultiplier',2),damageMultiplier:(stats.damageMultiplier??1)*(1+versatile+mastery),
-      healingMultiplier:(stats.healingMultiplier??1)*(1+versatile+mastery),
+      healingMultiplier:(stats.healingMultiplier??1)*(1+versatile+mastery)*Math.max(0,1+percent('healingDone')),
       ...(stats.schoolDamageMultipliers?{schoolDamageMultipliers:stats.schoolDamageMultipliers}:{})
     },
     healingPower:boosted('healingPower'),meleePower:boosted('meleePower'),rangedPower:boosted('rangedPower'),spellDamage:boosted('spellDamage'),

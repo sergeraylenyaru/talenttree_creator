@@ -25,6 +25,8 @@ addTranslations([
   ['Свободно', 'Clear'], ['До манекена', 'Dummy distance']
 ]);
 
+addTranslations([['Замена анимации','Animation fallback']]);
+
 const qualityKey = 'talentforge-world-quality';
 
 export function mountTrainingWorld(dialog, actions) {
@@ -74,6 +76,11 @@ export function mountTrainingWorld(dialog, actions) {
     canvas?.focus({preventScroll:true});
   };
   const frame = stage.querySelector('.tg-world-frame');
+  const fallback=document.createElement('small');
+  fallback.className='tg-animation-fallback';
+  fallback.hidden=true;
+  fallback.setAttribute('role','status');
+  frame.append(fallback);
   const meter = mountDamageMeter(frame, actions.build.name);
   const meterButton = toolbar.querySelector('.tg-world-meter');
   meterButton.onclick = () => {
@@ -187,6 +194,10 @@ export function mountTrainingWorld(dialog, actions) {
     model.textContent = 'Учебный персонаж';
     try {
       controller = module.createWorld(canvas, {
+        animationFallback(requested,replacement){
+          fallback.textContent=t('Замена анимации')+' · '+requested+' → '+replacement;
+          fallback.hidden=false;
+        },
         asset(role, state, detail) { assets.update(role, state, detail); },
         debugDefault(enabled) { debug.checked = enabled; debug.onchange(); },
         movementScale: actions.movementScale,
@@ -300,7 +311,7 @@ export function mountTrainingWorld(dialog, actions) {
       updateCombat(state);
       updateHUD();
     },
-    hit(critical, reaction) { controller?.combatHit(critical, reaction); },
+    hit(critical,reaction,clip) { controller?.combatHit(critical,reaction,clip); },
     update(now) {
       if (!controller) return;
       try {

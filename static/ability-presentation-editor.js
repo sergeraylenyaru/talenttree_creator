@@ -1,11 +1,17 @@
 import {addTranslations, getLanguage, t} from './i18n.js';
+import {effectPresets} from './combat/effect-presets.js';
 import {localAnimationNames} from './world/animation-catalog.js';
 import {animationFields, isLocalClip, presentationLimits, presentationOptions, presentationPresets} from './combat/presentation.js';
 
 const fields = {
   category: ['Категория', 'Category'], delivery: ['Тип доставки', 'Delivery'],
   animation: ['Анимация действия', 'Action animation'], castingAnimation: ['Анимация подготовки', 'Casting animation'],
-  attackAnimation: ['Анимация атаки', 'Attack animation'], projectile: ['Снаряд', 'Projectile'],
+  attackAnimation: ['Анимация выпуска', 'Release animation'], startAnimation:['Анимация начала','Start animation'],
+  finishAnimation:['Анимация завершения','Finish animation'], impactAnimation:['Анимация реакции манекена','Dummy impact animation'],
+  projectile: ['Снаряд', 'Projectile'], projectileOrigin:['Точка выпуска','Launch anchor'],
+  trajectory:['Траектория','Trajectory'], arcHeight:['Высота дуги','Arc height'],
+  projectilePreset:['Пресет снаряда','Projectile preset'], effectPreset:['Пресет попадания','Impact preset'],
+  impactAnchor:['Точка эффекта','Impact anchor'],
   projectileSpeed: ['Скорость снаряда', 'Projectile speed'], impact: ['Эффект попадания', 'Impact effect'],
   hitReaction: ['Реакция цели', 'Hit reaction'], sound: ['Звуковой эффект', 'Sound effect'],
   targeting: ['Выбор цели', 'Targeting'], channelDuration: ['Поддержание, сек.', 'Channel duration, sec.']
@@ -23,6 +29,8 @@ const labels = {
   physical:['Физическая','Physical'], magical:['Магическая','Magical'], support:['Поддержка','Support'], utility:['Утилита','Utility'],
   targetArea:['Область вокруг цели','Area around target'], ground:['По точке на земле','Ground-targeted'],
   heavy: ['Сильная', 'Heavy'], strike: ['Удар', 'Strike'], spark: ['Искра', 'Spark'],
+  caster:['Герой','Caster'],hand:['Правая рука','Right hand'],weapon:['Оружие','Weapon'],
+  linear:['Прямая','Linear'],arc:['Дуга','Arc'],contact:['Контакт','Contact'],target:['Манекен','Dummy model'],
   chime: ['Перезвон', 'Chime'], dummy: ['Манекен', 'Training dummy'], self: ['На себя', 'Self']
 };
 
@@ -37,7 +45,7 @@ export function presentationEditor(container, ability) {
   const makeSelect = (options, placeholder) => {
     const select = document.createElement('select');
     select.append(new Option(t(placeholder), ''));
-    for (const key of options) select.append(new Option(labelText(labels[key] ?? [key,key]), key));
+    for (const key of options) select.append(new Option(labelText(labels[key] ?? effectPresets[key]?.label ?? [key,key]), key));
     return select;
   };
   const append = (key, label, control) => {
@@ -83,7 +91,11 @@ export function presentationEditor(container, ability) {
     const area=['area','targetArea','ground'].includes(target);
     const projectile=controls.get('projectile');
     projectile.parentElement.hidden=area||target==='self'||delivery==='melee';
-    controls.get('projectileSpeed').parentElement.hidden=projectile.parentElement.hidden||!['straight','homing'].includes(projectile.value);
+    const flight=!projectile.parentElement.hidden&&['straight','homing'].includes(projectile.value);
+    for(const key of ['projectileSpeed','projectileOrigin','projectilePreset'])controls.get(key).parentElement.hidden=!flight;
+    controls.get('trajectory').parentElement.hidden=!flight||projectile.value!=='straight';
+    controls.get('arcHeight').parentElement.hidden=!flight||projectile.value!=='straight'||controls.get('trajectory').value!=='arc';
+    controls.get('impactAnimation').parentElement.hidden=target==='self';
     controls.get('hitReaction').parentElement.hidden=target==='self';
   }
   mode.onchange = () => {
@@ -97,18 +109,33 @@ export function presentationEditor(container, ability) {
     }
     updateRelevance();
   };
-  let availableClips;
-  localAnimationNames().then(names=>{
-    availableClips = new Set(names);
-    for (const key of animationFields) {
-      const control = controls.get(key);
-      const existing = new Set([...control.options].map(option=>option.value));
-      const group = document.createElement('optgroup');
-      group.label = 'GLB';
-      for (const name of names) if (!existing.has('clip:'+name)) group.append(new Option(name,'clip:'+name));
+  const catalogs=new Map();
+  const clipStatus=document.createElement('small');
+  clipStatus.setAttribute('role','status');
+  container.append(clipStatus);
+  function showFallback(){
+    const missing=animationFields.filter(key=>{
+      const value=controls.get(key).value;
+      return isLocalClip(value)&&catalogs.get(key)?.size&&!catalogs.get(key).has(value.slice(5));
+    });
+    clipStatus.textContent=missing.length?t('Отсутствующий клип заменится ближайшей доступной анимацией.'):'';
+  }
+  addTranslations([['Отсутствующий клип заменится ближайшей доступной анимацией.','The nearest available clip will replace the missing animation.']]);
+  async function addAnimations(keys,role){
+    const names=await localAnimationNames(role);
+    for (const key of keys) {
+      catalogs.set(key,new Set(names));
+      const control=controls.get(key),existing=new Set([...control.options].map(option=>option.value));
+      const group=document.createElement('optgroup');
+      group.label='GLB';
+      for(const name of names)if(!existing.has('clip:'+name))group.append(new Option(name,'clip:'+name));
       if(group.children.length)control.append(group);
     }
-  });
+    showFallback();
+  }
+  addAnimations(animationFields.filter(key=>key!=='impactAnimation'),'hero');
+  addAnimations(['impactAnimation'],'target');
+  container.addEventListener('change',showFallback);
   preset.onchange = () => {
     const defaults = presentationPresets[preset.value];
     for (const [key, control] of controls) control.value = defaults?.[key] ?? '';
@@ -121,11 +148,10 @@ export function presentationEditor(container, ability) {
       [key, control.type === 'number' ? control.valueAsNumber : control.value]));
     if (result.delivery==='melee'||['self','area','targetArea','ground'].includes(result.targeting)) {
       if (result.projectile) result.projectile='none';
-      delete result.projectileSpeed;
+      for(const key of ['projectileSpeed','projectileOrigin','projectilePreset','trajectory','arcHeight'])delete result[key];
     }
-    if (availableClips?.size && animationFields.some(key=>isLocalClip(result[key]) && !availableClips.has(result[key].slice(5)))) {
-      throw Error('Выбранная анимация отсутствует в локальной модели');
-    }
+    if(result.projectile!=='straight'){delete result.trajectory;delete result.arcHeight;}
+    if(result.trajectory!=='arc')delete result.arcHeight;
     return result;
   };
 }

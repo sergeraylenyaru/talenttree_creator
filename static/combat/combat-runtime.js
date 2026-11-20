@@ -225,7 +225,10 @@ export function createCombatRuntime(build, options = {}) {
     if (cooldown || gcd) events.push(entry('cooldownStarted', ability, {amount: cooldown, globalCooldown: gcd}));
     if (spatialDamage) events.push(entry(delivery.projectile ? 'projectileLaunched' : 'attackLaunched', ability));
     log(events);
-    if (delivery?.utility) delivery.launch(state.combatTime);
+    if(delivery?.utility){
+      delivery.launch(state.combatTime);
+      if(results.some(result=>result.isCritical))delivery.critical?.();
+    }
     if (spatialDamage) {
       const token = {};
       pending.add(token);
@@ -386,6 +389,7 @@ export function createCombatRuntime(build, options = {}) {
         if (cooldown || gcd) events.push(entry('cooldownStarted', ability, {amount: cooldown, globalCooldown: gcd}));
       }
       applyResults(results, ability, events, startedAt, delivery);
+      if(results.some(result=>result.isCritical))delivery?.critical?.();
       delivery?.sound?.(ability.workshop.tickSound);
       const nextTick = cast.nextTick + cast.tickInterval;
       state = {...state, activeCast: {...cast, paid: true, nextTick}};

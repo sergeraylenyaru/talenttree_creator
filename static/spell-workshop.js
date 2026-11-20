@@ -13,12 +13,13 @@ const words = {
   flightDirection:['Направление полёта','Flight direction'], projectileLifetime:['Время жизни снаряда','Projectile lifetime'], collisionRadius:['Радиус столкновения','Collision radius'],
   projectileSize:['Размер снаряда','Projectile size'], homingStrength:['Скорость поворота снаряда','Homing turn rate'],
   color:['Оттенок эффекта','Effect color'], effectScale:['Масштаб эффекта','Effect scale'], effectDuration:['Время эффекта','Effect duration'],
+  effectSpeed:['Скорость эффекта','Effect speed'],effectIntensity:['Интенсивность эффекта','Effect intensity'],
   opacity:['Непрозрачность','Opacity'], playback:['Скорость анимации','Animation playback speed'], blend:['Время смешивания','Blend duration'],
   loopAnimation:['Повторять анимацию','Loop animation'], casterEffect:['Эффект на герое','Caster effect'],
   weaponEffect:['Эффект на оружии','Weapon effect'], projectileEffect:['Вид снаряда','Projectile appearance'],
   activationSound:['Звук активации','Activation sound'], castSound:['Звук подготовки','Cast start sound'],
   launchSound:['Звук запуска','Launch sound'], impactSound:['Звук попадания','Impact sound'],
-  tickSound:['Звук тика канала','Channel tick sound'], buffSound:['Звук усиления','Buff sound'],
+  criticalSound:['Звук критического попадания','Critical hit sound'],tickSound:['Звук тика канала','Channel tick sound'], buffSound:['Звук усиления','Buff sound'],
   debuffSound:['Звук ослабления','Debuff sound'], healSound:['Звук лечения','Healing sound'],
   volume:['Громкость','Volume'], variation:['Разброс высоты звука','Pitch variation']
 };
@@ -33,8 +34,8 @@ const groups = [
   ['Механика применения','Cast rules',['minRange','facing','interruptMovement','uninterruptible','tickInterval','radius','areaShape']],
   ['Заряды и глобальная перезарядка','Charges and global cooldown',['charges','recharge','noGcd','gcdDuration']],
   ['Параметры снаряда','Projectile parameters',['projectileLifetime','collisionRadius','projectileSize','homingStrength','flightDirection']],
-  ['Анимация и эффекты','Animation and effects',['casterEffect','weaponEffect','projectileEffect','color','effectScale','effectDuration','opacity','playback','blend','loopAnimation']],
-  ['Звук','Sound',['activationSound','castSound','launchSound','impactSound','tickSound','buffSound','debuffSound','healSound','volume','variation']]
+  ['Анимация и эффекты','Animation and effects',['casterEffect','weaponEffect','projectileEffect','color','effectScale','effectDuration','effectSpeed','effectIntensity','opacity','playback','blend','loopAnimation']],
+  ['Звук','Sound',['activationSound','castSound','launchSound','impactSound','criticalSound','tickSound','buffSound','debuffSound','healSound','volume','variation']]
 ];
 addTranslations([...Object.values(words), ...Object.values(values), ...groups.map(([ru,en])=>[ru,en]),
   ['Модификаторы','Modifiers'], ['Шаблоны способностей','Ability templates'], ['Дополнительные настройки','Advanced settings'], ['Мастерская заклинаний','Spell Workshop'], ['Библиотека заклинаний','Spell Library'], ['Внутренний ID','Internal ID'],

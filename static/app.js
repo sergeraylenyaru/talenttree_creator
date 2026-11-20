@@ -1,3 +1,5 @@
+import {classSpellTemplates,classTemplateLabels,installStarterLibrary,templateClassForPreset} from './combat/class-spell-templates.js';
+import {combatSchools} from './combat/effect-validation.js';
 import {abilityReadiness} from './combat/ability-readiness.js';
 import {characterLab} from './character-lab.js';
 import {removeRpgReferences} from './combat/rpg-profile.js';
@@ -28,6 +30,20 @@ import {blank,branch,total,validBuild,changeRank,normalize,route,reserved,moveTa
 import {icons,iconURL} from './icons.js';
 const $=s=>document.querySelector(s);
 registerTrainingTranslations();
+addTranslations([...Object.values(classTemplateLabels),
+ ['Шаблоны классов','Class templates'],['Мои способности','My abilities'],
+ ['Добавить набор в библиотеку','Add set to library'],['Авторский шаблон Talent Forge','Talent Forge template'],
+ ['Адаптация исходного заклинания','Source spell adapted'],['Исходная запись','Source record'],
+ ['Только мои способности','My abilities only'],['Готовность','Readiness'],['Все состояния','Any state'],
+ ['Есть лечение','Has healing'],['Есть эффекты','Has effects'],['Нет эффектов','No effects'],
+ ['Требуется настройка','Needs setup'],['Частично настроена','Partly configured'],
+ ['Происхождение','Source'],['Все классы','All classes'],['Любая ветка','Any tree'],
+ ['Любой тип','Any type'],['Боевые эффекты','Combat effects'],['Любые эффекты','Any effects'],
+ ['Физический урон','Physical damage'],['Магический урон','Magic damage'],['Настроена','Configured'],
+ ['Неподдерживаемая механика','Unsupported mechanic'],['Ошибочная связь','Broken link'],
+ ['Редактировать','Edit'],['Сортировка','Sort by']
+]);
+const schoolLabels={physical:'Физический',fire:'Огонь',frost:'Лёд',arcane:'Тайная магия',nature:'Природа',shadow:'Тьма',holy:'Свет'};
 addTranslations([
  ['Открыть в мастерской','Open in Spell Workshop'],['Заменить способность','Replace ability'],
  ['Открыта текущим билдом','Unlocked by current build'],['Закрыта текущим билдом','Locked by current build'],
@@ -252,15 +268,31 @@ function commitTalentAbility(branch,talent,existing,ability,edit=false){
  doc=placeAbilityTalent(next,ability.id,branch.id,talent.row,talent.col,Boolean(existing),talent);
  changed();render();$('#modal').close();
 }
+function selectedTemplateClass(){
+ const first=doc.branches[0]?.id;
+ const preset=first?.replace(/-\d+$/,'');
+ return templateClassForPreset(preset);
+}
+
 function editAbility(existing,onSaved=null,onCancel=null,draft=null,savePlacement=null){
  const a=draft||existing||{id:crypto.randomUUID(),name:'',description:'',icon:'forge-arcane',workshop:{version:1},resourceUnit:'percent',resource:'',cast:'',cooldown:'',range:'',talentId:'',requirements:'',learningMode:'base'};
  if(mode==='play'){modal(a.name,`<p class="tooltip-description">${esc(a.description)}</p><div class="spell-stats">${abilityStatsMarkup(a)}</div>`,null);readOnlyFavorite('ability',a);return;}
  const learning=a.learningMode||((a.talentId||doc.branches.some(b=>b.talents.some(t=>t.grantedAbilityId===a.id)))?'talent':'base');
 
- const templates=workshopTemplates(classResources(character()).find(resource=>resource.id!=='health'));
+ const resource=classResources(character()).find(resource=>resource.id!=='health');
+ const presetClass=selectedTemplateClass();
+ const language=getLanguage(),classIds=Object.keys(classTemplateLabels);
+ if(presetClass)classIds.unshift(...classIds.splice(classIds.indexOf(presetClass),1));
+ const general=workshopTemplates(resource),templates=[...general];
+ const option=(item,index)=>`<option value="${index}" data-user-content>${esc(item.name)}</option>`;
+ const classOptions=classIds.map(classId=>{
+  const entries=classSpellTemplates(classId,character(),language),start=templates.length;
+  templates.push(...entries);
+  return `<optgroup label="${esc(classTemplateLabels[classId][language==='ru'?0:1])}">${entries.map((item,index)=>option(item,start+index)).join('')}</optgroup>`;
+ }).join('');
  const readiness=abilityReadiness(doc,a);
  const identity=`<div class="ability-identity"><div>${field('abilityName','НАЗВАНИЕ',a.name,'text','required maxlength="100"')}<small>Внутренний ID <code data-user-content>${esc(a.id)}</code> · <span class="spell-readiness" data-readiness="${readiness.state}">${esc(readiness.message)}</span></small></div>${iconPicker(a.icon)}</div>`;
- const templateTools=`<details class="workshop-template-details"><summary>Шаблоны способностей</summary><div class="workshop-template-bar"><label>Применить шаблон<select id="workshopTemplate"><option value="">Выбери шаблон</option>${templates.map((item,index)=>`<option value="${index}" data-user-content>${esc(item.name)}</option>`).join('')}</select></label>
+ const templateTools=`<details class="workshop-template-details"><summary>Шаблоны способностей</summary><div class="workshop-template-bar"><label>Применить шаблон<select id="workshopTemplate"><option value="">Выбери шаблон</option>${general.map(option).join('')}${classOptions}</select></label>
  <button id="applySpellTemplate" type="button">Применить шаблон</button><button id="rememberSpellTemplate" type="button">Сохранить как шаблон</button></div></details>`;
  const selectors=`<div class="ability-selectors"><div><label for="abilityKind">ТИП СПОСОБНОСТИ</label><select id="abilityKind"><option value="active" ${a.kind!=='passive'?'selected':''}>Активная</option><option value="passive" ${a.kind==='passive'?'selected':''}>Пассивная</option></select></div><div><label for="abilityBranch">ВЕТКА</label><select id="abilityBranch"><option value="auto" ${a.branchId===undefined||a.branchId==='auto'?'selected':''}>По размещению в дереве</option><option value="" ${a.branchId===''?'selected':''}>Общая — без ветки</option>${doc.branches.map(b=>`<option data-user-content value="${esc(b.id)}" ${a.branchId===b.id?'selected':''}>${esc(b.name)}</option>`).join('')}</select></div></div>`;
  const castControl=`<label id="abilityCastControl" class="workshop-cast-mode">Режим применения <select id="abilityCastMode"><option value="instant">Мгновенное</option><option value="cast">С временем применения</option>
@@ -415,11 +447,32 @@ function openSpellLibrary(){
    <option value="talent">Требуют талант</option><option value="disabled">Отключённые</option><option value="hidden">Скрытые</option></select></label>
    <label>Сортировка<select id="spellSort"><option value="name">По названию</option><option value="cooldown">По перезарядке</option><option value="">По порядку класса</option></select></label>
    <button type="button" id="libraryCreate">Добавить способность</button><button type="button" id="libraryLoad">Импорт способности</button>
+   <button type="button" id="libraryClassTemplates">Шаблоны классов</button>
+   <label>Происхождение<select id="spellOrigin"><option value="">Вся библиотека</option><option value="mine">Только мои способности</option><option value="source">Исходная запись</option><option value="template">Авторский шаблон Talent Forge</option></select></label>
+   <label>Класс<select id="spellClass"><option value="">Все классы</option>${Object.entries(classTemplateLabels).map(([key,names])=>
+   `<option value="${key}">${esc(names[getLanguage()==='ru'?0:1])}</option>`).join('')}</select></label>
+   <label>Ветка<select id="spellBranch"><option value="">Любая ветка</option>${doc.branches.map(branch=>`<option data-user-content value="${esc(branch.id)}">${esc(branch.name)}</option>`).join('')}</select></label>
+   <label>Школа урона<select id="spellSchool"><option value="">Все школы</option>${combatSchools.map(school=>`<option value="${school}">${schoolLabels[school]}</option>`).join('')}</select></label>
+   <label>Тип способности<select id="spellKind"><option value="">Любой тип</option><option value="active">Активная</option><option value="passive">Пассивная</option></select></label>
+   <label>Боевые эффекты<select id="spellEffects"><option value="">Любые эффекты</option><option value="damage">Урон</option><option value="physical">Физический урон</option><option value="magical">Магический урон</option><option value="healing">Есть лечение</option><option value="any">Есть эффекты</option><option value="none">Нет эффектов</option></select></label>
+   <label>Готовность<select id="spellReadiness"><option value="">Все состояния</option><option value="ready">Настроена</option><option value="partial">Частично настроена</option><option value="noEffects">Требуется настройка</option><option value="unsupported">Неподдерживаемая механика</option><option value="broken">Ошибочная связь</option></select></label>
    <input type="file" id="libraryFile" accept=".json,application/json" hidden></div><div id="spellLibraryRows"></div></div>`);
  function refresh(){
   const query=$('#spellSearch').value.trim().toLocaleLowerCase(), filter=$('#spellFilter').value;
   const order=$('#spellSort').value;
+  const origin=$('#spellOrigin').value, branch=$('#spellBranch').value, school=$('#spellSchool').value;
+  const kind=$('#spellKind').value, effect=$('#spellEffects').value, readiness=$('#spellReadiness').value;
+  const classId=$('#spellClass').value;
   const list=doc.abilities.filter(a=>{
+   const effects=a.combatEffects??[];
+   const knownClass=Object.keys(classTemplateLabels).find(key=>a.id.startsWith('tf-class-'+key+'-')||a.id.startsWith('cata-'+key+'-'));
+   if(classId&&classId!==(knownClass??selectedTemplateClass())||origin&&origin!==spellOrigin(a)||branch&&a.branchId!==branch&&!doc.branches.some(b=>b.id===branch&&b.talents.some(t=>t.grantedAbilityId===a.id||t.id===a.talentId))
+    ||school&&!effects.some(e=>e.school===school)||kind&&(a.kind??'active')!==kind
+    ||readiness&&abilityReadiness(doc,a).state!==readiness)return false;
+   if(effect==='any'&&!effects.length||effect==='none'&&effects.length
+    ||['damage','healing'].includes(effect)&&!effects.some(e=>e.type===effect)
+    ||effect==='physical'&&!effects.some(e=>e.type==='damage'&&e.school==='physical')
+    ||effect==='magical'&&!effects.some(e=>e.type==='damage'&&e.school!=='physical'))return false;
    const state=a.workshop?.disabled?'disabled':a.workshop?.hidden?'hidden':a.learningMode??'base';
    return (!filter||filter===state) && [a.name,a.description,a.id,...(a.combatEffects??[]).map(e=>e.school??e.type)]
     .some(value=>String(value??'').toLocaleLowerCase().includes(query));
@@ -428,7 +481,7 @@ function openSpellLibrary(){
   if(order==='cooldown')list.sort((a,b)=>numericValue(a.cooldown)-numericValue(b.cooldown));
   $('#spellLibraryRows').innerHTML=list.map(a=>`<article class="spell-library-row" data-spell-id="${esc(a.id)}">
     <span class="spell-library-icon">✦${image(a.icon)}</span>
-    <div><strong data-user-content>${esc(a.name)}</strong><small class="spell-readiness" data-readiness="${abilityReadiness(doc,a).state}">${esc(abilityReadiness(doc,a).message)}</small><small>${a.kind==='passive'?'Пассивная':'Активная'} · ${abilityStatsMarkup(a,' · ')}</small></div>
+    <div><strong data-user-content>${esc(a.name)}</strong><small class="spell-readiness" data-readiness="${abilityReadiness(doc,a).state}">${esc(abilityReadiness(doc,a).message)}</small><small>${a.kind==='passive'?'Пассивная':'Активная'} · ${spellOrigin(a)==='template'?'Авторский шаблон Talent Forge':spellOrigin(a)==='source'?(a.combatEffects?.length?'Адаптация исходного заклинания':'Исходная запись'):'Мои способности'} · ${abilityStatsMarkup(a,' · ')}</small></div>
     <div class="spell-library-actions"><button type="button" data-spell-action="edit">Редактировать</button>
     <button type="button" data-spell-action="rename">Переименовать</button><button type="button" data-spell-action="duplicate">Дублировать</button>
     <button type="button" data-spell-action="export">Экспорт</button><button type="button" data-spell-action="delete">Удалить</button></div></article>`
@@ -438,7 +491,9 @@ function openSpellLibrary(){
   $('#modal').close();
   editAbility(a,openSpellLibrary,openSpellLibrary,draft);
  }
- $('#spellSearch').oninput=$('#spellFilter').onchange=$('#spellSort').onchange=refresh;
+ $('#spellSearch').oninput=refresh;
+ for(const select of $('#modalBody').querySelectorAll('.spell-library-tools select'))select.onchange=refresh;
+ $('#libraryClassTemplates').onclick=()=>{$('#modal').close();openClassLibrary();};
  $('#libraryCreate').onclick=()=>reopenEditor(null);
  $('#libraryLoad').onclick=()=>$('#libraryFile').click();
  $('#libraryFile').onchange=async event=>{
@@ -482,6 +537,45 @@ function openSpellLibrary(){
    }
   }
  };
+ refresh();
+}
+
+function spellOrigin(ability){
+ if(ability.id.startsWith('tf-class-'))return 'template';
+ return ability.sourceSpellId?'source':'mine';
+}
+
+function openClassLibrary(){
+ const locale=getLanguage(),origin=selectedTemplateClass()??'warrior';
+ modal('Шаблоны классов',`<div class="spell-library">
+ <div class="spell-library-tools"><label>Класс<select id="templateClass">${Object.entries(classTemplateLabels)
+  .map(([key,names])=>`<option value="${key}" ${key===origin?'selected':''}>${esc(names[locale==='ru'?0:1])}</option>`).join('')}</select></label>
+ <button type="button" id="addClassLibrary">Добавить набор в библиотеку</button>
+ <button type="button" id="backSpellLibrary">Библиотека заклинаний</button></div>
+ <div id="classTemplateRows"></div></div>`,null);
+ const refresh=()=>{
+  const templates=classSpellTemplates($('#templateClass').value,character(),locale);
+  $('#classTemplateRows').innerHTML=templates.map(ability=>`<article class="spell-library-row">
+   <span class="spell-library-icon">${image(ability.icon)}</span>
+   <div data-user-content><strong>${esc(ability.name)}</strong><small>${esc(ability.description)}</small></div>
+   <button type="button" data-class-template="${esc(ability.id)}">Открыть в мастерской</button></article>`).join('');
+  $('#classTemplateRows').onclick=event=>{
+   const id=event.target.closest('[data-class-template]')?.dataset.classTemplate;
+   if(!id)return;
+   const existing=doc.abilities.find(ability=>ability.id===id);
+   $('#modal').close();
+   editAbility(existing,openClassLibrary,openClassLibrary,existing?null:templates.find(ability=>ability.id===id));
+  };
+ };
+ $('#templateClass').onchange=refresh;
+ $('#addClassLibrary').onclick=()=>{
+  try{
+   doc=normalize(installStarterLibrary(doc,$('#templateClass').value,locale),{allowLegacy:true});changed();render();
+   $('#modal').close();openSpellLibrary();
+  }catch(error){$('#formError').textContent=t(error.message);}
+ };
+ $('#backSpellLibrary').onclick=()=>{$('#modal').close();openSpellLibrary();};
+ modalCancel=openSpellLibrary;
  refresh();
 }
 
@@ -550,7 +644,8 @@ $('#preset').onclick=async()=>{
   let version='Forever',selected=classes.find(c=>c.version===version)?.id;
   modal('Стандартные деревья',`<div id="versionFilters" class="version-filters">${[['Forever','Forever'],['2.4.3','TBC'],['3.3.5a','WotLK'],['4.3.4','Cataclysm']].map(([v,n])=>`<button type="button" data-version="${v}">${n}</button>`).join('')}</div><input type="hidden" id="presetClass"><div id="classCards" class="class-cards"></div><p class="muted">Стандартный набор будет скопирован на языке интерфейса. Forever — снимок 1.60.1.69876, возможны отличия от текущего Wowhead.${getLanguage()==='ru'?' Русские тексты: игровые данные и перевод проекта.':''}</p>`,async()=>{
    if(!selected)throw Error('Выбери класс');if(!await askToLeave())return;
-   const response=await fetch(`presets/${selected}.json`,{cache:'no-store'});if(!response.ok)throw Error('Не удалось загрузить класс');const original=await response.json(),language=getLanguage();let locale=null;if(language==='ru'){const translated=await fetch(`preset-locales/ru/${selected}.json`,{cache:'no-store'});if(!translated.ok)throw Error('Не удалось загрузить русский набор талантов');locale=await translated.json();}doc=normalize(applyPresetLocale(original,selected,language,locale));showWorkspace();projectId=null;activeShare=null;favoriteTreeId=null;allocationSent=false;$('#shareStats').hidden=true;mode=user?'edit':'play';changed();render();$('#modal').close();toast(doc.source?.notice||'Класс загружен');
+   const response=await fetch(`presets/${selected}.json`,{cache:'no-store'});if(!response.ok)throw Error('Не удалось загрузить класс');const original=await response.json(),language=getLanguage();let locale=null;if(language==='ru'){const translated=await fetch(`preset-locales/ru/${selected}.json`,{cache:'no-store'});if(!translated.ok)throw Error('Не удалось загрузить русский набор талантов');locale=await translated.json();}const localized=applyPresetLocale(original,selected,language,locale);
+   doc=normalize(localized.abilities.length?localized:installStarterLibrary(localized,templateClassForPreset(selected),language));showWorkspace();projectId=null;activeShare=null;favoriteTreeId=null;allocationSent=false;$('#shareStats').hidden=true;mode=user?'edit':'play';changed();render();$('#modal').close();toast(doc.source?.notice||'Класс загружен');
   });
   function drawClasses(){
    for(const b of document.querySelectorAll('[data-version]')){b.classList.toggle('selected',b.dataset.version===version);b.setAttribute('aria-pressed',String(b.dataset.version===version));}

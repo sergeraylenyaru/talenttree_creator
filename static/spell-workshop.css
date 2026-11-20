@@ -72,3 +72,13 @@
 .workshop-cast-mode select { width:auto; max-width:100%; padding:.3rem .45rem; }
 .workshop-cast-mode[hidden] { display:none; }
 .ability-editor-dialog #abilityDescription { min-height:175px; }
+
+.tg-animation-fallback {
+  position:absolute;
+  top:3.5rem;
+  right:.6rem;
+  max-width:min(75vw,26rem);
+  background:#221e2c;
+  color:#f2d39f;
+  padding:.3rem .5rem;
+}

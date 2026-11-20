@@ -27,6 +27,22 @@ class WorkshopValidation(unittest.TestCase):
     def test_schema_round_trips_with_legacy_abilities(self):
         self.assertEqual(server.validate(copy.deepcopy(self.doc))['abilities'], self.doc['abilities'])
 
+    def test_visual_preset_and_arced_projectile_validation(self):
+        ability = self.doc['abilities'][0]
+        ability['presentation'].update(
+            targeting='dummy', projectile='straight', projectileOrigin='hand', trajectory='arc',
+            arcHeight=.8, projectilePreset='frostbolt', effectPreset='frostImpact', impactAnchor='target',
+            startAnimation='guard', finishAnimation='cast', impactAnimation='clip:CombatWound (ID 9 variation 0)'
+        )
+        ability['workshop']['criticalSound'] = 'strike'
+        self.assertEqual(server.validate(copy.deepcopy(self.doc))['abilities'][0], ability)
+        for key, value in [('arcHeight', 6), ('effectPreset', 'missing'), ('projectileOrigin', 'leftHip')]:
+            with self.subTest(key=key):
+                invalid = copy.deepcopy(self.doc)
+                invalid['abilities'][0]['presentation'][key] = value
+                with self.assertRaises(ValueError):
+                    server.validate(invalid)
+
     def test_linked_ids_remain_distinct_with_matching_metadata(self):
         original = self.doc['abilities'][0]
         copy_ability = copy.deepcopy(original)

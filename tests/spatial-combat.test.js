@@ -257,3 +257,51 @@ test('instant and projectile delivery respect 2, 5, 10, 15 and maximum surface r
   melee.victim.position.z = -5;
   assert.equal(melee.castAbility().reason, 'outOfRange');
 });
+
+test('arced projectiles start where authored, sweep real hit volumes, and hit only once',()=>{
+  const positions=[],reports=[],clips=[];
+  const target={selected:()=>true,read:()=>({position:{x:0,y:1.25,z:-8},alive:true,radius:.5})};
+  const world=createSpatialCombat({
+    player:()=>({x:0,y:0,z:0,facing:0}),target:()=>target,obstacles:[],
+    animationAvailable:name=>name==='SpellCastDirected (ID 53 variation 0)',
+    animationFallback:(from,to)=>reports.push([from,to]),
+    projectileOrigin:anchor=>({x:0,y:anchor==='hand'?1:1.25,z:0}),
+    animate:(_,__,clip)=>clips.push(clip),face(){},
+    visuals:{spawn(position,profile){positions.push({...position});assert.equal(profile.effectPreset,'frostbolt');return {};},
+      remove(){},move(_,position){positions.push({...position});},impact(){}}
+  });
+  const a={range:30,weaponType:'staff',presentation:{targeting:'dummy',delivery:'ranged',projectile:'straight',
+    projectileOrigin:'hand',trajectory:'arc',arcHeight:1.4,projectilePreset:'frostbolt',attackAnimation:'bow'},
+    combatEffects:[{type:'damage',school:'frost',trigger:'onHit'}]};
+  const delivery=world.delivery(a);
+  assert.equal(delivery.validate(),undefined);
+  let hits=0;
+  delivery.launch(0,outcome=>{assert.equal(outcome,'hit');hits++;});
+  assert.equal(positions[0].y,1);
+  world.update(.4);
+  assert.ok(Math.max(...positions.map(p=>p.y))>2);
+  assert.equal(hits,0);
+  world.update(2);
+  world.update(3);
+  assert.equal(hits,1);
+  assert.deepEqual(reports,[['AttackBow (ID 46 variation 0)','SpellCastDirected (ID 53 variation 0)']]);
+  assert.deepEqual(clips,['SpellCastDirected (ID 53 variation 0)']);
+});
+
+test('generic release animations adapt to equipped daggers, two-handers, and crossbows',()=>{
+  const clips=[];
+  const target={read:()=>({position:{x:0,y:1.25,z:-1.5},alive:true,radius:.5})};
+  const world=createSpatialCombat({
+    player:()=>({x:0,y:0,z:0,facing:0}),target:()=>target,obstacles:[],
+    animate:(_,__,clip)=>clips.push(clip),face(){},
+    visuals:{spawn(){return {};},remove(){},impact(){}}
+  });
+  for(const [weaponType,style,projectile] of [
+    ['dagger','sword','none'],['sword2','sword','none'],['crossbow','bow','straight']
+  ]){
+    const delivery=world.delivery({weaponType,range:2,combatEffects:[{type:'damage',school:'physical',trigger:'onHit'}],
+      presentation:{targeting:'dummy',delivery:style==='bow'?'ranged':'melee',attackAnimation:style,projectile}});
+    delivery.launch(0,()=>{});
+  }
+  assert.deepEqual(clips,['Attack1HPierce (ID 85 variation 0)','Attack2H (ID 18 variation 0)','AttackCrossbow (ID 840 variation 0)']);
+});

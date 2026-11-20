@@ -136,7 +136,11 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
       }
       if (picking) { world.pickGround(null); picking = false; }
       syncClock();
-      const result = runtime.cast(id, a => world?.delivery(a, point));
+      const result=runtime.cast(id,a=>{
+        const weapons=runtime.sheet().weapons;
+        const equipped=a.presentation?.delivery==='ranged'?weapons.ranged??weapons.melee:weapons.melee;
+        return world?.delivery({...a,weaponType:a.weaponType??equipped?.type},point);
+      });
       view.update(runtime);
       return result;
     },
@@ -188,7 +192,7 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
     combatText(event) {
       return world?.combatText(event);
     },
-    damage(critical, reaction) { world?.hit(critical, reaction); }
+    damage(critical,reaction,clip) { world?.hit(critical,reaction,clip); }
   });
 
   function tick(now) {

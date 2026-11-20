@@ -1,3 +1,4 @@
+import {animationClips,isLocalClip} from '../combat/presentation.js';
 import {capturePortrait} from './portrait.js';
 import {createExplorationTerrain, createWorldCollision} from './exploration-world.js';
 import {loadArenaAssets} from './arena-loader.js';
@@ -71,7 +72,10 @@ export function createWorld(canvas, callbacks, config = world) {
   let manifest;
   let weapon;
   let dummyAnimation;
+  let targetModelClips=[];
   let reaction;
+  let reactionClip;
+  let lastAnimationFallback;
   let reactionTime = 0;
   const diagnostics = {};
   let pose;
@@ -112,9 +116,21 @@ export function createWorld(canvas, callbacks, config = world) {
       };
     }
   };
+  function reportAnimationFallback(requested,replacement){
+    lastAnimationFallback={requested,replacement};
+    callbacks.animationFallback?.(requested,replacement);
+  }
+
   const combat = createSpatialCombat({
     player: () => player,
     animationAvailable: name => model.clips.some(clip=>clip.name===name),
+    animationFallback: reportAnimationFallback,
+    projectileOrigin(anchor) {
+      const node=anchor==='weapon'&&weapon?.mount||model.root?.getObjectByName('bone_HandR');
+      if(!node)return;
+      const {x,y,z}=node.getWorldPosition(mountPoint);
+      return {x,y,z};
+    },
     target: () => selected ? dummyTarget : null,
     areaTarget: () => dummyTarget,
     move() { queuedJump = true; },
@@ -256,15 +272,18 @@ export function createWorld(canvas, callbacks, config = world) {
       pose={name:'hitReaction',until:combatTime+.35,minimum:.35,elapsed:0,pending:true,
         override:'CombatWound (ID 9 variation 0)'};
     },
-    combatHit(critical, reactionStyle) {
-      if (reactionStyle === 'none') return;
+    combatHit(critical,reactionStyle,clip) {
+      if (reactionStyle==='none'||clip==='none')return;
       const state = (reactionStyle === 'heavy' || (critical && reactionStyle !== 'normal')) && dummyAnimation?.supports('criticalHit') ? 'criticalHit' : 'hit';
       if (!dummyAnimation?.supports(state)) {
         visuals.react();
         return;
       }
-      reaction = state;
-      dummyAnimation.update(reaction, 0, true);
+      const requested=isLocalClip(clip)?clip.slice(5):animationClips[clip];
+      reactionClip=requested&&targetModelClips.includes(requested)?requested:undefined;
+      if(requested&&!reactionClip)reportAnimationFallback(requested,'default');
+      reaction=state;
+      dummyAnimation.update(reaction,0,true,undefined,reactionClip);
       reactionTime = dummyAnimation.activeDuration;
     },
     weaponTransform(values) {
@@ -357,7 +376,7 @@ export function createWorld(canvas, callbacks, config = world) {
       visualPivot.rotation.x = pose && !clip ? -Math.sin(progress * Math.PI) * 0.25 : 0;
       visuals.update(dt);
       if (reaction && (reactionTime -= dt) <= 0) reaction = undefined;
-      dummyAnimation?.update(reaction ?? 'idle', dt);
+      dummyAnimation?.update(reaction??'idle',dt,false,undefined,reaction?reactionClip:undefined);
       target.x += (player.x - target.x) * blend;
       target.y += (player.y + 1.38 - target.y) * blend;
       target.z += (player.z - target.z) * blend;
@@ -390,7 +409,7 @@ export function createWorld(canvas, callbacks, config = world) {
       const visualMinY = renderedModelBounds(model.visual ?? model.root).min.y;
       const direction = camera.getWorldDirection(new Vector3());
       return {attacks: combat.snapshot(), player: {...player}, orbit: {...orbit}, selected, model: modelKind,
-        visualMinY, targetClip: dummyAnimation?.activeClip, assets: Object.keys(diagnostics), activeClip: animation.activeClip, cameraForward: {x: direction.x, z: direction.z},
+        visualMinY, lastAnimationFallback, targetClip: dummyAnimation?.activeClip, assets: Object.keys(diagnostics), activeClip: animation.activeClip, cameraForward: {x: direction.x, z: direction.z},
         camera: {...cameraState, position: camera.position.toArray(), avatarVisible: visualPivot.visible},
         dummy: dummy.position.toArray(),
         weaponPosition: weapon?.mount.getWorldPosition(mountPoint).toArray(),
@@ -481,6 +500,7 @@ export function createWorld(canvas, callbacks, config = world) {
       dummyVisual.visible = false;
       dummy.add(asset.visual);
       dummyAnimation = animateCharacter(asset);
+      targetModelClips=asset.clips.map(clip=>clip.name);
       diagnostics.target = info;
       if (callbacks.portrait) callbacks.portrait('target',capturePortrait(renderer,asset.visual,info.bounds,false));
     }
