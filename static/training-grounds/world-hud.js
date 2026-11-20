@@ -59,6 +59,7 @@ export function mountWorldHUD(frame, build, practice, cast, preview) {
   const player=root.querySelector('.tg-unit-player');
   const target=root.querySelector('.tg-unit-target');
   player.querySelector('strong').textContent=build.name;
+  player.querySelector('.tg-portrait b').textContent=build.profile?.level??1;
   const authored=[...build.activeAbilities];
   const sample=!authored.some(ability=>ability.combatEffects.length);
   const list=sample?[...practice,...authored]:[...authored,...practice.slice(0,1)];

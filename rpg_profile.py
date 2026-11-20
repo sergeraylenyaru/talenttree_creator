@@ -124,7 +124,7 @@ def validate_rpg(document, resources):
     if 'rpg' not in document:
         return
     profile = document['rpg']
-    record(profile, ('version', 'level', 'attributes', 'formulas', 'items', 'equipped', 'restrictions',
+    record(profile, ('version', 'level', 'primaryBudget', 'attributes', 'formulas', 'items', 'equipped', 'restrictions',
                      'hasteUses', 'autoSlot', 'resources', 'bonuses', 'procs', 'builds', 'incoming', 'seed',
                      'testDuration'), 'Invalid RPG profile fields')
     if type(profile.get('version')) is not int or profile['version'] != 1:
@@ -136,7 +136,17 @@ def validate_rpg(document, resources):
     resources = set(resources) - {'health'}
     talents = {talent['id']: talent for branch in document['branches'] for talent in branch['talents']}
     abilities = {ability['id']: ability for ability in document['abilities']}
-    stat_map(profile.get('attributes', {}), 0)
+    stats = profile.get('attributes', {})
+    stat_map(stats, 0)
+    if 'primaryBudget' in profile:
+        budget = profile['primaryBudget']
+        if not integer(budget, 0, 500_000_000):
+            raise ValueError('Недопустимый бюджет характеристик')
+        points = [stats.get(key, 0) for key in PRIMARY]
+        if any(not integer(point, 0, 100_000_000) for point in points):
+            raise ValueError('Распредели характеристики целыми очками')
+        if sum(points) > budget:
+            raise ValueError('Превышен бюджет базовых характеристик')
     formula_targets = SECONDARY + tuple('resource:' + key for key in resources)
     for formula in collection(profile.get('formulas', []), 64, False):
         record(formula, ('from', 'to', 'factor'), 'Invalid formula fields')

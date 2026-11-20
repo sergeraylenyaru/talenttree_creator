@@ -595,7 +595,7 @@ $('#characterLab').onclick=()=>{
   resourcesEditor:()=>{$('#modal').close();$('#characterSettings').click();},
   training:()=>{$('#modal').close();$('#openTrainingGrounds').click();}
  });
- modal('Character Lab','',panel.save);
+ modal('Персонаж и экипировка','',panel.save);
  $('#modal').classList.add('rpg-lab-dialog');
  $('#modalBody').append(panel.root);
 };

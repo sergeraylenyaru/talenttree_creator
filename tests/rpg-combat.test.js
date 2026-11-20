@@ -231,3 +231,22 @@ test('a school-specific one-use buff survives unrelated attacks and expires on i
   assert.equal(rt.statuses.length,0);
   assert.equal(rt.report().timeline.filter(e=>e.type==='statusExpired').length,1);
 });
+
+test('new classes start with a redistributable level 60 pool and legacy profiles stay opt-in',async()=>{
+  const {blank}=await import('../static/engine.js');
+  const {primaryPointsUsed}=await import('../static/combat/rpg-profile.js');
+  const source=blank();
+  assert.equal(source.rpg.level,60);
+  assert.equal(source.rpg.primaryBudget,384);
+  assert.equal(primaryPointsUsed(source.rpg.attributes),384);
+  assert.equal(runtime(source).state.player.maxHealth,2021);
+  source.rpg.attributes.stamina-=10;
+  source.rpg.attributes.strength+=10;
+  assert.equal(runtime(source).state.player.maxHealth,1921);
+  source.rpg.attributes.strength++;
+  assert.throws(()=>runtime(source), /Превышен бюджет/);
+  source.rpg.attributes.strength-=1.5;
+  assert.throws(()=>runtime(source), /целыми очками/);
+  delete source.rpg.primaryBudget;
+  assert.doesNotThrow(()=>runtime(source));
+});

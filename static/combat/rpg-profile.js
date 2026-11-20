@@ -1,6 +1,14 @@
 import {combatSchools} from './effect-validation.js';
 
 export const primaryStats = ['strength','agility','intellect','stamina','spirit'];
+// Rounded per-attribute means from the six Human class rows at level 60 in Classic Era.
+export const level60Primary = Object.freeze({strength:69,agility:67,intellect:74,stamina:82,spirit:92});
+
+export function primaryPointsUsed(stats){
+  return primaryStats.reduce((sum,key)=>sum+(stats?.[key]??0),0);
+}
+
+export const level60PrimaryBudget = primaryPointsUsed(level60Primary);
 export const secondaryStats = [
   'attackPower','spellPower','healingPower','critChance','critMultiplier','haste','mastery','versatility',
   'armor','physicalResistance',...combatSchools.filter(school=>school!=='physical').map(school=>school+'Resistance'),
@@ -100,13 +108,18 @@ export function validateRpg(document, resources) {
   const abilities=new Map(document.abilities.map(ability=>[ability.id,ability]));
   const resourceIds=resources.filter(resource=>resource.id!=='health').map(resource=>resource.id);
   const targets=[...secondaryStats,...resourceIds.map(id=>'resource:'+id)];
-  schema(profile,['version','level','attributes','formulas','items','equipped','restrictions','hasteUses','autoSlot',
+  schema(profile,['version','level','primaryBudget','attributes','formulas','items','equipped','restrictions','hasteUses','autoSlot',
     'resources','bonuses','procs','builds','incoming','seed','testDuration'],'Invalid RPG profile fields');
   if(profile.version!==1)fail('Unsupported RPG profile version');
   if(profile.seed!==undefined&&(!Number.isInteger(profile.seed)||!number(profile.seed,0,4294967295)))fail('Invalid test seed');
   if(profile.testDuration!==undefined&&!number(profile.testDuration,1,3600))fail('Invalid measurement duration');
   if(profile.level!==undefined&&(!Number.isInteger(profile.level)||!number(profile.level,1,1000)))fail('Invalid character level');
   if(profile.attributes!==undefined)statMap(profile.attributes,attributes,0);
+  if(profile.primaryBudget!==undefined){
+    if(!Number.isInteger(profile.primaryBudget)||!number(profile.primaryBudget,0,5e8))fail('Недопустимый бюджет характеристик');
+    if(primaryStats.some(key=>!Number.isInteger(profile.attributes?.[key]??0)))fail('Распредели характеристики целыми очками');
+    if(primaryPointsUsed(profile.attributes)>profile.primaryBudget)fail('Превышен бюджет базовых характеристик');
+  }
   collection(profile.formulas,64,rule=>{
     schema(rule,['from','to','factor'],'Invalid formula');
     if(!primaryStats.includes(rule.from)||!targets.includes(rule.to)||!number(rule.factor,-10000,10000))fail('Invalid scaling formula');

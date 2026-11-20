@@ -23,6 +23,22 @@ class RpgProfileValidation(unittest.TestCase):
         del legacy['rpg']
         self.assertNotIn('rpg', server.validate(legacy))
 
+    def test_primary_budget_only_limits_base_attributes(self):
+        self.doc['rpg']['primaryBudget'] = 30
+        self.item['stats']['stamina'] = 100
+        self.assertEqual(server.validate(self.doc)['rpg']['primaryBudget'], 30)
+        for value in (29, True, 30.5):
+            with self.subTest(value=value):
+                self.doc['rpg']['primaryBudget'] = value
+                with self.assertRaises(ValueError):
+                    server.validate(self.doc)
+        self.doc['rpg']['primaryBudget'] = 30
+        self.doc['rpg']['attributes']['intellect'] = 19.5
+        with self.assertRaises(ValueError):
+            server.validate(self.doc)
+        del self.doc['rpg']['primaryBudget']
+        self.assertEqual(server.validate(self.doc)['rpg']['attributes']['intellect'], 19.5)
+
     def test_reject_invalid_configuration(self):
         for key, value in (
             ('version', 2), ('seed', True), ('testDuration', float('inf')),

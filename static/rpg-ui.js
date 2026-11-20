@@ -66,11 +66,11 @@ export function download(name,text,type='application/json'){
   link.download=name;link.click();
   setTimeout(()=>URL.revokeObjectURL(link.href),0);
 }
-export function tabs(root, choose, pages){
+export function tabs(root, choose, pages, caption=title=>title){
   const nav=element('div',undefined,'rpg-tabs');
   nav.setAttribute('role','group');
   for(const title of pages){
-    const option=button(title,()=>choose(title));
+    const option=button(caption(title),()=>choose(title));
     option.setAttribute('aria-pressed',String(title===root));
     nav.append(option);
   }

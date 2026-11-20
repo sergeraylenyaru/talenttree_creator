@@ -5,11 +5,26 @@ import {deriveCharacterStats} from './combat/character-stats.js';
 import {validBuild} from './engine.js';
 import {combatSchools} from './combat/effect-validation.js';
 import {attributes,primaryStats,secondaryStats,equipmentSlots,itemTypes,itemTypesForSlot,itemEligibility,equippedItems,
-  qualities,hasteSystems,talentModifiers,procEvents,conditions,validateItem,validateRpg,removeRpgReferences} from './combat/rpg-profile.js';
+  qualities,hasteSystems,talentModifiers,procEvents,conditions,validateItem,validateRpg,removeRpgReferences,
+  level60Primary,level60PrimaryBudget,primaryPointsUsed} from './combat/rpg-profile.js';
 import {button,element,field,section,grid,table,tabs,download,format,label} from './rpg-ui.js';
 import {comparisonPanel,statRows} from './training-grounds/combat-review.js';
+import {addTranslations,t} from './i18n.js';
 
-const pages=['Character','Equipment','Statistics','Buffs and Debuffs','Talents','Abilities','Combat Analytics'];
+const tabLabels={Character:'Персонаж',Equipment:'Экипировка',Statistics:'Характеристики',
+  'Buffs and Debuffs':'Баффы и дебаффы',Talents:'Таланты',Abilities:'Способности','Combat Analytics':'Боевая аналитика'};
+const primaryLabels={strength:'Сила',agility:'Ловкость',intellect:'Интеллект',stamina:'Выносливость',spirit:'Дух'};
+addTranslations([
+  ...Object.entries(tabLabels).map(([en,ru])=>[ru,en]),
+  ...Object.entries(primaryLabels).map(([key,ru])=>[ru,label(key)]),
+  ['Персонаж и экипировка','Character Lab'], ['Бюджет базовых характеристик','Primary attribute budget'],
+  ['Распределено','Spent'], ['Осталось','Remaining'], ['Сверх бюджета','Over budget'],
+  ['Загрузить базовые характеристики 60-го уровня','Load level 60 primary attributes'],
+  ['Бюджет не задан','No budget set'], ['Недопустимый бюджет характеристик','Invalid attribute budget'],
+  ['Распредели характеристики целыми очками','Allocate whole points to primary attributes'],
+  ['Превышен бюджет базовых характеристик','Primary attribute budget exceeded']
+]);
+const pages=Object.keys(tabLabels);
 const id=()=>crypto.randomUUID();
 const displayTypes={sword1:'One-handed sword',sword2:'Two-handed sword'};
 const choices=types=>types.map(type=>[type,displayTypes[type]??label(type)]);
@@ -32,6 +47,7 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
   root.append(notice,body);
   let page='Character', itemId=profile.items[0]?.id, selectedSlot='mainHand';
   let compare=element('div');
+  let pointStatus;
   const change=(object,property,refresh=false)=>value=>{
     if(value==='')delete object[property];
     else object[property]=value;
@@ -61,6 +77,12 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
   const open=callback=>attempt(()=>{persist();callback();});
 
   function updatePreview(){
+    if(page==='Statistics'&&pointStatus){
+      const spent=primaryPointsUsed(profile.attributes);
+      const remaining=profile.primaryBudget===undefined?null:profile.primaryBudget-spent;
+      pointStatus.textContent=remaining===null?`${t('Распределено')}: ${format(spent)} · ${t('Бюджет не задан')}`
+        : `${t('Распределено')}: ${format(spent)} / ${format(profile.primaryBudget)} · ${t(remaining<0?'Сверх бюджета':'Осталось')}: ${format(Math.abs(remaining))}`;
+    }
     if(!compare.parentElement)return;
     try{
       if(page==='Equipment'){
@@ -132,9 +154,19 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
 
   function rendersStats(){
     compare=element('div');
+    pointStatus=element('p',undefined,'rpg-notice');
+    pointStatus.setAttribute('role','status');
+    const budget=field('Бюджет базовых характеристик',profile.primaryBudget??'',change(profile,'primaryBudget',true),
+      {...number,max:5e8,step:1,key:'primary-budget'});
+    const baseline=button('Загрузить базовые характеристики 60-го уровня',()=>{
+      profile.level??=60;
+      profile.primaryBudget=level60PrimaryBudget;
+      Object.assign(profile.attributes,level60Primary);
+      render();
+    });
     const form=grid(...attributes.map(attribute=>{
-      const outer=field(label(attribute),profile.attributes[attribute]??'',change(profile.attributes,attribute),
-        {...number,...percentStats[attribute],key:'stat-'+attribute});
+      const outer=field(primaryLabels[attribute]??label(attribute),profile.attributes[attribute]??'',change(profile.attributes,attribute),
+        {...number,...percentStats[attribute],...(profile.primaryBudget!==undefined&&primaryStats.includes(attribute)?{step:1}:{}),key:'stat-'+attribute});
       if(attribute==='critChance')outer.title='Fraction, such as 0.10 for 10%.';
       if(attribute==='critMultiplier')outer.title='Multiplier, such as 2 for twice normal damage.';
       if(attribute==='maxHealth')outer.title='Adds to the class maximum health.';
@@ -149,7 +181,7 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
         button('Remove formula',()=>{profile.formulas.splice(index,1);render();})));
     }
     formulas.append(button('Add formula',()=>{profile.formulas.push({from:'strength',to:'attackPower',factor:2});render();}));
-    return grid(section('Base attributes',form,formulas),section('Derived statistics',compare));
+    return grid(section('Base attributes',grid(budget,baseline),pointStatus,form,formulas),section('Derived statistics',compare));
   }
 
   function unequipItem(id){
@@ -377,7 +409,7 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
     compare=element('div');
     const panel=page==='Character'?rendersCharacter():page==='Equipment'?rendersEquipment():page==='Statistics'?rendersStats()
       :page==='Combat Analytics'?rendersAnalytics():rendersRules();
-    body.replaceChildren(tabs(page,value=>{page=value;render();},pages),panel);
+    body.replaceChildren(tabs(page,value=>{page=value;render();},pages,title=>tabLabels[title]),panel);
     updatePreview();
   }
   render();

@@ -1,4 +1,4 @@
-import {validateRpg,removeRpgReferences} from './combat/rpg-profile.js';
+import {validateRpg,removeRpgReferences,level60Primary,level60PrimaryBudget} from './combat/rpg-profile.js';
 import {validateWorkshop} from './combat/workshop-rules.js';
 import {validatePresentation} from './combat/presentation.js';
 import {validateCombatEffects} from './combat/effect-validation.js';
@@ -7,7 +7,13 @@ import {classResources, validateResourceCosts} from './resource-costs.js';
 import {validateClassIcon} from './class-emblem.js';
 import {renderRankTemplate} from './rank-template.js';
 export function blank() {
-  return {version:1,name:'Новый класс',budget:41,budgetAuto:true,rowCost:5,primaryBranchEnabled:false,branches:[branch('Ветка 1'),branch('Ветка 2')],abilities:[],build:{}};
+  const healthScaling=10;
+  const level60Health=2021;
+  const character={hp:level60Health-level60Primary.stamina*healthScaling,race:'Человек',gender:'Мужской',armory:'',
+    resources:[{name:'Мана',max:100,current:100,unit:'percent',display:'bar',shape:'diamond',color:'#397de1'}]};
+  const rpg={version:1,level:60,primaryBudget:level60PrimaryBudget,attributes:{...level60Primary},
+    formulas:[{from:'stamina',to:'maxHealth',factor:healthScaling}]};
+  return {version:1,name:'Новый класс',budget:41,budgetAuto:true,rowCost:5,primaryBranchEnabled:false,branches:[branch('Ветка 1'),branch('Ветка 2')],abilities:[],build:{},character,rpg};
 }
 export function usesPrimaryBranch(doc) { return doc.primaryBranchEnabled??!!(doc.specialization||doc.abilities?.some(a=>a.branchOnly)); }
 export function branch(name) { return {id:crypto.randomUUID(),name,rows:5,talents:[]}; }
