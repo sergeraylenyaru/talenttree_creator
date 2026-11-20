@@ -1,5 +1,6 @@
 import {retailIconNames} from './retail-icon-aliases.js';
 // Curated starter catalog, not a full 3.3.5a icon database.
+const workshopIcons = [['steel','Меч Sword'],['ember','Огонь Fire'],['frost','Лёд Frost'],['light','Свет Holy'],['nature','Природа Nature'],['arcane','Тайная магия Arcane']];
 export const icons = [
 ['spell_fire_fireball02','Огненный шар огонь маг'],['spell_fire_flamebolt','Пламя огонь'],['spell_fire_flameshock','Огненный шок шаман'],['spell_fire_sealoffire','Печать огня'],['spell_fire_burnout','Огонь взрыв'],
 ['spell_frost_frostbolt02','Ледяная стрела лед маг'],['spell_frost_frostnova','Кольцо льда'],['spell_frost_icestorm','Снежная буря лед'],['spell_frost_frostarmor02','Ледяная броня'],['spell_frost_manarecharge','Мана лед'],
@@ -11,7 +12,9 @@ export const icons = [
 ['ability_rogue_eviscerate','Потрошение разбойник'],['ability_stealth','Незаметность'],['ability_backstab','Удар в спину'],['ability_rogue_sprint','Спринт'],['ability_rogue_ambush','Внезапный удар'],['ability_hunter_aimedshot','Прицельный выстрел охотник'],['ability_hunter_beasttaming','Питомец зверь'],['ability_hunter_markedfordeath','Метка охотника'],
 ['spell_deathknight_frostpresence','Власть льда рыцарь смерти'],['spell_deathknight_bloodpresence','Власть крови'],['spell_deathknight_unholypresence','Власть нечестивости'],['spell_deathknight_deathstrike','Удар смерти'],['inv_sword_04','Меч оружие'],['inv_axe_09','Топор оружие'],['inv_shield_04','Щит'],['inv_staff_13','Посох'],['inv_misc_questionmark','Вопрос неизвестно']
 ].map(([id,label])=>({id:id.toLowerCase(),label}));
+icons.unshift(...workshopIcons.map(([id,label])=>({id:'forge-'+id,label,category:'workshop'})));
 export function iconURL(id) {
+ if (workshopIcons.some(([name]) => id === 'forge-'+name)) return '/art/spells/'+id.slice(6)+'.png';
  if(Object.hasOwn(retailIconNames,id))return `https://wow.zamimg.com/images/wow/icons/large/${encodeURIComponent(retailIconNames[id])}.jpg`;
  if(/^custom:[a-f0-9]{32}$/.test(id||''))return '/media/icons/'+id.slice(7)+'.png';
  if(/^wotlk:shared\/global\/talents\/[a-z]+\/images\/[a-z]+\/[a-z0-9'_,.\-]+\.jpg$/.test(id||'')) return 'https://raw.githubusercontent.com/CraftedRO/Offline-talent-calculator-for-WotLK-3.3.5a/master/'+id.slice(6).split('/').map(encodeURIComponent).join('/');

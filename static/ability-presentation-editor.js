@@ -1,5 +1,6 @@
 import {addTranslations, getLanguage, t} from './i18n.js';
-import {presentationLimits, presentationOptions, presentationPresets} from './combat/presentation.js';
+import {localAnimationNames} from './world/animation-catalog.js';
+import {animationFields, isLocalClip, presentationLimits, presentationOptions, presentationPresets} from './combat/presentation.js';
 
 const fields = {
   category: ['Категория', 'Category'], delivery: ['Тип доставки', 'Delivery'],
@@ -19,6 +20,8 @@ const labels = {
   straight: ['Прямой', 'Straight'], homing: ['Самонаводящийся', 'Homing'], fire: ['Огонь', 'Fire'],
   frost: ['Лёд', 'Frost'], arcane: ['Тайная магия', 'Arcane'], holy: ['Свет', 'Holy'],
   nature: ['Природа', 'Nature'], shadow: ['Тьма', 'Shadow'], normal: ['Обычная', 'Normal'],
+  physical:['Физическая','Physical'], magical:['Магическая','Magical'], support:['Поддержка','Support'], utility:['Утилита','Utility'],
+  targetArea:['Область вокруг цели','Area around target'], ground:['По точке на земле','Ground-targeted'],
   heavy: ['Сильная', 'Heavy'], strike: ['Удар', 'Strike'], spark: ['Искра', 'Spark'],
   chime: ['Перезвон', 'Chime'], dummy: ['Манекен', 'Training dummy'], self: ['На себя', 'Self']
 };
@@ -34,7 +37,7 @@ export function presentationEditor(container, ability) {
   const makeSelect = (options, placeholder) => {
     const select = document.createElement('select');
     select.append(new Option(t(placeholder), ''));
-    for (const key of options) select.append(new Option(labelText(labels[key]), key));
+    for (const key of options) select.append(new Option(labelText(labels[key] ?? [key,key]), key));
     return select;
   };
   const append = (key, label, control) => {
@@ -52,14 +55,60 @@ export function presentationEditor(container, ability) {
       [control.min, control.max] = presentationLimits[key];
       control.step = 'any';
     }
-    control.value = ability.presentation?.[key] ?? '';
+    const initial = ability.presentation?.[key] ?? '';
+    if (isLocalClip(initial)) control.append(new Option(initial.slice(5),initial));
+    control.value = initial;
     controls.set(key, control);
     append(key, label, control);
   }
+  const modes = {
+    instant:['Мгновенная доставка','ranged','none','dummy'],
+    melee:['Ближний бой','melee','none','dummy'],
+    straight:['Прямой снаряд','ranged','straight','dummy'],
+    homing:['Самонаведение','ranged','homing','dummy'],
+    area:['Область действия','ranged','none','area'],
+    targetArea:['Область вокруг цели','ranged','none','targetArea'],
+    ground:['По точке на земле','ranged','none','ground'],
+    channel:['Поддерживаемое заклинание','ranged','none','dummy']
+  };
+  const mode = document.createElement('select');
+  mode.append(new Option(t('Автоматически'),''),...Object.entries(modes).map(([key,[name]])=>new Option(t(name),key)));
+  const modeLabel = document.createElement('label');
+  modeLabel.append(t('Поэтапное применение'),mode);
+  mode.dataset.workshopDelivery = '';
+  container.prepend(modeLabel);
+  mode.onchange = () => {
+    const selected = modes[mode.value];
+    if (!selected) return;
+    const [,delivery,projectile,targeting] = selected;
+    for (const [key,value] of Object.entries({delivery,projectile,targeting})) controls.get(key).value=value;
+    if (mode.value === 'channel' && !Number(controls.get('channelDuration').value)) {
+      controls.get('channelDuration').value = '3';
+      controls.get('channelDuration').dispatchEvent(new Event('input'));
+    }
+  };
+  let availableClips;
+  localAnimationNames().then(names=>{
+    availableClips = new Set(names);
+    for (const key of animationFields) {
+      const control = controls.get(key);
+      const existing = new Set([...control.options].map(option=>option.value));
+      const group = document.createElement('optgroup');
+      group.label = 'GLB';
+      for (const name of names) if (!existing.has('clip:'+name)) group.append(new Option(name,'clip:'+name));
+      if(group.children.length)control.append(group);
+    }
+  });
   preset.onchange = () => {
     const defaults = presentationPresets[preset.value];
     for (const [key, control] of controls) control.value = defaults?.[key] ?? '';
   };
-  return () => Object.fromEntries([...controls].filter(([, control]) => control.value !== '').map(([key, control]) =>
-    [key, control.type === 'number' ? control.valueAsNumber : control.value]));
+  return () => {
+    const result = Object.fromEntries([...controls].filter(([, control]) => control.value !== '').map(([key, control]) =>
+      [key, control.type === 'number' ? control.valueAsNumber : control.value]));
+    if (availableClips?.size && animationFields.some(key=>isLocalClip(result[key]) && !availableClips.has(result[key].slice(5)))) {
+      throw Error('Выбранная анимация отсутствует в локальной модели');
+    }
+    return result;
+  };
 }

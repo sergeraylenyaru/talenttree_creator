@@ -112,7 +112,7 @@ export function mountTrainingWorld(dialog, actions) {
     else actions.cast(id);
     updateHUD();
     canvas?.focus({preventScroll:true});
-  });
+  },actions.preview);
   frame.append(hud.controls);
   const dummyVital = arena.querySelector('#tg-label-dummy').closest('.tg-vital');
   let controller;
@@ -178,6 +178,8 @@ export function mountTrainingWorld(dialog, actions) {
       controller = module.createWorld(canvas, {
         asset(role, state, detail) { assets.update(role, state, detail); },
         debugDefault(enabled) { debug.checked = enabled; debug.onchange(); },
+        movementScale: actions.movementScale,
+        move: actions.move,
         targetAlive: () => actions.state().dummy.health > 0,
         marker({x, y, visible}) {
           marker.hidden = !visible;
@@ -242,7 +244,7 @@ export function mountTrainingWorld(dialog, actions) {
     controller?.selectDummy();
     canvas?.focus({preventScroll: true});
   };
-  if (matchMedia('(pointer: fine) and (min-width: 760px)').matches) enter();
+  if (actions.preview || matchMedia('(pointer: fine) and (min-width: 760px)').matches) enter();
 
   function updateCombat(state) {
     if (!controller) return;
@@ -263,7 +265,15 @@ export function mountTrainingWorld(dialog, actions) {
     weaponCombat: () => controller?.weaponCombat(),
     selectDummy: () => controller?.selectDummy(),
     updateHUD,
-    delivery: ability => controller?.delivery(ability),
+    delivery: (ability, point) => controller?.delivery(ability, point),
+    targetGround: () => controller?.targetGround(),
+    stagePreview: ability => controller?.stagePreview(ability),
+    pickGround(callback) {
+      if (!controller) return false;
+      status.textContent = callback ? t('Выбери точку на земле') : '';
+      controller.pickGround(callback);
+      return true;
+    },
     combatState: updateCombat,
     combatText(event) {
       if (!controller) return false;

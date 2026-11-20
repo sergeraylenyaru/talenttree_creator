@@ -15,9 +15,20 @@ function loadSettings() {
   }
 }
 
-export function openTrainingGrounds(dialog, document) {
+export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) {
   let settings = loadSettings();
-  let build = compileCombatBuild(document, settings);
+  function compile() {
+    const build = compileCombatBuild(document, settings);
+    if (layoutId) build.layoutId = layoutId;
+    if (preview) {
+      build.resources = build.resources.map(resource=>({...resource,current:resource.max}));
+      if (build.activeAbilities.some(ability=>ability.combatEffects.some(effect=>effect.type==='healing'))) {
+        build.health = Math.ceil(build.maxHealth / 2);
+      }
+    }
+    return build;
+  }
+  let build = compile();
   const practice = practiceAbilities(build.activeAbilities, build.resources);
   const arenaBuild = () => ({...build, activeAbilities: [...build.activeAbilities, ...practice]});
   let runtime = createCombatRuntime(arenaBuild(), settings);
@@ -39,6 +50,7 @@ export function openTrainingGrounds(dialog, document) {
   }
   let frame = null;
   let world;
+  let picking = false;
   let realStart = performance.now();
   let combatStart = 0;
 
@@ -61,14 +73,28 @@ export function openTrainingGrounds(dialog, document) {
   }
 
   const view = renderTrainingGrounds(dialog, build, settings, {
-    cast(id) {
+    cast(id, point) {
+      const ability = build.activeAbilities.find(item => item.id === id);
+      if (ability?.presentation?.targeting === 'ground' && !point) {
+        if (preview && world?.targetGround()) point = world.targetGround();
+        else if (world?.pickGround(position => {
+          picking = false;
+          world.pickGround(null);
+          view.castAbility(id, position);
+        })) {
+          picking = true;
+          return {ok: true};
+        }
+      }
+      if (picking) { world.pickGround(null); picking = false; }
       syncClock();
-      const result = runtime.cast(id, world?.delivery);
+      const result = runtime.cast(id, a => world?.delivery(a, point));
       view.update(runtime);
       return result;
     },
     cancel() {
       syncClock();
+      if (picking) { world.pickGround(null); picking = false; }
       runtime.cancel();
       view.update(runtime);
     },
@@ -79,6 +105,7 @@ export function openTrainingGrounds(dialog, document) {
       view.update(runtime);
     },
     reset() {
+      if (picking) { world.pickGround(null); picking = false; }
       auto.stop();
       runtime.reset();
       world?.clearCombat(runtime.state);
@@ -91,13 +118,13 @@ export function openTrainingGrounds(dialog, document) {
     },
     settings(input) {
       settings = normalizeCombatSettings(input);
-      build = compileCombatBuild(document, settings);
+      build = compile();
       auto.stop();
       runtime.cancelSpatial();
       runtime = createCombatRuntime(arenaBuild(), settings);
       world?.clearCombat(runtime.state);
       try {
-        localStorage.setItem(storageKey, JSON.stringify(settings));
+        if (!preview) localStorage.setItem(storageKey, JSON.stringify(settings));
       } catch {
         // The settings still apply to the current session.
       }
@@ -126,8 +153,11 @@ export function openTrainingGrounds(dialog, document) {
   }, {once: true});
   dialog.showModal();
   world = mountTrainingWorld(dialog, {
+    preview,
+    movementScale: () => runtime.movementScale(),
+    move: () => runtime.moved(),
     enter() { runtime.cancel(); },
-    leave() { auto.stop(); runtime.cancelSpatial(); },
+    leave() { picking = false; auto.stop(); runtime.cancelSpatial(); },
     deselect() { auto.stop(); world?.updateHUD(); },
     startAuto,
     autoStatus: () => auto.status,
@@ -147,6 +177,51 @@ export function openTrainingGrounds(dialog, document) {
     state: () => runtime.state,
     runtime: () => runtime, build, practice, cast: view.castAbility
   });
+  if (preview) {
+    dialog.classList.add('tg-spell-preview');
+    const tools = window.document.createElement('div');
+    tools.className = 'tg-preview-tools';
+    const badge = window.document.createElement('strong');
+    badge.textContent = 'Визуальный предпросмотр · отдельная сессия';
+    tools.append(badge);
+    for (const [label, action] of [
+      ['Запустить предпросмотр', () => {
+        dialog.querySelector('#tg-reset').click();
+        world.selectDummy();
+        const ability = build.activeAbilities.find(item=>item.id===preview);
+        if (ability) world.stagePreview(ability);
+        view.castAbility(preview);
+      }],
+      ['Остановить предпросмотр', () => {
+        auto.stop();
+        runtime.cancel(true);
+        runtime.cancelSpatial();
+        runtime.setPaused(true);
+        world.clearCombat(runtime.state);
+        view.update(runtime);
+      }],
+      ['Сбросить предпросмотр', () => dialog.querySelector('#tg-reset').click()]
+    ]) {
+      const button = window.document.createElement('button');
+      button.type = 'button';
+      button.textContent = label;
+      button.onclick = action;
+      tools.append(button);
+    }
+    dialog.append(tools);
+    dialog.addEventListener('close', () => dialog.classList.remove('tg-spell-preview'), {once: true});
+  }
+  dialog.addEventListener('keydown', event => {
+    if (picking && event.key === 'Escape') {
+      event.preventDefault();
+      world.pickGround(null);
+      picking = false;
+    }
+  }, {signal: (() => {
+    const controller = new AbortController();
+    dialog.addEventListener('close', () => controller.abort(), {once: true});
+    return controller.signal;
+  })()});
   rebaseClock();
   view.update(runtime);
   frame = requestAnimationFrame(tick);

@@ -1,7 +1,8 @@
+import {validateWorkshop} from './combat/workshop-rules.js';
 import {validatePresentation} from './combat/presentation.js';
 import {validateCombatEffects} from './combat/effect-validation.js';
 export {validateCombatEffects} from './combat/effect-validation.js';
-import {validateResourceCosts} from './resource-costs.js';
+import {classResources, validateResourceCosts} from './resource-costs.js';
 import {validateClassIcon} from './class-emblem.js';
 import {renderRankTemplate} from './rank-template.js';
 export function blank() {
@@ -65,7 +66,10 @@ export function normalize(doc,{allowLegacy=false}={}) {
   if(!allowLegacy)for(const b of doc.branches)if([...dependencyRoutes(b).values()].some(path=>!path))throw Error('Стрелки зависимостей пересекаются или нет свободного пути. Убери или измени зависимость.');
   if(!Array.isArray(doc.abilities)||doc.abilities.some(a=>!a||typeof a.id!=='string'||typeof a.name!=='string'||typeof a.description!=='string')) throw Error('Неверный список способностей');
   for(const a of doc.abilities)if(a.requirements!==undefined&&(typeof a.requirements==='string'?a.requirements.length>1000:(!Array.isArray(a.requirements)||a.requirements.length>40||a.requirements.some(v=>typeof v!=='string'||!v.trim()||v.length>100)||new Set(a.requirements).size!==a.requirements.length)))throw Error('Проверь требования способности');
-  for(const a of doc.abilities){validateCombatEffects(a);validatePresentation(a);}
+  for(const a of doc.abilities){validateCombatEffects(a);validatePresentation(a);validateWorkshop(a);
+    if (a.combatEffects?.some(effect=>effect.type==='resource' && !classResources(doc.character).some(r=>r.id===effect.resourceId))) {
+      throw Error('Выбери ресурс класса для восстановления');
+    }}
   for(const a of doc.abilities){validateResourceCosts(a,doc.character);if(a.resourceCosts&&['cast','cooldown','range'].some(k=>!Number.isFinite(a[k])||a[k]<0||a[k]>1e9))throw Error('Неверные числовые параметры способности');}
   for(const a of doc.abilities)if(a.learningMode!==undefined&&!['base','talent','specialization'].includes(a.learningMode))throw Error('Неверный способ изучения способности');
   for(const a of doc.abilities)if(a.channeled!==undefined&&typeof a.channeled!=='boolean')throw Error('Проверь настройку поддерживаемого заклинания');
@@ -140,8 +144,9 @@ export function moveTalent(document,id,branchId,row,col){
 export function defaultBudget(doc){return Math.max(0,41+(Math.max(...doc.branches.map(b=>b.rows))-5)*5);}
 
 export function abilityTalentDraft(ability,existing={}){
- const descriptions=[ability.description||''];
- const talent={...existing,id:existing.id||crypto.randomUUID(),name:ability.name,icon:ability.icon,maxRank:1,descriptions,grantedAbilityId:ability.id};delete talent.rankTemplate;return talent;
+ const rank=ability.workshop?.rank??1;
+ const descriptions=Array.from({length:rank},()=>ability.description||'');
+ const talent={...existing,id:existing.id||crypto.randomUUID(),name:ability.name,icon:ability.icon,maxRank:rank,descriptions,grantedAbilityId:ability.id};delete talent.rankTemplate;return talent;
 }
 export function placeAbilityTalent(document,abilityId,branchId,row,col,replace=false){
  const next=structuredClone(document),branch=next.branches.find(b=>b.id===branchId),ability=next.abilities.find(a=>a.id===abilityId);
@@ -161,10 +166,10 @@ export function synchronizeAbilityTalents(doc){
  const nodes=doc.branches.flatMap(b=>b.talents||[]),referenced=new Set(nodes.map(t=>t.grantedAbilityId).filter(Boolean)),signatures=new Map(),aliases=new Map();
  for(const a of doc.abilities){if(!referenced.has(a.id))continue;const fields=Object.keys(a).filter(k=>!['id','talentId'].includes(k)).sort();const signature=JSON.stringify(fields.map(k=>[k,a[k]]));if(signatures.has(signature))aliases.set(a.id,signatures.get(signature));else signatures.set(signature,a.id);}
  if(aliases.size){for(const t of nodes)if(aliases.has(t.grantedAbilityId))t.grantedAbilityId=aliases.get(t.grantedAbilityId);doc.abilities=doc.abilities.filter(a=>!aliases.has(a.id));}
- for(const t of nodes)if(t.grantedAbilityId){const a=doc.abilities.find(a=>a.id===t.grantedAbilityId);if(!a)throw Error('Способность таланта не найдена');Object.assign(t,{name:a.name,icon:a.icon,maxRank:1,descriptions:[a.description]});delete t.rankTemplate;}
+ for(const t of nodes)if(t.grantedAbilityId){const a=doc.abilities.find(a=>a.id===t.grantedAbilityId);if(!a)throw Error('Способность таланта не найдена');const rank=a.workshop?.rank??1;if(!Number.isInteger(rank)||rank<1||rank>100)throw Error('Проверь ранг способности');Object.assign(t,{name:a.name,icon:a.icon,maxRank:rank,descriptions:Array.from({length:rank},()=>a.description)});delete t.rankTemplate;}
  return doc;
 }
-export function abilityUnlocked(doc,ability){if(usesPrimaryBranch(doc)&&ability.branchOnly&&doc.primaryBranchId!==ability.branchId)return false;if(ability.learningMode==='specialization')return !usesPrimaryBranch(doc)||!!doc.primaryBranchId&&doc.primaryBranchId===ability.branchId;if(ability.learningMode==='base')return true;if(ability.learningMode==='talent'&&ability.talentId)return (doc.build[ability.talentId]||0)>0;const ids=new Set(doc.branches.flatMap(b=>b.talents).filter(t=>t.grantedAbilityId===ability.id).map(t=>t.id));if(ability.talentId)ids.add(ability.talentId);return (!ids.size&&ability.learningMode!=='talent')||[...ids].some(id=>(doc.build[id]||0)>0);}
+export function abilityUnlocked(doc,ability){if(ability.workshop?.disabled||ability.workshop?.hidden)return false;const rank=ability.workshop?.talentRank??1;if(usesPrimaryBranch(doc)&&ability.branchOnly&&doc.primaryBranchId!==ability.branchId)return false;if(ability.learningMode==='specialization')return !usesPrimaryBranch(doc)||!!doc.primaryBranchId&&doc.primaryBranchId===ability.branchId;if(ability.learningMode==='base')return true;if(ability.learningMode==='talent'&&ability.talentId)return (doc.build[ability.talentId]||0)>=rank;const ids=new Set(doc.branches.flatMap(b=>b.talents).filter(t=>t.grantedAbilityId===ability.id).map(t=>t.id));if(ability.talentId)ids.add(ability.talentId);return (!ids.size&&ability.learningMode!=='talent')||[...ids].some(id=>(doc.build[id]||0)>=rank);}
 export function removeAbility(document,id){const next=structuredClone(document),removed=new Set();next.abilities=next.abilities.filter(a=>a.id!==id);for(const b of next.branches){for(const t of b.talents)if(t.grantedAbilityId===id)removed.add(t.id);b.talents=b.talents.filter(t=>!removed.has(t.id));}for(const b of next.branches)for(const t of b.talents)if(removed.has(t.requires))t.requires='';for(const a of next.abilities)if(removed.has(a.talentId))a.talentId='';next.build={};return next;}
 
 export function branchIcon(branch){return branch.icon||branch.talents[0]?.icon||'inv_misc_questionmark';}

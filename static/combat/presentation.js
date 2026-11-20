@@ -11,24 +11,29 @@ export const animationClips = {
 };
 
 export const presentationOptions = {
-  category: ['attack', 'spell', 'healing', 'area', 'defense', 'movement'],
+  category: ['attack', 'spell', 'healing', 'area', 'defense', 'movement', 'physical', 'magical', 'support', 'utility'],
   delivery: ['melee', 'ranged'],
-  animation: Object.keys(animationClips),
-  castingAnimation: Object.keys(animationClips),
-  attackAnimation: Object.keys(animationClips),
+  animation: [...Object.keys(animationClips), 'none'],
+  castingAnimation: [...Object.keys(animationClips), 'none'],
+  attackAnimation: [...Object.keys(animationClips), 'none'],
   projectile: ['none', 'straight', 'homing'],
   impact: ['none', 'melee', 'fire', 'frost', 'arcane', 'holy', 'nature', 'shadow', 'healing', 'defense'],
   hitReaction: ['normal', 'heavy', 'none'],
   sound: ['strike', 'spark', 'chime'],
-  targeting: ['dummy', 'self', 'area']
+  targeting: ['dummy', 'self', 'area', 'targetArea', 'ground']
 };
 
 export const presentationLimits = {projectileSpeed: [1, 100], channelDuration: [0, 120]};
+
+export const animationFields = ['animation','castingAnimation','attackAnimation'];
+export const isLocalClip = value => typeof value === 'string' && value.startsWith('clip:') && value.length > 5 &&
+  value.length <= 155 && !/[\x00-\x1f\x7f]/.test(value);
 
 export function validatePresentation(ability) {
   if (!Object.hasOwn(ability, 'presentation')) return;
   const data = ability.presentation;
   if (!data || typeof data !== 'object' || Array.isArray(data) || Object.entries(data).some(([key, value]) => {
+    if (animationFields.includes(key) && isLocalClip(value)) return false;
     if (Object.hasOwn(presentationOptions, key)) return !presentationOptions[key].includes(value);
     if (!Object.hasOwn(presentationLimits, key)) return true;
     const [min, max] = presentationLimits[key];

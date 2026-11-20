@@ -26,17 +26,17 @@ export function animateCharacter({root, clips, mapping}) {
     get activeDuration() { return currentClip?.duration ?? 0; },
     get activeClip() { return currentClip?.name ?? null; },
     supports(state, override) { return Boolean(resolveClip(clips, mapping, state, override)); },
-    update(state, dt, restart = false, duration, override, loop = false, pace) {
+    update(state, dt, restart = false, duration, override, loop = false, pace, playback = 1, blend = .16) {
       const clip = resolveClip(clips, mapping, state, override);
       if (clip !== currentClip || restart) {
-        current?.fadeOut(0.16);
+        current?.fadeOut(blend);
         current = clip ? mixer.clipAction(clip) : null;
         currentClip = clip;
         if (current) {
           const once = !loop && !['ready', 'idle', 'walk', 'run', 'walkBack', 'runBack', 'strafeLeft', 'strafeRight'].includes(state) && clip.name !== mapping.idle;
           current.setLoop(once ? LoopOnce : LoopRepeat, once ? 1 : Infinity);
           current.clampWhenFinished = once;
-          current.reset().setEffectiveTimeScale(duration > 0 ? clip.duration / duration : 1).fadeIn(0.16).play();
+          current.reset().setEffectiveTimeScale((duration > 0 ? clip.duration / duration : 1) * playback).fadeIn(blend).play();
         }
       }
       if (pace !== undefined) current?.setEffectiveTimeScale(pace);

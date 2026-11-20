@@ -17,17 +17,19 @@ export function createCombatVisuals(scene, dummy) {
   const impactMaterials = new Map();
   const free = [];
   const bursts = [];
+  const zones = new Set();
   let reaction = 0;
   let audio;
 
   function createMesh(position, profile, radius, geometry, impact = false) {
-    const tint = palette[profile.impact] ?? palette[profile.school] ?? palette.physical;
+    const tint = profile.color ?? palette[profile.impact] ?? palette[profile.school] ?? palette.physical;
     const cache = impact ? impactMaterials : materials;
-    if (!cache.has(tint)) cache.set(tint, new MeshBasicMaterial(impact
-      ? {color: tint, transparent: true, opacity: 0.72, depthWrite: false} : {color: tint}));
+    const key = impact ? `${tint}/${profile.opacity ?? .72}` : tint;
+    if (!cache.has(key)) cache.set(key, new MeshBasicMaterial(impact
+      ? {color: tint, transparent: true, opacity: profile.opacity ?? .72, depthWrite: false} : {color: tint}));
     const mesh = free.pop() || new Mesh();
     mesh.geometry = geometry;
-    mesh.material = cache.get(tint);
+    mesh.material = cache.get(key);
     mesh.position.set(position.x, position.y, position.z);
     mesh.rotation.set(geometry === ring ? -Math.PI / 2 : 0, 0, 0);
     mesh.scale.setScalar(radius);
@@ -58,11 +60,17 @@ export function createCombatVisuals(scene, dummy) {
     impact(position, profile) {
       if (profile.impact === 'none') return;
       if (bursts.length === 24) remove(bursts.shift().mesh);
-      const size = profile.area ? 2.5 : profile.critical ? 1.1 : 0.65;
+      const size = (profile.area && profile.radius ? profile.radius / .31 : profile.area ? 2.5 : profile.critical ? 1.1 : .65) * (profile.effectScale ?? 1);
       const geometry = profile.area || profile.critical || ['healing', 'defense'].includes(profile.impact ?? profile.school)
         ? ring : sphere;
       const mesh = createMesh(position, profile, geometry === ring ? size : size * 0.28, geometry, true);
-      bursts.push({mesh, age: 0, size: mesh.scale.x, lifetime: profile.critical ? 0.38 : 0.25});
+      bursts.push({mesh, age: 0, size: mesh.scale.x, lifetime: profile.effectDuration ?? (profile.critical ? .38 : .25)});
+    },
+    zone(position, profile) {
+      if (profile.impact === 'none') return;
+      const mesh = createMesh({...position,y:position.y + .025},profile,(profile.radius ?? 5) / .31,ring,true);
+      zones.add(mesh);
+      return () => { if (zones.delete(mesh)) remove(mesh); };
     },
     prepareSound() {
       if (!globalThis.AudioContext) return;
@@ -73,16 +81,17 @@ export function createCombatVisuals(scene, dummy) {
         // Presentation is optional when audio is unavailable.
       }
     },
-    sound(id) {
-      if (audio?.state !== 'running' || !Object.hasOwn(tones, id)) return;
+    sound(id, profile = {}) {
+      if (audio?.state !== 'running' || profile.volume === 0 || !Object.hasOwn(tones, id)) return;
       const [start, end, wave] = tones[id];
       const oscillator = audio.createOscillator();
       const gain = audio.createGain();
       const time = audio.currentTime;
       oscillator.type = wave;
-      oscillator.frequency.setValueAtTime(start, time);
-      oscillator.frequency.exponentialRampToValueAtTime(end, time + 0.14);
-      gain.gain.setValueAtTime(0.075, time);
+      const pitch = 1 + (Math.random() * 2 - 1) * (profile.variation ?? 0);
+      oscillator.frequency.setValueAtTime(start * pitch, time);
+      oscillator.frequency.exponentialRampToValueAtTime(end * pitch, time + 0.14);
+      gain.gain.setValueAtTime(.115 * (profile.volume ?? .65), time);
       gain.gain.exponentialRampToValueAtTime(0.001, time + 0.14);
       oscillator.connect(gain).connect(audio.destination);
       oscillator.start(time);
@@ -105,6 +114,8 @@ export function createCombatVisuals(scene, dummy) {
     clear() {
       for (const burst of bursts) remove(burst.mesh);
       bursts.length = 0;
+      for (const zone of zones) remove(zone);
+      zones.clear();
       reaction = 0;
       dummy.rotation.x = 0;
     },

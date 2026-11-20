@@ -4,7 +4,7 @@ import {loadArenaAssets} from './arena-loader.js';
 import {applyWeaponTransform, attachWeapon, boundsOf, debugArena, safeArenaPositions} from './local-arena.js';
 import {createSpatialCombat, facingTarget, spatialDefaults} from './combat/spatial-combat.js';
 import {createCombatVisuals} from './combat/combat-visuals.js';
-import {ArrowHelper, Box3, Group, MathUtils, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer} from 'three';
+import {ArrowHelper, Box3, Group, Matrix3, MathUtils, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer} from 'three';
 import {animateCharacter} from './animation-controller.js';
 import {cameraFraction} from './collision-system.js';
 import {bindMovement, createCharacter, stepCharacter} from './character-controller.js';
@@ -45,6 +45,10 @@ export function createWorld(canvas, callbacks, config = world) {
   let lastTime = null;
   let queuedJump = false;
   let selected = false;
+  let groundPick;
+  let groundMeshes = [fallback];
+  const normalMatrix = new Matrix3();
+  const normal = new Vector3();
   let modelKind = 'placeholder';
   let width = 0;
   let height = 0;
@@ -63,7 +67,7 @@ export function createWorld(canvas, callbacks, config = world) {
   document.addEventListener('visibilitychange', () => { lastTime = null; queuedJump = false; }, {signal});
   window.addEventListener('blur', () => { queuedJump = false; }, {signal});
 
-  let motionConfig = config;
+  let motionConfig = {...config};
   let manifest;
   let weapon;
   let dummyAnimation;
@@ -76,6 +80,9 @@ export function createWorld(canvas, callbacks, config = world) {
   let autoReady = false;
   let alive = true;
   const visuals = createCombatVisuals(scene, dummy);
+  visuals.weapon = profile => {
+    if (weapon) visuals.impact(weapon.mount.getWorldPosition(mountPoint), profile);
+  };
   const combatConfig = {...spatialDefaults, ...config.combat};
   function targetBounds() {
     const bounds = diagnostics.target?.bounds;
@@ -107,6 +114,7 @@ export function createWorld(canvas, callbacks, config = world) {
   };
   const combat = createSpatialCombat({
     player: () => player,
+    animationAvailable: name => model.clips.some(clip=>clip.name===name),
     target: () => selected ? dummyTarget : null,
     areaTarget: () => dummyTarget,
     move() { queuedJump = true; },
@@ -122,9 +130,9 @@ export function createWorld(canvas, callbacks, config = world) {
       pose = {name: 'meleeAttack', until, minimum: duration, elapsed: 0, pending: true, duration, auto: true};
     },
     stopAnimation() { controller.clearPose(); },
-    animate(name, until, override, loop = false, duration) {
+    animate(name, until, override, loop = false, duration, profile) {
       const minimum = name === 'meleeAttack' ? combatConfig.windup + 0.18 : 0.18;
-      pose = {name, until, minimum, elapsed: 0, pending: true, override, loop, duration};
+      pose = {name, until, minimum, elapsed: 0, pending: true, override, loop, duration, profile};
     },
     visuals,
     config: combatConfig
@@ -174,6 +182,15 @@ export function createWorld(canvas, callbacks, config = world) {
   bindOrbit(canvas, delta => { orbit = orbitInput(orbit, delta, config.camera); }, (x, y, right, marker) => {
     const rect = canvas.getBoundingClientRect();
     ray.setFromCamera(new Vector2((x - rect.left) / rect.width * 2 - 1, 1 - (y - rect.top) / rect.height * 2), camera);
+    if (groundPick && !right) {
+      const hit = ray.intersectObjects(groundMeshes, true)[0];
+      if (hit?.face && normal.copy(hit.face.normal).applyNormalMatrix(normalMatrix.getNormalMatrix(hit.object.matrixWorld)).y > .52) {
+        const pick = groundPick;
+        controller.pickGround(null);
+        pick({x: hit.point.x, y: hit.point.y, z: hit.point.z});
+      }
+      return;
+    }
     const bounds = targetBounds();
     if (bounds) {
       interactionBounds.min.fromArray(bounds.min);
@@ -201,6 +218,26 @@ export function createWorld(canvas, callbacks, config = world) {
 
   const controller = {
     setQuality,
+    pickGround(callback) {
+      groundPick = callback;
+      canvas.classList.toggle('tg-aim-ground', Boolean(callback));
+    },
+    stagePreview(ability) {
+      const dx = dummy.position.x - player.x, dz = dummy.position.z - player.z;
+      const distance = Math.hypot(dx,dz);
+      const close = ability.presentation?.delivery === 'melee' || (!ability.range && !ability.presentation?.projectile) ||
+        ability.presentation?.targeting === 'area';
+      player.facing = facingTarget(player,dummy.position);
+      if (!close || distance <= 1.7) return;
+      const move = (distance - 1.7) / distance;
+      const x = player.x + dx * move, z = player.z + dz * move;
+      const floor = motionConfig.collision?.floorAt(x,z,player.y + .3,1) ?? motionConfig.ground?.y ?? 0;
+      Object.assign(player,{x,y:floor,z,vx:0,vy:0,vz:0});
+      target.set(x,floor + 1.38,z);
+    },
+    targetGround() {
+      return {x: dummy.position.x, y: dummy.position.y, z: dummy.position.z};
+    },
     selectDummy() { setSelection(true); },
     delivery: combat.delivery,
     weaponCombat() { return manifest?.weapons?.mainHand; },
@@ -270,7 +307,10 @@ export function createWorld(canvas, callbacks, config = world) {
       view.distance = orbit.distance;
       elapsed += dt;
       const input = readInput();
+      const movement = callbacks.movementScale?.() ?? 1;
+      motionConfig.movement = movement === 1 ? config.movement : {...config.movement, walk: config.movement.walk * movement, run: config.movement.run * movement};
       queuedJump ||= input.jump;
+      if (input.forward || input.side || queuedJump) callbacks.move?.();
       while (elapsed >= config.step) {
         player = stepCharacter(player, {...input, jump: queuedJump}, view.yaw, config.step, motionConfig, obstacles);
         queuedJump = false;
@@ -303,7 +343,7 @@ export function createWorld(canvas, callbacks, config = world) {
       const stride = directionalClip ? config.movement.walk : config.movement[player.animation];
       const pace = !pose && locomotion ? Math.max(.55, Math.min(1.7, Math.hypot(player.vx, player.vz)/stride)) : undefined;
       animation.update(clip ? pose.name : ready ? 'ready' : directionalClip ? lateral : player.animation, dt,
-        Boolean(clip && pose.pending), swingDuration, ready ? 'Ready1H (ID 26 variation 0)' : pose?.override, pose?.loop, pace);
+        Boolean(clip && pose.pending), swingDuration, ready ? 'Ready1H (ID 26 variation 0)' : pose?.override, pose?.loop, pace, pose?.profile?.playback, pose?.profile?.blend);
       if (weapon) for (const {finger, rotation} of weapon.grip) finger.quaternion.fromArray(rotation);
       if (pose) pose.pending = false;
       // Root tilt is a rig-independent fallback for models without attack clips.
@@ -398,9 +438,11 @@ export function createWorld(canvas, callbacks, config = world) {
       }
       const spawn = safeArenaPositions(ground, settings.walls, manifest.playerSpawn, manifest.target?.position, config.playerRadius, config.playerHeight);
       positionArena(spawn, ground, settings.exploration ? [] : settings.walls);
+      groundMeshes = [visual];
       if (settings.exploration) {
         const terrain = createExplorationTerrain(bounds);
         scene.add(terrain.root);
+        groundMeshes.push(terrain.ground);
         motionConfig.collision = createWorldCollision(visual, terrain, config, obstacles);
       }
       scene.add(visual);

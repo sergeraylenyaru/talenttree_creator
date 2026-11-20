@@ -1,3 +1,5 @@
+import {workshopOptions, workshopTemplates, rememberTemplate} from './spell-workshop.js';
+import {validateWorkshop} from './combat/workshop-rules.js';
 import {presentationEditor} from './ability-presentation-editor.js';
 import {validatePresentation} from './combat/presentation.js';
 import {openTrainingGrounds} from './training-grounds/training-grounds.js';
@@ -24,7 +26,7 @@ import {icons,iconURL} from './icons.js';
 const $=s=>document.querySelector(s);
 registerTrainingTranslations();
 $('#openTrainingGrounds').onclick=()=>{
- try{closeMenus();$('#tooltip').hidden=true;openTrainingGrounds($('#trainingGrounds'),doc);}
+ try{closeMenus();$('#tooltip').hidden=true;openTrainingGrounds($('#trainingGrounds'),doc,{layoutId:projectId?'project:'+projectId:undefined});}
  catch(error){toast(t(error.message));}
 };
 const confirm=message=>window.confirm(t(message));
@@ -76,7 +78,7 @@ function render() {if(!$('#aboutPage').hidden&&aboutContent)$('#aboutContent').i
  const foreign=!!activeShare&&!activePublication?.isOwner;$('#editMode').hidden=foreign;$('#copyToSelf').hidden=!foreign;
  $('#editMode').classList.toggle('selected',mode==='edit');$('#playMode').classList.toggle('selected',mode==='play');$('#editMode').setAttribute('aria-pressed',String(mode==='edit'));$('#playMode').setAttribute('aria-pressed',String(mode==='play'));
  $('#primaryBranchSetting').hidden=mode!=='edit';$('#primaryBranchEnabled').checked=usesPrimaryBranch(doc);$('#primaryBranchEnabled').disabled=mode!=='edit';$('#primaryBranchModeLabel').textContent=usesPrimaryBranch(doc)?'С основной веткой':'Без основной ветки';
- $('#addBranch').hidden=mode!=='edit';$('#addBranch').disabled=doc.branches.length>=4;$('#addAbility').hidden=mode!=='edit';
+ $('#addBranch').hidden=mode!=='edit';$('#addBranch').disabled=doc.branches.length>=4;$('#addAbility').hidden=mode!=='edit';$('#spellLibrary').hidden=mode!=='edit';
  $('#hint').hidden=mode==='play';$('#hint').textContent=doc.branches.length>4?'В старом классе пять веток. Удали лишнюю перед сохранением; данные пока сохранены.':'Нажми на пустую ячейку, чтобы создать талант.';
  $('#trees').innerHTML=doc.branches.map(b=>`<article class="tree" ${branchTint(b)} data-branch="${esc(b.id)}"><div class="tree-header"><button class="branch-icon-button" data-action="branch-icon" title="Выбрать иконку ветки" aria-label="Иконка ветки ${esc(b.name)}" ${mode!=='edit'?'disabled':''}>${image(branchIcon(b))}</button><input aria-label="Название ветки" value="${esc(b.name)}" maxlength="80" ${mode!=='edit'?'disabled':''}><span>${b.talents.reduce((s,t)=>s+(doc.build[t.id]||0),0)} очк.</span>${mode==='edit'?'<button data-action="branch-color" aria-label="Цвет фона ветки" title="Цвет фона ветки">◐</button><button data-action="delete-branch" aria-label="Удалить ветку">×</button>':''}</div><div class="talent-grid">${Array.from({length:b.rows*4},(_,i)=>{
  const row=Math.floor(i/4),col=i%4,t=b.talents.find(t=>t.row===row&&t.col===col);
@@ -147,7 +149,7 @@ $('#closeModal').onclick=()=>{const back=modalCancel;modalCancel=null;$('#modal'
 $('#modalForm').onsubmit=async e=>{e.preventDefault();$('#formError').textContent='';const button=$('#submitModal');button.disabled=true;button.setAttribute('aria-busy','true');try{if(modalSave) await modalSave();}catch(err){$('#formError').textContent=err.message;}finally{button.disabled=false;button.setAttribute('aria-busy','false');}};
 $('#deleteItem').onclick=()=>modalDelete?.();
 function field(id,label,value='',type='text',attrs=''){return `<label for="${id}">${label}</label><input id="${id}" type="${type}" value="${esc(value)}" ${attrs}>`;}
-function refreshIconCategoryOptions(){const select=$('#iconCategory');if(!select)return;const current=select.value;select.innerHTML=`<option value="all">Все иконки</option><option value="weapons">Оружие и щиты</option><option value="armor">Доспехи</option>${iconCategories.filter(c=>!['general','weapon','armor'].includes(c.id)).map(c=>`<option data-user-content value="category:${esc(c.id)}">${esc(c.name)}</option>`).join('')}`;if([...select.options].some(o=>o.value===current))select.value=current;}
+function refreshIconCategoryOptions(){const select=$('#iconCategory');if(!select)return;const current=select.value;select.innerHTML=`<option value="all">Все иконки</option><option value="category:workshop">Мастерская заклинаний</option><option value="weapons">Оружие и щиты</option><option value="armor">Доспехи</option>${iconCategories.filter(c=>!['general','weapon','armor'].includes(c.id)).map(c=>`<option data-user-content value="category:${esc(c.id)}">${esc(c.name)}</option>`).join('')}`;if([...select.options].some(o=>o.value===current))select.value=current;}
 function iconMatchesCategory(i,value){if(value==='all')return true;if(value==='weapons')return i.categoryKind==='weapon'||i.category==='weapon'||/^inv_(?:sword|axe|mace|hammer|staff|wand|weapon|bow|crossbow|musket|spear|throwing|knife|shield|polearm)/i.test(i.id);if(value==='armor')return i.categoryKind==='armor'||i.category==='armor'||/^inv_(?:chest|helmet|shoulder|pants|belt|boots|bracer|shield)/i.test(i.id);return i.category===value.replace(/^category:/,'');}
 function iconPicker(selected='inv_misc_questionmark'){
  return `<div class="compact-icon-picker"><button type="button" id="toggleIconPicker" class="icon-picker-trigger" aria-expanded="false" aria-haspopup="dialog" aria-controls="iconDialog"><span class="icon-picker-thumb"><span class="icon-picker-fallback">?</span>${image(selected,'id="iconPreview"')}</span><span id="iconPickerCaption">${selected==='inv_misc_questionmark'?'Выбрать иконку':'Изменить иконку'}</span><span aria-hidden="true">⌄</span></button><div id="iconPickerOptions" class="icon-picker-options" hidden><label for="iconSearch">ИКОНКА · ПОИСК ПО НАЗВАНИЮ ИЛИ ТЕГАМ</label><input id="iconSearch" type="search" placeholder="Название или теги: лёд, frost, маг…" autocomplete="off"><label for="iconCategory">КАТЕГОРИЯ</label><select id="iconCategory"><option value="all">Все иконки</option></select><div id="iconGrid" class="icon-grid"></div>${field('iconName','ПРЯМОЕ ИМЯ WOW-ИКОНКИ',/^[a-z0-9_-]+$/i.test(selected)?selected:'','text',`pattern="[A-Za-z0-9_-]+" data-initial="${esc(selected)}"`)}<small id="iconCount" class="muted" role="status">Загрузка каталога…</small></div></div>`;
@@ -199,35 +201,76 @@ function editAbilityPlacement(b,t,existing){
  function eligible(p){if(p.id===t.id||p.row>t.row)return false;let current=p;const seen=new Set();while(current.requires){if(current.requires===t.id||seen.has(current.id))return false;seen.add(current.id);current=b.talents.find(x=>x.id===current.requires);if(!current)return false;}return !!route(b,p,t);}
  modal('Зависимость: '+ability.name,`<label for="requires">ТРЕБУЕТ ТАЛАНТ (ПОЛНЫЙ РАНГ)</label><select id="requires"><option value="">Без зависимости</option>${t.requires&&!b.talents.filter(eligible).some(p=>p.id===t.requires)?`<option value="${esc(t.requires)}" selected>Текущая зависимость: нужно изменить маршрут</option>`:''}${b.talents.filter(eligible).map(p=>`<option data-user-content value="${esc(p.id)}" ${t.requires===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select><p class="muted">Название, иконка и описание берутся из способности и изменяются в списке способностей.</p>`,()=>{const updated=abilityTalentDraft(ability,{...t,requires:$('#requires').value});if([...dependencyRoutes({...b,talents:b.talents.filter(x=>x.id!==updated.id).concat(updated)}).values()].some(p=>!p))throw Error('Стрелки пересекаются или нет свободного пути. Измени зависимость.');if(existing)b.talents[b.talents.indexOf(existing)]=updated;else b.talents.push(updated);if(!existing){ability.learningMode='talent';ability.talentId='';}if(!validBuild(doc,doc.build))doc.build={};changed();render();$('#modal').close();},existing?()=>{if(!confirm('Убрать способность из этой ячейки?'))return;b.talents=b.talents.filter(x=>x.id!==t.id);for(const p of b.talents)if(p.requires===t.id)p.requires='';for(const a of doc.abilities)if(a.talentId===t.id)a.talentId='';doc.build={};changed();render();$('#modal').close();}:null);
 }
-function editAbility(existing,onSaved=null,onCancel=null){
- const a=existing||{id:crypto.randomUUID(),name:'',description:'',icon:'inv_misc_questionmark',resourceUnit:'percent',resource:'',cast:'',cooldown:'',range:'',talentId:'',requirements:'',learningMode:'base'};
+function editAbility(existing,onSaved=null,onCancel=null,draft=null){
+ const a=draft||existing||{id:crypto.randomUUID(),name:'',description:'',icon:'forge-arcane',workshop:{version:1},resourceUnit:'percent',resource:'',cast:'',cooldown:'',range:'',talentId:'',requirements:'',learningMode:'base'};
  if(mode==='play'){modal(a.name,`<p class="tooltip-description">${esc(a.description)}</p><div class="spell-stats">${abilityStatsMarkup(a)}</div>`,null);readOnlyFavorite('ability',a);return;}
  const learning=(a.learningMode==='specialization'?'base':a.learningMode)||((a.talentId||doc.branches.some(b=>b.talents.some(t=>t.grantedAbilityId===a.id)))?'talent':'base');
 
- const identity=`<div class="ability-identity"><div>${field('abilityName','НАЗВАНИЕ',a.name,'text','required maxlength="100"')}</div>${iconPicker(a.icon)}</div>`;
+ const templates=workshopTemplates();
+ const identity=`<div class="ability-identity"><div>${field('abilityName','НАЗВАНИЕ',a.name,'text','required maxlength="100"')}<small>Внутренний ID <code data-user-content>${esc(a.id)}</code></small></div>${iconPicker(a.icon)}</div>`;
+ const templateTools=`<details class="workshop-template-details"><summary>Шаблоны способностей</summary><div class="workshop-template-bar"><label>Применить шаблон<select id="workshopTemplate"><option value="">Выбери шаблон</option>${templates.map((item,index)=>`<option value="${index}" data-user-content>${esc(item.name)}</option>`).join('')}</select></label>
+ <button id="applySpellTemplate" type="button">Применить шаблон</button><button id="rememberSpellTemplate" type="button">Сохранить как шаблон</button></div></details>`;
  const selectors=`<div class="ability-selectors"><div><label for="abilityKind">ТИП СПОСОБНОСТИ</label><select id="abilityKind"><option value="active" ${a.kind!=='passive'?'selected':''}>Активная</option><option value="passive" ${a.kind==='passive'?'selected':''}>Пассивная</option></select></div><div><label for="abilityBranch">ВЕТКА</label><select id="abilityBranch"><option value="auto" ${a.branchId===undefined||a.branchId==='auto'?'selected':''}>По размещению в дереве</option><option value="" ${a.branchId===''?'selected':''}>Общая — без ветки</option>${doc.branches.map(b=>`<option data-user-content value="${esc(b.id)}" ${a.branchId===b.id?'selected':''}>${esc(b.name)}</option>`).join('')}</select></div></div>`;
  const costs=`<div id="abilityResourceCosts"></div><div class="ability-numbers">${['cast','cooldown','range'].map((key,i)=>`<div>${field(key,['ВРЕМЯ ПРИМЕНЕНИЯ, СЕК.','ПЕРЕЗАРЯДКА, СЕК.','ДАЛЬНОСТЬ, М'][i],numericValue(a[key]),'number','min="0" max="1000000000" step="any" required')}</div>`).join('')}</div>`;
- let readCosts,readEffects,readPresentation;
+ let readCosts,readEffects,readPresentation,readRules;
  const requirements=`<label for="abilityRequirements">Требуется:</label><input id="abilityRequirements" type="text" maxlength="1000" value="${esc(abilityRequirementsText(a))}">`;
- modal(existing?'Редактировать способность':'Новая способность',identity+`<div class="ability-editor-layout"><div>${selectors}<div class="ability-flags"><label class="ability-branch-only" ${!usesPrimaryBranch(doc)?'title="Включи основную ветку в настройках дерева"':''}><input type="checkbox" id="abilityBranchOnly" ${!usesPrimaryBranch(doc)?'disabled':''} ${a.branchOnly||a.learningMode==='specialization'?'checked':''}>Способность только для ветки</label><label class="editor-switch ability-channeled"><input type="checkbox" role="switch" id="abilityChanneled" ${a.channeled?'checked':''}><span>Поддерживаемое заклинание</span></label></div><label for="abilityDescription">ОПИСАНИЕ</label><textarea id="abilityDescription" maxlength="10000" rows="8">${esc(a.description)}</textarea></div><div>${costs}<div id="combatEffectEditor"></div><details><summary>Оформление в бою</summary><div id="abilityPresentation"></div></details>${requirements}<label for="abilityLearning">ИЗУЧЕНИЕ СПОСОБНОСТИ</label><select id="abilityLearning"><option value="base" ${learning==='base'?'selected':''}>Изучается без таланта</option><option value="talent" ${learning==='talent'?'selected':''}>Требуется талант</option></select><div id="talentLinkField" ${learning!=='talent'?'hidden':''}><label for="talentLink">ОТКРЫВАЕТСЯ ТАЛАНТОМ</label><select id="talentLink"><option value="">По размещению в дереве</option>${doc.branches.flatMap(b=>b.talents).map(t=>`<option data-user-content value="${esc(t.id)}" ${a.talentId===t.id?'selected':''}>${esc(t.name)}</option>`).join('')}</select></div><p id="abilityTimingHelp" class="muted compact-field-help">0 м — ближний бой. 0 сек. — мгновенное применение.</p></div></div>`,()=>{
+ const previewTools=`<div class="workshop-preview-actions"><button type="button" id="previewSpell">Предпросмотр в 3D</button>
+ <button type="button" id="saveTestSpell">Сохранить и открыть тренировку</button></div>`;
+ const body=identity+`<div class="ability-editor-layout"><div>${selectors}<div class="ability-flags"><label class="ability-branch-only" ${!usesPrimaryBranch(doc)?'title="Включи основную ветку в настройках дерева"':''}><input type="checkbox" id="abilityBranchOnly" ${!usesPrimaryBranch(doc)?'disabled':''} ${a.branchOnly||a.learningMode==='specialization'?'checked':''}>Способность только для ветки</label><label class="editor-switch ability-channeled"><input type="checkbox" role="switch" id="abilityChanneled" ${a.channeled?'checked':''}><span>Поддерживаемое заклинание</span></label></div><label for="abilityDescription">ОПИСАНИЕ</label><textarea id="abilityDescription" maxlength="10000" rows="8">${esc(a.description)}</textarea><div id="workshopOptions"></div>${templateTools}${previewTools}</div><div>${costs}<div id="combatEffectEditor"></div><details><summary>Оформление в бою</summary><div id="abilityPresentation"></div></details>${requirements}<label for="abilityLearning">ИЗУЧЕНИЕ СПОСОБНОСТИ</label><select id="abilityLearning"><option value="base" ${learning==='base'?'selected':''}>Изучается без таланта</option><option value="talent" ${learning==='talent'?'selected':''}>Требуется талант</option></select><div id="talentLinkField" ${learning!=='talent'?'hidden':''}><label for="talentLink">ОТКРЫВАЕТСЯ ТАЛАНТОМ</label><select id="talentLink"><option value="">По размещению в дереве</option>${doc.branches.flatMap(b=>b.talents).map(t=>`<option data-user-content value="${esc(t.id)}" ${a.talentId===t.id?'selected':''}>${esc(t.name)}</option>`).join('')}</select></div><p id="abilityTimingHelp" class="muted compact-field-help">0 м — ближний бой. 0 сек. — мгновенное применение.</p></div></div>`;
+ function readDraft(){
   const updated={...a,name:$('#abilityName').value.trim(),description:$('#abilityDescription').value,icon:readIcon(),learningMode:$('#abilityLearning').value,talentId:$('#abilityLearning').value==='talent'?$('#talentLink').value:'',kind:$('#abilityKind').value,channeled:$('#abilityKind').value!=='passive'&&$('#abilityChanneled').checked,branchOnly:$('#abilityBranchOnly').checked,branchId:$('#abilityBranch').value,requirements:$('#abilityRequirements').value.trim()};
   const effects=readEffects();if(effects!==undefined)updated.combatEffects=effects;
   const presentation=readPresentation();
   if(Object.keys(presentation).length)updated.presentation=presentation;else delete updated.presentation;
   validatePresentation(updated);
+  const rules=readRules();
+  if(rules)updated.workshop=rules;
+  else delete updated.workshop;
   if(!updated.name)throw Error('Введи название');
   if(updated.branchOnly&&!doc.branches.some(b=>b.id===updated.branchId))throw Error('Выбери ветку для способности');
   for(const key of ['cast','cooldown','range']){updated[key]=Number($('#'+key).value);if(!Number.isFinite(updated[key])||updated[key]<0||updated[key]>1e9)throw Error('Характеристики должны быть неотрицательными числами');}updated.resourceCosts=readCosts();delete updated.resource;delete updated.resourceType;delete updated.resourceUnit;
+  validateWorkshop(updated);
+  const talent=doc.branches.flatMap(b=>b.talents).find(t=>t.id===updated.talentId);
+  if(talent&&(rules?.talentRank??1)>talent.maxRank)throw Error('Требуемый ранг превышает максимум таланта');
+  if(effects?.some(effect=>effect.type==='resource'&&!classResources(character()).some(r=>r.id===effect.resourceId))) {
+    throw Error('Выбери ресурс класса для восстановления');
+  }
+  return updated;
+ }
+ function save(reopen=true){
+  const updated=readDraft();
   if(existing)doc.abilities[doc.abilities.indexOf(existing)]=updated;else doc.abilities.push(updated);
-  changed();render();$('#modal').close();if(onSaved)setTimeout(()=>onSaved(updated),0);
- },existing?()=>{if(confirm('Удалить способность и её размещения в деревьях?')){doc=removeAbility(doc,a.id);changed();render();$('#modal').close();}}:null);
+  changed();render();$('#modal').close();if(reopen&&onSaved)setTimeout(()=>onSaved(updated),0);
+ }
+ modal('Мастерская заклинаний',body,save,existing?()=>{if(confirm('Удалить способность и её размещения в деревьях?')){doc=removeAbility(doc,a.id);changed();render();$('#modal').close();}}:null);
  $('#modal').classList.add('ability-editor-dialog');
  const updateChannel=()=>{const passive=$('#abilityKind').value==='passive';$('#abilityChanneled').disabled=passive;$('#modalBody label[for="cast"]').textContent=!passive&&$('#abilityChanneled').checked&&!$('[data-presentation=channelDuration]')?.value?'ДЛИТЕЛЬНОСТЬ ПОДДЕРЖАНИЯ, СЕК.':'ВРЕМЯ ПРИМЕНЕНИЯ, СЕК.';$('#abilityTimingHelp').textContent=!passive&&$('#abilityChanneled').checked&&!$('[data-presentation=channelDuration]')?.value?'0 м — ближний бой. Укажи длительность поддержания в секундах.':'0 м — ближний бой. 0 сек. — мгновенное применение.';};$('#abilityChanneled').onchange=$('#abilityKind').onchange=updateChannel;updateChannel();
- readEffects=combatEffectEditor($('#combatEffectEditor'),a);
+ readEffects=combatEffectEditor($('#combatEffectEditor'),a,classResources(character()));
+ readRules=workshopOptions($('#workshopOptions'),a);
  readPresentation=presentationEditor($('#abilityPresentation'),a);
  $('[data-presentation=channelDuration]').addEventListener('input',updateChannel);
  $('[data-presentation=preset]').addEventListener('change',updateChannel);updateChannel();
  readCosts=resourceCostEditor($('#abilityResourceCosts'),a,character(),!existing);const constrainBranch=()=>{for(const option of $('#abilityBranch').options)option.disabled=$('#abilityBranchOnly').checked&&['','auto'].includes(option.value);if($('#abilityBranchOnly').checked&&!doc.branches.some(b=>b.id===$('#abilityBranch').value))$('#abilityBranch').value=doc.branches[0].id;};$('#abilityBranchOnly').onchange=constrainBranch;constrainBranch();$('#abilityLearning').onchange=()=>{$('#talentLinkField').hidden=$('#abilityLearning').value!=='talent';};bindPicker();favoriteButton('ability',()=>doc.abilities.find(x=>x.id===a.id));modalCancel=onCancel;
+ const attempt=run=>()=>{try{$('#formError').textContent='';run();}catch(error){$('#formError').textContent=t(error.message);}};
+ $('#applySpellTemplate').onclick=attempt(()=>{
+  const index=$('#workshopTemplate').value;
+  if(index==='')return;
+  const preset=structuredClone(templates[Number(index)]);
+  const staged={...a,...preset,id:a.id,learningMode:$('#abilityLearning').value,talentId:$('#talentLink').value};
+  $('#modal').close();
+  editAbility(existing,onSaved,onCancel,staged);
+ });
+ $('#rememberSpellTemplate').onclick=attempt(()=>{rememberTemplate(readDraft());toast(t('Настройки сохранены как шаблон'));});
+ $('#previewSpell').onclick=attempt(()=>{
+  const edited=readDraft();
+  const isolated=structuredClone(doc);
+  isolated.abilities=[{...edited,kind:'active',learningMode:'base',talentId:'',branchOnly:false,
+    workshop:edited.workshop?{...edited.workshop,hidden:false,disabled:false}:undefined}];
+  if(!isolated.abilities[0].workshop)delete isolated.abilities[0].workshop;
+  for(const branch of isolated.branches)for(const talent of branch.talents)delete talent.grantedAbilityId;
+  openTrainingGrounds($('#trainingGrounds'),isolated,{preview:edited.id});
+ });
+ $('#saveTestSpell').onclick=attempt(()=>{save(false);$('#openTrainingGrounds').click();});
 
 }
 $('#trees').addEventListener('change',e=>{if(e.target.matches('.tree-header input')){doc.branches.find(b=>b.id===e.target.closest('.tree').dataset.branch).name=e.target.value;changed();render();}});
@@ -268,6 +311,85 @@ $('#trees').onclick=treeClick;$('#trees').oncontextmenu=e=>{if(mode==='play'&&e.
 $('#abilities').onclick=e=>{const el=e.target.closest('[data-ability]');if(el)editAbility(doc.abilities.find(a=>a.id===el.dataset.ability));};
 $('#addBranch').onclick=()=>{if(doc.branches.length<4){const next=branch(t('Ветка')+' '+(doc.branches.length+1));next.rows=Math.max(...doc.branches.map(b=>b.rows));doc.branches.push(next);changed();render();}};
 $('#addAbility').onclick=()=>editAbility();
+$('#spellLibrary').onclick=openSpellLibrary;
+
+function openSpellLibrary(){
+ modal('Библиотека заклинаний',`<div class="spell-library">
+   <div class="spell-library-tools"><label>Поиск способностей<input id="spellSearch" type="search"></label>
+   <label>Доступность<select id="spellFilter"><option value="">Все способности</option><option value="base">Доступны по умолчанию</option>
+   <option value="talent">Требуют талант</option><option value="disabled">Отключённые</option><option value="hidden">Скрытые</option></select></label>
+   <label>Сортировка<select id="spellSort"><option value="name">По названию</option><option value="cooldown">По перезарядке</option><option value="">По порядку класса</option></select></label>
+   <button type="button" id="libraryCreate">Добавить способность</button><button type="button" id="libraryLoad">Импорт способности</button>
+   <input type="file" id="libraryFile" accept=".json,application/json" hidden></div><div id="spellLibraryRows"></div></div>`);
+ function refresh(){
+  const query=$('#spellSearch').value.trim().toLocaleLowerCase(), filter=$('#spellFilter').value;
+  const order=$('#spellSort').value;
+  const list=doc.abilities.filter(a=>{
+   const state=a.workshop?.disabled?'disabled':a.workshop?.hidden?'hidden':a.learningMode??'base';
+   return (!filter||filter===state) && [a.name,a.description,a.id,...(a.combatEffects??[]).map(e=>e.school??e.type)]
+    .some(value=>String(value??'').toLocaleLowerCase().includes(query));
+  });
+  if(order==='name')list.sort((a,b)=>a.name.localeCompare(b.name));
+  if(order==='cooldown')list.sort((a,b)=>numericValue(a.cooldown)-numericValue(b.cooldown));
+  $('#spellLibraryRows').innerHTML=list.map(a=>`<article class="spell-library-row" data-spell-id="${esc(a.id)}">
+    <span class="spell-library-icon">✦${image(a.icon)}</span>
+    <div><strong data-user-content>${esc(a.name)}</strong><small>${a.kind==='passive'?'Пассивная':'Активная'} · ${abilityStatsMarkup(a,' · ')}</small></div>
+    <div class="spell-library-actions"><button type="button" data-spell-action="edit">Редактировать</button>
+    <button type="button" data-spell-action="rename">Переименовать</button><button type="button" data-spell-action="duplicate">Дублировать</button>
+    <button type="button" data-spell-action="export">Экспорт</button><button type="button" data-spell-action="delete">Удалить</button></div></article>`
+  ).join('')||'<p>Нет способностей</p>';
+ }
+ function reopenEditor(a,draft){
+  $('#modal').close();
+  editAbility(a,openSpellLibrary,openSpellLibrary,draft);
+ }
+ $('#spellSearch').oninput=$('#spellFilter').onchange=$('#spellSort').onchange=refresh;
+ $('#libraryCreate').onclick=()=>reopenEditor(null);
+ $('#libraryLoad').onclick=()=>$('#libraryFile').click();
+ $('#libraryFile').onchange=async event=>{
+  const file=event.target.files[0];
+  if(!file)return;
+  try{
+   if(file.size>500000)throw Error('Файл больше 500 КБ');
+   const payload=JSON.parse(await file.text());
+   if(payload.version!==1||payload.type!=='talentforge-ability'||!payload.ability||typeof payload.ability!=='object')throw Error('Неверный файл способности');
+   const id=crypto.randomUUID(), incoming={...payload.ability,id,branchOnly:false,branchId:'auto',
+    talentId:'',learningMode:'talent'};
+   const copy=normalize({...structuredClone(doc),abilities:[...doc.abilities,incoming]},{allowLegacy:true});
+   reopenEditor(null,copy.abilities.find(item=>item.id===id));
+  }catch(error){$('#formError').textContent=t(error.message);}
+  finally{event.target.value='';}
+ };
+ $('#spellLibraryRows').onclick=event=>{
+  const button=event.target.closest('[data-spell-action]');
+  if(!button)return;
+  const ability=doc.abilities.find(a=>a.id===button.closest('[data-spell-id]').dataset.spellId);
+  switch(button.dataset.spellAction){
+   case 'edit': reopenEditor(ability);break;
+   case 'rename': {
+    $('#modal').close();
+    modal('Переименовать',field('newSpellName','НАЗВАНИЕ',ability.name,'text','maxlength="100" required'),()=>{
+     const name=$('#newSpellName').value.trim();
+     if(!name)throw Error('Введи название');
+     ability.name=name;changed();render();$('#modal').close();setTimeout(openSpellLibrary,0);
+    });
+    modalCancel=openSpellLibrary;break;
+   }
+   case 'duplicate': reopenEditor(null,{...structuredClone(ability),id:crypto.randomUUID(),
+     name:ability.name.slice(0,85)+' · '+t('Копия')});break;
+   case 'delete':
+    if(confirm('Удалить способность и её размещения в деревьях?')){doc=removeAbility(doc,ability.id);changed();render();refresh();}
+    break;
+   case 'export': {
+    const link=document.createElement('a');
+    link.href=URL.createObjectURL(new Blob([JSON.stringify({version:1,type:'talentforge-ability',ability},null,2)],{type:'application/json'}));
+    link.download='talentforge-ability.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),0);break;
+   }
+  }
+ };
+ refresh();
+}
+
 $('#copyToSelf').onclick=()=>{if(!user){auth(false,copySharedToEditor);return;}copySharedToEditor();};
 async function copySharedToEditor(){
  if(!activeShare)return;const token=activeShare,copy=structuredClone(doc),suffix=' '+t('— копия');copy.name=copy.name.slice(0,100-suffix.length)+suffix;const button=$('#copyToSelf');button.disabled=true;

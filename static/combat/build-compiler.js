@@ -62,6 +62,12 @@ export function compileCombatBuild(document, options = {}) {
     if (!abilityUnlocked(doc, ability)) continue;
     if (!ability.id || ids.has(ability.id)) throw new Error('Неверный идентификатор способности');
     ids.add(ability.id);
+    const talentRank = ability.learningMode === 'talent'
+      ? Math.max(1, ...doc.branches.flatMap(branch=>branch.talents)
+        .filter(talent=>ability.talentId ? talent.id===ability.talentId : talent.grantedAbilityId===ability.id)
+        .map(talent=>doc.build[talent.id]??0))
+      : ability.workshop?.rank ?? 1;
+    const rankMultiplier = 1 + (talentRank - 1) * (ability.workshop?.rankScale ?? 0) / 100;
     const compiled = {
       ...ability,
       cast: ability.channeled && ability.presentation?.channelDuration === undefined ? 0 : duration(ability.cast),
@@ -69,6 +75,7 @@ export function compileCombatBuild(document, options = {}) {
       cooldown: duration(ability.cooldown),
       range: duration(ability.range),
       combatEffects: ability.combatEffects ?? [],
+      ...(rankMultiplier !== 1 ? {rankMultiplier} : {}),
       resourceCosts: abilityResourceCosts(ability, character).map(cost => ({
         ...cost,
         resourceName: resourceNames.get(cost.resourceId) || cost.resourceName
@@ -79,6 +86,7 @@ export function compileCombatBuild(document, options = {}) {
 
   return {
     name: doc.name, icon: doc.classIcon, health: maxHealth, maxHealth, resources,
+    knownAbilityIds: doc.abilities.map(ability => ability.id),
     points: total(doc), budget: doc.budget,
     primaryBranch: doc.branches.find(branch => branch.id === doc.primaryBranchId)?.name,
     stats: normalizeCombatSettings(options).stats, activeAbilities, passiveAbilities

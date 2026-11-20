@@ -1,3 +1,4 @@
+import struct
 """TalentForge HTTP server. Python 3.12+, SQLite; Pillow for admin icon uploads."""
 import accounts
 import site_content
@@ -163,7 +164,7 @@ def validate_class_icon(value):
 
 PRESENTATION_ANIMATIONS = ('sword', 'twoHand', 'bow', 'cast', 'area', 'channel', 'guard', 'movement', 'hurt')
 PRESENTATION_OPTIONS = {
-    'category': ('attack', 'spell', 'healing', 'area', 'defense', 'movement'),
+    'category': ('attack', 'spell', 'healing', 'area', 'defense', 'movement', 'physical', 'magical', 'support', 'utility'),
     'delivery': ('melee', 'ranged'),
     'animation': PRESENTATION_ANIMATIONS,
     'castingAnimation': PRESENTATION_ANIMATIONS,
@@ -172,7 +173,7 @@ PRESENTATION_OPTIONS = {
     'impact': ('none', 'melee', 'fire', 'frost', 'arcane', 'holy', 'nature', 'shadow', 'healing', 'defense'),
     'hitReaction': ('normal', 'heavy', 'none'),
     'sound': ('strike', 'spark', 'chime'),
-    'targeting': ('dummy', 'self', 'area'),
+    'targeting': ('dummy', 'self', 'area', 'targetArea', 'ground'),
 }
 PRESENTATION_LIMITS = {'projectileSpeed': (1, 100), 'channelDuration': (0, 120)}
 
@@ -184,6 +185,9 @@ def validate_presentation(ability):
     if not isinstance(data, dict):
         raise ValueError('Проверь оформление способности')
     for key, value in data.items():
+        if key in ('animation','castingAnimation','attackAnimation') and isinstance(value,str):
+            if value == 'none' or value.startswith('clip:') and 5 < len(value) <= 155 and not re.search(r'[\x00-\x1f\x7f]',value):
+                continue
         if key in PRESENTATION_OPTIONS and value in PRESENTATION_OPTIONS[key]:
             continue
         if key in PRESENTATION_LIMITS and type(value) in (int, float):
@@ -194,12 +198,16 @@ def validate_presentation(ability):
 
 
 def validate_combat_effects(ability):
-    """Optional declarative combat schema; limits must match engine.js."""
     if 'combatEffects' not in ability:
         return
     effects = ability['combatEffects']
+    common = {'id', 'type', 'trigger'}
+    timing = {'duration', 'interval', 'stacks', 'refresh'}
+    bonuses = {'flatBonus', 'multiplier', 'critMultiplier', 'attackCoefficient', 'spellCoefficient'}
     def invalid():
         raise ValueError('Проверь боевые эффекты')
+    def bounded(value, lo, hi):
+        return type(value) in (int, float) and lo <= value <= hi
     if not isinstance(effects, list) or len(effects) > 32:
         invalid()
     ids = set()
@@ -210,18 +218,115 @@ def validate_combat_effects(ability):
         if not isinstance(eid, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,100}', eid) or eid in ids:
             invalid()
         ids.add(eid)
-        if effect.get('type') not in ('damage', 'healing') or effect.get('trigger') not in ('onCast', 'onHit') or effect.get('scalingStat') not in ('none', 'spellPower', 'attackPower'):
+        if effect.get('trigger') not in ('onCast', 'onHit'):
             invalid()
-        if effect['type'] == 'damage' and effect.get('school') not in ('physical', 'fire', 'frost', 'arcane', 'nature', 'shadow', 'holy'):
-            invalid()
-        if effect['type'] == 'healing' and 'school' in effect:
-            invalid()
-        for key, limit in (('baseAmount', 1e9), ('coefficient', 1000)):
-            value = effect.get(key)
-            if type(value) not in (int, float) or not 0 <= value <= limit:
+        kind = effect.get('type')
+        if kind in ('damage', 'healing'):
+            fields = {'baseAmount', 'scalingStat', 'coefficient', 'canCrit'} | timing | bonuses
+            if kind == 'damage':
+                fields.add('school')
+                if effect.get('school') not in ('physical', 'fire', 'frost', 'arcane', 'nature', 'shadow', 'holy'):
+                    invalid()
+            if (effect.get('scalingStat') not in ('none', 'spellPower', 'attackPower')
+                    or not bounded(effect.get('baseAmount'), 0, 1e9) or not bounded(effect.get('coefficient'), 0, 1000)
+                    or type(effect.get('canCrit')) is not bool):
                 invalid()
-        if type(effect.get('canCrit')) is not bool or set(effect) - {'id', 'type', 'trigger', 'school', 'baseAmount', 'scalingStat', 'coefficient', 'canCrit'}:
+            for key in bonuses & effect.keys():
+                if not bounded(effect[key], 0, 1e9 if key == 'flatBonus' else 1000):
+                    invalid()
+            if ('duration' in effect) != ('interval' in effect):
+                invalid()
+            if 'interval' in effect and (not bounded(effect.get('duration'), .25, 300)
+                                         or not bounded(effect['interval'], .25, effect['duration'])):
+                invalid()
+        elif kind == 'status':
+            fields = {'target', 'name', 'icon', 'stat', 'amount', 'duration', 'stacks', 'refresh'}
+            target = effect.get('target')
+            stats = ('armor', 'damageTaken') if target == 'dummy' else (
+                'attackPower', 'spellPower', 'critChance', 'movementSpeed', 'healingTaken')
+            if 'icon' in effect and (not isinstance(effect['icon'], str) or not re.fullmatch(r'[a-zA-Z0-9_-]{1,100}', effect['icon'])):
+                invalid()
+            if (target not in ('player', 'dummy') or effect.get('stat') not in stats
+                    or not bounded(effect.get('amount'), -100, 500) or not bounded(effect.get('duration'), .25, 300)
+                    or not isinstance(effect.get('name'), str) or not 1 <= len(effect['name'].strip()) <= 100
+                    or len(effect['name']) > 100):
+                invalid()
+        elif kind == 'resource':
+            fields = {'resourceId', 'amount', 'unit'}
+            if (not isinstance(effect.get('resourceId'), str) or not 1 <= len(effect['resourceId']) <= 100
+                    or effect['resourceId'] == 'health' or effect.get('unit') not in ('points', 'percent', 'count')
+                    or not bounded(effect.get('amount'), 0, 1e9)):
+                invalid()
+        else:
             invalid()
+        if 'stacks' in effect and (type(effect['stacks']) is not int or not 1 <= effect['stacks'] <= 10):
+            invalid()
+        if 'refresh' in effect and effect['refresh'] not in ('refresh', 'keep', 'replace'):
+            invalid()
+        if set(effect) - common - fields:
+            invalid()
+
+
+WORKSHOP_LIMITS = {
+    'rank': (1, 100), 'rankScale': (0, 100), 'talentRank': (1, 100), 'minRange': (0, 100), 'charges': (1, 10),
+    'recharge': (.25, 3600), 'gcdDuration': (0, 3), 'tickInterval': (.25, 120), 'radius': (.25, 30),
+    'projectileLifetime': (.25, 30), 'collisionRadius': (.02, 1), 'projectileSize': (.02, 2),
+    'homingStrength': (.1, 30), 'effectScale': (.1, 4), 'effectDuration': (.05, 5),
+    'opacity': (0, 1), 'playback': (.25, 3), 'blend': (0, 1), 'volume': (0, 1), 'variation': (0, .5),
+}
+WORKSHOP_FLAGS = {'disabled', 'hidden', 'noGcd', 'interruptMovement', 'uninterruptible', 'facing', 'loopAnimation'}
+WORKSHOP_SOUNDS = {event + 'Sound' for event in ('activation', 'cast', 'launch', 'impact', 'tick', 'buff', 'debuff', 'heal')}
+
+
+def validate_workshop(ability):
+    if 'workshop' not in ability:
+        return
+    rules = ability['workshop']
+    if not isinstance(rules, dict) or type(rules.get('version')) is not int or rules['version'] != 1:
+        raise ValueError('Неверная версия настроек мастерской')
+    for key, value in rules.items():
+        if key == 'version' or key in WORKSHOP_FLAGS and type(value) is bool:
+            continue
+        if key in WORKSHOP_LIMITS and type(value) in (int, float):
+            lo, hi = WORKSHOP_LIMITS[key]
+            if lo <= value <= hi and (key not in ('rank', 'talentRank', 'charges') or type(value) is int):
+                continue
+        if key in WORKSHOP_SOUNDS and value in PRESENTATION_OPTIONS['sound']:
+            continue
+        if key in ('casterEffect', 'weaponEffect', 'projectileEffect') and value in PRESENTATION_OPTIONS['impact']:
+            continue
+        if key == 'flightDirection' and value in ('aim', 'forward'):
+            continue
+        if key == 'areaShape' and value in ('circle', 'cone'):
+            continue
+        if key == 'color' and isinstance(value, str) and re.fullmatch(r'#[a-fA-F0-9]{6}', value):
+            continue
+        if key == 'tier' and isinstance(value, str) and len(value) <= 40:
+            continue
+        raise ValueError('Проверь настройку способности: ' + key)
+    presentation = ability.get('presentation', {})
+    effects = ability.get('combatEffects', [])
+    projectile = presentation.get('projectile') in ('straight', 'homing')
+    melee = presentation.get('delivery') == 'melee'
+    if rules.get('tickInterval') and (rules['tickInterval'] > presentation.get('channelDuration', 0) or melee or projectile):
+        raise ValueError('Интервал должен помещаться в длительность канала. Для тиков нужна мгновенная доставка.')
+    for key in ('cast', 'cooldown', 'range'):
+        value = ability.get(key)
+        if type(value) not in (int, float) or not 0 <= value <= 1e9:
+            raise ValueError('Проверь время применения, перезарядку и дальность')
+    target = presentation.get('targeting')
+    max_range = min(ability['range'] or 2, 2) if melee else ability['range'] or (8 if target == 'area' else 30)
+    if rules.get('minRange', 0) > max_range:
+        raise ValueError('Минимальная дальность превышает максимальную')
+    category = presentation.get('category')
+    if category == 'healing' and not any(e['type'] == 'healing' for e in effects):
+        raise ValueError('Добавь эффект лечения')
+    if category == 'attack' and not any(e['type'] == 'damage' for e in effects):
+        raise ValueError('Добавь эффект урона')
+    if target == 'self' and any(e['type'] == 'damage' or e.get('target') == 'dummy' for e in effects):
+        raise ValueError('Урон и ослабления требуют враждебную цель')
+    if target == 'ground' and (melee or projectile):
+        raise ValueError('Для точки на земле выбери мгновенную доставку')
 
 
 def validate(document):
@@ -252,7 +357,12 @@ def validate(document):
                 linked = ability_by_id.get(talent['grantedAbilityId'])
                 if not linked or any(not isinstance(linked.get(k), str) for k in ('name', 'icon', 'description')):
                     raise ValueError('Способность таланта не найдена')
-                talent.update(name=linked['name'], icon=linked['icon'], maxRank=1, descriptions=[linked['description']])
+                rules = linked.get('workshop')
+                rank = rules.get('rank', 1) if isinstance(rules, dict) else 1
+                if type(rank) is not int or not 1 <= rank <= 100:
+                    raise ValueError('Проверь ранг способности')
+                talent.update(name=linked['name'], icon=linked['icon'], maxRank=rank,
+                              descriptions=[linked['description']] * rank)
                 talent.pop('rankTemplate', None)
     ids = set()
     branch_ids = set()
@@ -308,6 +418,7 @@ def validate(document):
         raise ValueError('Неверный формат класса или способностей')
     for ability in abilities:
         validate_combat_effects(ability)
+        validate_workshop(ability)
         validate_presentation(ability)
         if 'channeled' in ability and type(ability['channeled']) is not bool:raise ValueError('Проверь настройку поддерживаемого заклинания')
         if 'learningMode' in ability and ability['learningMode'] not in ('base','talent','specialization'):raise ValueError('Неверный способ изучения способности')
@@ -352,6 +463,9 @@ def validate(document):
         if not isinstance(rid,str) or not 1<=len(rid)<=100 or rid in resource_ids:raise ValueError('Неверный ресурс')
         resource_ids.add(rid)
     for ability in abilities:
+        if any(effect['type'] == 'resource' and effect['resourceId'] not in resource_ids
+               for effect in ability.get('combatEffects', [])):
+            raise ValueError('Выбери ресурс класса для восстановления')
         if 'resourceCosts' not in ability:continue
         costs=ability['resourceCosts']
         if not isinstance(costs,list):raise ValueError('Проверь затраты ресурсов')
@@ -394,7 +508,7 @@ class Handler(SimpleHTTPRequestHandler):
             token = ''
         return db.execute('SELECT users.id, users.login, users.avatar FROM sessions JOIN users ON users.id=sessions.user_id WHERE token=? AND expires>? AND users.blocked=0 AND (users.email IS NULL OR users.email_verified=1 OR ?=0)', (hashlib.sha256(token.encode()).hexdigest(), time.time(),int(accounts.verification_required()))).fetchone()
 
-    def serve_local_world_asset(self, resource_path):
+    def serve_local_world_asset(self, resource_path, animation_only=False):
         # Local exports are opt-in and available only through a direct loopback request.
         local_host = re.fullmatch(r'(localhost|127\.0\.0\.1|\[::1\])(?::[0-9]+)?', self.headers.get('Host', ''), re.I)
         if (os.environ.get('TALENT_LOCAL_WOW_ASSETS') != '1'
@@ -426,6 +540,24 @@ class Handler(SimpleHTTPRequestHandler):
             stream = path.open('rb')
         except (OSError, RuntimeError, ValueError):
             return self.send_error(404)
+        if animation_only:
+            with stream:
+                try:
+                    if parts[0] != 'character' or extension not in ('.glb', '.gltf'):
+                        return self.send_error(404)
+                    if extension == '.glb':
+                        magic, version, _, size, chunk_type = struct.unpack('<4sIIII', stream.read(20))
+                        if magic != b'glTF' or version != 2 or chunk_type != 0x4e4f534a or size > 64 * 1024 * 1024:
+                            raise ValueError('Invalid GLB metadata')
+                        model = json.loads(stream.read(size))
+                    else:
+                        model = json.loads(stream.read(64 * 1024 * 1024))
+                    names = sorted({clip['name'] for clip in model.get('animations', [])
+                                    if isinstance(clip, dict) and isinstance(clip.get('name'), str)
+                                    and 0 < len(clip['name']) <= 150})
+                except (ValueError, OSError, struct.error, AttributeError, TypeError):
+                    return self.send_error(400)
+                return self.reply(200, {'animations': names})
         with stream:
             stat = os.fstat(stream.fileno())
             etag = f'"{stat.st_mtime_ns:x}-{stat.st_size:x}"'
@@ -444,7 +576,7 @@ class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         parsed=urlsplit(self.path)
         if parsed.path.startswith('/local-world-assets/'):
-            return self.serve_local_world_asset(parsed.path.removeprefix('/local-world-assets/'))
+            return self.serve_local_world_asset(parsed.path.removeprefix('/local-world-assets/'), parsed.query == 'animations=1')
         if parsed.path in ('/admin','/admin/'):
             self.path='/admin.html';return super().do_GET()
         match=re.fullmatch(r'/media/project/([a-f0-9]{32})\.png',parsed.path)

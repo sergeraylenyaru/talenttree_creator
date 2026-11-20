@@ -92,17 +92,18 @@ export function calculateMitigation(school, target={}, rules={}) {
 function calculate(effect, context, expectedType) {
   record(effect, 'effect');
   validateCombatEffects({combatEffects:[effect]});
-  if (expectedType && effect.type !== expectedType) throw new TypeError(`Expected ${expectedType} effect`);
+  if (!['damage','healing'].includes(effect.type) || expectedType && effect.type !== expectedType) throw new TypeError(`Expected ${expectedType} effect`);
   const {source, target, rules, outcome} = calculationContext(context);
   const damage = effect.type === 'damage';
-  const scalingAmount = number((effect.scalingStat==='none' ? 0 : source[effect.scalingStat])*effect.coefficient, 'scalingAmount');
-  const rawAmount = number(effect.baseAmount+scalingAmount, 'rawAmount');
+  const scalingAmount = number((effect.scalingStat==='none' ? 0 : source[effect.scalingStat])*effect.coefficient +
+    source.attackPower*(effect.attackCoefficient ?? 0) + source.spellPower*(effect.spellCoefficient ?? 0), 'scalingAmount');
+  const rawAmount = number(effect.baseAmount+scalingAmount+(effect.flatBonus ?? 0), 'rawAmount');
   const isCritical = effect.canCrit && outcome.isCritical;
   const multipliers = {
-    source:damage ? source.damageMultiplier : source.healingMultiplier,
+    source:(damage ? source.damageMultiplier : source.healingMultiplier)*(effect.multiplier ?? 1),
     school:damage ? source.schoolDamageMultipliers[effect.school] : 1,
     target:damage ? target.damageTakenMultiplier : target.healingTakenMultiplier,
-    critical:isCritical ? source.critMultiplier : 1
+    critical:isCritical ? effect.critMultiplier ?? source.critMultiplier : 1
   };
   const modifiedAmount = number(number(number(rawAmount*multipliers.source, 'source modified amount')*multipliers.school, 'school modified amount')*multipliers.target, 'modifiedAmount');
   const criticalAmount = number(modifiedAmount*multipliers.critical, 'criticalAmount');

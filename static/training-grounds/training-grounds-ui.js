@@ -41,6 +41,8 @@ const eventLabels = {
   projectileHit: ['Снаряд попал', 'Projectile hit'],
   projectileMissed: ['Снаряд не попал', 'Projectile missed'],
   attackMissed: ['Атака не попала', 'Attack missed'],
+  resourceGained: ['Получен ресурс', 'Resource gained'],
+  statusApplied: ['Наложен эффект', 'Status applied'],
   autoStarted: ['Автоатака началась', 'Autoattack started'],
   autoHit: ['Автоатака попала', 'Autoattack hit'],
   autoWaiting: ['Автоатака ожидает', 'Autoattack waiting'],
@@ -53,6 +55,10 @@ const statusLabels = {
   cooldown: ['Перезарядка', 'Cooldown'], gcd: ['Общая перезарядка', 'Global cooldown'],
   dummyDead: ['Манекен побеждён. Сбрось бой, чтобы продолжить.', 'Dummy defeated. Reset combat to continue.'],
   invalidTarget: ['Выбери манекен', 'Select the dummy'],
+  animationMissing: ['Выбранная анимация отсутствует в локальной модели', 'The selected animation is missing from the local model'],
+  facing: ['Повернись к цели', 'Face the target'],
+  tooNear: ['Цель слишком близко', 'Target too close'],
+  groundTarget: ['Выбери точку на земле', 'Choose a point on the ground'],
   outOfRange: ['Цель вне зоны действия', 'Target out of range'],
   obstructed: ['Препятствие между игроком и целью', 'Line of sight blocked'],
   insufficient: eventLabels.insufficient, calculationFailed: eventLabels.calculationFailed
@@ -251,7 +257,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
         : event.amount !== undefined ? ` · ${fmt(event.amount)}` : '';
       return `<li data-event="${event.type}" class="${event.isCritical ? 'tg-critical' : ''}">
         <time>${event.time.toFixed(1)}</time> <strong>${eventLabels[event.type][0]}</strong>
-        ${userText(event.abilityName)}${detail}${event.resourceName ? ' ' + userText(event.resourceName) : ''}
+        ${userText(event.abilityName)}${detail}${event.resourceName || event.statusName ? ' ' + userText(event.resourceName ?? event.statusName) : ''}
         ${event.isCritical ? '<b>Крит</b>' : ''}</li>`;
     }).join('');
     for (const event of events) {
@@ -332,9 +338,9 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
     showLog(state.combatLog);
   }
 
-  function castAbility(id) {
+  function castAbility(id, point) {
     if (!id) return;
-    const {ok, reason, failedCost} = actions.cast(id);
+    const {ok, reason, failedCost} = actions.cast(id, point);
     const feedback = $('#tg-feedback');
     feedback.replaceChildren();
     if (!ok && statusLabels[reason]) {
@@ -357,11 +363,13 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
     }
     if (event.repeat || event.altKey || event.ctrlKey || event.metaKey ||
         event.target.closest('input, textarea, select, [contenteditable]')) return;
-    if (/^[1-9]$/.test(event.key)) {
+    const digit = /^[1-9]$/.test(event.key) ? Number(event.key) : event.shiftKey && /^Digit[1-9]$/.test(event.code) ? Number(event.code.at(-1)) : 0;
+    if (digit) {
       event.preventDefault();
-      const button = dialog.querySelectorAll('.tg-show-world [data-world-slot]')[Number(event.key)-1];
+      const slot = digit + (event.shiftKey ? 9 : 0);
+      const button = dialog.querySelector(`.tg-show-world [data-world-slot="${slot}"]`);
       if (button) button.click();
-      else castAbility(abilities[Number(event.key) - 1]?.id);
+      else if (!event.shiftKey) castAbility(abilities[digit - 1]?.id);
     }
   };
   $('#tg-return').onclick = () => dialog.close();

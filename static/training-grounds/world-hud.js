@@ -47,7 +47,7 @@ function describe(ability) {
     t('Дальность')+' '+presentationRange(ability.range,ability.presentation)+' m'].filter(Boolean).join('\n');
 }
 
-export function mountWorldHUD(frame, build, practice, cast) {
+export function mountWorldHUD(frame, build, practice, cast, preview) {
   const root=document.createElement('div');
   root.className='tg-play-hud';
   root.innerHTML=`<div class="tg-unit tg-unit-player"><div class="tg-portrait"><img alt="" hidden><b aria-label="Уровень">1</b></div>
@@ -63,25 +63,69 @@ export function mountWorldHUD(frame, build, practice, cast) {
   const sample=!authored.some(ability=>ability.combatEffects.length);
   const list=sample?[...practice,...authored]:[...authored,...practice.slice(0,1)];
   const byId=new Map(list.map(ability=>[ability.id,ability]));
-  const storageKey='talentforge-action-slots-v1:'+JSON.stringify([build.name,list.map(ability=>ability.id)]);
+  const storageKey='talentforge-action-slots-v2:'+JSON.stringify(build.layoutId ?? build.name);
+  const legacyKey='talentforge-action-slots-v1:'+JSON.stringify([build.name,list.map(ability=>ability.id)]);
+  const known = new Set([...(build.knownAbilityIds ?? []), ...practice.map(ability=>ability.id)]);
   let slots=list.slice(0,18).map(ability=>ability.id);
   try {
-    const saved=JSON.parse(localStorage.getItem(storageKey));
-    if(Array.isArray(saved)) saved.slice(0,18).forEach((id,index)=>{slots[index]=byId.has(id)?id:null;});
+    const exact = preview ? null : localStorage.getItem(storageKey) ?? localStorage.getItem(legacyKey);
+    let saved = JSON.parse(exact);
+    if (!preview && !saved) {
+      let best = 0;
+      for (const key of Object.keys(localStorage)) {
+        const prefix = 'talentforge-action-slots-v1:';
+        if (!key.startsWith(prefix)) continue;
+        const [name,ids] = JSON.parse(key.slice(prefix.length));
+        if (name !== build.name || !Array.isArray(ids)) continue;
+        const score = ids.filter(id => known.has(id)).length;
+        if (score <= best) continue;
+        best = score;
+        saved = JSON.parse(localStorage.getItem(key));
+      }
+    }
+    if(Array.isArray(saved)) saved.slice(0,18).forEach((id,index)=>{slots[index]=known.has(id)?id:null;});
   } catch { /* A session can still use its default assignments. */ }
 
   const controls=document.createElement('section');
   controls.className='tg-world-actions';
   controls.innerHTML=`<div class="tg-game-feedback" role="status"></div><div class="tg-swing" hidden><progress max="1"></progress><span></span></div><div class="tg-hotbar"><div></div><div></div></div>
-    <details><summary>Назначить ячейки</summary><div class="tg-slot-settings"></div></details>
+    <details><summary>Назначить ячейки</summary><div class="tg-slot-settings"><div class="tg-slot-palette"></div></div></details>
     <small>${sample?t('Учебный набор')+' · ':''}${t('Выбери манекен мышью, подойди ближе и нажми клавишу способности.')} · ${t('WASD · Shift — ходьба · Пробел — прыжок · ПКМ — камера и автоатака')}</small>`;
   const bar=controls.querySelector('.tg-hotbar');
   const settings=controls.querySelector('.tg-slot-settings');
-  const buttons=[];
+  const buttons=[], selects=[];
+  const dragType = 'application/x-talentforge-ability';
+  function dragAbility(event, id) {
+    if (id) event.dataTransfer.setData(dragType, id);
+    else event.preventDefault();
+  }
+  function assign(index, id) {
+    slots[index] = byId.has(id) ? id : null;
+    selects[index].value = slots[index] ?? '';
+    renderSlot(index);
+    if (preview) return;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(slots));
+      // Retain the bridge for existing saved loadouts and clients.
+      localStorage.setItem(legacyKey, JSON.stringify(slots));
+    } catch { /* Optional persistence. */ }
+  }
+  const palette=settings.querySelector('.tg-slot-palette');
+  for (const ability of list) {
+    const button=document.createElement('button');
+    button.type='button';
+    button.draggable=true;
+    button.dataset.dragAbility=ability.id;
+    button.textContent=ability.name;
+    button.title=describe(ability);
+    button.ondragstart=event=>dragAbility(event,ability.id);
+    palette.append(button);
+  }
   function renderSlot(index) {
     const button=buttons[index];
     const ability=byId.get(slots[index]);
     button.dataset.worldAbility=ability?.id??'';
+    button.draggable=Boolean(ability);
     const img=button.querySelector('img');
     const symbol=button.querySelector('i');
     img.hidden=true;
@@ -101,8 +145,15 @@ export function mountWorldHUD(frame, build, practice, cast) {
     const button=document.createElement('button');
     button.type='button';
     button.dataset.worldSlot=String(i+1);
-    button.innerHTML=`<i aria-hidden="true"></i><img alt="" hidden><kbd>${i<9?i+1:''}</kbd><span></span>`;
-    button.onclick=()=>{if(slots[i])cast(slots[i]);};
+    button.innerHTML=`<i aria-hidden="true"></i><img alt="" hidden><kbd>${i<9?i+1:'Shift+'+(i-8)}</kbd><em class="tg-slot-charge"></em><span></span>`;
+    button.onclick=()=>{if(byId.has(slots[i]))cast(slots[i]);};
+    button.ondragstart=event=>dragAbility(event,slots[i]);
+    button.ondragover=event=>{if(event.dataTransfer.types.includes(dragType))event.preventDefault();};
+    button.ondrop=event=>{
+      event.preventDefault();
+      const id=event.dataTransfer.getData(dragType);
+      if(byId.has(id))assign(i,id);
+    };
     bar.children[i<9?0:1].append(button);
     buttons.push(button);
     renderSlot(i);
@@ -110,11 +161,8 @@ export function mountWorldHUD(frame, build, practice, cast) {
     select.setAttribute('aria-label',t('Назначить ячейки')+' '+(i+1));
     select.append(new Option(t('Пустая ячейка'),''),...list.map(ability=>new Option(ability.name,ability.id)));
     select.value=slots[i]??'';
-    select.onchange=()=>{
-      slots[i]=select.value||null;
-      renderSlot(i);
-      try { localStorage.setItem(storageKey,JSON.stringify(slots)); } catch { /* Optional persistence. */ }
-    };
+    select.onchange=()=>assign(i,select.value);
+    selects.push(select);
     settings.append(select);
   }
   const strike=document.createElement('button');
@@ -139,6 +187,42 @@ export function mountWorldHUD(frame, build, practice, cast) {
   const targetStatus=target.querySelector('small');
   const feedbackLabel=controls.querySelector('.tg-game-feedback');
   let event;
+  const activeStatuses = new Map();
+  const rails = {player:player.querySelector('.tg-buffs'),dummy:target.querySelector('.tg-debuffs'),zone:player.querySelector('.tg-buffs')};
+  function renderStatuses(runtime) {
+    const present = new Set();
+    for (const status of runtime.statuses) {
+      const {ability,effect,expires,stacks,target} = status;
+      const key=ability.id+'|'+effect.id;
+      present.add(key);
+      let badge=activeStatuses.get(key);
+      if(!badge) {
+        badge=document.createElement('span');
+        badge.className='tg-status-effect';
+        badge.tabIndex=0;
+        const icon=document.createElement('img');
+        const iconSrc=iconURL(effect.icon??ability.icon);
+        icon.alt='';
+        if(iconSrc)icon.src=iconSrc;
+        else icon.hidden=true;
+        icon.onerror=()=>{icon.hidden=true;};
+        badge.append(icon,document.createElement('small'));
+        rails[target].append(badge);
+        activeStatuses.set(key,badge);
+      }
+      const time=Math.max(0,Math.ceil(expires-runtime.state.combatTime));
+      const label=(stacks>1?stacks+'× ':'')+time+' s';
+      if(badge.lastChild.textContent!==label) {
+        badge.lastChild.textContent=label;
+        badge.title=(effect.name??ability.name)+' · '+label;
+        badge.setAttribute('aria-label',badge.title);
+      }
+    }
+    for(const [key,badge] of activeStatuses)if(!present.has(key)){
+      badge.remove();
+      activeStatuses.delete(key);
+    }
+  }
   return {
     controls,
     select(value,unit) {
@@ -168,6 +252,7 @@ export function mountWorldHUD(frame, build, practice, cast) {
         if(swingLabel.textContent!==line) swingLabel.textContent=line;
       }
       const {state}=runtime;
+      renderStatuses(runtime);
       fill(bars[0],state.player.health,state.player.maxHealth);
       const resource=build.resources[0] && state.player.resources[build.resources[0].id];
       bars[1].hidden=!resource;
@@ -178,7 +263,11 @@ export function mountWorldHUD(frame, build, practice, cast) {
       buttons.forEach((button,i)=>{
         const basic=slots[i]===practice[0].id;
         button.classList.toggle('tg-auto-active',basic && auto.active);
-        const status=slots[i]&&!basic?runtime.availability(slots[i]):{};
+        const charge = runtime.chargeCount(slots[i]);
+        const badge = button.querySelector('.tg-slot-charge');
+        const chargeLabel = charge === undefined ? '' : String(charge);
+        if(badge.textContent!==chargeLabel)badge.textContent=chargeLabel;
+        const status=byId.has(slots[i])&&!basic?runtime.availability(slots[i]):{};
         if(button.dataset.state!==(status.reason??'')) button.dataset.state=status.reason??'';
         const remaining=status.remaining?Math.ceil(status.remaining*10)/10+' s':'';
         if(button.lastElementChild.textContent!==remaining) button.lastElementChild.textContent=remaining;

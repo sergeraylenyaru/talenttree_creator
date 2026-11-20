@@ -1,4 +1,5 @@
-import {animationClips, presentationRange} from '../../combat/presentation.js';
+import {animationClips, animationFields, isLocalClip, presentationRange} from '../../combat/presentation.js';
+import {isHostileEffect} from '../../combat/workshop-rules.js';
 import {cameraFraction} from '../collision-system.js';
 
 export const spatialDefaults = {
@@ -13,20 +14,24 @@ const dot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;
 
 export function attackProfile(ability, config = spatialDefaults) {
   const damage = ability.combatEffects.filter(effect => effect.type === 'damage');
-  const p = ability.presentation;
+  const hostile = ability.combatEffects.some(isHostileEffect);
+  const p = ability.presentation ?? (ability.workshop ? {targeting:hostile?'dummy':'self'} : null);
   if (!p) {
     if (!damage.length) return ability.combatEffects.some(effect => effect.type === 'healing') ? {kind: 'utility', school: 'healing'} : null;
     const range = ability.range || config.meleeRange;
     const kind = !ability.range ? 'melee' : damage.some(effect => effect.trigger === 'onHit') ? 'projectile' : 'instant';
     return {kind, range, school: (damage.find(effect => effect.school !== 'physical') || damage[0]).school};
   }
-  if (!damage.length) return {...p, kind: 'utility', range: presentationRange(ability.range, p, config.meleeRange),
-    school: ability.combatEffects.some(effect => effect.type === 'healing') ? 'healing' : p.category};
-  const melee = p.delivery ? p.delivery === 'melee' : !ability.range && (!p.projectile || p.projectile === 'none') && p.targeting !== 'area';
+  const workshop = ability.workshop;
+  const zone = ['area','targetArea','ground'].includes(p.targeting);
   const projectile = p.projectile ?? (damage.some(effect => effect.trigger === 'onHit') ? 'straight' : 'none');
-  const kind = melee ? 'melee' : projectile === 'none' || p.targeting === 'area' ? 'instant' : 'projectile';
-  return {...p, kind, projectile, range: melee ? Math.min(config.meleeRange, ability.range || config.meleeRange) : presentationRange(ability.range, p, 30),
-    school: (damage.find(effect => effect.school !== 'physical') || damage[0]).school};
+  const utility = !hostile && !zone && p.targeting !== 'dummy' && !(workshop && projectile !== 'none');
+  const melee = !zone && (p.delivery ? p.delivery === 'melee' : !ability.range && (!p.projectile || p.projectile === 'none'));
+  const kind = utility ? 'utility' : zone || workshop?.tickInterval ? 'instant' : melee ? 'melee' : projectile === 'none' ? 'instant' : 'projectile';
+  return {...p, ...workshop, kind, projectile, range: melee ? Math.min(config.meleeRange, ability.range || config.meleeRange)
+    : presentationRange(ability.range, p, 30), school: damage.find(effect => effect.school !== 'physical')?.school ?? damage[0]?.school ??
+      (ability.combatEffects.some(effect => effect.type === 'healing') ? 'healing' : p.category)};
+
 }
 
 export const facingTarget = (player, target) => Math.atan2(player.x - target.x, player.z - target.z);
@@ -40,7 +45,9 @@ export function distanceToTarget(origin, target) {
 export function validateAttack(origin, target, profile, obstacles, occlusion) {
   if (!target) return 'invalidTarget';
   if (!target.alive) return 'dummyDead';
-  if (distanceToTarget(origin, target) > profile.range) return 'outOfRange';
+  const distance = distanceToTarget(origin, target);
+  if (distance > profile.range) return 'outOfRange';
+  if (distance < (profile.minRange ?? 0)) return 'tooNear';
   if (Math.min(cameraFraction(origin, difference(target.position, origin), obstacles, 0),
       occlusion?.(origin, difference(target.position, origin), 0) ?? 1) < 1) return 'obstructed';
 }
@@ -72,7 +79,7 @@ export function sweptTargetImpact(origin, delta, target, padding) {
 }
 
 
-export function createSpatialCombat({autoAnimate, player, target, areaTarget, obstacles, occlusion, animate, face, visuals, move, stopAnimation, config = spatialDefaults}) {
+export function createSpatialCombat({animationAvailable, autoAnimate, player, target, areaTarget, obstacles, occlusion, animate, face, visuals, move, stopAnimation, config = spatialDefaults}) {
   const flights = new Set();
   const origin = () => {
     const position = player();
@@ -86,27 +93,65 @@ export function createSpatialCombat({autoAnimate, player, target, areaTarget, ob
       attack.impactPosition = position;
       visuals.impact(position, outcome === 'miss' ? {...attack.profile, impact: 'melee'} : attack.profile);
     }
+    if (outcome === 'hit') visuals.sound?.(attack.profile.impactSound, attack.profile);
     attack.resolve(outcome, reason);
   }
 
   return {
-    delivery(ability) {
+    delivery(ability, groundPoint) {
       const profile = attackProfile(ability, config);
       if (!profile) return null;
-      if (profile.sound) visuals.prepareSound?.();
+      if (profile.sound || Object.keys(ability.workshop ?? {}).some(key => key.endsWith('Sound'))) visuals.prepareSound?.();
       const utility = profile.kind === 'utility';
-      const self = utility && profile.targeting !== 'dummy' && profile.targeting !== 'area';
+      const forwardShot = profile.projectile === 'straight' && profile.flightDirection === 'forward';
+      const self = utility && profile.targeting !== 'dummy';
       const area = profile.targeting === 'area';
-      // A selected cast owns its original target; area casts use the only arena opponent.
-      const locked = area ? areaTarget?.() : self ? null : target();
-      const validate = () => !utility && profile.targeting === 'self' ? 'invalidTarget' : self ? undefined
-        : validateAttack(origin(), area || locked?.selected() ? locked?.read() : null, profile, obstacles, occlusion);
+      const ground = profile.targeting === 'ground';
+      const zone = area || ground || profile.targeting === 'targetArea';
+      const locked = area || ground ? areaTarget?.() : self ? null : target();
+      function validate() {
+        if (animationAvailable && animationFields.some(key=>isLocalClip(profile[key]) && !animationAvailable(profile[key].slice(5)))) return 'animationMissing';
+        if (self) return;
+        if (ground) {
+          if (!groundPoint) return 'groundTarget';
+          // Aim above the clicked floor to avoid treating the floor as a wall.
+          const point = {...groundPoint, y: groundPoint.y + .15};
+          return validateAttack(origin(), {position: point, alive: true, radius: 0}, profile, obstacles, occlusion);
+        }
+        if (area && ability.workshop) return;
+        const victim = area || locked?.selected() ? locked?.read() : null;
+        const rejection = validateAttack(origin(), victim, profile, obstacles, occlusion);
+        if (rejection || !profile.facing) return rejection;
+        const delta = player().facing - facingTarget(player(), victim.position);
+        if (Math.cos(delta) < .5) return 'facing';
+      }
+      function zoneImpact(victim) {
+        const center = ground ? groundPoint : area ? player() : victim.position;
+        visuals.impact(center, {...profile, area: true});
+        if (!victim?.alive) return false;
+        const from = area ? origin() : {...center, y: center.y + (ground ? .2 : 0)};
+        if (area && profile.areaShape === 'cone' &&
+            Math.cos(player().facing - facingTarget(player(), victim.position)) < Math.cos(Math.PI / 4)) return false;
+        return !validateAttack(from, victim, {range: profile.radius ?? profile.range}, obstacles, occlusion);
+      }
       const windup = config.windup + 0.18;
-      const pose = (state, now, duration, key) => animate(state, now + duration,
-        animationClips[key], state === 'channel', state === 'meleeAttack' ? duration : undefined);
+      const pose = (state, now, duration, key) => {
+        if (key === 'none') { stopAnimation?.(); return; }
+        const clip = isLocalClip(key) ? key.slice(5) : animationClips[key] ?? key;
+        animate(state, now + duration, clip, state === 'channel' || profile.loopAnimation,
+          state === 'meleeAttack' ? duration : undefined, profile);
+      };
       let launch;
       return {
-        utility, validate, projectile: profile.kind === 'projectile',
+        utility, validate, ground, projectile: profile.kind === 'projectile',
+        placeZone() { return visuals.zone?.(groundPoint,profile); },
+        sound(id) { visuals.sound?.(id, profile); },
+        pulse() {
+          const victim = locked?.read();
+          if (zone) return zoneImpact(victim);
+          visuals.impact(victim?.position ?? origin(), profile);
+          return true;
+        },
         autoPose(now, duration) {
           autoAnimate?.(locked.read().position, now + duration, duration);
         },
@@ -118,26 +163,29 @@ export function createSpatialCombat({autoAnimate, player, target, areaTarget, ob
         },
         cancel: stopAnimation,
         prepare(duration, now) {
-          if (locked) face(locked.read().position);
+          if (locked && !forwardShot && locked.read()) face(locked.read().position);
           else if (self) face(null);
+          if (profile.casterEffect) visuals.impact(origin(), {...profile, impact: profile.casterEffect});
           pose('spellCast', now, duration, profile.castingAnimation ?? profile.animation);
         },
         channel(duration, now) {
-          if (locked) face(locked.read().position);
+          if (locked && !forwardShot && locked.read()) face(locked.read().position);
           else if (self) face(null);
-          pose('channel', now, duration, 'channel');
+          pose('channel', now, duration, profile.castingAnimation ?? 'channel');
         },
         critical() {
           if (launch?.impactPosition) visuals.impact(launch.impactPosition, {...profile, critical: true});
         },
         launch(now, resolve) {
           const victim = locked?.read();
-          if (victim) face(victim.position);
+          if (victim && !forwardShot) face(victim.position);
           else if (self) face(null);
           const {kind} = profile;
           const state = kind === 'melee' ? 'meleeAttack' : profile.school === 'physical' ? 'rangedAttack' : 'spellCast';
           pose(state, now, kind === 'melee' ? windup : 0.4, profile.attackAnimation ?? profile.animation ?? profile.castingAnimation);
-          visuals.sound?.(profile.sound);
+          visuals.sound?.(profile.launchSound ?? profile.sound, profile);
+          if (profile.casterEffect && !ability.cast) visuals.impact(origin(), {...profile, impact: profile.casterEffect});
+          if (profile.weaponEffect) visuals.weapon?.({...profile, impact: profile.weaponEffect});
           if (utility) {
             if (profile.category === 'movement') move?.();
             visuals.impact(origin(), profile);
@@ -146,19 +194,26 @@ export function createSpatialCombat({autoAnimate, player, target, areaTarget, ob
           const attack = {profile, locked, resolve, start: now, last: now, position: origin()};
           launch = attack;
           if (kind === 'instant') {
-            if (area) visuals.impact({...player()}, {...profile, area: true});
-            attack.impactPosition = victim.position;
-            visuals.impact(victim.position, profile);
-            resolve('hit');
+            attack.impactPosition = victim?.position;
+            const hit = zone ? zoneImpact(victim) : Boolean(victim?.alive);
+            if (!zone && hit) visuals.impact(victim.position, profile);
+            if (hit) visuals.sound?.(profile.impactSound, profile);
+            resolve(hit ? 'hit' : 'miss', hit ? undefined : 'outOfRange');
             return;
           }
           if (kind === 'projectile') {
             const heading = difference(victim.position, attack.position);
+            if (forwardShot) {
+              const horizontal = Math.hypot(heading.x,heading.z);
+              heading.x = -Math.sin(player().facing) * horizontal;
+              heading.z = -Math.cos(player().facing) * horizontal;
+            }
             const magnitude = length(heading);
             attack.direction = magnitude ? offset({x: 0, y: 0, z: 0}, heading, 1 / magnitude) : {x: 0, y: 0, z: 0};
             attack.remaining = magnitude + Math.max(0, profile.range - distanceToTarget(attack.position, victim)) +
-              config.projectileRadius;
-            attack.visual = visuals.spawn(attack.position, profile, config.projectileScale, attack.direction);
+              (profile.collisionRadius ?? config.projectileRadius);
+            attack.visual = visuals.spawn(attack.position, profile.projectileEffect ? {...profile, impact: profile.projectileEffect} : profile,
+              profile.projectileSize ?? config.projectileScale, attack.direction);
           }
           flights.add(attack);
         }
@@ -179,15 +234,26 @@ export function createSpatialCombat({autoAnimate, player, target, areaTarget, ob
           continue;
         }
 
-        const travel = Math.min(attack.remaining, (now - attack.last) * (profile.projectileSpeed ?? config.projectileSpeed));
-        if (travel <= 0) continue;
+        const dt = Math.min(now, attack.start + (profile.projectileLifetime ?? Infinity)) - attack.last;
+        const travel = Math.min(attack.remaining, dt * (profile.projectileSpeed ?? config.projectileSpeed));
+        if (travel <= 0) {
+          if (now >= attack.start + (profile.projectileLifetime ?? Infinity)) finish(attack, 'miss');
+          continue;
+        }
         if (profile.projectile === 'homing') {
           const heading = difference(victim.position, attack.position);
-          if (length(heading)) attack.direction = offset({x: 0, y: 0, z: 0}, heading, 1 / length(heading));
+          if (length(heading)) {
+            const desired = offset({x: 0, y: 0, z: 0}, heading, 1 / length(heading));
+            const angle = Math.acos(Math.max(-1, Math.min(1, dot(attack.direction, desired))));
+            const mix = angle ? Math.min(1, dt * (profile.homingStrength ?? Infinity) / angle) : 1;
+            attack.direction = offset(attack.direction, difference(desired, attack.direction), mix);
+            const magnitude = length(attack.direction);
+            attack.direction = magnitude ? offset({x: 0, y: 0, z: 0}, attack.direction, 1 / magnitude) : desired;
+          }
         }
         const delta = offset({x: 0, y: 0, z: 0}, attack.direction, travel);
-        const hit = sweptTargetImpact(attack.position, delta, victim, config.projectileRadius);
-        const wall = Math.min(cameraFraction(attack.position, delta, obstacles, config.projectileRadius),
+        const hit = sweptTargetImpact(attack.position, delta, victim, profile.collisionRadius ?? config.projectileRadius);
+        const wall = Math.min(cameraFraction(attack.position, delta, obstacles, profile.collisionRadius ?? config.projectileRadius),
           occlusion?.(attack.position, delta, 0) ?? 1);
         if (hit <= wall && hit <= 1) {
           finish(attack, 'hit', offset(attack.position, delta, hit));
@@ -198,7 +264,7 @@ export function createSpatialCombat({autoAnimate, player, target, areaTarget, ob
           attack.last = now;
           attack.remaining -= travel;
           visuals.move(attack.visual, attack.position);
-          if (attack.remaining <= 0) finish(attack, 'miss');
+          if (attack.remaining <= 0 || now >= attack.start + (profile.projectileLifetime ?? Infinity)) finish(attack, 'miss');
         }
       }
     },

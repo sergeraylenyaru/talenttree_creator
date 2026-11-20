@@ -38,3 +38,28 @@ the result stable. Clearing the separate combat log keeps the meter totals.
 In 3D, resolved damage appears above the dummy with the ability icon. Physical
 damage is white, magical damage is yellow, and effective healing is green above
 the player. The 3D range check measures to the target volume.
+
+### Spell Workshop
+
+Open **Spell Library** in class edit mode to create, find, duplicate, rename,
+import, or export an ability. The workshop edits the same ability that a talent
+unlocks and the arena executes. Use **Ability templates** for starters and
+**Save as template** for reusable local presets.
+
+In **Combat presentation**, choose delivery, targeting, an impact and optional
+local hero clips. **Advanced settings** includes charge recharge, GCD, cast
+interruption, projectile parameters, timing, visual modifiers and procedural
+sounds. Periodic damage or healing takes its first tick after the configured
+interval. A ground-targeted periodic damage effect creates a world zone that
+checks the dummy's position and line of sight on each tick. The training arena
+has one hostile target. Self-targeted effects apply to the player.
+
+**Preview in 3D** opens a separate session using unsaved editor settings. The
+preview supplies health missing from the player if the ability heals. Close it
+to return to the draft. **Save and open Training Grounds** opens normal combat
+with the saved class, current talent build and actual costs.
+
+Open **Assign slots** to drag a spell to either action row or use its slot
+selector. Select the empty option to clear a slot. The first row uses **1–9**
+and the second uses **Shift+1–9**. Locked or temporarily disabled abilities keep
+their slot references while they are unavailable.
