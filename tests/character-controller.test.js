@@ -123,3 +123,16 @@ test('camera retracts at once and eases out after a wall clears', () => {
   assert.equal(clear.obstructed, false);
   assert.ok(clear.clearance > blocked.clearance && clear.clearance < 5);
 });
+
+test('full forward speed survives a 360-degree turn and a change to diagonal input', () => {
+  let player = simulate({...walk, sprint: true}, 0.5);
+  for (let step = 1; step <= 120; step++) {
+    player = stepCharacter(player, {...walk, sprint: true, side: Number(step > 40)}, step * Math.PI / 60,
+      world.step, world, []);
+    assert.ok(Math.abs(Math.hypot(player.vx, player.vz) - world.movement.run) < 1e-9);
+  }
+  const back = simulate({forward: -1, side: 0, sprint: true}, 1);
+  assert.equal(back.animation, 'walk');
+  assert.equal(back.facing, 0);
+  assert.ok(Math.abs(back.vz - world.movement.walk) < 1e-9);
+});

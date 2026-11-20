@@ -67,7 +67,7 @@ export function sweptTargetImpact(origin, delta, target, padding) {
 }
 
 
-export function createSpatialCombat({player, target, areaTarget, obstacles, occlusion, animate, face, visuals, move, stopAnimation, config = spatialDefaults}) {
+export function createSpatialCombat({autoAnimate, player, target, areaTarget, obstacles, occlusion, animate, face, visuals, move, stopAnimation, config = spatialDefaults}) {
   const flights = new Set();
   const origin = () => {
     const position = player();
@@ -102,6 +102,15 @@ export function createSpatialCombat({player, target, areaTarget, obstacles, occl
       let launch;
       return {
         utility, validate,
+        autoPose(now, duration) {
+          autoAnimate?.(locked.read().position, now + duration, duration);
+        },
+        autoContact() {
+          if (validate()) return false;
+          launch = {impactPosition: locked.read().position};
+          visuals.impact(launch.impactPosition, profile);
+          return true;
+        },
         cancel: stopAnimation,
         prepare(duration, now) {
           if (locked) face(locked.read().position);

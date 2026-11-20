@@ -94,18 +94,51 @@ def verify(page, port, screenshots, world_only=False, combat_only=False):
         arena.locator('.tg-world-target').click()
         expect(arena.locator('.tg-unit-target .tg-portrait img')).to_be_visible()
         expect(arena.locator('.tg-unit-target .tg-unit-bar')).to_contain_text('1000000 / 1000000')
-        shot('01-unit-frames',True)
-        page.keyboard.press('1')
-        expect(arena.locator('#tg-feedback')).to_contain_text('Out of range',ignore_case=True)
+        shot('01-complete-hud', True)
+        if screenshots:
+            frame.locator('.tg-play-hud').screenshot(path=screenshots/'02-unit-frames.png')
+        marker = arena.locator('.tg-world-target')
+        strike = arena.locator('.tg-basic-strike')
+        initial_yaw = state()['orbit']['yaw']
+        bounds = marker.bounding_box()
+        x, y = bounds['x'] + bounds['width'] / 2, bounds['y'] + bounds['height'] / 2
+        page.mouse.move(x, y)
+        page.mouse.down()
+        page.mouse.move(x + 24, y, steps=4)
+        page.mouse.up()
+        assert state()['orbit']['yaw'] == initial_yaw
+        canvas.evaluate("""canvas => window.menuSuppressed = false""")
+        frame.evaluate("""frame => frame.addEventListener('contextmenu', event => {
+            window.menuSuppressed = event.defaultPrevented;
+        })""")
+        page.mouse.move(x, y)
+        page.mouse.down(button='right')
+        assert canvas.evaluate("element => getComputedStyle(element).cursor") == 'none'
+        page.mouse.move(x + 48, y, steps=4)
+        assert state()['orbit']['yaw'] != initial_yaw
+        shot('04-right-orbit', True)
+        page.mouse.move(x, y, steps=4)
+        page.mouse.up(button='right')
+        assert abs(state()['orbit']['yaw'] - initial_yaw) < 0.0001
+        assert canvas.evaluate("element => getComputedStyle(element).cursor") != 'none'
+        expect(strike).to_have_attribute('aria-pressed', 'false')
+        marker.click(button='right')
+        assert page.evaluate('window.menuSuppressed')
+        expect(strike).to_have_attribute('aria-pressed', 'true')
+        expect(arena.locator('.tg-swing')).to_contain_text('Out of melee range')
+        assert arena.locator('[data-event=damage]').count() == 0
         page.keyboard.down('KeyW')
         wait_for("p.clip?.startsWith('Run')",'default run')
         shot('04-running')
         page.keyboard.up('KeyW')
         go([[-25,-23]])
-        page.keyboard.press('1')
-        wait_for("p.clip?.startsWith('Attack1H')",'basic attack')
-        shot('05-melee')
-        expect(arena.locator('[data-event=damage].tg-critical')).to_have_count(1)
+        expect(arena.locator('.tg-swing')).not_to_contain_text('Out of melee range')
+        shot('03-autoattack', True)
+        wait_for("p.clip?.startsWith('Attack1H')",'automatic sword attack')
+        expect(arena.locator('[data-event=damage].tg-critical').first).to_be_attached()
+        expect(arena.locator('[data-event=autoHit]').nth(1)).to_be_attached(timeout=10000)
+        assert arena.locator('[data-event=cooldownStarted]').count() == 0
+        expect(arena.locator('.tg-unit-resource')).to_contain_text('80 / 100')
         expect(arena.locator('.tg-unit-target .tg-unit-bar')).not_to_contain_text('1000000 / 1000000')
         shot('07-target-health')
         canvas.evaluate('''async canvas => {
@@ -127,6 +160,24 @@ def verify(page, port, screenshots, world_only=False, combat_only=False):
         page.keyboard.press('2')
         expect(arena.locator('.tg-unit-resource')).to_contain_text('75 / 100',timeout=20000)
         expect(arena.locator('[data-world-slot="2"] span')).not_to_be_empty()
+        expect(arena.locator('[data-event=damage]').filter(has_text='Practice spark')).to_have_count(1, timeout=15000)
+        strike.click()
+        expect(strike).to_have_attribute('aria-pressed', 'false')
+        arena.locator('.tg-world-meter').click()
+        meter = arena.locator('.tg-damage-meter')
+        expect(meter.locator('ol').first).to_contain_text('Basic attack')
+        expect(meter.locator('ol').first).to_contain_text('Practice spark')
+        expect(meter.locator('.tg-meter-player')).to_contain_text('100%')
+        expect(meter.locator('.tg-meter-player')).to_contain_text('DPS')
+        shot('05-damage-meter', True)
+        meter.locator('summary').click()
+        expect(meter.locator('details')).to_contain_text('Critical hits')
+        shot('06-ability-breakdown', True)
+        arena.locator('.tg-world-log').click()
+        expect(arena.locator('[data-event=autoHit]').first).to_be_visible()
+        shot('07-combat-log', True)
+        arena.locator('.tg-world-log').click()
+        arena.locator('.tg-world-meter').click()
         arena.locator('.tg-target-reset').click()
         expect(arena.locator('.tg-unit-target .tg-unit-bar')).to_contain_text('1000000 / 1000000')
         slots=arena.locator('.tg-world-actions details')
@@ -137,18 +188,16 @@ def verify(page, port, screenshots, world_only=False, combat_only=False):
         assert page.evaluate("Object.keys(localStorage).some(k=>k.startsWith('talentforge-action-slots-v1:') && JSON.parse(localStorage[k])[7]?.startsWith('__training_spark'))")
         assert not page.evaluate("JSON.parse(localStorage.getItem('talentforge-draft')).abilities.some(a=>a.id.startsWith('__training_'))")
         slots.locator('summary').click()
-        print('Actual portraits and HUD, manual Attack1H, cast, Escape, channel, projectile, critical hit, resource and reset passed',flush=True)
+        print('Actual portraits and HUD, automatic Attack1H, cast, Escape, channel, projectile, critical hit, resource and reset passed',flush=True)
 
     if combat_only:
         assert not errors, errors
         return
 
     canvas.focus()
-    page.keyboard.down('ShiftLeft')
     page.keyboard.down('KeyS')
-    wait_for("p.clip?.startsWith('Walkbackwards')",'shift backward walk')
+    wait_for("p.clip?.startsWith('Walkbackwards')",'backward walk')
     page.keyboard.up('KeyS')
-    page.keyboard.up('ShiftLeft')
     page.keyboard.press('Space')
     wait_for("p.animation==='jump'",'jump')
     wait_for("p.animation==='fall'",'fall')

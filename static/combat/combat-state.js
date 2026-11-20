@@ -10,8 +10,8 @@ export function createCombatState(build, settings) {
     activeCast: null,
     combatTime: 0,
     statistics: {
-      firstDamageAt: null, totalDamage: 0, totalHealing: 0, effectiveHealing: 0,
-      overhealing: 0, criticalHits: 0, effects: 0, casts: 0, damageByAbility: {}
+      firstDamageAt: null, damageWindowStart: null, lastDamageAt: null, totalDamage: 0, totalHealing: 0, effectiveHealing: 0,
+      overhealing: 0, criticalHits: 0, effects: 0, casts: 0, damageByAbility: {}, damageDetails: {}
     },
     combatLog: []
   };
@@ -33,7 +33,7 @@ export function spendResources(player, costs) {
   return {player: next};
 }
 
-export function applyCombatResult(state, ability, result) {
+export function applyCombatResult(state, ability, result, startedAt = state.combatTime) {
   const {statistics} = state;
   const next = {
     ...state,
@@ -50,6 +50,13 @@ export function applyCombatResult(state, ability, result) {
     next.statistics.totalDamage += amount;
     if (amount > 0) {
       next.statistics.firstDamageAt ??= state.combatTime;
+      next.statistics.damageWindowStart = Math.min(startedAt, statistics.damageWindowStart ?? startedAt);
+      next.statistics.lastDamageAt = state.combatTime;
+      const details = Object.hasOwn(statistics.damageDetails, ability.id)
+        ? statistics.damageDetails[ability.id] : {name: ability.name, icon: ability.icon, hits: 0, criticalHits: 0};
+      next.statistics.damageDetails = {...statistics.damageDetails, [ability.id]: {
+        ...details, hits: details.hits + 1, criticalHits: details.criticalHits + Number(result.isCritical)
+      }};
       next.statistics.damageByAbility = {...statistics.damageByAbility, [ability.id]: previous + amount};
     }
     return {state: next, amount, overkill: result.finalAmount - amount};

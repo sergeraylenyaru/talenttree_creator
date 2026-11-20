@@ -38,26 +38,69 @@ export function placeCamera(camera, target, orbit, previous, dt, obstacles, floo
 }
 
 export function bindOrbit(canvas, update, select, signal) {
-  let pointer = null;
-  canvas.addEventListener('pointerdown', event => {
-    if (pointer || event.button !== 0) return;
+  const surface = canvas.parentElement;
+  const isArena = event => event.target === canvas || event.target.closest?.('.tg-world-target');
+  const options = {signal};
+  let pointer;
+  const inside = ({clientX, clientY}) => {
+    const bounds = canvas.getBoundingClientRect();
+    return clientX >= bounds.left && clientX < bounds.right && clientY >= bounds.top && clientY < bounds.bottom;
+  };
+
+  function release() {
+    if (!pointer) return;
+    const {id} = pointer;
+    pointer = undefined;
+    surface.classList.remove('tg-orbit-held');
+    if (surface.hasPointerCapture(id)) surface.releasePointerCapture(id);
+  }
+
+  surface.addEventListener('pointerdown', event => {
+    if (pointer || !isArena(event) || ![0, 2].includes(event.button)) return;
     canvas.focus({preventScroll: true});
-    pointer = {id: event.pointerId, x: event.clientX, y: event.clientY, moved: 0};
-    canvas.setPointerCapture(event.pointerId);
-  }, {signal});
-  canvas.addEventListener('pointermove', event => {
+    pointer = {id: event.pointerId, button: event.button, x: event.clientX, y: event.clientY,
+      marker: event.target !== canvas, dragged: false, touch: event.pointerType === 'touch'};
+    if (event.button === 2) {
+      event.preventDefault();
+      surface.classList.add('tg-orbit-held');
+    }
+    if (event.button === 2 || pointer.touch) surface.setPointerCapture(event.pointerId);
+  }, options);
+  surface.addEventListener('pointermove', event => {
     if (pointer?.id !== event.pointerId) return;
+    if (!inside(event)) {
+      release();
+      return;
+    }
     const x = event.clientX - pointer.x;
     const y = event.clientY - pointer.y;
-    pointer = {id: event.pointerId, x: event.clientX, y: event.clientY, moved: pointer.moved + Math.hypot(x, y)};
-    if (pointer.moved > 4) update({x, y});
-  }, {signal});
-  canvas.addEventListener('pointerup', event => {
-    if (pointer?.id !== event.pointerId) return;
-    if (pointer.moved <= 4) select(event.clientX, event.clientY);
-    pointer = null;
-  }, {signal});
-  canvas.addEventListener('lostpointercapture', () => { pointer = null; }, {signal});
+    if (!pointer.dragged && Math.hypot(x, y) <= 4) return;
+    pointer.dragged = true;
+    pointer.x = event.clientX;
+    pointer.y = event.clientY;
+    if (pointer.button === 2 || pointer.touch) update({x, y});
+  }, options);
+  window.addEventListener('pointerup', event => {
+    if (pointer?.id !== event.pointerId || pointer.button !== event.button) return;
+    const {dragged, button, marker, touch} = pointer;
+    release();
+    if (!dragged && inside(event) && (button === 2 || touch || isArena(event))) {
+      select(event.clientX, event.clientY, button === 2, marker);
+    }
+  }, options);
+  for (const name of ['lostpointercapture', 'pointercancel', 'pointerleave']) surface.addEventListener(name, release, options);
+  window.addEventListener('blur', release, options);
+  document.addEventListener('visibilitychange', release, options);
+  window.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || pointer?.button !== 2) return;
+    release();
+    event.preventDefault();
+    event.stopPropagation();
+  }, {...options, capture: true});
+  signal.addEventListener('abort', release, {once: true});
+  surface.addEventListener('contextmenu', event => {
+    if (isArena(event) || event.target === surface || pointer) event.preventDefault();
+  }, options);
   canvas.addEventListener('wheel', event => {
     event.preventDefault();
     update({zoom: event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY});

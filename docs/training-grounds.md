@@ -18,3 +18,19 @@
 ## Устройство
 
 `build-compiler.js` проверяет копию документа и выбранный билд, применяет правила открытия способностей и разрешает затраты ресурсов. `combat-state.js` хранит здоровье, ресурсы и показатели и выполняет чистые переходы состояния. `combat-runtime.js` планирует применения, списывает затраты и отправляет эффекты независимому [расчётному движку](combat-calculation.md). Его часы можно продвигать явно. Экран площадки продвигает их по монотонному времени браузера и обновляет интерфейс через `requestAnimationFrame`. Площадка не меняет документ класса и не отправляет боевые события на сервер.
+
+### 3D weapon swings
+
+Right-click the training dummy to select it and start autoattack. Use the Autoattack
+button or the assigned Basic Attack slot to stop it. Right-drag orbits the camera,
+left-click selects a target, and the wheel zooms. S backpedals at walking speed.
+
+The training sword uses a two-second swing interval and 55 base physical damage
+before the normal armor and critical-hit calculations. Set optional numeric
+`swingSeconds` and `damage` on `weapons.mainHand` in the ignored local asset
+manifest to tune these values. The swing restarts when range and line of sight
+return. It runs independently of ability costs and cooldowns.
+
+Damage meter DPS uses the interval from the start of the first action that landed
+damage to the most recent damaging impact. Idle time after the final hit leaves
+the result stable. Clearing the separate combat log keeps the meter totals.

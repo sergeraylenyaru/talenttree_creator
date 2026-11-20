@@ -32,7 +32,6 @@ export function createWorld(canvas, callbacks, config = world) {
   visualPivot.add(model.root);
   let animation = animateCharacter(model);
   let player = createCharacter(config);
-  let strafeFacing;
   let orbit = {yaw: 0, pitch: 0.29, distance: config.camera.distance};
   let view = {...orbit};
   let cameraState = {distance: view.distance, clearance: view.distance, obstructed: false};
@@ -69,6 +68,7 @@ export function createWorld(canvas, callbacks, config = world) {
   let pose;
   let combatTime = 0;
   let facing;
+  let autoReady = false;
   let alive = true;
   const visuals = createCombatVisuals(scene, dummy);
   const combatConfig = {...spatialDefaults, ...config.combat};
@@ -97,6 +97,11 @@ export function createWorld(canvas, callbacks, config = world) {
     face(position) {
       facing = position ? facingTarget(player, position) : undefined;
       if (facing !== undefined) player.facing = facing;
+    },
+    autoAnimate(position, until, duration) {
+      if (pose) return;
+      facing = facingTarget(player, position);
+      pose = {name: 'meleeAttack', until, minimum: duration, elapsed: 0, pending: true, duration, auto: true};
     },
     stopAnimation() { controller.clearPose(); },
     animate(name, until, override, loop = false, duration) {
@@ -136,7 +141,7 @@ export function createWorld(canvas, callbacks, config = world) {
     callbacks.selection(value, value ? targetUnit : null);
   }
 
-  bindOrbit(canvas, delta => { orbit = orbitInput(orbit, delta, config.camera); }, (x, y) => {
+  bindOrbit(canvas, delta => { orbit = orbitInput(orbit, delta, config.camera); }, (x, y, right, marker) => {
     const rect = canvas.getBoundingClientRect();
     ray.setFromCamera(new Vector2((x - rect.left) / rect.width * 2 - 1, 1 - (y - rect.top) / rect.height * 2), camera);
     const hit = ray.intersectObjects(scene.children, true).find(({object}) => {
@@ -145,7 +150,9 @@ export function createWorld(canvas, callbacks, config = world) {
     });
     let node = hit?.object;
     while (node && node !== dummy) node = node.parent;
-    setSelection(node === dummy);
+    const found = marker || node === dummy;
+    if (!right || found) setSelection(found);
+    if (right && found) callbacks.autoAttack?.();
   }, signal);
   canvas.addEventListener('webglcontextlost', event => {
     event.preventDefault();
@@ -156,6 +163,11 @@ export function createWorld(canvas, callbacks, config = world) {
     setQuality,
     selectDummy() { setSelection(true); },
     delivery: combat.delivery,
+    weaponCombat() { return manifest?.weapons?.mainHand; },
+    autoStance(value) {
+      autoReady = value;
+      if (!value && pose?.auto) controller.clearPose();
+    },
     combatState(time, health) {
       alive = health > 0;
       combatTime = time;
@@ -232,17 +244,17 @@ export function createWorld(canvas, callbacks, config = world) {
         if (combatTime >= pose.until && pose.elapsed >= pose.minimum) controller.clearPose();
       }
       const lateral = player.grounded && player.animation !== 'idle'
-        ? input.forward < 0 ? (input.sprint ? 'runBack' : 'walkBack')
+        ? input.forward < 0 ? 'walkBack'
           : !input.forward && input.side ? (input.side < 0 ? 'strafeLeft' : 'strafeRight') : null
         : null;
       const directionalClip = lateral && animation.supports(lateral);
-      if (directionalClip && !pose) {
-        strafeFacing ??= avatar.rotation.y;
-        const delta = view.yaw - strafeFacing;
+      const ready = autoReady && !pose && player.animation === 'idle' && animation.supports('ready', 'Ready1H (ID 26 variation 0)');
+      if (ready) {
+        const desired = facingTarget(player, dummy.position);
+        const delta = desired - player.facing;
         const turn = Math.atan2(Math.sin(delta), Math.cos(delta));
-        strafeFacing += Math.max(-12 * dt, Math.min(12 * dt, turn));
-        player.facing = strafeFacing;
-      } else strafeFacing = undefined;
+        player.facing += Math.max(-12 * dt, Math.min(12 * dt, turn));
+      }
       if (pose && facing !== undefined) player.facing = facing;
       avatar.rotation.y = player.facing;
       const clip = pose && animation.supports(pose.name, pose.override);
@@ -250,8 +262,8 @@ export function createWorld(canvas, callbacks, config = world) {
       const locomotion = directionalClip || ['walk', 'run'].includes(player.animation);
       const stride = directionalClip ? config.movement.walk : config.movement[player.animation];
       const pace = !pose && locomotion ? Math.max(.55, Math.min(1.7, Math.hypot(player.vx, player.vz)/stride)) : undefined;
-      animation.update(clip ? pose.name : directionalClip ? lateral : player.animation, dt,
-        Boolean(clip && pose.pending), swingDuration, pose?.override, pose?.loop, pace);
+      animation.update(clip ? pose.name : ready ? 'ready' : directionalClip ? lateral : player.animation, dt,
+        Boolean(clip && pose.pending), swingDuration, ready ? 'Ready1H (ID 26 variation 0)' : pose?.override, pose?.loop, pace);
       if (weapon) for (const {finger, rotation} of weapon.grip) finger.quaternion.fromArray(rotation);
       if (pose) pose.pending = false;
       // Root tilt is a rig-independent fallback for models without attack clips.

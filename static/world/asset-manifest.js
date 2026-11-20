@@ -66,9 +66,17 @@ export function validateManifest(value) {
       validateAssetPath(weapon.model, 'weapons');
       if (weapon.enabled !== undefined && typeof weapon.enabled !== 'boolean') throw Error('Invalid weapon enabled flag');
       const grip = weapon.gripClip === undefined ? {} : {gripClip: name(weapon.gripClip)};
+      const combat = {};
+      for (const [key, minimum, maximum] of [['swingSeconds', 0.4, 30], ['damage', 0, 1000000]]) {
+        if (weapon[key] === undefined) continue;
+        if (!Number.isFinite(weapon[key]) || weapon[key] < minimum || weapon[key] > maximum) {
+          throw Error('Invalid weapon ' + key);
+        }
+        combat[key] = weapon[key];
+      }
       result.weapons = {mainHand: {model: weapon.model, enabled: weapon.enabled ?? true,
         attachmentBone: name(weapon.attachmentBone ?? 'bone_WeaponR'), scale: scaleValue(weapon.scale),
-        position: triple(weapon.position), rotation: triple(weapon.rotation), ...grip}};
+        position: triple(weapon.position), rotation: triple(weapon.rotation), ...grip, ...combat}};
     }
   }
   if (value.playerSpawn !== undefined) result.playerSpawn = point(value.playerSpawn);

@@ -75,9 +75,9 @@ def verify(page, port, screenshots):
         rect = canvas.bounding_box()
         x, y = rect['x'] + rect['width'] * .35, rect['y'] + rect['height'] * .55
         page.mouse.move(x, y)
-        page.mouse.down()
+        page.mouse.down(button='right')
         page.mouse.move(x + dx, y, steps=6)
-        page.mouse.up()
+        page.mouse.up(button='right')
 
     def shot(name):
         if screenshots:

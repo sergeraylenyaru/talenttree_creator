@@ -37,7 +37,12 @@ const eventLabels = {
   castRejected: ['Применение отклонено', 'Cast rejected'],
   attackLaunched: ['Атака началась', 'Attack launched'],
   attackHit: ['Попадание', 'Impact'],
-  attackMissed: ['Атака не попала', 'Attack missed']
+  attackMissed: ['Атака не попала', 'Attack missed'],
+  autoStarted: ['Автоатака началась', 'Autoattack started'],
+  autoHit: ['Автоатака попала', 'Autoattack hit'],
+  autoWaiting: ['Автоатака ожидает', 'Autoattack waiting'],
+  targetDefeated: ['Манекен повержен', 'Dummy defeated'],
+  targetRestored: ['Манекен восстановлен', 'Dummy restored']
 };
 
 const statusLabels = {

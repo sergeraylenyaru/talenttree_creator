@@ -109,9 +109,9 @@ with temporary_database() as folder, sync_playwright() as playwright:
         bounds = canvas.bounding_box()
         x, y = bounds['x'] + bounds['width'] * 0.75, bounds['y'] + bounds['height'] * 0.45
         page.mouse.move(x, y)
-        page.mouse.down()
+        page.mouse.down(button='right')
         page.mouse.move(x + 80, y + 25, steps=4)
-        page.mouse.up()
+        page.mouse.up(button='right')
         changed = snapshot()['orbit']
         assert changed['yaw'] != 0 and changed['pitch'] != 0.29
         page.mouse.wheel(0, -300)
@@ -159,15 +159,15 @@ with temporary_database() as folder, sync_playwright() as playwright:
             page.clock.run_for(300)
 
         move('w', 'forward', 1, 'Run')
-        move('s', 'forward', -1, 'Run')
+        move('s', 'forward', -1, 'Walk')
         move('a', 'right', -1, 'Run')
         move('d', 'right', 1, 'Run')
         bounds = canvas.bounding_box()
         x, y = bounds['x'] + bounds['width'] * 0.7, bounds['y'] + bounds['height'] * 0.5
         page.mouse.move(x, y)
-        page.mouse.down()
+        page.mouse.down(button='right')
         page.mouse.move(x - 270, y, steps=6)
-        page.mouse.up()
+        page.mouse.up(button='right')
         page.clock.run_for(260)
         assert abs(snapshot()['cameraForward']['x']) > 0.8
         page.keyboard.down('Shift')

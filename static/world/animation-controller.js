@@ -7,7 +7,7 @@ export function resolveClip(clips, mapping, state, override) {
   }
   const combat = ['meleeAttack', 'rangedAttack', 'spellCast', 'hitReaction', 'hit', 'criticalHit', 'channel'];
   const candidates = {
-    idle: ['idle'], walk: ['walk', 'idle'], run: ['run', 'walk', 'idle'],
+    ready: [], idle: ['idle'], walk: ['walk', 'idle'], run: ['run', 'walk', 'idle'],
     walkBack: ['walkBack'], runBack: ['runBack', 'walkBack'], strafeLeft: ['strafeLeft'], strafeRight: ['strafeRight'],
     jump: ['jump', 'idle'], fall: ['fall', 'jump', 'idle']
   }[state] ?? (combat.includes(state) ? [state] : ['idle']);
@@ -33,7 +33,7 @@ export function animateCharacter({root, clips, mapping}) {
         current = clip ? mixer.clipAction(clip) : null;
         currentClip = clip;
         if (current) {
-          const once = !loop && !['idle', 'walk', 'run', 'walkBack', 'runBack', 'strafeLeft', 'strafeRight'].includes(state) && clip.name !== mapping.idle;
+          const once = !loop && !['ready', 'idle', 'walk', 'run', 'walkBack', 'runBack', 'strafeLeft', 'strafeRight'].includes(state) && clip.name !== mapping.idle;
           current.setLoop(once ? LoopOnce : LoopRepeat, once ? 1 : Infinity);
           current.clampWhenFinished = once;
           current.reset().setEffectiveTimeScale(duration > 0 ? clip.duration / duration : 1).fadeIn(0.16).play();

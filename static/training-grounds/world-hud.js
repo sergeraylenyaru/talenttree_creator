@@ -1,4 +1,5 @@
 import {addTranslations, t} from '../i18n.js';
+import {trainingWeapon} from '../combat/auto-attack.js';
 import {iconURL} from '../icons.js';
 import {presentationRange} from '../combat/presentation.js';
 
@@ -6,14 +7,17 @@ addTranslations([
   ['Уровень', 'Level'], ['Базовая атака', 'Basic attack'], ['Назначить ячейки', 'Assign slots'],
   ['Выбери манекен мышью, подойди ближе и нажми клавишу способности.', 'Select the dummy, move into range and press the ability key.'],
   ['Учебный набор', 'Practice loadout'], ['Пустая ячейка', 'Empty slot'], ['Время применения', 'Cast time'],
-  ['Бег WASD · ходьба Shift · прыжок Space', 'WASD run · Shift walk · Space jump'],
+  ['WASD · Shift — ходьба · Пробел — прыжок · ПКМ — камера и автоатака',
+    'WASD · Shift to walk · Space to jump · Right mouse for orbit and autoattack'],
+  ['Автоатака', 'Autoattack'], ['Остановить автоатаку', 'Stop autoattack'],
+  ['Вне досягаемости', 'Out of melee range'], ['Цель за преградой', 'Target obstructed'],
   ['Учебная искра', 'Practice spark'], ['Учебный луч', 'Practice beam']
 ]);
 
 const demo = (id,name,icon,range,cast,presentation) => ({
   id,name,icon,range,cast,channelDuration:presentation.channelDuration??0,presentation,
   cooldown:2,resourceCosts:[],combatEffects:[{id:'training-hit',type:'damage',trigger:'onHit',
-    school:range?'fire':'physical',baseAmount:55,coefficient:0,scalingStat:'none',canCrit:true}]
+    school:range?'fire':'physical',baseAmount:trainingWeapon.damage,coefficient:0,scalingStat:'none',canCrit:true}]
 });
 
 export function practiceAbilities(abilities, resources) {
@@ -48,9 +52,9 @@ export function mountWorldHUD(frame, build, practice, cast) {
   root.className='tg-play-hud';
   root.innerHTML=`<div class="tg-unit tg-unit-player"><div class="tg-portrait"><img alt="" hidden><b aria-label="Уровень">1</b></div>
     <div class="tg-unit-details"><strong data-user-content></strong><div class="tg-unit-bar"><i></i><span></span></div>
-    <div class="tg-unit-bar tg-unit-resource"><i></i><span></span></div></div></div>
+    <div class="tg-unit-bar tg-unit-resource"><i></i><span></span></div><div class="tg-buffs"></div></div></div>
     <div class="tg-unit tg-unit-target" hidden><div class="tg-portrait"><img alt="" hidden><b aria-label="Уровень">1</b></div>
-    <div class="tg-unit-details"><strong>Манекен</strong><div class="tg-unit-bar"><i></i><span></span></div><small></small></div></div>`;
+    <div class="tg-unit-details"><strong>Манекен</strong><div class="tg-unit-bar"><i></i><span></span></div><small></small><div class="tg-debuffs"></div></div></div>`;
   frame.append(root);
   const player=root.querySelector('.tg-unit-player');
   const target=root.querySelector('.tg-unit-target');
@@ -60,17 +64,17 @@ export function mountWorldHUD(frame, build, practice, cast) {
   const list=sample?[...practice,...authored]:[...authored,...practice.slice(0,1)];
   const byId=new Map(list.map(ability=>[ability.id,ability]));
   const storageKey='talentforge-action-slots-v1:'+JSON.stringify([build.name,list.map(ability=>ability.id)]);
-  let slots=list.slice(0,9).map(ability=>ability.id);
+  let slots=list.slice(0,18).map(ability=>ability.id);
   try {
     const saved=JSON.parse(localStorage.getItem(storageKey));
-    if(Array.isArray(saved)) slots=saved.slice(0,9).map(id=>byId.has(id)?id:null);
+    if(Array.isArray(saved)) saved.slice(0,18).forEach((id,index)=>{slots[index]=byId.has(id)?id:null;});
   } catch { /* A session can still use its default assignments. */ }
 
   const controls=document.createElement('section');
   controls.className='tg-world-actions';
-  controls.innerHTML=`<div class="tg-game-feedback" role="status"></div><div class="tg-hotbar"></div>
+  controls.innerHTML=`<div class="tg-game-feedback" role="status"></div><div class="tg-swing" hidden><progress max="1"></progress><span></span></div><div class="tg-hotbar"><div></div><div></div></div>
     <details><summary>Назначить ячейки</summary><div class="tg-slot-settings"></div></details>
-    <small>${sample?t('Учебный набор')+' · ':''}${t('Выбери манекен мышью, подойди ближе и нажми клавишу способности.')} · ${t('Бег WASD · ходьба Shift · прыжок Space')}</small>`;
+    <small>${sample?t('Учебный набор')+' · ':''}${t('Выбери манекен мышью, подойди ближе и нажми клавишу способности.')} · ${t('WASD · Shift — ходьба · Пробел — прыжок · ПКМ — камера и автоатака')}</small>`;
   const bar=controls.querySelector('.tg-hotbar');
   const settings=controls.querySelector('.tg-slot-settings');
   const buttons=[];
@@ -90,16 +94,16 @@ export function mountWorldHUD(frame, build, practice, cast) {
       if(url) img.src=url;
       else img.removeAttribute('src');
     } else img.removeAttribute('src');
-    button.title=ability?describe(ability):t('Пустая ячейка');
+    button.title=ability?.id===practice[0].id?t('Автоатака'):ability?describe(ability):t('Пустая ячейка');
     button.setAttribute('aria-label',ability?.name??t('Пустая ячейка'));
   }
-  for(let i=0;i<9;i++){
+  for(let i=0;i<18;i++){
     const button=document.createElement('button');
     button.type='button';
     button.dataset.worldSlot=String(i+1);
-    button.innerHTML=`<i aria-hidden="true"></i><img alt="" hidden><kbd>${i+1}</kbd><span></span>`;
+    button.innerHTML=`<i aria-hidden="true"></i><img alt="" hidden><kbd>${i<9?i+1:''}</kbd><span></span>`;
     button.onclick=()=>{if(slots[i])cast(slots[i]);};
-    bar.append(button);
+    bar.children[i<9?0:1].append(button);
     buttons.push(button);
     renderSlot(i);
     const select=document.createElement('select');
@@ -118,8 +122,11 @@ export function mountWorldHUD(frame, build, practice, cast) {
   strike.className='tg-basic-strike';
   strike.textContent=t('Базовая атака');
   strike.onclick=()=>cast(practice[0].id);
-  strike.title=describe(practice[0]);
-  bar.append(strike);
+  strike.title=t('Автоатака');
+  strike.setAttribute('aria-pressed','false');
+  controls.append(strike);
+  const swing=controls.querySelector('.tg-swing');
+  const swingLabel=swing.querySelector('span');
 
   const bars=[player.querySelector('.tg-unit-bar'),player.querySelector('.tg-unit-resource'),target.querySelector('.tg-unit-bar')];
   function fill(element,value,max) {
@@ -147,7 +154,19 @@ export function mountWorldHUD(frame, build, practice, cast) {
       img.src=url;
       img.hidden=false;
     },
-    update(runtime,feedback) {
+    update(runtime,feedback,auto = {active:false}) {
+      strike.setAttribute('aria-pressed', String(auto.active));
+      const strikeLabel=t(auto.active?'Остановить автоатаку':'Автоатака');
+      if(strike.textContent!==strikeLabel) strike.textContent=strikeLabel;
+      swing.hidden=!auto.active;
+      swing.toggleAttribute('data-waiting', Boolean(auto.reason));
+      if(auto.active) {
+        swing.firstElementChild.value=auto.progress;
+        const message=auto.reason ? t(auto.reason==='outOfRange'?'Вне досягаемости':'Цель за преградой')
+          : auto.remaining.toFixed(1)+' s';
+        const line=t('Манекен')+' · '+message;
+        if(swingLabel.textContent!==line) swingLabel.textContent=line;
+      }
       const {state}=runtime;
       fill(bars[0],state.player.health,state.player.maxHealth);
       const resource=build.resources[0] && state.player.resources[build.resources[0].id];
@@ -157,7 +176,9 @@ export function mountWorldHUD(frame, build, practice, cast) {
       const stateLabel=state.dummy.health?'':t('Манекен повержен');
       if(targetStatus.textContent!==stateLabel) targetStatus.textContent=stateLabel;
       buttons.forEach((button,i)=>{
-        const status=slots[i]?runtime.availability(slots[i]):{};
+        const basic=slots[i]===practice[0].id;
+        button.classList.toggle('tg-auto-active',basic && auto.active);
+        const status=slots[i]&&!basic?runtime.availability(slots[i]):{};
         if(button.dataset.state!==(status.reason??'')) button.dataset.state=status.reason??'';
         const remaining=status.remaining?Math.ceil(status.remaining*10)/10+' s':'';
         if(button.lastElementChild.textContent!==remaining) button.lastElementChild.textContent=remaining;

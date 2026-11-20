@@ -8,7 +8,7 @@
   position:relative; width:100%; min-width:0; aspect-ratio:16/10; min-height:250px; max-height:62dvh;
   border:1px solid #94734a; border-radius:7px; overflow:hidden; background:#121713;
 }
-.tg-world-frame canvas { position:absolute; inset:0; display:block; width:100%; height:100%; outline:none; touch-action:none; cursor:grab; }
+.tg-world-frame canvas { position:absolute; inset:0; display:block; width:100%; height:100%; outline:none; touch-action:none; cursor:default; }
 .tg-world-frame canvas:focus-visible { outline:2px solid var(--gold); outline-offset:-3px; }
 .tg-world-frame canvas:active { cursor:grabbing; }
 .tg-world-frame .tg-world-target {
@@ -65,10 +65,9 @@
 .tg-unit-bar i { display:block; height:100%; background:linear-gradient(#75b869,#377c48); transition:width .18s ease-out; }
 .tg-unit-resource i { background:linear-gradient(#559ade,#27539d); }
 .tg-unit-bar span { position:absolute; inset:0; text-align:center; color:#fff; text-shadow:0 1px 2px #000; font-size:.57rem; }
-.tg-world-frame #tg-cast { position:absolute; bottom:4.1rem; left:50%; width:min(310px,87%); transform:translateX(-50%); border:1px solid #a38a56; border-radius:.35rem; background:#131925ee; padding:.45rem .65rem; }
+.tg-world-frame #tg-cast { position:absolute; bottom:13rem; left:50%; width:min(310px,87%); transform:translateX(-50%); border:1px solid #a38a56; border-radius:.35rem; background:#131925ee; padding:.45rem .65rem; }
 #tg-cast-icon { width:22px; height:22px; border-radius:.2rem; }
 .tg-world-actions { text-align:center; margin:.5rem 0; }
-.tg-hotbar { display:flex; flex-wrap:wrap; justify-content:center; gap:.28rem; }
 .tg-hotbar button { position:relative; width:40px; height:40px; padding:0; border:1px solid #ae925d; background:#151927; }
 .tg-hotbar button img { width:100%; height:100%; object-fit:cover; }
 .tg-hotbar button kbd, .tg-hotbar button span { position:absolute; color:white; text-shadow:0 1px 3px #000; background:#0b1019b0; font-size:.65rem; }
@@ -76,7 +75,6 @@
 .tg-hotbar button span { right:0; bottom:0; }
 .tg-hotbar button[data-state]:not([data-state=""]) img { opacity:.43; }
 .tg-hotbar button[data-state="insufficient"] { border-color:#c87970; }
-.tg-hotbar .tg-basic-strike { width:auto; padding:0 .5rem; font-size:.75rem; }
 .tg-game-feedback { min-height:1.35rem; color:#f0d491; font-size:.8rem; }
 .tg-slot-settings { display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:.3rem; }
 .tg-show-world .tg-vitals { display:none; }
@@ -112,9 +110,45 @@
 .tg-slot-settings { position:absolute; bottom:100%; left:50%; transform:translateX(-50%); width:min(370px,90vw); background:#151927; padding:.45rem; border:1px solid #ae925d; }
 .tg-hotbar button i { display:grid; place-content:center; position:absolute; inset:0; color:#e7b97a; font-style:normal; background:radial-gradient(#393c59,#171b29); }
 .tg-hotbar button i[hidden],.tg-hotbar button img[hidden] { display:none; }
-.tg-world-frame #tg-cast { bottom:8.6rem; }
-@media(max-width:1000px) { .tg-play-hud { bottom:6rem; } .tg-world-frame #tg-cast { bottom:9.6rem; } }
-@media(max-width:550px) { .tg-hotbar button { width:30px; height:32px; } .tg-unit { padding:.2rem; } .tg-portrait { width:34px; height:34px; } }
+@media(max-width:550px) { .tg-unit { padding:.2rem; } .tg-portrait { width:34px; height:34px; } }
 
 .tg-cast-art { position:relative; display:grid; place-content:center; width:22px; height:22px; color:#f2d79a; background:#273047; border-radius:.2rem; }
 .tg-cast-art img { position:absolute; inset:0; }
+
+.tg-world-target { user-select:none; touch-action:none; }
+.tg-orbit-held, .tg-orbit-held :is(canvas, .tg-world-target) { cursor:none !important; }
+.tg-hotbar { display:grid; gap:.2rem; }
+.tg-hotbar > div { display:grid; grid-template-columns:repeat(9, min(42px,9vw)); justify-content:center; gap:.2rem; }
+.tg-hotbar button { width:min(42px, 9vw); height:min(42px, 9vw); }
+.tg-hotbar button[data-world-ability=""] { opacity:.55; }
+.tg-world-actions .tg-basic-strike { margin-inline-start:.4rem; font-size:.75rem; }
+.tg-world-actions .tg-basic-strike[aria-pressed="true"], .tg-hotbar button.tg-auto-active {
+  border-color:#f7c867; box-shadow:0 0 8px #f3b149;
+}
+.tg-swing { position:relative; width:min(250px,70vw); margin:0 auto .28rem; height:1.2rem; color:#fff4d0; }
+.tg-swing[data-waiting] { background:#291b16d9; border-radius:.25rem; }
+.tg-swing progress { width:100%; height:100%; accent-color:#d99c39; }
+.tg-swing span { position:absolute; inset:0; text-shadow:0 1px 3px #000,0 0 4px #000; font-size:.75rem; line-height:1.2rem; }
+.tg-damage-meter { position:absolute; z-index:4; left:.7rem; bottom:6rem; width:min(346px, 90vw);
+  max-height:40vh; overflow:auto; background:#141721ee; border:1px solid #9d865e; border-radius:.3rem;
+  box-shadow:0 2px 12px #000a; color:#f5e9c8; font-size:.76rem; padding:.45rem; }
+.tg-damage-meter ol { padding:0; margin:.25rem 0; list-style:none; }
+.tg-damage-meter li { display:flex; align-items:center; gap:.3rem; min-height:1.4rem; padding:.1rem .2rem;
+  background:linear-gradient(90deg,#66512b var(--tg-share),#24283a var(--tg-share)); margin:.12rem 0; }
+.tg-damage-meter li i { position:relative; display:grid; place-items:center; flex:none; width:1.1rem; height:1.1rem; background:#191d2a; font-style:normal; }
+.tg-damage-meter li img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.tg-damage-meter li span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.tg-damage-meter li b { margin-left:auto; text-align:right; font-variant-numeric:tabular-nums; }
+.tg-damage-meter summary { cursor:pointer; }
+@media (max-width:1000px) {
+  .tg-play-hud { bottom:12rem; }
+  .tg-damage-meter { left:.55rem; bottom:auto; top:8.5rem; }
+}
+@media (max-width:550px) {
+  .tg-play-hud { bottom:15rem; }
+  .tg-world-frame #tg-cast { bottom:12rem; }
+  .tg-damage-meter { max-height:31vh; }
+  .tg-world-actions small { display:none; }
+}
+
+#trainingGrounds:has(.tg-show-world) .tg-side > section:has(.tg-stats) { display:none; }

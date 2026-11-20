@@ -36,8 +36,8 @@ for (const [index, directions] of cardinal.entries()) {
       for (let i = 0; i < 100; i++) player = stepCharacter(player, input[key], yaw, world.step, world, []);
       near(player.vx, x * world.movement.walk);
       near(player.vz, z * world.movement.walk);
-      near(-Math.sin(player.facing), x);
-      near(-Math.cos(player.facing), z);
+      near(-Math.sin(player.facing), flattened.x);
+      near(-Math.cos(player.facing), flattened.z);
     }
   });
 }

@@ -10,17 +10,15 @@ export function createCharacter(config) {
 export function stepCharacter(player, input, yaw, dt, config, obstacles) {
   const {walk, run, acceleration, braking, jumpSpeed, gravity} = config.movement;
   const mag = Math.hypot(input.side, input.forward);
-  const speed = (input.sprint ? run : walk) / Math.max(1, mag);
+  const running = input.sprint && input.forward >= 0;
+  const previousSpeed = Math.hypot(player.vx, player.vz);
+  const limit = running ? run : walk;
+  const speed = approach(mag ? player.motionSpeed ?? previousSpeed : previousSpeed, mag ? limit * Math.min(1, mag) : 0, (mag ? acceleration : braking) * dt);
   const forward = horizontalCameraForward(yaw);
-  // Camera right is forward × world up (+Y).
-  const targetX = (input.forward * forward.x - input.side * forward.z) * speed;
-  const targetZ = (input.forward * forward.z + input.side * forward.x) * speed;
-  const changeX = targetX - player.vx;
-  const changeZ = targetZ - player.vz;
-  const rate = (mag ? acceleration : braking) * dt;
-  const ratio = Math.min(1, rate / (Math.hypot(changeX, changeZ) || 1));
-  const vx = player.vx + changeX * ratio;
-  const vz = player.vz + changeZ * ratio;
+  const vx = mag ? (input.forward * forward.x - input.side * forward.z) * speed / mag
+    : player.vx * speed / (previousSpeed || 1);
+  const vz = mag ? (input.forward * forward.z + input.side * forward.x) * speed / mag
+    : player.vz * speed / (previousSpeed || 1);
   const initialVy = input.jump && player.grounded ? jumpSpeed : player.vy;
   const nextY = player.y + initialVy * dt - gravity * dt * dt / 2;
   const surface = config.collision?.move(player, vx * dt, vz * dt, nextY, initialVy > 0);
@@ -32,14 +30,14 @@ export function stepCharacter(player, input, yaw, dt, config, obstacles) {
   const actualX = surface ? Math.sign(vx) * Math.max(0, Math.min(Math.abs(vx), Math.sign(vx) * dx / dt)) : dx / dt;
   const actualZ = surface ? Math.sign(vz) * Math.max(0, Math.min(Math.abs(vz), Math.sign(vz) * dz / dt)) : dz / dt;
   const moving = Math.hypot(actualX, actualZ);
-  const desired = moving >= 0.08 ? Math.atan2(-actualX, -actualZ) : player.facing;
+  const desired = moving < 0.08 ? player.facing : input.forward <= 0 && mag ? yaw : Math.atan2(-actualX, -actualZ);
   const angle = Math.atan2(Math.sin(desired - player.facing), Math.cos(desired - player.facing));
   const {y, grounded, blocked} = surface ?? moveVertically(horizontal, player.y, nextY, obstacles, config);
   const vy = grounded || blocked ? 0 : initialVy - gravity * dt;
   return {
     x: horizontal.x, z: horizontal.z, y, vx: actualX, vy, vz: actualZ, grounded,
-    facing: approach(0, angle, 12 * dt) + player.facing,
-    animation: !grounded ? (vy > 0 ? 'jump' : 'fall') : moving < 0.08 ? 'idle' : input.sprint ? 'run' : 'walk'
+    facing: approach(0, angle, 12 * dt) + player.facing, motionSpeed: speed,
+    animation: !grounded ? (vy > 0 ? 'jump' : 'fall') : moving < 0.08 ? 'idle' : running ? 'run' : 'walk'
   };
 }
 

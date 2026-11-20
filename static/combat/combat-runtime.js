@@ -44,7 +44,7 @@ export function createCombatRuntime(build, options = {}) {
     return {ability, costs};
   }
 
-  function finish({ability, costs, delivery}) {
+  function finish({ability, costs, delivery, startedAt}) {
     const rejection = delivery?.validate();
     if (rejection) {
       state = {...state, activeCast: null};
@@ -83,7 +83,7 @@ export function createCombatRuntime(build, options = {}) {
       cooldowns: {...state.cooldowns, [ability.id]: state.combatTime + ability.cooldown},
       statistics: {...state.statistics, casts: state.statistics.casts + 1}
     };
-    applyResults(results, ability, events);
+    applyResults(results, ability, events, startedAt);
     if (ability.cooldown || settings.globalCooldown) {
       events.push(entry('cooldownStarted', ability, {amount: ability.cooldown, globalCooldown: settings.globalCooldown}));
     }
@@ -100,7 +100,7 @@ export function createCombatRuntime(build, options = {}) {
         if (impact) {
           try {
             const results = calculate(delayed);
-            applyResults(results, ability, entries);
+            applyResults(results, ability, entries, startedAt);
             if (results.some(result => result.isCritical)) delivery.critical?.();
           } catch (error) {
             entries.push(entry('calculationFailed', ability, {message: error.message}));
@@ -123,14 +123,16 @@ export function createCombatRuntime(build, options = {}) {
     }));
   }
 
-  function applyResults(results, ability, events) {
+  function applyResults(results, ability, events, startedAt) {
     for (const result of results) {
-      const applied = applyCombatResult(state, ability, result);
+      const wasAlive = state.dummy.health > 0;
+      const applied = applyCombatResult(state, ability, result, startedAt);
       state = applied.state;
       const {amount, effective, overhealing, overkill} = applied;
       events.push(entry(result.type, ability, {
         amount, effective, overhealing, overkill, effectId: result.effectId, isCritical: result.isCritical
       }));
+      if (wasAlive && !state.dummy.health) events.push(entry('targetDefeated', ability));
       if (overhealing) events.push(entry('overhealing', ability, {amount: overhealing, isCritical: result.isCritical}));
     }
   }
@@ -139,6 +141,19 @@ export function createCombatRuntime(build, options = {}) {
     get state() { return state; },
     get paused() { return paused; },
     availability,
+    autoEvent(ability, type, details) { log([entry(type, ability, details)]); },
+    autoImpact(ability, delivery, startedAt) {
+      if (paused || !state.dummy.health) return;
+      const events = [entry('autoHit', ability)];
+      try {
+        const results = calculate(ability.combatEffects);
+        applyResults(results, ability, events, startedAt);
+        if (results.some(result => result.isCritical)) delivery.critical?.();
+      } catch (error) {
+        events.push(entry('calculationFailed', ability, {message: error.message}));
+      }
+      log(events);
+    },
     cast(id, bindDelivery) {
       const status = availability(id);
       if (status.reason) {
@@ -153,6 +168,7 @@ export function createCombatRuntime(build, options = {}) {
         return {ok: false, reason: rejection};
       }
       status.delivery = delivery;
+      status.startedAt = state.combatTime;
       log([entry('castStarted', ability)]);
       const channel = ability.channelDuration ?? 0;
       if (!ability.cast && !channel) return finish(status);
@@ -189,6 +205,7 @@ export function createCombatRuntime(build, options = {}) {
     resetTarget() {
       this.cancelSpatial();
       state = {...state, dummy: {...state.dummy, health: state.dummy.maxHealth}};
+      log([entry('targetRestored', {id: '', name: ''})]);
     },
     cancelSpatial() {
       pending.clear();
