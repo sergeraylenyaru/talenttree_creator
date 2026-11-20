@@ -571,7 +571,11 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_header('Content-Length', str(stat.st_size))
             self.end_headers()
             if not not_modified:
-                self.copyfile(stream, self.wfile)
+                try:
+                    self.copyfile(stream, self.wfile)
+                except (BrokenPipeError, ConnectionResetError):
+                    # Closing a preview or the arena aborts its local model requests.
+                    return
 
     def do_GET(self):
         parsed=urlsplit(self.path)
