@@ -42,6 +42,7 @@ export function practiceAbilities(abilities, resources) {
 function describe(ability) {
   const cost=ability.resourceCosts.map(c=>c.amount+(c.unit==='percent'?'%':'')+' '+c.resourceName).join(', ');
   return [ability.name,ability.description,
+    !ability.combatEffects.length&&ability.presentation?.category!=='movement'&&t('Нет исполняемых боевых эффектов'),
     cost||t('Бесплатно'),t('Время применения')+' '+(ability.cast+ability.channelDuration)+' s',
     t('Перезарядка')+' '+ability.cooldown+' s',
     t('Дальность')+' '+presentationRange(ability.range,ability.presentation)+' m'].filter(Boolean).join('\n');
@@ -61,7 +62,8 @@ export function mountWorldHUD(frame, build, practice, cast, preview) {
   player.querySelector('strong').textContent=build.name;
   player.querySelector('.tg-portrait b').textContent=build.profile?.level??1;
   const authored=[...build.activeAbilities];
-  const sample=!authored.some(ability=>ability.combatEffects.length);
+  const ready=authored.filter(ability=>ability.combatEffects.length||ability.presentation?.category==='movement');
+  const sample=!ready.length;
   const list=sample?[...practice,...authored]:[...authored,...practice.slice(0,1)];
   const byId=new Map(list.map(ability=>[ability.id,ability]));
   const storageKey='talentforge-action-slots-v2:'+JSON.stringify(build.layoutId ?? build.name);
@@ -84,7 +86,21 @@ export function mountWorldHUD(frame, build, practice, cast, preview) {
         saved = JSON.parse(localStorage.getItem(key));
       }
     }
-    if(Array.isArray(saved)) saved.slice(0,18).forEach((id,index)=>{slots[index]=known.has(id)?id:null;});
+    const readyKey=storageKey+':unlocked';
+    const previous=preview?[]:JSON.parse(localStorage.getItem(readyKey))??[];
+    if(Array.isArray(saved)){
+      saved.slice(0,18).forEach((id,index)=>{slots[index]=known.has(id)?id:null;});
+      while(slots.length<18)slots.push(null);
+      for(const ability of ready){
+        if(slots.includes(ability.id)||previous.includes(ability.id))continue;
+        const index=slots.findIndex(id=>id===null||practice.slice(1).some(example=>example.id===id));
+        if(index>=0)slots[index]=ability.id;
+      }
+    }
+    if(!preview){
+      localStorage.setItem(readyKey,JSON.stringify([...new Set([...previous,...ready.map(ability=>ability.id)])]));
+      if(Array.isArray(saved))localStorage.setItem(storageKey,JSON.stringify(slots));
+    }
   } catch { /* A session can still use its default assignments. */ }
 
   const controls=document.createElement('section');

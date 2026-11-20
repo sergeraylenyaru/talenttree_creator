@@ -17,7 +17,11 @@ export function attackProfile(ability, config = spatialDefaults) {
   const hostile = ability.combatEffects.some(isHostileEffect);
   const p = ability.presentation ?? (ability.workshop ? {targeting:hostile?'dummy':'self'} : null);
   if (!p) {
-    if (!damage.length) return ability.combatEffects.some(effect => effect.type === 'healing') ? {kind: 'utility', school: 'healing'} : null;
+    if (!damage.length) {
+      if (hostile) return {kind:'instant',range:ability.range||config.meleeRange,targeting:'dummy'};
+      if (ability.combatEffects.length) return {kind:'utility',school:ability.combatEffects.some(effect=>effect.type==='healing')?'healing':'defense'};
+      return null;
+    }
     const range = ability.range || config.meleeRange;
     const kind = !ability.range ? 'melee' : damage.some(effect => effect.trigger === 'onHit') ? 'projectile' : 'instant';
     return {kind, range, school: (damage.find(effect => effect.school !== 'physical') || damage[0]).school};
@@ -25,7 +29,7 @@ export function attackProfile(ability, config = spatialDefaults) {
   const workshop = ability.workshop;
   const zone = ['area','targetArea','ground'].includes(p.targeting);
   const projectile = p.projectile ?? (damage.some(effect => effect.trigger === 'onHit') ? 'straight' : 'none');
-  const utility = !hostile && !zone && p.targeting !== 'dummy' && !(workshop && projectile !== 'none');
+  const utility = p.targeting==='self'||(!hostile&&!zone&&p.targeting!=='dummy'&&!(workshop&&projectile!=='none'));
   const melee = !zone && (p.delivery ? p.delivery === 'melee' : !ability.range && (!p.projectile || p.projectile === 'none'));
   const kind = utility ? 'utility' : zone || workshop?.tickInterval ? 'instant' : melee ? 'melee' : projectile === 'none' ? 'instant' : 'projectile';
   return {...p, ...workshop, kind, projectile, range: melee ? Math.min(config.meleeRange, ability.range || config.meleeRange)
@@ -113,6 +117,7 @@ export function createSpatialCombat({animationAvailable, autoAnimate, player, ta
       const inFront = point => Math.cos(player().facing - facingTarget(player(), point)) >= .5;
       function validate() {
         if (animationAvailable && animationFields.some(key=>isLocalClip(profile[key]) && !animationAvailable(profile[key].slice(5)))) return 'animationMissing';
+        if (self&&ability.combatEffects.some(isHostileEffect)) return 'invalidTarget';
         if (self) return;
         if (ground) {
           if (!groundPoint) return 'groundTarget';

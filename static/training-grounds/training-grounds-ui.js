@@ -55,6 +55,7 @@ const eventLabels = {
 };
 
 const statusLabels = {
+  noEffects: ['Нет исполняемых боевых эффектов', 'No executable combat effects'],
   paused: ['Бой на паузе', 'Combat paused'], casting: ['Идёт применение', 'Casting'],
   cooldown: ['Перезарядка', 'Cooldown'], gcd: ['Общая перезарядка', 'Global cooldown'],
   dummyDead: ['Манекен побеждён. Сбрось бой, чтобы продолжить.', 'Dummy defeated. Reset combat to continue.'],

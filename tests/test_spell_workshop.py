@@ -27,6 +27,23 @@ class WorkshopValidation(unittest.TestCase):
     def test_schema_round_trips_with_legacy_abilities(self):
         self.assertEqual(server.validate(copy.deepcopy(self.doc))['abilities'], self.doc['abilities'])
 
+    def test_linked_ids_remain_distinct_with_matching_metadata(self):
+        original = self.doc['abilities'][0]
+        copy_ability = copy.deepcopy(original)
+        copy_ability['id'] = 'another-flame'
+        self.doc['abilities'].append(copy_ability)
+        first = self.doc['branches'][0]['talents'][0]
+        second = {**first, 'id': 'second-link', 'col': 1, 'grantedAbilityId': copy_ability['id']}
+        self.doc['branches'][0]['talents'].append(second)
+        saved = server.validate(self.doc)
+        self.assertEqual([node['grantedAbilityId'] for node in saved['branches'][0]['talents']],
+                         [original['id'], copy_ability['id']])
+        for malformed in (['flame'], False, 'missing'):
+            broken = copy.deepcopy(self.doc)
+            broken['branches'][0]['talents'][0]['grantedAbilityId'] = malformed
+            with self.assertRaisesRegex(ValueError, 'Способность таланта'):
+                server.validate(broken)
+
     def test_invalid_settings_are_rejected(self):
         for key, value in [('version', 2), ('minRange', 35), ('charges', 2.5), ('collisionRadius', 0), ('tickInterval', 1)]:
             with self.subTest(key=key):

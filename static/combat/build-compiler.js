@@ -65,7 +65,7 @@ export function compileCombatBuild(document, options = {}) {
     ids.add(ability.id);
     const talentRank = ability.learningMode === 'talent'
       ? Math.max(1, ...doc.branches.flatMap(branch=>branch.talents)
-        .filter(talent=>ability.talentId ? talent.id===ability.talentId : talent.grantedAbilityId===ability.id)
+        .filter(talent=>talent.id===ability.talentId||talent.grantedAbilityId===ability.id)
         .map(talent=>doc.build[talent.id]??0))
       : ability.workshop?.rank ?? 1;
     const rankMultiplier = 1 + (talentRank - 1) * (ability.workshop?.rankScale ?? 0) / 100;

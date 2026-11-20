@@ -209,7 +209,7 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
   world = mountTrainingWorld(dialog, {
     preview,
     review:()=>view.review(),
-    incoming:build.profile?.incoming&&!preview?incoming:undefined,
+    incoming:build.profile?.incoming?incoming:undefined,
     movementScale: () => runtime.movementScale(),
     move: () => runtime.moved(),
     enter() { runtime.cancel(); },

@@ -57,3 +57,18 @@
 
 .tg-hotbar > div:nth-child(2) kbd { font-size:.53rem; }
 @media(min-width:701px) { .tg-world-frame #tg-cast { bottom:13.8rem; } }
+
+.spell-readiness {
+  display:block;
+  color:#d9cdb3;
+  font-size:.86rem;
+  margin-block:.35rem;
+}
+.spell-readiness:is([data-readiness="partial"],[data-readiness="noEffects"],[data-readiness="unsupported"],[data-readiness="broken"]) {
+  color:#f4bd72;
+}
+.ability-identity .spell-readiness { display:inline; margin:0; font-size:inherit; }
+.workshop-cast-mode { display:flex; flex-wrap:wrap; align-items:center; gap:.35rem; margin:0; }
+.workshop-cast-mode select { width:auto; max-width:100%; padding:.3rem .45rem; }
+.workshop-cast-mode[hidden] { display:none; }
+.ability-editor-dialog #abilityDescription { min-height:175px; }

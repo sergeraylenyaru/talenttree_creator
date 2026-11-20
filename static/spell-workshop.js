@@ -97,20 +97,27 @@ export function workshopOptions(root, ability) {
   function relevant() {
     const form = root.closest('form');
     const get = name => form?.querySelector(`[data-presentation="${name}"]`)?.value;
-    const projectile = get('projectile');
+    const projectileControl=form?.querySelector('[data-presentation="projectile"]');
+    const projectile = projectileControl?.parentElement.hidden ? 'none' : get('projectile');
     const target = get('targeting');
     const byKey = {
       radius:['area','targetArea','ground'].includes(target), areaShape:target==='area',
       minRange:target!=='area'&&target!=='self', facing:target!=='area'&&target!=='self',
       homingStrength:projectile==='homing', projectileLifetime:['straight','homing'].includes(projectile),
       collisionRadius:['straight','homing'].includes(projectile), projectileSize:['straight','homing'].includes(projectile),
-      projectileEffect:['straight','homing'].includes(projectile), flightDirection:projectile==='straight'
+      projectileEffect:['straight','homing'].includes(projectile), flightDirection:projectile==='straight',
+      tickInterval:Number(get('channelDuration'))>0, tickSound:Number(get('channelDuration'))>0
     };
     for (const [key,visible] of Object.entries(byKey)) controls.get(key).parentElement.hidden=!visible;
     const projectileSection=controls.get('projectileSize').closest('details');
     projectileSection.hidden=!byKey.projectileSize;
   }
   queueMicrotask(relevant);
+  root.closest('form')?.addEventListener('input', relevant, {signal: (() => {
+    const controller=new AbortController();
+    root.closest('dialog')?.addEventListener('close',()=>controller.abort(),{once:true});
+    return controller.signal;
+  })()});
   root.closest('form')?.addEventListener('change', relevant, {signal: (() => {
     const controller = new AbortController();
     root.closest('dialog')?.addEventListener('close',()=>controller.abort(),{once:true});
@@ -143,17 +150,25 @@ const templates = [
   ['Воодушевление','Battle Focus','light',0,0,presentationPresets.guard,[status('Воодушевление','player','attackPower',25,8)]],
   ['Раскол брони','Sunder Armor','steel',15,0,{category:'spell',delivery:'ranged',targeting:'dummy',projectile:'none',impact:'melee'},[status('Раскол брони','dummy','armor',-35,8)]],
   ['Тайный луч','Arcane Channel','arcane',24,0,{category:'spell',delivery:'ranged',projectile:'none',impact:'arcane',channelDuration:3},[damage('arcane',50)],{tickInterval:1,tickSound:'spark'}],
-  ['Огненная зона','Flame Zone','ember',25,0,{...presentationPresets.area,targeting:'ground',impact:'fire'},[damage('fire',40,{duration:6,interval:2})],{radius:4}]
+  ['Огненная зона','Flame Zone','ember',25,0,{...presentationPresets.area,targeting:'ground',impact:'fire'},[damage('fire',40,{duration:6,interval:2})],{radius:4}],
+  ['Поглощение','Absorption Ward','light',0,0,presentationPresets.guard,[
+    {id:'ward',type:'shield',trigger:'onCast',name:'Поглощение',amount:150,coefficient:0,fraction:1,priority:10,duration:8}
+  ]]
 ];
 addTranslations(templates.map(([ru,en])=>[ru,en]));
 
-export function workshopTemplates() {
+export function workshopTemplates(resource) {
   const builtIn = templates.map(([ru,,icon,range,cast,presentation,effects,rules]) => ({
     name:t(ru),description:'', icon:'forge-'+icon, kind:'active', learningMode:'base', range,cast,cooldown:2,resourceCosts:[],
     presentation:Object.fromEntries(Object.entries(presentation).filter(([,v])=>v!==undefined)), combatEffects:effects, workshop:{version:1,...rules}
   }));
+  if(resource&&resource.id!=='health')builtIn.push({name:t('Всплеск ресурса'),description:'',icon:'forge-arcane',
+    kind:'active',learningMode:'base',range:0,cast:0,cooldown:2,resourceCosts:[],workshop:{version:1},
+    presentation:{targeting:'self',category:'support',impact:'arcane'},
+    combatEffects:[{id:'gain',type:'resource',trigger:'onCast',resourceId:resource.id,unit:'percent',amount:10}]});
   return [...builtIn,...personalTemplates()];
 }
+addTranslations([['Всплеск ресурса','Resource Surge']]);
 const templateKey = 'talentforge-spell-templates-v1';
 export function personalTemplates() {
   try {

@@ -173,6 +173,7 @@ export function createCombatRuntime(build, options = {}) {
     const pool = chargeState(ability);
     if (pool.limit && pool.remaining.length >= pool.limit) return {reason: 'cooldown', remaining: pool.remaining[0] - state.combatTime};
     if (cooldown || gcd) return {reason: cooldown >= gcd ? 'cooldown' : 'gcd', remaining: Math.max(cooldown, gcd)};
+    if (!ability.combatEffects.length && ability.presentation?.category!=='movement') return {reason:'noEffects'};
     if (!state.dummy.health && ability.combatEffects.some(isHostileEffect) && !['area','ground'].includes(ability.presentation?.targeting)) {
       return {reason: 'dummyDead'};
     }
@@ -272,7 +273,7 @@ export function createCombatRuntime(build, options = {}) {
       const result = calculateCombatEffect(effect, {
         source:{...source,damageMultiplier:source.damageMultiplier*damageModifier,
           flatDamage:effect.school==='physical'?(ranged?values.rangedPower:values.meleePower):values.spellDamage,
-          weaponDamage:effect.school==='physical'&&weapon?(weapon.minDamage+weapon.maxDamage)/2:0
+          weaponDamage:weapon?(weapon.minDamage+weapon.maxDamage)/2:0
         },
         target: effect.type === 'damage' ? {
           armor: state.dummy.armor * targetModifier('armor'), resistances: state.dummy.resistances,

@@ -369,15 +369,20 @@ def validate(document):
     if not isinstance(branches, list) or not 1 <= len(branches) <= 4:
         raise ValueError('Допустимо от 1 до 4 веток')
     ability_list = document.get('abilities')
-    if not isinstance(ability_list, list) or any(not isinstance(a, dict) or not isinstance(a.get('id'), str) for a in ability_list):
+    if not isinstance(ability_list, list) or any(not isinstance(a, dict) or not isinstance(a.get('id'), str) or not a['id'] for a in ability_list):
         raise ValueError('Неверный список способностей')
     ability_by_id = {a['id']: a for a in ability_list}
     if len(ability_by_id) != len(ability_list):
         raise ValueError('Повторяющийся идентификатор способности')
     for branch in branches:
         for talent in branch.get('talents', []):
-            if isinstance(talent, dict) and talent.get('grantedAbilityId'):
-                linked = ability_by_id.get(talent['grantedAbilityId'])
+            if isinstance(talent, dict) and 'grantedAbilityId' in talent:
+                granted = talent['grantedAbilityId']
+                if not isinstance(granted, str):
+                    raise ValueError('Способность таланта не найдена')
+                if not granted:
+                    continue
+                linked = ability_by_id.get(granted)
                 if not linked or any(not isinstance(linked.get(k), str) for k in ('name', 'icon', 'description')):
                     raise ValueError('Способность таланта не найдена')
                 rules = linked.get('workshop')

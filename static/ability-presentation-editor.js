@@ -77,6 +77,15 @@ export function presentationEditor(container, ability) {
   modeLabel.append(t('Поэтапное применение'),mode);
   mode.dataset.workshopDelivery = '';
   container.prepend(modeLabel);
+  function updateRelevance() {
+    const target=controls.get('targeting').value;
+    const delivery=controls.get('delivery').value;
+    const area=['area','targetArea','ground'].includes(target);
+    const projectile=controls.get('projectile');
+    projectile.parentElement.hidden=area||target==='self'||delivery==='melee';
+    controls.get('projectileSpeed').parentElement.hidden=projectile.parentElement.hidden||!['straight','homing'].includes(projectile.value);
+    controls.get('hitReaction').parentElement.hidden=target==='self';
+  }
   mode.onchange = () => {
     const selected = modes[mode.value];
     if (!selected) return;
@@ -86,6 +95,7 @@ export function presentationEditor(container, ability) {
       controls.get('channelDuration').value = '3';
       controls.get('channelDuration').dispatchEvent(new Event('input'));
     }
+    updateRelevance();
   };
   let availableClips;
   localAnimationNames().then(names=>{
@@ -102,10 +112,17 @@ export function presentationEditor(container, ability) {
   preset.onchange = () => {
     const defaults = presentationPresets[preset.value];
     for (const [key, control] of controls) control.value = defaults?.[key] ?? '';
+    updateRelevance();
   };
+  container.addEventListener('change',updateRelevance);
+  updateRelevance();
   return () => {
     const result = Object.fromEntries([...controls].filter(([, control]) => control.value !== '').map(([key, control]) =>
       [key, control.type === 'number' ? control.valueAsNumber : control.value]));
+    if (result.delivery==='melee'||['self','area','targetArea','ground'].includes(result.targeting)) {
+      if (result.projectile) result.projectile='none';
+      delete result.projectileSpeed;
+    }
     if (availableClips?.size && animationFields.some(key=>isLocalClip(result[key]) && !availableClips.has(result[key].slice(5)))) {
       throw Error('Выбранная анимация отсутствует в локальной модели');
     }

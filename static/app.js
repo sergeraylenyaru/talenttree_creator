@@ -1,3 +1,4 @@
+import {abilityReadiness} from './combat/ability-readiness.js';
 import {characterLab} from './character-lab.js';
 import {removeRpgReferences} from './combat/rpg-profile.js';
 import {workshopOptions, workshopTemplates, rememberTemplate} from './spell-workshop.js';
@@ -17,7 +18,7 @@ import {initIconFitting} from './icon-fit.js';
 import {aboutMarkup} from './about.js';
 import {characterBuilder,armorTypes,weaponTypes,equipmentIcons} from './character-builder.js';
 import './translations.js';
-import {t,getLanguage,setLanguage,initLanguage} from './i18n.js';
+import {addTranslations,t,getLanguage,setLanguage,initLanguage} from './i18n.js';
 import {withoutBuild,restoreBrowserBuild,saveBrowserBuild} from './browser-build.js';
 import {classEmblem,defaultClassIcon} from './class-emblem.js';
 import {glyph,initUI,notify,notificationUser,closeMenus} from './ui.js';
@@ -27,6 +28,14 @@ import {blank,branch,total,validBuild,changeRank,normalize,route,reserved,moveTa
 import {icons,iconURL} from './icons.js';
 const $=s=>document.querySelector(s);
 registerTrainingTranslations();
+addTranslations([
+ ['Открыть в мастерской','Open in Spell Workshop'],['Заменить способность','Replace ability'],
+ ['Открыта текущим билдом','Unlocked by current build'],['Закрыта текущим билдом','Locked by current build'],
+ ['Открывается специализацией','Granted by specialization'],['Боевой эффект настроен','Combat effect configured'],
+ ['Пассивный эффект настроен','Passive effect configured'],['Режим применения','Cast mode'],
+ ['С временем применения','With cast time'],['Поддержание до завершения','Sustained until completion'],
+ ['Канал с тиками','Channel with ticks'],['Нет исполняемых боевых эффектов','No executable combat effects']
+]);
 $('#openTrainingGrounds').onclick=()=>{
  try{closeMenus();$('#tooltip').hidden=true;openTrainingGrounds($('#trainingGrounds'),doc,{layoutId:projectId?'project:'+projectId:undefined});}
  catch(error){toast(t(error.message));}
@@ -195,30 +204,74 @@ function editTalent(b,row,col,existing,draft){
  }:null);
  $('#modal').classList.add('talent-editor-dialog');$('#modalBody').insertAdjacentHTML('afterbegin','<div class="talent-source-actions"><button type="button" id="pickFavorite">★ Взять из избранного</button><button type="button" id="pickAbility">＋ Добавить способность</button></div>');
  $('#pickFavorite').hidden=!!existing;$('#pickFavorite').onclick=()=>{$('#modal').close();showFavorites({branchId:b.id,row,col});};
- $('#pickAbility').onclick=()=>{const saved={...t,...rankEditor.draft(),name:$('#talentName').value,icon:readIcon(),maxRank:Number($('#maxRank').value),requires:$('#requires').value};if(!rankEditor.draft().rankTemplate)delete saved.rankTemplate;const reopen=()=>editTalent(b,row,col,existing,saved);$('#modal').close();setTimeout(()=>pickAbilityForTalent(ability=>editTalent(b,row,col,existing,abilityTalentDraft(ability,saved)),reopen),0);};
+ $('#pickAbility').onclick=()=>{const saved={...t,...rankEditor.draft(),name:$('#talentName').value,icon:readIcon(),maxRank:Number($('#maxRank').value),requires:$('#requires').value};if(!rankEditor.draft().rankTemplate)delete saved.rankTemplate;const reopen=()=>editTalent(b,row,col,existing,saved);$('#modal').close();setTimeout(()=>pickAbilityForTalent((ability,created)=>created?commitTalentAbility(b,saved,existing,ability):editTalent(b,row,col,existing,abilityTalentDraft(ability,saved)),reopen,saved),0);};
  rankEditor=createRankEditor($('#rankFields'),$('#maxRank'),t,{name:()=>$('#talentName').value,icon:readIcon});$('#talentName').addEventListener('input',()=>rankEditor.refresh());$('#iconName').addEventListener('input',()=>rankEditor.refresh());bindPicker();$('#iconGrid').addEventListener('click',()=>rankEditor.refresh());favoriteButton('talent',()=>b.talents.find(x=>x.id===t.id));
 }
 function editAbilityPlacement(b,t,existing){
- const ability=doc.abilities.find(a=>a.id===t.grantedAbilityId);if(!ability){toast('Способность не найдена');return;}
+ const ability=doc.abilities.find(a=>a.id===t.grantedAbilityId);
+ const status=abilityReadiness(doc,ability);
+ const learns=ability&&abilityUnlocked(doc,ability)?'Открыта текущим билдом':'Закрыта текущим билдом';
  function eligible(p){if(p.id===t.id||p.row>t.row)return false;let current=p;const seen=new Set();while(current.requires){if(current.requires===t.id||seen.has(current.id))return false;seen.add(current.id);current=b.talents.find(x=>x.id===current.requires);if(!current)return false;}return !!route(b,p,t);}
- modal('Зависимость: '+ability.name,`<label for="requires">ТРЕБУЕТ ТАЛАНТ (ПОЛНЫЙ РАНГ)</label><select id="requires"><option value="">Без зависимости</option>${t.requires&&!b.talents.filter(eligible).some(p=>p.id===t.requires)?`<option value="${esc(t.requires)}" selected>Текущая зависимость: нужно изменить маршрут</option>`:''}${b.talents.filter(eligible).map(p=>`<option data-user-content value="${esc(p.id)}" ${t.requires===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select><p class="muted">Название, иконка и описание берутся из способности и изменяются в списке способностей.</p>`,()=>{const updated=abilityTalentDraft(ability,{...t,requires:$('#requires').value});if([...dependencyRoutes({...b,talents:b.talents.filter(x=>x.id!==updated.id).concat(updated)}).values()].some(p=>!p))throw Error('Стрелки пересекаются или нет свободного пути. Измени зависимость.');if(existing)b.talents[b.talents.indexOf(existing)]=updated;else b.talents.push(updated);if(!existing){ability.learningMode='talent';ability.talentId='';}if(!validBuild(doc,doc.build))doc.build={};changed();render();$('#modal').close();},existing?()=>{if(!confirm('Убрать способность из этой ячейки?'))return;removeRpgReferences(doc.rpg,'talent',t.id);b.talents=b.talents.filter(x=>x.id!==t.id);for(const p of b.talents)if(p.requires===t.id)p.requires='';for(const a of doc.abilities)if(a.talentId===t.id)a.talentId='';doc.build={};changed();render();$('#modal').close();}:null);
+ const options=b.talents.filter(eligible);
+ const savePlacement=()=>commitTalentAbility(b,{...t,requires:$('#requires').value},existing,ability);
+ modal(ability?.name??t.name,`<p class="spell-readiness" data-readiness="${status.state}">${esc(status.message)} · ${learns}</p>
+  <div class="talent-source-actions"><button type="button" id="editLinkedAbility" ${ability?'':'hidden'}>Открыть в мастерской</button>
+  <button type="button" id="replaceLinkedAbility">Заменить способность</button></div>
+  <label for="requires">ТРЕБУЕТ ТАЛАНТ (ПОЛНЫЙ РАНГ)</label><select id="requires"><option value="">Без зависимости</option>
+  ${t.requires&&!options.some(p=>p.id===t.requires)?`<option selected value="${esc(t.requires)}">Текущая зависимость: нужно изменить маршрут</option>`:''}
+  ${options.map(p=>`<option data-user-content value="${esc(p.id)}" ${t.requires===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select>`,
+  ability?savePlacement:null,existing?()=>{
+    if(!confirm('Убрать способность из этой ячейки?'))return;
+    removeRpgReferences(doc.rpg,'talent',t.id);b.talents=b.talents.filter(x=>x.id!==t.id);
+    for(const p of b.talents)if(p.requires===t.id)p.requires='';
+    for(const a of doc.abilities)if(a.talentId===t.id)a.talentId='';
+    doc.build={};changed();render();$('#modal').close();
+  }:null);
+ if(ability)$('#editLinkedAbility').onclick=()=>{
+  const placement={...t,requires:$('#requires').value};
+  const reopen=()=>{const current=doc.branches.find(branch=>branch.id===b.id);
+   const node=current.talents.find(node=>node.id===t.id);
+   editAbilityPlacement(current,placement,node);};
+  $('#modal').close();
+  editAbility(ability,null,reopen,null,updated=>commitTalentAbility(b,placement,existing,updated,true));
+ };
+ $('#replaceLinkedAbility').onclick=()=>{
+  const placement={...t,requires:$('#requires').value};
+  const back=()=>editAbilityPlacement(b,placement,existing);
+  $('#modal').close();
+  setTimeout(()=>pickAbilityForTalent((entry,created)=>created
+    ?commitTalentAbility(b,placement,existing,entry)
+    :editAbilityPlacement(b,abilityTalentDraft(entry,placement),existing),back,t),0);
+ };
 }
-function editAbility(existing,onSaved=null,onCancel=null,draft=null){
+function commitTalentAbility(branch,talent,existing,ability,edit=false){
+ const next=structuredClone(doc);
+ const index=next.abilities.findIndex(entry=>entry.id===ability.id);
+ if(index<0)next.abilities.push(ability);
+ else if(edit)next.abilities[index]=ability;
+ doc=placeAbilityTalent(next,ability.id,branch.id,talent.row,talent.col,Boolean(existing),talent);
+ changed();render();$('#modal').close();
+}
+function editAbility(existing,onSaved=null,onCancel=null,draft=null,savePlacement=null){
  const a=draft||existing||{id:crypto.randomUUID(),name:'',description:'',icon:'forge-arcane',workshop:{version:1},resourceUnit:'percent',resource:'',cast:'',cooldown:'',range:'',talentId:'',requirements:'',learningMode:'base'};
  if(mode==='play'){modal(a.name,`<p class="tooltip-description">${esc(a.description)}</p><div class="spell-stats">${abilityStatsMarkup(a)}</div>`,null);readOnlyFavorite('ability',a);return;}
- const learning=(a.learningMode==='specialization'?'base':a.learningMode)||((a.talentId||doc.branches.some(b=>b.talents.some(t=>t.grantedAbilityId===a.id)))?'talent':'base');
+ const learning=a.learningMode||((a.talentId||doc.branches.some(b=>b.talents.some(t=>t.grantedAbilityId===a.id)))?'talent':'base');
 
- const templates=workshopTemplates();
- const identity=`<div class="ability-identity"><div>${field('abilityName','НАЗВАНИЕ',a.name,'text','required maxlength="100"')}<small>Внутренний ID <code data-user-content>${esc(a.id)}</code></small></div>${iconPicker(a.icon)}</div>`;
+ const templates=workshopTemplates(classResources(character()).find(resource=>resource.id!=='health'));
+ const readiness=abilityReadiness(doc,a);
+ const identity=`<div class="ability-identity"><div>${field('abilityName','НАЗВАНИЕ',a.name,'text','required maxlength="100"')}<small>Внутренний ID <code data-user-content>${esc(a.id)}</code> · <span class="spell-readiness" data-readiness="${readiness.state}">${esc(readiness.message)}</span></small></div>${iconPicker(a.icon)}</div>`;
  const templateTools=`<details class="workshop-template-details"><summary>Шаблоны способностей</summary><div class="workshop-template-bar"><label>Применить шаблон<select id="workshopTemplate"><option value="">Выбери шаблон</option>${templates.map((item,index)=>`<option value="${index}" data-user-content>${esc(item.name)}</option>`).join('')}</select></label>
  <button id="applySpellTemplate" type="button">Применить шаблон</button><button id="rememberSpellTemplate" type="button">Сохранить как шаблон</button></div></details>`;
  const selectors=`<div class="ability-selectors"><div><label for="abilityKind">ТИП СПОСОБНОСТИ</label><select id="abilityKind"><option value="active" ${a.kind!=='passive'?'selected':''}>Активная</option><option value="passive" ${a.kind==='passive'?'selected':''}>Пассивная</option></select></div><div><label for="abilityBranch">ВЕТКА</label><select id="abilityBranch"><option value="auto" ${a.branchId===undefined||a.branchId==='auto'?'selected':''}>По размещению в дереве</option><option value="" ${a.branchId===''?'selected':''}>Общая — без ветки</option>${doc.branches.map(b=>`<option data-user-content value="${esc(b.id)}" ${a.branchId===b.id?'selected':''}>${esc(b.name)}</option>`).join('')}</select></div></div>`;
- const costs=`<div id="abilityResourceCosts"></div><div class="ability-numbers">${['cast','cooldown','range'].map((key,i)=>`<div>${field(key,['ВРЕМЯ ПРИМЕНЕНИЯ, СЕК.','ПЕРЕЗАРЯДКА, СЕК.','ДАЛЬНОСТЬ, М'][i],numericValue(a[key]),'number','min="0" max="1000000000" step="any" required')}</div>`).join('')}</div>`;
+ const castControl=`<label id="abilityCastControl" class="workshop-cast-mode">Режим применения <select id="abilityCastMode"><option value="instant">Мгновенное</option><option value="cast">С временем применения</option>
+ <option value="sustain">Поддержание до завершения</option><option value="channel">Канал с тиками</option></select></label>`;
+ const costs=`<div id="abilityApplication"><div id="abilityResourceCosts"></div><div class="ability-numbers">${['cast','cooldown','range'].map((key,i)=>`<div>${field(key,['ВРЕМЯ ПРИМЕНЕНИЯ, СЕК.','ПЕРЕЗАРЯДКА, СЕК.','ДАЛЬНОСТЬ, М'][i],numericValue(a[key]),'number','min="0" max="1000000000" step="any" required')}</div>`).join('')}</div></div>`;
  let readCosts,readEffects,readPresentation,readRules;
  const requirements=`<label for="abilityRequirements">Требуется:</label><input id="abilityRequirements" type="text" maxlength="1000" value="${esc(abilityRequirementsText(a))}">`;
  const previewTools=`<div class="workshop-preview-actions"><button type="button" id="previewSpell">Предпросмотр в 3D</button>
  <button type="button" id="saveTestSpell">Сохранить и открыть тренировку</button></div>`;
- const body=identity+`<div class="ability-editor-layout"><div>${selectors}<div class="ability-flags"><label class="ability-branch-only" ${!usesPrimaryBranch(doc)?'title="Включи основную ветку в настройках дерева"':''}><input type="checkbox" id="abilityBranchOnly" ${!usesPrimaryBranch(doc)?'disabled':''} ${a.branchOnly||a.learningMode==='specialization'?'checked':''}>Способность только для ветки</label><label class="editor-switch ability-channeled"><input type="checkbox" role="switch" id="abilityChanneled" ${a.channeled?'checked':''}><span>Поддерживаемое заклинание</span></label></div><label for="abilityDescription">ОПИСАНИЕ</label><textarea id="abilityDescription" maxlength="10000" rows="8">${esc(a.description)}</textarea><div id="workshopOptions"></div>${templateTools}${previewTools}</div><div>${costs}<div id="combatEffectEditor"></div><details><summary>Оформление в бою</summary><div id="abilityPresentation"></div></details>${requirements}<label for="abilityLearning">ИЗУЧЕНИЕ СПОСОБНОСТИ</label><select id="abilityLearning"><option value="base" ${learning==='base'?'selected':''}>Изучается без таланта</option><option value="talent" ${learning==='talent'?'selected':''}>Требуется талант</option></select><div id="talentLinkField" ${learning!=='talent'?'hidden':''}><label for="talentLink">ОТКРЫВАЕТСЯ ТАЛАНТОМ</label><select id="talentLink"><option value="">По размещению в дереве</option>${doc.branches.flatMap(b=>b.talents).map(t=>`<option data-user-content value="${esc(t.id)}" ${a.talentId===t.id?'selected':''}>${esc(t.name)}</option>`).join('')}</select></div><p id="abilityTimingHelp" class="muted compact-field-help">0 м — ближний бой. 0 сек. — мгновенное применение.</p></div></div>`;
+ const body=identity+`<div class="ability-editor-layout"><div>${selectors}<div class="ability-flags"><label class="ability-branch-only" ${!usesPrimaryBranch(doc)?'title="Включи основную ветку в настройках дерева"':''}><input type="checkbox" id="abilityBranchOnly" ${!usesPrimaryBranch(doc)?'disabled':''} ${a.branchOnly?'checked':''}>Способность только для ветки</label><label class="editor-switch ability-channeled"><input type="checkbox" role="switch" id="abilityChanneled" ${a.channeled?'checked':''}><span>Поддерживаемое заклинание</span></label>${castControl}</div><label for="abilityDescription">ОПИСАНИЕ</label><textarea id="abilityDescription" maxlength="10000" rows="7">${esc(a.description)}</textarea><div id="workshopOptions"></div>${templateTools}${previewTools}</div><div>${costs}<p id="passiveApplication" class="muted" hidden>Пассивный эффект работает после изучения. Автоматические срабатывания настраиваются в разделе персонажа.</p><div id="combatEffectEditor"></div><details id="spellPresentationDetails"><summary>Оформление в бою</summary><div id="abilityPresentation"></div></details>${requirements}<label for="abilityLearning">ИЗУЧЕНИЕ СПОСОБНОСТИ</label><select id="abilityLearning"><option value="base" ${learning==='base'?'selected':''}>Изучается без таланта</option><option value="talent" ${learning==='talent'?'selected':''}>Требуется талант</option>
+ ${doc.specialization?`<option value="specialization" ${learning==='specialization'?'selected':''}>Открывается специализацией</option>`:''}</select><div id="talentLinkField" ${learning!=='talent'?'hidden':''}><label for="talentLink">ОТКРЫВАЕТСЯ ТАЛАНТОМ</label><select id="talentLink"><option value="">По размещению в дереве</option>${doc.branches.flatMap(b=>b.talents).map(t=>`<option data-user-content value="${esc(t.id)}" ${a.talentId===t.id?'selected':''}>${esc(t.name)}</option>`).join('')}</select></div><p id="abilityTimingHelp" class="muted compact-field-help">0 м — ближний бой. 0 сек. — мгновенное применение.</p></div></div>`;
  function readDraft(){
   const updated={...a,name:$('#abilityName').value.trim(),description:$('#abilityDescription').value,icon:readIcon(),learningMode:$('#abilityLearning').value,talentId:$('#abilityLearning').value==='talent'?$('#talentLink').value:'',kind:$('#abilityKind').value,channeled:$('#abilityKind').value!=='passive'&&$('#abilityChanneled').checked,branchOnly:$('#abilityBranchOnly').checked,branchId:$('#abilityBranch').value,requirements:$('#abilityRequirements').value.trim()};
   const effects=readEffects();if(effects!==undefined)updated.combatEffects=effects;
@@ -229,7 +282,7 @@ function editAbility(existing,onSaved=null,onCancel=null,draft=null){
   if(rules)updated.workshop=rules;
   else delete updated.workshop;
   if(!updated.name)throw Error('Введи название');
-  if(updated.branchOnly&&!doc.branches.some(b=>b.id===updated.branchId))throw Error('Выбери ветку для способности');
+  if((updated.branchOnly||updated.learningMode==='specialization')&&!doc.branches.some(b=>b.id===updated.branchId))throw Error('Выбери ветку для способности');
   for(const key of ['cast','cooldown','range']){updated[key]=Number($('#'+key).value);if(!Number.isFinite(updated[key])||updated[key]<0||updated[key]>1e9)throw Error('Характеристики должны быть неотрицательными числами');}updated.resourceCosts=readCosts();delete updated.resource;delete updated.resourceType;delete updated.resourceUnit;
   validateWorkshop(updated);
   for(const proc of doc.rpg?.procs??[])if(proc.spell===updated.id&&!updated.combatEffects?.some(effect=>effect.id===proc.effect)){
@@ -248,30 +301,55 @@ function editAbility(existing,onSaved=null,onCancel=null,draft=null){
  }
  function save(reopen=true){
   const updated=readDraft();
+  if(savePlacement){savePlacement(updated);return;}
   if(existing)doc.abilities[doc.abilities.indexOf(existing)]=updated;else doc.abilities.push(updated);
   changed();render();$('#modal').close();if(reopen&&onSaved)setTimeout(()=>onSaved(updated),0);
  }
  modal('Мастерская заклинаний',body,save,existing?()=>{if(confirm('Удалить способность и её размещения в деревьях?')){doc=removeAbility(doc,a.id);changed();render();$('#modal').close();}}:null);
  $('#modal').classList.add('ability-editor-dialog');
- const updateChannel=()=>{const passive=$('#abilityKind').value==='passive';$('#abilityChanneled').disabled=passive;$('#modalBody label[for="cast"]').textContent=!passive&&$('#abilityChanneled').checked&&!$('[data-presentation=channelDuration]')?.value?'ДЛИТЕЛЬНОСТЬ ПОДДЕРЖАНИЯ, СЕК.':'ВРЕМЯ ПРИМЕНЕНИЯ, СЕК.';$('#abilityTimingHelp').textContent=!passive&&$('#abilityChanneled').checked&&!$('[data-presentation=channelDuration]')?.value?'0 м — ближний бой. Укажи длительность поддержания в секундах.':'0 м — ближний бой. 0 сек. — мгновенное применение.';};$('#abilityChanneled').onchange=$('#abilityKind').onchange=updateChannel;updateChannel();
+ const updateChannel=()=>{const passive=$('#abilityKind').value==='passive';$('#abilityChanneled').disabled=passive;
+ $('#abilityApplication').hidden=passive;$('#abilityCastControl').hidden=passive;$('#passiveApplication').hidden=!passive;$('#spellPresentationDetails').hidden=passive;
+ $('#previewSpell').disabled=passive;$('#saveTestSpell').disabled=passive;$('#modalBody label[for="cast"]').textContent=!passive&&$('#abilityChanneled').checked&&!$('[data-presentation=channelDuration]')?.value?'ДЛИТЕЛЬНОСТЬ ПОДДЕРЖАНИЯ, СЕК.':'ВРЕМЯ ПРИМЕНЕНИЯ, СЕК.';$('#abilityTimingHelp').textContent=!passive&&$('#abilityChanneled').checked&&!$('[data-presentation=channelDuration]')?.value?'0 м — ближний бой. Укажи длительность поддержания в секундах.':'0 м — ближний бой. 0 сек. — мгновенное применение.';};$('#abilityChanneled').onchange=$('#abilityKind').onchange=updateChannel;updateChannel();
  readEffects=combatEffectEditor($('#combatEffectEditor'),a,classResources(character()));
  readRules=workshopOptions($('#workshopOptions'),a);
  readPresentation=presentationEditor($('#abilityPresentation'),a);
  $('[data-presentation=channelDuration]').addEventListener('input',updateChannel);
  $('[data-presentation=preset]').addEventListener('change',updateChannel);updateChannel();
+ const castMode=$('#abilityCastMode');
+ const duration=$('[data-presentation=channelDuration]'), tick=$('[data-workshop=tickInterval]');
+ const originalMode=()=>tick.value?'channel':duration.value||$('#abilityChanneled').checked?'sustain':Number($('#cast').value)?'cast':'instant';
+ castMode.value=originalMode();
+ castMode.onchange=()=>{
+  $('#abilityChanneled').checked=false;
+  const channel=castMode.value==='sustain'||castMode.value==='channel';
+  $('#cast').value=castMode.value==='cast'?Number($('#cast').value)||1.5:0;
+  duration.value=channel?Number(duration.value)||3:'';
+  tick.value=castMode.value==='channel'?Math.min(Number(tick.value)||1,Number(duration.value)):'';
+  if(castMode.value==='channel'){
+   $('[data-presentation=delivery]').value='ranged';
+   $('[data-presentation=projectile]').value='none';
+   $('[data-presentation=projectile]').dispatchEvent(new Event('change',{bubbles:true}));
+  }
+  duration.dispatchEvent(new Event('input',{bubbles:true}));
+  updateChannel();
+ };
+ for(const input of [duration,tick,$('#cast'),$('#abilityChanneled')])input.addEventListener('change',()=>castMode.value=originalMode());
  readCosts=resourceCostEditor($('#abilityResourceCosts'),a,character(),!existing);const constrainBranch=()=>{for(const option of $('#abilityBranch').options)option.disabled=$('#abilityBranchOnly').checked&&['','auto'].includes(option.value);if($('#abilityBranchOnly').checked&&!doc.branches.some(b=>b.id===$('#abilityBranch').value))$('#abilityBranch').value=doc.branches[0].id;};$('#abilityBranchOnly').onchange=constrainBranch;constrainBranch();$('#abilityLearning').onchange=()=>{$('#talentLinkField').hidden=$('#abilityLearning').value!=='talent';};bindPicker();favoriteButton('ability',()=>doc.abilities.find(x=>x.id===a.id));modalCancel=onCancel;
  const attempt=run=>()=>{try{$('#formError').textContent='';run();}catch(error){$('#formError').textContent=t(error.message);}};
  $('#applySpellTemplate').onclick=attempt(()=>{
   const index=$('#workshopTemplate').value;
   if(index==='')return;
   const preset=structuredClone(templates[Number(index)]);
-  const staged={...a,...preset,id:a.id,learningMode:$('#abilityLearning').value,talentId:$('#talentLink').value};
+  const identity=existing?{name:$('#abilityName').value,description:$('#abilityDescription').value,icon:readIcon()}:null;
+  const staged={...a,...preset,...identity,id:a.id,learningMode:$('#abilityLearning').value,talentId:$('#talentLink').value,
+   branchId:$('#abilityBranch').value,branchOnly:$('#abilityBranchOnly').checked,channeled:false};
   $('#modal').close();
-  editAbility(existing,onSaved,onCancel,staged);
+  editAbility(existing,onSaved,onCancel,staged,savePlacement);
  });
  $('#rememberSpellTemplate').onclick=attempt(()=>{rememberTemplate(readDraft());toast(t('Настройки сохранены как шаблон'));});
  $('#previewSpell').onclick=attempt(()=>{
   const edited=readDraft();
+  if(!edited.combatEffects?.length&&edited.presentation?.category!=='movement')throw Error('Нет исполняемых боевых эффектов');
   const isolated=structuredClone(doc);
   isolated.abilities=[{...edited,kind:'active',learningMode:'base',talentId:'',branchOnly:false,
     workshop:edited.workshop?{...edited.workshop,hidden:false,disabled:false}:undefined}];
@@ -280,6 +358,10 @@ function editAbility(existing,onSaved=null,onCancel=null,draft=null){
   if(isolated.rpg){
    isolated.rpg.bonuses=(isolated.rpg.bonuses??[]).filter(rule=>rule.owner.kind!=='passive'&&(!rule.spell||rule.spell===edited.id));
    isolated.rpg.procs=[];
+  }
+  if(edited.combatEffects?.some(effect=>effect.type==='shield')){
+   isolated.rpg??={version:1};
+   isolated.rpg.incoming??={school:'physical',amount:200};
   }
   openTrainingGrounds($('#trainingGrounds'),isolated,{preview:edited.id});
  });
@@ -346,7 +428,7 @@ function openSpellLibrary(){
   if(order==='cooldown')list.sort((a,b)=>numericValue(a.cooldown)-numericValue(b.cooldown));
   $('#spellLibraryRows').innerHTML=list.map(a=>`<article class="spell-library-row" data-spell-id="${esc(a.id)}">
     <span class="spell-library-icon">✦${image(a.icon)}</span>
-    <div><strong data-user-content>${esc(a.name)}</strong><small>${a.kind==='passive'?'Пассивная':'Активная'} · ${abilityStatsMarkup(a,' · ')}</small></div>
+    <div><strong data-user-content>${esc(a.name)}</strong><small class="spell-readiness" data-readiness="${abilityReadiness(doc,a).state}">${esc(abilityReadiness(doc,a).message)}</small><small>${a.kind==='passive'?'Пассивная':'Активная'} · ${abilityStatsMarkup(a,' · ')}</small></div>
     <div class="spell-library-actions"><button type="button" data-spell-action="edit">Редактировать</button>
     <button type="button" data-spell-action="rename">Переименовать</button><button type="button" data-spell-action="duplicate">Дублировать</button>
     <button type="button" data-spell-action="export">Экспорт</button><button type="button" data-spell-action="delete">Удалить</button></div></article>`
@@ -627,12 +709,15 @@ document.addEventListener('focusin',e=>{if(e.target.matches('[data-talent],[data
 document.addEventListener('focusout',()=>$('#tooltip').hidden=true);
 document.addEventListener('click',()=>{hoverTarget=null;$('#tooltip').hidden=true;});
 
-function pickAbilityForTalent(onPick,onBack){
+function pickAbilityForTalent(onPick,onBack,node){
  modal('Добавить способность в талант',`<p class="muted">Выбери способность. Её название, иконка и описание станут основой таланта; способность откроется при изучении таланта.</p><div class="ability-picker-grid">${doc.abilities.map(a=>`<button type="button" data-pick-ability="${esc(a.id)}">${image(a.icon)}<span>${esc(a.name)}</span></button>`).join('')||'<p class="muted">Способностей пока нет. Создай первую ниже.</p>'}</div><div class="talent-source-actions"><button type="button" id="newPickerAbility" class="primary">＋ Добавить способность</button><button type="button" id="backToTalent">← К таланту</button></div>`,null);
  modalCancel=onBack;
  for(const button of document.querySelectorAll('[data-pick-ability]'))button.onclick=()=>{const ability=doc.abilities.find(a=>a.id===button.dataset.pickAbility);$('#modal').close();setTimeout(()=>onPick(ability),0);};
  $('#backToTalent').onclick=()=>{$('#modal').close();setTimeout(onBack,0);};
- $('#newPickerAbility').onclick=()=>{$('#modal').close();setTimeout(()=>editAbility(null,onPick,()=>pickAbilityForTalent(onPick,onBack)),0);};
+ $('#newPickerAbility').onclick=()=>{$('#modal').close();setTimeout(()=>editAbility(null,null,()=>pickAbilityForTalent(onPick,onBack,node),
+   {id:crypto.randomUUID(),name:node?.name||'',description:node?.descriptions?.[0]||'',icon:node?.icon||'forge-arcane',
+    workshop:{version:1,rank:node?.maxRank??1},learningMode:'talent',cast:0,cooldown:0,range:0},
+   ability=>onPick(ability,true)),0);};
 }
 function numericValue(value){const n=Number.parseFloat(value);return Number.isFinite(n)&&n>=0?n:0;}
 
