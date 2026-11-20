@@ -1,5 +1,6 @@
 import {AxesHelper, Box3, Box3Helper, Color, Group, MathUtils, Vector3} from 'three';
 import {box} from './collision-system.js';
+import {renderedModelBounds} from './model-loader.js';
 
 export function boundsOf(root) {
   root.updateMatrixWorld(true);
@@ -19,16 +20,17 @@ export function assetDiagnostics(asset, configuration) {
   for (const material of materials) {
     for (const value of Object.values(material)) if (value?.isTexture) textures.add(value);
   }
-  const {min, max} = boundsOf(asset.visual ?? asset.root);
+  const {min, max} = renderedModelBounds(asset.visual ?? asset.root);
   return {model: configuration.model, meshes, materials: materials.size, textures: textures.size,
     joints: joints.size, animations: asset.clips.map(clip => clip.name), bounds: {min: min.toArray(), max: max.toArray()},
-    transform: configuration};
+    transform: configuration,
+    ...(configuration.rigidAttachments?.length ? {rigidAttachments: configuration.rigidAttachments.map(({mesh, bone}) => ({mesh, bone}))} : {})};
 }
 
-export function safeArenaPositions(ground, walls, spawn, dummy, radius) {
+export function safeArenaPositions(ground, walls, spawn, dummy, radius, height = 2.1) {
   const clear = (point, margin, obstacles) => point.x >= ground.minX + margin && point.x <= ground.maxX - margin &&
     point.z >= ground.minZ + margin && point.z <= ground.maxZ - margin && obstacles.every(wall =>
-      point.x <= wall.minX - margin || point.x >= wall.maxX + margin ||
+      wall.minY >= ground.y + height || wall.maxY <= ground.y || point.x <= wall.minX - margin || point.x >= wall.maxX + margin ||
       point.z <= wall.minZ - margin || point.z >= wall.maxZ + margin);
   function choose(requested, margin, obstacles) {
     const candidates = [requested];
@@ -50,11 +52,21 @@ export function attachWeapon(hero, weapon, config) {
   const bone = [...new Set([config.attachmentBone, 'bone_HandR'])]
     .map(name => hero.root.getObjectByName(name)).find(Boolean);
   if (!bone) throw Error('Weapon attachment node was not found: ' + config.attachmentBone);
+  // Unarmed locomotion opens the fingers. Sample the exported one-hand grip
+  // without replacing the animated wrist, arm or any other joint.
+  const fingers = /^(bone_(?:Thumb|IndexFinger|MiddleFinger|RingFinger|PinkyFinger)(?:Tip)?R)\.quaternion$/;
+  const gripClip = hero.clips?.find(clip => clip.name === config.gripClip);
+  const grip = gripClip?.tracks.flatMap(track => {
+    const match = fingers.exec(track.name);
+    const finger = match && hero.root.getObjectByName(match[1]);
+    return finger ? [{finger, rotation: track.createInterpolant().evaluate(0)}] : [];
+  }) ?? [];
+  if (config.gripClip && !grip.length) throw Error('No right-hand finger rotations in ' + config.gripClip);
   const mount = new Group();
   mount.add(weapon.root);
   bone.add(mount);
   applyWeaponTransform(mount, config);
-  return {mount, bone: bone.name};
+  return {mount, bone: bone.name, grip};
 }
 
 export function applyWeaponTransform(mount, {position, rotation, scale}) {

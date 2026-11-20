@@ -1,4 +1,4 @@
-import {moveOnGround} from './collision-system.js';
+import {moveOnGround, moveVertically} from './collision-system.js';
 import {horizontalCameraForward} from './third-person-camera.js';
 
 const approach = (value, target, step) => value + Math.max(-step, Math.min(step, target - value));
@@ -28,12 +28,11 @@ export function stepCharacter(player, input, yaw, dt, config, obstacles) {
   const desired = moving >= 0.08 ? Math.atan2(-dx, -dz) : player.facing;
   const angle = Math.atan2(Math.sin(desired - player.facing), Math.cos(desired - player.facing));
   const initialVy = input.jump && player.grounded ? jumpSpeed : player.vy;
-  const floor = config.ground?.y ?? 0;
-  const y = Math.max(floor, player.y + initialVy * dt - gravity * dt * dt / 2);
-  const grounded = y === floor;
-  const vy = grounded ? 0 : initialVy - gravity * dt;
+  const nextY = player.y + initialVy * dt - gravity * dt * dt / 2;
+  const {y, grounded, blocked} = moveVertically(horizontal, player.y, nextY, obstacles, config);
+  const vy = grounded || blocked ? 0 : initialVy - gravity * dt;
   return {
-    ...horizontal, y, vx, vy, vz, grounded,
+    ...horizontal, y, vx: dx / dt, vy, vz: dz / dt, grounded,
     facing: approach(0, angle, 12 * dt) + player.facing,
     animation: !grounded ? (vy > 0 ? 'jump' : 'fall') : moving < 0.08 ? 'idle' : moving > walk + 0.2 ? 'run' : 'walk'
   };

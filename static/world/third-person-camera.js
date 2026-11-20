@@ -16,21 +16,25 @@ export function horizontalCameraForward(yaw) {
 }
 
 export function placeCamera(camera, target, orbit, previous, dt, obstacles, floor = 0) {
-  const distance = previous + (orbit.distance - previous) * (1 - Math.exp(-12 * dt));
+  const {distance = orbit.distance, clearance = orbit.distance} = previous;
   const forward = horizontalCameraForward(orbit.yaw);
-  const horizontalDistance = Math.cos(orbit.pitch) * distance;
+  const zoom = distance + (orbit.distance - distance) * (1 - Math.exp(-12 * dt));
+  const horizontalDistance = Math.cos(orbit.pitch) * zoom;
   const offset = {
     x: -forward.x * horizontalDistance,
-    y: Math.sin(orbit.pitch) * distance,
+    y: Math.sin(orbit.pitch) * zoom,
     z: -forward.z * horizontalDistance
   };
   const fraction = Math.min(cameraFraction(target, offset, obstacles),
     offset.y < 0 ? (target.y - floor - 0.24) / -offset.y : 1);
-  const usable = Math.max(0.015, fraction);
+  // Pull in immediately to avoid clipping, then ease back once the wall clears.
+  const limit = zoom * Math.max(0, fraction);
+  const actual = Math.min(limit, clearance + (limit - clearance) * (1 - Math.exp(-9 * dt)));
+  const usable = Math.max(0.00001, actual / zoom);
   camera.position.set(target.x + offset.x * usable, target.y + offset.y * usable, target.z + offset.z * usable);
   camera.lookAt(target.x, target.y, target.z);
   camera.updateMatrixWorld();
-  return distance;
+  return {distance: zoom, clearance: actual, obstructed: fraction < 1};
 }
 
 export function bindOrbit(canvas, update, select, signal) {

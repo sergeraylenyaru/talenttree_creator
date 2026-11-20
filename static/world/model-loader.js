@@ -1,4 +1,4 @@
-import {Box3, Group, LoadingManager, MathUtils} from 'three';
+import {Box3, Group, LoadingManager, MathUtils, Vector3} from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {assetDirectories, assetRoot, validateManifest} from './asset-manifest.js';
 
@@ -38,6 +38,22 @@ export function localAssetURL(value, origin) {
   return url.href;
 }
 
+export function renderedModelBounds(root) {
+  const bounds = new Box3();
+  const vertex = new Vector3();
+  root.updateMatrixWorld(true);
+  root.traverseVisible(mesh => {
+    if (!mesh.isMesh) return;
+    const {index, attributes, drawRange} = mesh.geometry;
+    const end = Math.min(index?.count ?? attributes.position.count, drawRange.start + drawRange.count);
+    for (let i = drawRange.start; i < end; i++) {
+      const vertexIndex = index ? index.getX(i) : i;
+      bounds.expandByPoint(mesh.getVertexPosition(vertexIndex, vertex).applyMatrix4(mesh.matrixWorld));
+    }
+  });
+  return bounds;
+}
+
 export function orientAndGroundModel(root, {scale, rotation, heightOffset}) {
   const orientation = new Group();
   orientation.scale.setScalar(scale);
@@ -45,7 +61,7 @@ export function orientAndGroundModel(root, {scale, rotation, heightOffset}) {
   orientation.add(root);
   // Refresh bone transforms and the attached skin's inverse bind transform before sampling vertices.
   orientation.updateMatrixWorld(true);
-  const bounds = new Box3().setFromObject(orientation, true);
+  const bounds = renderedModelBounds(orientation);
   if (bounds.isEmpty() || !bounds.min.toArray().every(Number.isFinite) || !bounds.max.toArray().every(Number.isFinite)) {
     throw Error('Cannot align character to ground: model bounds are empty or non-finite');
   }
@@ -128,8 +144,29 @@ export async function loadLocalModel(manifest, signal, progress) {
   return {root: gltf.scene, clips: gltf.animations, mapping: manifest.animations};
 }
 
+export function mountRigidAttachments(root, attachments = []) {
+  if (!attachments.length) return;
+  const namedMeshes = new Map();
+  root.traverse(node => {
+    if (node.isMesh && !node.isSkinnedMesh && !node.children.length) {
+      namedMeshes.set(node.userData.name ?? node.name, node);
+    }
+  });
+  const mounts = attachments.map(({mesh, bone, position}) => {
+    const object = namedMeshes.get(mesh);
+    const joint = root.getObjectByName(bone);
+    if (!object || !joint?.isBone) throw Error('Invalid rigid attachment: ' + mesh + ' → ' + bone);
+    return {object, joint, position};
+  });
+  for (const {object, joint, position} of mounts) {
+    joint.add(object);
+    object.position.fromArray(position);
+  }
+}
+
 export function groundLocalModel(asset, manifest) {
   try {
+    mountRigidAttachments(asset.root, manifest.rigidAttachments);
     return {...asset, visual: orientAndGroundModel(asset.root, manifest)};
   } catch (error) {
     disposeObjects(asset.root);

@@ -6,7 +6,7 @@ export function box(x, z, width, depth, height) {
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
 export function moveOnGround(player, dx, dz, obstacles, config) {
-  const {playerRadius: radius, halfSize} = config;
+  const {playerRadius: radius, playerHeight = 2.1, halfSize} = config;
   const limit = halfSize - radius;
   const position = {x: player.x, z: player.z};
   for (const [axis, other, min, max, otherMin, otherMax, delta] of [
@@ -18,6 +18,7 @@ export function moveOnGround(player, dx, dz, obstacles, config) {
     let end = region ? clamp(start + delta, region[min] + radius, region[max] - radius)
       : clamp(start + delta, -limit, limit);
     for (const obstacle of obstacles) {
+      if (player.y >= obstacle.maxY || player.y + playerHeight <= obstacle.minY) continue;
       if (position[other] <= obstacle[otherMin] - radius || position[other] >= obstacle[otherMax] + radius) continue;
       const lower = obstacle[min] - radius;
       const upper = obstacle[max] + radius;
@@ -27,6 +28,26 @@ export function moveOnGround(player, dx, dz, obstacles, config) {
     position[axis] = end;
   }
   return position;
+}
+
+export function moveVertically(position, start, end, obstacles, config) {
+  const {playerRadius: radius, playerHeight = 2.1} = config;
+  const descending = end <= start;
+  const floor = config.ground?.y ?? 0;
+  let y = Math.max(floor, end);
+  let grounded = descending && end <= floor;
+  for (const box of obstacles) {
+    if (position.x <= box.minX - radius || position.x >= box.maxX + radius ||
+        position.z <= box.minZ - radius || position.z >= box.maxZ + radius) continue;
+    const ceiling = box.minY - playerHeight;
+    if (descending && start >= box.maxY && y <= box.maxY) {
+      y = box.maxY;
+      grounded = true;
+    } else if (!descending && start <= ceiling && y > ceiling) {
+      y = ceiling;
+    }
+  }
+  return {y, grounded, blocked: y !== end};
 }
 
 export function cameraFraction(origin, offset, obstacles, padding = 0.18) {

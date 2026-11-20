@@ -1,0 +1,191 @@
+{
+  "model": "character/hero.glb",
+  "scale": 1,
+  "rotation": 90,
+  "heightOffset": 0,
+  "animations": {
+    "idle": "Stand (ID 0 variation 0)",
+    "walk": "Walk (ID 4 variation 0)",
+    "run": "Run (ID 5 variation 0)",
+    "jump": "Jump (ID 38 variation 0)",
+    "fall": "Fall (ID 40 variation 0)",
+    "meleeAttack": "Attack1H (ID 17 variation 0)",
+    "rangedAttack": "AttackBow (ID 46 variation 0)",
+    "spellCast": "SpellCastDirected (ID 53 variation 0)",
+    "hitReaction": "CombatWound (ID 9 variation 0)",
+    "attacks": [
+      "AttackUnarmed (ID 16 variation 0)",
+      "Attack1H (ID 17 variation 0)",
+      "Attack2H (ID 18 variation 0)"
+    ]
+  },
+  "debug": false,
+  "environment": {
+    "model": "world/guildhouseb.glb",
+    "ground": {
+      "minX": -32,
+      "maxX": -16,
+      "minZ": -30.7,
+      "maxZ": -9.2,
+      "y": -0.0545
+    },
+    "walls": [
+      {
+        "minX": -33.1,
+        "maxX": -30.9,
+        "minZ": -31.3,
+        "maxZ": -27.1,
+        "minY": -0.0545,
+        "maxY": 5.9
+      },
+      {
+        "minX": -32.4,
+        "maxX": -31.25,
+        "minZ": -27.1,
+        "maxZ": -21.15,
+        "minY": -0.0545,
+        "maxY": 5.9
+      },
+      {
+        "minX": -32.9,
+        "maxX": -31.4,
+        "minZ": -20.85,
+        "maxZ": -17.15,
+        "minY": -0.0545,
+        "maxY": 5.9
+      },
+      {
+        "minX": -32.4,
+        "maxX": -28.35,
+        "minZ": -31.25,
+        "maxZ": -30.7,
+        "minY": -0.0545,
+        "maxY": 5.9
+      },
+      {
+        "minX": -28.35,
+        "maxX": -24.3,
+        "minZ": -31.55,
+        "maxZ": -31.0,
+        "minY": -0.0545,
+        "maxY": 5.9
+      },
+      {
+        "minX": -24.3,
+        "maxX": -20.2,
+        "minZ": -31.9,
+        "maxZ": -31.3,
+        "minY": -0.0545,
+        "maxY": 5.9
+      },
+      {
+        "minX": -20.2,
+        "maxX": -17.65,
+        "minZ": -32.15,
+        "maxZ": -31.6,
+        "minY": -0.0545,
+        "maxY": 5.9
+      },
+      {
+        "minX": -18.35,
+        "maxX": -17.4,
+        "minZ": -32.0,
+        "maxZ": -30.05,
+        "minY": -0.0545,
+        "maxY": 5.9
+      },
+      {
+        "minX": -16.55,
+        "maxX": -15.8,
+        "minZ": -16.95,
+        "maxZ": -14.2,
+        "minY": -0.0545,
+        "maxY": 5.9
+      },
+      {
+        "minX": -32.25,
+        "maxX": -31.55,
+        "minZ": -17.15,
+        "maxZ": -14.85,
+        "minY": -0.0545,
+        "maxY": 5.9
+      },
+      {
+        "minX": -15.6,
+        "maxX": -14.35,
+        "minZ": -14.2,
+        "maxZ": -9,
+        "minY": -0.0545,
+        "maxY": 5.9
+      },
+      {
+        "minX": -28.525,
+        "maxX": -25.529,
+        "minZ": -19.416,
+        "maxZ": -15.151,
+        "minY": -0.0545,
+        "maxY": 0.996
+      },
+      {
+        "minX": -32.5,
+        "maxX": -16,
+        "minZ": -31.8,
+        "maxZ": -9,
+        "minY": 5.95,
+        "maxY": 6.3
+      }
+    ]
+  },
+  "playerSpawn": {
+    "x": -25,
+    "z": -22
+  },
+  "target": {
+    "model": "targets/Training-dummy.glb",
+    "position": {
+      "x": -25,
+      "z": -25
+    },
+    "animations": {
+      "criticalHit": "CombatWound (ID 9 variation 1)"
+    }
+  },
+  "weapons": {
+    "mainHand": {
+      "model": "weapons/sword-one-hand.glb",
+      "attachmentBone": "bone_HandR",
+      "position": [
+        0.012,
+        -0.151,
+        0.063
+      ],
+      "rotation": [
+        0,
+        4.4,
+        11.4
+      ],
+      "scale": 1,
+      "gripClip": "Attack1H (ID 17 variation 0)"
+    }
+  },
+  "rigidAttachments": [
+    {
+      "mesh": "Shoulder (L)_Item12428_0",
+      "bone": "bone_ShoulderL",
+      "position": [
+        -0.07752,
+        -0.04209,
+        -0.21543
+      ]
+    },
+    {
+      "mesh": "Shoulder (R)_Item12428_0",
+      "bone": "bone_ShoulderR",
+      "position": [
+        -0.07752,
+        -0.04209,
+        0.21543
+      ]
+    }
+  ]
+}

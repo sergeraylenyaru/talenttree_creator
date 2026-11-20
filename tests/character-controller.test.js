@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {bindMovement, createCharacter, stepCharacter} from '../static/world/character-controller.js';
 import {box, cameraFraction} from '../static/world/collision-system.js';
-import {orbitInput} from '../static/world/third-person-camera.js';
+import {orbitInput, placeCamera} from '../static/world/third-person-camera.js';
 import {world} from '../static/world/world-config.js';
 
 const walk = {forward: 1, side: 0};
@@ -82,4 +82,44 @@ test('movement clears on blur and disposal removes handlers when the canvas is r
   assert.equal(readAgain().jump, true);
   assert.equal(readAgain().jump, false);
   second.abort();
+});
+
+test('jumping clears low obstacles but respects ceilings and lands on raised surfaces', () => {
+  const step = box(0, 4, 2, 0.4, 0.55);
+  const jumping = simulate({...walk, jump: true}, 1, {obstacles: [step]});
+  assert.ok(jumping.z < step.minZ - world.playerRadius);
+  const underRoof = {...box(0, 6, 2, 2, 4), minY: 2.4};
+  const bumped = simulate({forward: 0, side: 0, jump: true}, 0.1, {dt: 0.1, obstacles: [underRoof]});
+  assert.equal(bumped.y, underRoof.minY - world.playerHeight);
+  assert.ok(bumped.vy <= 0);
+  const airborne = {...createCharacter(world), y: 1, vy: -3, grounded: false};
+  const platform = box(0, 6, 2, 2, 0.75);
+  const landed = stepCharacter(airborne, {side: 0, forward: 0}, 0, 0.1, world, [platform]);
+  assert.equal(landed.y, platform.maxY);
+  assert.equal(landed.grounded, true);
+});
+
+test('separate wall volumes leave a doorway and the player slides along the jamb', () => {
+  const walls = [box(-2, 4, 2, 0.4, 3), box(2, 4, 2, 0.4, 3)];
+  assert.ok(simulate(walk, 1.2, {obstacles: walls}).z < 3.8);
+  let player = {...createCharacter(world), x: -1.7};
+  const blocked = 4.2 + world.playerRadius;
+  for (let i = 0; i < 120; i++) player = stepCharacter(player, walk, 0, world.step, world, walls);
+  assert.ok(Math.abs(player.z - blocked) < 1e-8);
+  for (let i = 0; i < 160; i++) {
+    player = stepCharacter(player, {...walk, side: 1}, 0, world.step, world, walls);
+  }
+  assert.ok(player.z < 3.8);
+});
+
+test('camera retracts at once and eases out after a wall clears', () => {
+  const camera = {position: {set() {}}, lookAt() {}, updateMatrixWorld() {}};
+  const target = {x: 0, y: 1, z: 0};
+  const orbit = {yaw: 0, pitch: 0, distance: 5};
+  const blocked = placeCamera(camera, target, orbit, {distance: 5, clearance: 5}, 1 / 60, [box(0, 3, 2, 1, 3)]);
+  assert.equal(blocked.obstructed, true);
+  assert.ok(blocked.clearance < 2.5);
+  const clear = placeCamera(camera, target, orbit, blocked, 1 / 60, []);
+  assert.equal(clear.obstructed, false);
+  assert.ok(clear.clearance > blocked.clearance && clear.clearance < 5);
 });

@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {Bone, Group} from 'three';
+import {AnimationClip, Bone, BufferGeometry, Float32BufferAttribute, Group, Mesh, QuaternionKeyframeTrack} from 'three';
 import {validateManifest} from '../static/world/asset-manifest.js';
 import {attachWeapon, applyWeaponTransform, safeArenaPositions} from '../static/world/local-arena.js';
-import {localAssetURL} from '../static/world/model-loader.js';
+import {localAssetURL, mountRigidAttachments, renderedModelBounds} from '../static/world/model-loader.js';
 import {createCharacter, stepCharacter} from '../static/world/character-controller.js';
 import {world} from '../static/world/world-config.js';
 
@@ -69,4 +69,56 @@ test('weapon follows the preferred or fallback bone with local calibration', () 
     assert.equal(attachment.mount.rotation.x, Math.PI / 2);
     assert.equal(attachment.mount.scale.x, 2);
   }
+});
+
+test('optional sword grip samples only the right fingers from the exported clip', () => {
+  const root = new Group();
+  const hand = new Bone();
+  hand.name = 'bone_HandR';
+  const finger = new Bone();
+  finger.name = 'bone_IndexFingerR';
+  root.add(hand);
+  hand.add(finger);
+  const values = [0.5, 0.5, 0.5, 0.5];
+  const clips = [new AnimationClip('swing', 1, [
+    new QuaternionKeyframeTrack('bone_HandR.quaternion', [0], [0, 0, 0, 1]),
+    new QuaternionKeyframeTrack('bone_IndexFingerR.quaternion', [0], values)
+  ])];
+  const settings = validateManifest({...configuration, weapons: {mainHand: {
+    ...configuration.weapons.mainHand, attachmentBone: 'bone_HandR', gripClip: 'swing'
+  }}}).weapons.mainHand;
+  const attachment = attachWeapon({root, clips}, {root: new Group()}, settings);
+  assert.equal(attachment.grip.length, 1);
+  assert.equal(attachment.grip[0].finger, finger);
+  assert.deepEqual([...attachment.grip[0].rotation], values);
+  assert.throws(() => attachWeapon({root, clips}, {root: new Group()}, {...settings, gripClip: 'missing'}), /finger rotations/);
+});
+
+
+test('rigid armor uses the original glTF mesh name and moves with its configured joint', () => {
+  const root = new Group();
+  const shoulder = new Bone();
+  shoulder.name = 'bone_ShoulderL';
+  shoulder.position.y = 1.6;
+  const plate = new Mesh();
+  plate.name = 'Shoulder_(L)_Armor';
+  plate.userData.name = 'Shoulder (L) Armor';
+  root.add(shoulder, plate);
+  const {rigidAttachments} = validateManifest({...configuration, rigidAttachments: [
+    {mesh: plate.userData.name, bone: shoulder.name, position: [0, 0.1, -0.2]}
+  ]});
+  mountRigidAttachments(root, rigidAttachments);
+  assert.equal(plate.parent, shoulder);
+  assert.deepEqual(plate.position.toArray(), [0, 0.1, -0.2]);
+  assert.throws(() => mountRigidAttachments(root, [{...rigidAttachments[0], bone: 'missing'}]), /Invalid rigid attachment/);
+});
+
+test('grounding ignores unreferenced vertices in shared export buffers', () => {
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', new Float32BufferAttribute([0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -10, 0], 3));
+  geometry.setIndex([0, 1, 2]);
+  const mesh = new Mesh(geometry);
+  assert.equal(renderedModelBounds(mesh).min.y, 0);
+  geometry.dispose();
+  mesh.material.dispose();
 });

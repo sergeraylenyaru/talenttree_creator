@@ -102,9 +102,8 @@ export function assetPanel(stage, controller) {
       if (state === 'error') panel.open = true;
       if (state === 'ready') showDetails();
       if (role === 'weapon' && state === 'ready') {
-        const report = controller()?.assetReport();
-        if (!report?.manifest?.debug) return;
-        const info = report.assets.weapon;
+        const info = controller()?.assetReport().assets.weapon;
+        if (!info) return;
         original = structuredClone(info.transform);
         setFields(original);
         calibration.querySelector('[data-bone]').textContent = info.bone;

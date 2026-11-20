@@ -15,7 +15,11 @@ addTranslations([
   ['3D недоступна. Открыт боевой стенд.', '3D is unavailable. Combat view is active.'],
   ['Собери модуль командой npm run build:world.', 'Build the module with npm run build:world.'],
   ['Манекен выбран', 'Dummy selected'], ['Манекен повержен', 'Dummy defeated'],
-  ['Восстановить манекен', 'Reset dummy']
+  ['Восстановить манекен', 'Reset dummy'], ['Отладка сцены', 'Scene debug'],
+  ['Позиция', 'Position'], ['Поворот', 'Rotation'], ['Анимация', 'Animation'], ['Кость', 'Bone'],
+  ['Смещение', 'Offset'], ['Масштаб', 'Scale'], ['Высота пола', 'Ground height'],
+  ['Коллизии', 'Collision volumes'], ['Камера', 'Camera'], ['Преграда', 'Obstructed'],
+  ['Свободно', 'Clear'], ['До манекена', 'Dummy distance']
 ]);
 
 const qualityKey = 'talentforge-world-quality';
@@ -27,6 +31,7 @@ export function mountTrainingWorld(dialog, actions) {
   toolbar.innerHTML = `<button type="button" class="tg-world-toggle" aria-pressed="false">3D-сцена</button>
     <label class="tg-quality" hidden>Качество графики <select><option value="low">Низкое</option><option value="high">Высокое</option></select></label>
     <button type="button" class="tg-target-reset" hidden>Восстановить манекен</button>
+    <label class="tg-world-debug-control" hidden><input type="checkbox"> Отладка сцены</label>
     <span class="tg-world-status muted" role="status"></span>`;
   const stage = document.createElement('div');
   stage.className = 'tg-world-stage';
@@ -34,6 +39,7 @@ export function mountTrainingWorld(dialog, actions) {
   stage.innerHTML = `<div class="tg-world-frame">
     <button class="tg-world-target" type="button" hidden>Манекен</button>
     <span class="tg-world-model">Учебный персонаж</span>
+    <pre class="tg-world-debug" hidden></pre>
   </div>
   <p class="tg-world-keys muted">WASD — движение · Shift — бег · Пробел — прыжок<br>
     Перетаскивание — камера · Колесо — масштаб · Клик — выбор цели</p>
@@ -48,6 +54,38 @@ export function mountTrainingWorld(dialog, actions) {
   const frame = stage.querySelector('.tg-world-frame');
   const marker = stage.querySelector('.tg-world-target');
   const model = stage.querySelector('.tg-world-model');
+  const debug = toolbar.querySelector('.tg-world-debug-control input');
+  const overlay = stage.querySelector('.tg-world-debug');
+  let debugRefresh = 0;
+  debug.onchange = () => {
+    controller?.setDebug(debug.checked);
+    overlay.hidden = !debug.checked;
+    debugRefresh = 0;
+  };
+
+  function updateDebug(now) {
+    if (!debug.checked || now < debugRefresh) return;
+    debugRefresh = now + 100;
+    const state = controller.debugState();
+    const format = value => value.toFixed(2);
+    const vector = values => values.map(format).join(', ');
+    const {weapon} = state;
+    overlay.textContent = [
+      t('Позиция') + ' · ' + vector(state.position),
+      t('Поворот') + ' · ' + format(state.rotation) + '°',
+      t('Анимация') + ' · ' + state.animation,
+      ...(weapon ? [
+        t('Кость') + ' · ' + weapon.bone,
+        t('Смещение') + ' · ' + vector(weapon.position),
+        t('Поворот') + ' · ' + vector(weapon.rotation) + '°',
+        t('Масштаб') + ' · ' + format(weapon.scale)
+      ] : []),
+      t('Высота пола') + ' · ' + format(state.ground),
+      t('Коллизии') + ' · ' + state.volumes,
+      t('Камера') + ' · ' + t(state.obstructed ? 'Преграда' : 'Свободно'),
+      t('До манекена') + ' · ' + format(state.dummyDistance)
+    ].join('\n');
+  }
   const floats = arena.querySelector('#tg-floats');
   const originalFloatParent = floats.parentElement;
   const dummyVital = arena.querySelector('#tg-label-dummy').closest('.tg-vital');
@@ -75,6 +113,9 @@ export function mountTrainingWorld(dialog, actions) {
     marker.removeAttribute('aria-pressed');
     quality.parentElement.hidden = true;
     reset.hidden = true;
+    debug.parentElement.hidden = true;
+    debug.checked = false;
+    debug.onchange();
     toggle.disabled = false;
     toggle.setAttribute('aria-pressed', 'false');
     toggle.textContent = '3D-сцена';
@@ -102,6 +143,7 @@ export function mountTrainingWorld(dialog, actions) {
     try {
       controller = module.createWorld(canvas, {
         asset(role, state, detail) { assets.update(role, state, detail); },
+        debugDefault(enabled) { debug.checked = enabled; debug.onchange(); },
         targetAlive: () => actions.state().dummy.health > 0,
         marker({x, y, visible}) {
           marker.hidden = !visible;
@@ -133,6 +175,7 @@ export function mountTrainingWorld(dialog, actions) {
       stage.hidden = false;
       quality.parentElement.hidden = false;
       reset.hidden = false;
+      debug.parentElement.hidden = false;
       updateCombat(actions.state());
       toggle.disabled = false;
       toggle.setAttribute('aria-pressed', 'true');
@@ -179,7 +222,10 @@ export function mountTrainingWorld(dialog, actions) {
     hit(critical) { controller?.combatHit(critical); },
     update(now) {
       if (!controller) return;
-      try { controller.update(now); }
+      try {
+        controller.update(now);
+        if (controller) updateDebug(now);
+      }
       catch {
         switchToCombat();
         status.textContent = '3D недоступна. Открыт боевой стенд.';

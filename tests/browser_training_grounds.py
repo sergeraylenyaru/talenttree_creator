@@ -49,7 +49,7 @@ with temporary_database() as tmp, sync_playwright() as playwright:
         expect(arena.locator('#tg-title')).to_have_text('Training Grounds')
         expect(arena.locator('.tg-build strong')).to_have_text('Training Mage')
         expect(arena.locator('.tg-ability strong')).to_have_text(['Flame', 'Renewal'])
-        expect(arena.locator('.tg-main details')).to_contain_text('Passive abilities')
+        expect(arena.locator('.tg-main details').filter(has_text='Passive abilities')).to_contain_text('Passive abilities')
 
         def meter(name, value):
             expect(arena.locator(f'meter[aria-labelledby="tg-label-{name}"]')).to_have_attribute('value', str(value))

@@ -26,6 +26,17 @@ export function validateManifest(value) {
   }
   if (!Object.hasOwn(mapping, 'meleeAttack') && attacks.length) mapping.meleeAttack = attacks[0];
   const result = {model, scale, rotation, heightOffset, animations: {...mapping, attacks: [...attacks]}};
+  if (value.rigidAttachments !== undefined) {
+    const entries = value.rigidAttachments;
+    if (!Array.isArray(entries) || entries.length > 32) throw Error('Invalid rigid attachments');
+    result.rigidAttachments = entries.map(entry => {
+      const {mesh, bone, position} = object(entry);
+      return {mesh: name(mesh), bone: name(bone), position: triple(position)};
+    });
+    if (new Set(result.rigidAttachments.map(entry => entry.mesh)).size !== entries.length) {
+      throw Error('A rigid mesh can only have one attachment');
+    }
+  }
   if (value.environment !== undefined) {
     const asset = transform(value.environment, 'world');
     const {ground, walls = []} = value.environment;
@@ -53,9 +64,10 @@ export function validateManifest(value) {
       object(weapon);
       validateAssetPath(weapon.model, 'weapons');
       if (weapon.enabled !== undefined && typeof weapon.enabled !== 'boolean') throw Error('Invalid weapon enabled flag');
+      const grip = weapon.gripClip === undefined ? {} : {gripClip: name(weapon.gripClip)};
       result.weapons = {mainHand: {model: weapon.model, enabled: weapon.enabled ?? true,
         attachmentBone: name(weapon.attachmentBone ?? 'bone_WeaponR'), scale: scaleValue(weapon.scale),
-        position: triple(weapon.position), rotation: triple(weapon.rotation)}};
+        position: triple(weapon.position), rotation: triple(weapon.rotation), ...grip}};
     }
   }
   if (value.playerSpawn !== undefined) result.playerSpawn = point(value.playerSpawn);

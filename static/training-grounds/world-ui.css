@@ -37,3 +37,17 @@
 .tg-asset-panel ul { margin: 6px 0; padding-left: 18px; font-size: 12px; overflow-wrap: anywhere; }
 .tg-asset-panel fieldset { min-width: 0; margin-top: 8px; }
 .tg-asset-panel pre { max-height: 240px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tg-world-debug {
+  position: absolute;
+  inset: 2.25rem auto auto .5rem;
+  z-index: 2;
+  margin: 0;
+  padding: .45rem .6rem;
+  max-width: calc(100% - 1rem);
+  overflow: hidden;
+  color: #fff;
+  background: rgb(5 10 16 / 86%);
+  border-radius: .25rem;
+  font: .72rem/1.35 monospace;
+  pointer-events: none;
+}

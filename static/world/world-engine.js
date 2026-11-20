@@ -2,10 +2,11 @@ import {loadArenaAssets} from './arena-loader.js';
 import {applyWeaponTransform, attachWeapon, boundsOf, debugArena, safeArenaPositions} from './local-arena.js';
 import {createSpatialCombat, facingTarget, spatialDefaults} from './combat/spatial-combat.js';
 import {createCombatVisuals} from './combat/combat-visuals.js';
-import {ArrowHelper, Box3, Group, MathUtils, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer} from 'three';
+import {ArrowHelper, Group, MathUtils, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer} from 'three';
 import {animateCharacter} from './animation-controller.js';
+import {cameraFraction} from './collision-system.js';
 import {bindMovement, createCharacter, stepCharacter} from './character-controller.js';
-import {disposeObjects} from './model-loader.js';
+import {disposeObjects, renderedModelBounds} from './model-loader.js';
 import {bindOrbit, orbitInput, placeCamera} from './third-person-camera.js';
 import {qualities, world} from './world-config.js';
 import {createArena, createPlaceholder} from './world-scene.js';
@@ -31,7 +32,13 @@ export function createWorld(canvas, callbacks, config = world) {
   let strafeFacing;
   let orbit = {yaw: 0, pitch: 0.29, distance: config.camera.distance};
   let view = {...orbit};
-  let distance = view.distance;
+  let cameraState = {distance: view.distance, clearance: view.distance, obstructed: false};
+  let debug = false;
+  let debugGeometry;
+  let debugArrow;
+  const focus = new Vector3();
+  const lag = new Vector3();
+  const mountPoint = new Vector3();
   let elapsed = 0;
   let lastTime = null;
   let queuedJump = false;
@@ -71,7 +78,10 @@ export function createWorld(canvas, callbacks, config = world) {
     target: () => selected ? dummyTarget : null,
     obstacles: sightObstacles,
     face(position) { facing = facingTarget(player, position); player.facing = facing; },
-    animate(name, until) { pose = {name, until}; },
+    animate(name, until) {
+      const minimum = name === 'meleeAttack' ? combatConfig.windup + 0.18 : 0.18;
+      pose = {name, until, minimum, elapsed: 0, pending: true};
+    },
     visuals,
     config: combatConfig
   });
@@ -145,6 +155,24 @@ export function createWorld(canvas, callbacks, config = world) {
       return true;
     },
     assetReport() { return {assets: diagnostics, manifest}; },
+    setDebug(enabled) {
+      debug = enabled;
+      if (debugGeometry) debugGeometry.visible = enabled;
+      if (debugArrow) debugArrow.visible = enabled;
+    },
+    debugState() {
+      return {
+        position: [player.x, player.y, player.z],
+        rotation: player.facing * 180 / Math.PI,
+        animation: animation.activeClip ?? player.animation,
+        weapon: weapon && {bone: weapon.bone, position: weapon.mount.position.toArray(),
+          rotation: diagnostics.weapon.transform.rotation, scale: diagnostics.weapon.transform.scale},
+        ground: motionConfig.ground?.y ?? 0,
+        volumes: obstacles.length,
+        obstructed: cameraState.obstructed,
+        dummyDistance: Math.hypot(player.x - dummy.position.x, player.z - dummy.position.z)
+      };
+    },
     clearPose() { pose = undefined; },
     clearCombat() {
       combat.clear();
@@ -171,7 +199,12 @@ export function createWorld(canvas, callbacks, config = world) {
         elapsed -= config.step;
       }
       avatar.position.set(player.x, player.y, player.z);
-      if (pose && combatTime >= pose.until) pose = undefined;
+      // The combat clock can advance across a delayed render. Give its pose
+      // enough rendered time to be seen without delaying the combat result.
+      if (pose && !pose.pending) {
+        pose.elapsed += dt;
+        if (combatTime >= pose.until && pose.elapsed >= pose.minimum) pose = undefined;
+      }
       const lateral = player.grounded && player.animation !== 'idle'
         ? input.forward < 0 ? (input.sprint ? 'runBack' : 'walkBack')
           : !input.forward && input.side ? (input.side < 0 ? 'strafeLeft' : 'strafeRight') : null
@@ -187,9 +220,14 @@ export function createWorld(canvas, callbacks, config = world) {
       if (pose) player.facing = facing;
       avatar.rotation.y = player.facing;
       const clip = pose && animation.supports(pose.name);
-      animation.update(clip ? pose.name : directionalClip ? lateral : player.animation, dt);
+      const swingDuration = pose?.name === 'meleeAttack' ? pose.minimum : undefined;
+      animation.update(clip ? pose.name : directionalClip ? lateral : player.animation, dt,
+        Boolean(clip && pose.pending), swingDuration);
+      if (weapon) for (const {finger, rotation} of weapon.grip) finger.quaternion.fromArray(rotation);
+      if (pose) pose.pending = false;
       // Root tilt is a rig-independent fallback for models without attack clips.
-      const progress = pose ? Math.max(0, Math.min(1, (pose.until - combatTime) / 0.48)) : 0;
+      const remaining = pose ? Math.max(pose.until - combatTime, pose.minimum - pose.elapsed) : 0;
+      const progress = Math.max(0, Math.min(1, remaining / 0.48));
       visualPivot.rotation.x = pose && !clip ? -Math.sin(progress * Math.PI) * 0.25 : 0;
       visuals.update(dt);
       if (reaction && (reactionTime -= dt) <= 0) reaction = undefined;
@@ -207,16 +245,26 @@ export function createWorld(canvas, callbacks, config = world) {
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
       }
-      distance = placeCamera(camera, target, view, distance, dt, obstacles, motionConfig.ground?.y);
+      // Limit follow lag to the player's side of any wall crossed by the focus.
+      focus.set(player.x, player.y + 1.38, player.z);
+      lag.set(target.x - focus.x, target.y - focus.y, target.z - focus.z);
+      focus.addScaledVector(lag, cameraFraction(focus, lag, sightObstacles, 0.18));
+      cameraState = placeCamera(camera, focus, view, cameraState, dt, obstacles, motionConfig.ground?.y);
+      // In a tight obstruction the camera can be inside the avatar.
+      visualPivot.visible = cameraState.clearance >= (config.camera.hideAvatarDistance ?? world.camera.hideAvatarDistance);
       renderer.render(scene, camera);
       projectDummy();
     },
     snapshot() {
       avatar.updateMatrixWorld(true);
-      const visualMinY = new Box3().setFromObject(visualPivot, true).min.y;
+      const visualMinY = renderedModelBounds(model.visual ?? model.root).min.y;
       const direction = camera.getWorldDirection(new Vector3());
       return {attacks: combat.snapshot(), player: {...player}, orbit: {...orbit}, selected, model: modelKind,
         visualMinY, targetClip: dummyAnimation?.activeClip, assets: Object.keys(diagnostics), activeClip: animation.activeClip, cameraForward: {x: direction.x, z: direction.z},
+        camera: {...cameraState, position: camera.position.toArray(), avatarVisible: visualPivot.visible},
+        dummy: dummy.position.toArray(),
+        weaponPosition: weapon?.mount.getWorldPosition(mountPoint).toArray(),
+        weaponGripError: weapon && weapon.mount.parent.worldToLocal(mountPoint).distanceTo(weapon.mount.position),
         geometries: renderer.info.memory.geometries, draws: renderer.info.render.calls};
     },
     dispose() {
@@ -247,7 +295,10 @@ export function createWorld(canvas, callbacks, config = world) {
   }
 
   loadArenaAssets(signal, {
-    manifest(value) { manifest = value; },
+    manifest(value) {
+      manifest = value;
+      callbacks.debugDefault?.(Boolean(value.debug));
+    },
     environment(asset, settings, info) {
       const visual = new Group();
       visual.add(asset.root);
@@ -260,18 +311,18 @@ export function createWorld(canvas, callbacks, config = world) {
           ground.maxZ > bounds.max.z || ground.y < bounds.min.y - 0.05 || ground.y > bounds.max.y + 0.05) {
         throw Error('Configured floor is outside the transformed environment bounds');
       }
-      const spawn = safeArenaPositions(ground, settings.walls, manifest.playerSpawn, manifest.target?.position, config.playerRadius);
+      const spawn = safeArenaPositions(ground, settings.walls, manifest.playerSpawn, manifest.target?.position, config.playerRadius, config.playerHeight);
       positionArena(spawn, ground, settings.walls);
       scene.add(visual);
       fallback.visible = false;
       diagnostics.environment = {...info, bounds: {min: bounds.min.toArray(), max: bounds.max.toArray()},
         groundStatus: 'explicit collision proxy', spawn};
-      if (manifest.debug) {
-        scene.add(debugArena(bounds, ground, settings.walls, spawn));
-        const arrow = new ArrowHelper(new Vector3(0, 0, -1), new Vector3(0, 0.15, 0), 1.5, 0x00ffff);
-        arrow.traverse(node => { node.raycast = () => {}; });
-        avatar.add(arrow);
-      }
+      debugGeometry = debugArena(bounds, ground, [...settings.walls, spawn.collider], spawn);
+      debugArrow = new ArrowHelper(new Vector3(0, 0, -1), new Vector3(0, 0.15, 0), 1.5, 0x00ffff);
+      debugArrow.traverse(node => { node.raycast = () => {}; });
+      scene.add(debugGeometry);
+      avatar.add(debugArrow);
+      controller.setDebug(debug);
     },
     hero(imported, settings, info) {
       animation.dispose();
