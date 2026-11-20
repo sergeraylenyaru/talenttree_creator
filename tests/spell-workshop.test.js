@@ -146,3 +146,10 @@ test('player-centered cones honor real facing instead of turning to the dummy',(
   runtime.cast(cone.id,world.delivery);
   assert.equal(runtime.state.statistics.totalDamage,50);
 });
+
+test('configured base damage rolls within bounds before the existing scaling and mitigation',()=>{
+  const spell=ability('Roll',[effect({baseAmount:80,minAmount:60,maxAmount:100,attackCoefficient:.2})]);
+  const runtime=make([spell],{random:()=>.5});
+  runtime.cast(spell.id);
+  assert.equal(runtime.state.statistics.totalDamage,100);
+});

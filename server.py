@@ -224,8 +224,11 @@ def validate_combat_effects(ability):
         if kind in ('damage', 'healing'):
             fields = {'baseAmount', 'scalingStat', 'coefficient', 'canCrit'} | timing | bonuses
             if kind == 'damage':
-                fields.add('school')
-                if effect.get('school') not in ('physical', 'fire', 'frost', 'arcane', 'nature', 'shadow', 'holy'):
+                fields.update(('school', 'minAmount', 'maxAmount'))
+                lo = effect.get('minAmount', effect.get('baseAmount'))
+                hi = effect.get('maxAmount', effect.get('baseAmount'))
+                if (effect.get('school') not in ('physical', 'fire', 'frost', 'arcane', 'nature', 'shadow', 'holy')
+                        or not bounded(lo, 0, 1e9) or not bounded(hi, lo, 1e9)):
                     invalid()
             if (effect.get('scalingStat') not in ('none', 'spellPower', 'attackPower')
                     or not bounded(effect.get('baseAmount'), 0, 1e9) or not bounded(effect.get('coefficient'), 0, 1000)

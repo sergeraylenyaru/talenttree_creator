@@ -60,10 +60,11 @@ function calculationContext(value) {
   }
   normalized.schoolDamageMultipliers = schoolMap(read(source, 'schoolDamageMultipliers', {}), 'schoolDamageMultipliers', 1);
   const outcome = read(value, 'outcome', {});
-  keys(outcome, ['isCritical'], 'outcome');
+  keys(outcome, ['isCritical','amountRoll'], 'outcome');
   const isCritical = read(outcome, 'isCritical', false);
   if (typeof isCritical !== 'boolean') throw new TypeError('isCritical must be boolean');
-  return {source:normalized, target:targetContext(read(value, 'target', {})), rules:rulesContext(read(value, 'rules', {})), outcome:{isCritical}};
+  const amountRoll = number(read(outcome,'amountRoll',0),'amount roll',0,1);
+  return {source:normalized, target:targetContext(read(value, 'target', {})), rules:rulesContext(read(value, 'rules', {})), outcome:{isCritical,amountRoll}};
 }
 function mitigation(school, target, rules) {
   if (!schools.includes(school)) throw new TypeError('Unsupported damage school');
@@ -97,7 +98,10 @@ function calculate(effect, context, expectedType) {
   const damage = effect.type === 'damage';
   const scalingAmount = number((effect.scalingStat==='none' ? 0 : source[effect.scalingStat])*effect.coefficient +
     source.attackPower*(effect.attackCoefficient ?? 0) + source.spellPower*(effect.spellCoefficient ?? 0), 'scalingAmount');
-  const rawAmount = number(effect.baseAmount+scalingAmount+(effect.flatBonus ?? 0), 'rawAmount');
+  const minimum = effect.minAmount ?? effect.baseAmount;
+  const maximum = effect.maxAmount ?? effect.baseAmount;
+  const rolledAmount = minimum + (maximum - minimum) * outcome.amountRoll;
+  const rawAmount = number(rolledAmount+scalingAmount+(effect.flatBonus ?? 0), 'rawAmount');
   const isCritical = effect.canCrit && outcome.isCritical;
   const multipliers = {
     source:(damage ? source.damageMultiplier : source.healingMultiplier)*(effect.multiplier ?? 1),

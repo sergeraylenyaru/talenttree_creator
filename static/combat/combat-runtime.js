@@ -158,7 +158,8 @@ export function createCombatRuntime(build, options = {}) {
           armor: state.dummy.armor * targetModifier('armor'), resistances: state.dummy.resistances,
           damageTakenMultiplier: state.dummy.damageTakenMultiplier * targetModifier('damageTaken')
         } : {healingTakenMultiplier: settings.healingTakenMultiplier * Math.max(0, 1 + stat('healingTaken'))},
-        outcome: {isCritical: effect.canCrit && rollCritical(source.critChance, random())}
+        outcome: {isCritical: effect.canCrit && rollCritical(source.critChance, random()),
+          ...(effect.minAmount !== undefined || effect.maxAmount !== undefined ? {amountRoll:random()} : {})}
       });
       const finalAmount = result.finalAmount * stacked;
       if (!Number.isSafeInteger(finalAmount)) throw new RangeError('Stacked result exceeds safe integer precision');

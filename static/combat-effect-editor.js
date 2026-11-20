@@ -8,6 +8,7 @@ addTranslations([
   ['Стеки','Max stacks'], ['Обновление','Refresh policy'], ['Обновить время','Refresh duration'],
   ['Сохранить время','Keep duration'], ['Заменить','Replace'], ['Изменение, %','Modifier, %'],
   ['Скорость движения','Movement speed'], ['Получаемый урон','Damage taken'], ['Получаемое лечение','Healing taken'],
+  ['Минимальный базовый урон','Minimum base damage'], ['Максимальный базовый урон','Maximum base damage'],
   ['Периодический эффект','Periodic effect'], ['Плоский бонус','Flat bonus'], ['Множитель эффекта','Effect multiplier'],
   ['Множитель крита','Critical multiplier'], ['Коэффициент силы атаки','Attack Power coefficient'],
   ['Коэффициент силы заклинаний','Spell Power coefficient'], ['Единицы ресурса','Resource units'],
@@ -75,6 +76,8 @@ export function combatEffectEditor(root, ability, resources = []) {
       <label><input type="checkbox" data-periodic ${e.duration?'checked':''}>Периодический эффект</label>` +
       (e.duration ? timing(e) : '') +
       `<details class="workshop-effect-advanced"><summary>Модификаторы</summary><div class="ability-selectors">
+      ${e.type==='damage'?number('minAmount','Минимальный базовый урон',e.minAmount,0,1e9,true)+
+        number('maxAmount','Максимальный базовый урон',e.maxAmount,0,1e9,true):''}
       ${number('flatBonus','Плоский бонус',e.flatBonus,0,1e9,true)}
       ${number('attackCoefficient','Коэффициент силы атаки',e.attackCoefficient,0,1000,true)}
       ${number('spellCoefficient','Коэффициент силы заклинаний',e.spellCoefficient,0,1000,true)}

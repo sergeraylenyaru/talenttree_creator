@@ -20,8 +20,12 @@ export function validateCombatEffects(ability) {
     if (!['onCast', 'onHit'].includes(e.trigger)) invalid();
     let fields;
     if (['damage', 'healing'].includes(e.type)) {
-      fields = [...amounts, ...bonuses, ...timing, ...(e.type === 'damage' ? ['school'] : [])];
-      if (e.type === 'damage' && !combatSchools.includes(e.school)) invalid();
+      fields = [...amounts, ...bonuses, ...timing, ...(e.type === 'damage' ? ['school','minAmount','maxAmount'] : [])];
+      if (e.type === 'damage') {
+        const minimum = Object.hasOwn(e,'minAmount') ? e.minAmount : e.baseAmount;
+        const maximum = Object.hasOwn(e,'maxAmount') ? e.maxAmount : e.baseAmount;
+        if (!combatSchools.includes(e.school) || !bounded(minimum,0,1e9) || !bounded(maximum,minimum,1e9)) invalid();
+      }
       if (!['none', 'spellPower', 'attackPower'].includes(e.scalingStat) || !bounded(e.baseAmount, 0, 1e9) ||
           !bounded(e.coefficient, 0, 1000) || typeof e.canCrit !== 'boolean') invalid();
       for (const key of bonuses) if (Object.hasOwn(e, key) && !bounded(e[key], 0, key === 'flatBonus' ? 1e9 : 1000)) invalid();
