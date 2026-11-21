@@ -1,0 +1,24 @@
+{
+  "name": "TALENTFORGE Painterly Fantasy Icon Pack",
+  "total_icons": 100,
+  "format": "PNG",
+  "icon_size": "256x256",
+  "packs": [
+    {
+      "folder": "01_magic_relics_50",
+      "count": 50,
+      "source": "First uploaded reference sheet",
+      "background": "Original dark illustrated tile with transparency outside the tile"
+    },
+    {
+      "folder": "02_combat_nature_50",
+      "count": 50,
+      "source": "Second uploaded reference sheet",
+      "background": "Original dark illustrated square tile"
+    }
+  ],
+  "sprite_sheets": [
+    "sprite_sheet_magic_relics_50.png",
+    "sprite_sheet_combat_nature_50.png"
+  ]
+}
