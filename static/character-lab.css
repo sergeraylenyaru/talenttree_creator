@@ -39,3 +39,5 @@
 .rpg-notice { font-size:.8rem;color:#e5d0aa; }
 .tg-status-effect[data-target=dummy] { border-color:#bd626d;background:#361e2d; }
 .tg-world-toolbar .tg-rpg-review,.tg-world-toolbar .tg-test-incoming { color:#f0d6ae;pointer-events:auto; }
+
+.wowhead-import{margin:12px 0;padding:12px;border:1px solid #766342}.wowhead-import>input{width:100%;box-sizing:border-box}.wowhead-import summary{cursor:pointer}.wowhead-source pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:280px;overflow:auto}.wowhead-source p,.wowhead-source a{overflow-wrap:anywhere}.wowhead-preview{max-width:100%}

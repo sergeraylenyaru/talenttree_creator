@@ -16,10 +16,10 @@ ATTRIBUTES = PRIMARY + SECONDARY
 SLOTS = ('head', 'shoulders', 'chest', 'wrists', 'hands', 'waist', 'legs', 'feet', 'neck', 'back',
          'ring1', 'ring2', 'trinket1', 'trinket2', 'mainHand', 'offHand', 'ranged')
 ARMOR = ('cloth', 'leather', 'mail', 'plate')
-MELEE = ('sword1', 'sword2', 'axe', 'mace', 'dagger', 'staff', 'wand')
-RANGED = ('bow', 'crossbow', 'wand')
-TWO_HANDED = ('sword2', 'staff')
-TYPES = ARMOR + ('ring', 'necklace', 'trinket', 'cloak') + MELEE + ('bow', 'crossbow', 'shield')
+MELEE = ('sword1', 'sword2', 'axe', 'mace', 'dagger', 'staff', 'wand','axe2','mace2','polearm','fist')
+RANGED = ('bow', 'crossbow', 'wand','gun')
+TWO_HANDED = ('sword2', 'staff','axe2','mace2','polearm')
+TYPES = ARMOR + ('ring', 'necklace', 'trinket', 'cloak') + MELEE + ('bow', 'crossbow', 'gun','shield','holdable')
 MODIFIERS = ('damage', 'healing', 'cooldown', 'cost', 'castTime', 'maxStacks', 'resourceGain', 'duration', 'period', 'procChance')
 PROC_EVENTS = (
     'castStarted', 'castCompleted', 'attackHit', 'projectileHit', 'attackMissed', 'projectileMissed',
@@ -73,7 +73,7 @@ def types_for(slot):
     if slot == 'ranged':
         return RANGED
     if slot == 'offHand':
-        return tuple(kind for kind in MELEE if kind not in TWO_HANDED) + ('shield',)
+        return tuple(kind for kind in MELEE if kind not in TWO_HANDED) + ('shield','holdable')
     if slot == 'neck':
         return ('necklace',)
     if slot == 'back':
@@ -87,14 +87,24 @@ def types_for(slot):
 
 def validate_item(item):
     record(item, ('id', 'name', 'description', 'icon', 'level', 'quality', 'type', 'slot', 'armor',
-                  'minDamage', 'maxDamage', 'speed', 'stats', 'requiredLevel','requiredClass','setId', 'disabled', 'roll'), 'Invalid item fields')
+                  'minDamage', 'maxDamage', 'speed', 'stats', 'requiredLevel','requiredClass','setId', 'disabled', 'roll','allowedSlots','requiredClasses','uniqueGroup','source'), 'Invalid item fields')
     slot, kind = item.get('slot'), item.get('type')
     if (not identifier(item.get('id')) or not text(item.get('name'), 1, 100)
             or not text(item.get('description', ''), 0, 3000) or not identifier(item.get('icon'))
             or slot not in SLOTS or kind not in types_for(slot)
-            or item.get('quality') not in ('common', 'uncommon', 'rare', 'epic', 'legendary')
+            or item.get('quality') not in ('poor','common', 'uncommon', 'rare', 'epic', 'legendary')
             or not integer(item.get('level'), 1, 1000)):
         raise ValueError('Check item identity, slot and quality')
+    if 'allowedSlots' in item:
+        slots=item['allowedSlots']
+        if (not isinstance(slots,list) or not 1<=len(slots)<=2 or any(not isinstance(entry,str) for entry in slots) or len(set(slots))!=len(slots) or slot not in slots or any(entry not in SLOTS or kind not in types_for(entry) for entry in slots)
+                or len(slots)==2 and set(slots) not in ({'mainHand','offHand'},{'ring1','ring2'},{'trinket1','trinket2'})):raise ValueError('Invalid allowed item slots')
+    if 'requiredClasses' in item:
+        classes=item['requiredClasses']
+        if (not isinstance(classes,list) or not 1<=len(classes)<=10 or any(entry not in ('warrior','paladin','hunter','rogue','priest','shaman','mage','warlock','druid','deathknight') for entry in classes) or len(set(classes))!=len(classes)
+                or item.get('requiredClass') and item['requiredClass'] not in classes):raise ValueError('Invalid item class restrictions')
+    if 'uniqueGroup' in item and not identifier(item['uniqueGroup']):raise ValueError('Invalid unique item group')
+    if 'source' in item:validate_item_source(item['source'])
     if ('disabled' in item and type(item['disabled']) is not bool
             or not integer(item.get('requiredLevel', 1), 1, 1000)
             or not bounded(item.get('armor', 0), 0, 1e8)):
@@ -219,8 +229,11 @@ def validate_rpg(document, resources):
         record(mapping, SLOTS, 'Invalid equipment slots')
         for slot, item_id in mapping.items():
             item = library.get(item_id) if isinstance(item_id, str) else None
-            if not item or item.get('disabled') or item['slot'] != slot:
+            if not item or item.get('disabled') or slot not in item.get('allowedSlots',[item['slot']]):
                 raise ValueError('Equipped item is missing, disabled or in the wrong slot')
+            if any(other!=slot and other_id==item_id for other,other_id in mapping.items()):raise ValueError('This item copy is already equipped in another slot')
+            if item.get('requiredClasses') and profile.get('combatRules',{}).get('classId') not in item['requiredClasses']:raise ValueError('Item class requirement')
+            if item.get('uniqueGroup') and any(other!=slot and library.get(other_id,{}).get('uniqueGroup')==item['uniqueGroup'] for other,other_id in mapping.items() if isinstance(other_id,str)):raise ValueError('Unique-equipped item already equipped')
             if item.get('requiredClass') and item['requiredClass'] != profile.get('combatRules', {}).get('classId'):
                 raise ValueError('Item class requirement')
             if allowed and item['type'] not in allowed or item.get('requiredLevel', 1) > profile.get('level', 1):
@@ -229,7 +242,7 @@ def validate_rpg(document, resources):
                 primary = mapping.get('mainHand')
                 if not isinstance(primary, (str, type(None))) or library.get(primary, {}).get('type') in TWO_HANDED:
                     raise ValueError('A two-handed weapon occupies the off hand')
-                if item['type'] != 'shield' and not restrictions.get('dualWield'):
+                if item['type'] not in ('shield','holdable') and not restrictions.get('dualWield'):
                     raise ValueError('Dual wield is disabled')
 
     validate_gear(profile.get('equipped', {}))
@@ -360,3 +373,19 @@ def validate_state_condition(state):
     record(state,('key','value'),'Invalid class state condition')
     if state.get('key') not in ('form','stance','aspect','seal','mode') or not text(state.get('value'),1,60):
         raise ValueError('Invalid class state condition')
+
+
+def validate_item_source(source):
+    from datetime import datetime
+    record(source,('provider','version','itemId','url','fetchedAt','responseSha256','inventorySlot','subclass','tooltipText','imported','unmodeled'),'Invalid item source')
+    valid=(source.get('provider')=='wowhead' and source.get('version')=='cataclysm' and integer(source.get('itemId'),1,2147483647)
+        and source.get('url')==f"https://www.wowhead.com/cata/item={source.get('itemId')}"
+        and isinstance(source.get('fetchedAt'),str) and len(source['fetchedAt'])<=40 and re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|\+00:00)',source['fetchedAt'])
+        and isinstance(source.get('responseSha256'),str) and re.fullmatch('[a-f0-9]{64}',source['responseSha256'])
+        and integer(source.get('inventorySlot'),1,28) and integer(source.get('subclass'),0,100)
+        and isinstance(source.get('tooltipText'),str) and len(source['tooltipText'])<=20000)
+    if not valid:raise ValueError('Invalid item source')
+    try:datetime.fromisoformat(source['fetchedAt'].replace('Z','+00:00'))
+    except ValueError:raise ValueError('Invalid item source') from None
+    for key in ('imported','unmodeled'):
+        if not isinstance(source.get(key),list) or len(source[key])>128 or any(not isinstance(value,str) or not 1<=len(value)<=200 for value in source[key]):raise ValueError('Invalid item import details')

@@ -1,3 +1,4 @@
+import wowhead_items
 from combat_rules import ADVANCED_TYPES, validate_advanced_effect, aura_metadata
 import struct
 import copy
@@ -855,6 +856,16 @@ class Handler(SimpleHTTPRequestHandler):
                     return self.reply(200,{'user':profile_info(db,uid)},accounts.new_session(db,uid))
                 if not user:
                     return self.reply(401, {'error': 'Войдите в аккаунт'})
+                if parsed.path=='/api/items/wowhead/preview' and method=='POST':
+                    if set(data)-{'reference','version'}:raise ValueError('Неизвестные параметры импорта')
+                    # Validate before network access and release the SQLite write lock.
+                    item_id=wowhead_items.parse_reference(data.get('reference'),data.get('version'))
+                    accounts.rate_limit(db,'wowhead:'+str(uid),60);db.commit()
+                    imported=wowhead_items.parse_item_xml(wowhead_items.fetch_xml(item_id),item_id)
+                    from rpg_profile import validate_item
+                    try:validate_item(imported)
+                    except ValueError as error:raise wowhead_items.ImportError('source_format','Данные Wowhead не соответствуют модели предмета: '+str(error),502) from None
+                    return self.reply(200,{'item':imported,'version':'cataclysm'})
                 if parsed.path=='/api/auth/email' and method=='POST':
                     accounts.rate_limit(db,'email-change:'+str(uid),10)
                     row=db.execute('SELECT salt,password FROM users WHERE id=?',(uid,)).fetchone()
@@ -1040,6 +1051,8 @@ class Handler(SimpleHTTPRequestHandler):
                         db.commit()
                         return self.reply(200, {})
                 self.reply(404, {'error': 'Не найдено'})
+        except wowhead_items.ImportError as error:
+            self.reply(error.status,{'error':str(error),'code':error.code})
         except accounts.Error as error:
             self.reply(error.status,{'error':str(error),**error.details})
         except (ValueError, KeyError, TypeError, AttributeError) as error:

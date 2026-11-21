@@ -1,0 +1,1 @@
+These are hand-authored parser/HTTP/browser fixtures for the observed XML + JSON-fragment format. IDs and statistics are synthetic and are NOT captured Wowhead item data. Live Wowhead 19019 is tested separately and must not be claimed successful from these fixtures.

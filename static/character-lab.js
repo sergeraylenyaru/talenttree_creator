@@ -1,3 +1,4 @@
+import {wowheadItemImporter,itemSourceDetails} from './wowhead-item-import.js';
 import {talentReadiness} from './combat/ability-readiness.js';
 import {rollItemStats} from './combat/item-roll.js';
 import {saveBuildSnapshot,restoreBuildSnapshot,detachLegacyBuilds} from './combat/build-snapshots.js';
@@ -10,7 +11,7 @@ import {deriveCharacterStats} from './combat/character-stats.js';
 import {validBuild} from './engine.js';
 import {combatSchools} from './combat/effect-validation.js';
 import {attributes,primaryStats,secondaryStats,equipmentSlots,itemTypes,itemTypesForSlot,itemEligibility,equippedItems,
-  qualities,hasteSystems,talentModifiers,procEvents,conditions,validateItem,validateRpg,removeRpgReferences,
+  meleeWeapons,rangedWeapons,qualities,hasteSystems,talentModifiers,procEvents,conditions,validateItem,validateRpg,removeRpgReferences,
   level60Primary,level60PrimaryBudget,primaryPointsUsed} from './combat/rpg-profile.js';
 import {button,element,field,section,grid,table,tabs,download,format,label} from './rpg-ui.js';
 import {comparisonPanel,statRows} from './training-grounds/combat-review.js';
@@ -25,13 +26,13 @@ addTranslations([
   ['Персонаж и экипировка','Character Lab'], ['Бюджет базовых характеристик','Primary attribute budget'],
   ['Распределено','Spent'], ['Осталось','Remaining'], ['Сверх бюджета','Over budget'],
   ['Загрузить базовые характеристики 60-го уровня','Load level 60 primary attributes'],
-  ['Бюджет не задан','No budget set'], ['Недопустимый бюджет характеристик','Invalid attribute budget'],
+  ['Настроить эффекты предмета','Configure item effects'],['Допустимые классы','Allowed classes'],['Бюджет не задан','No budget set'], ['Недопустимый бюджет характеристик','Invalid attribute budget'],
   ['Распредели характеристики целыми очками','Allocate whole points to primary attributes'],
   ['Превышен бюджет базовых характеристик','Primary attribute budget exceeded']
 ]);
 const pages=Object.keys(tabLabels);
 const id=()=>crypto.randomUUID();
-const displayTypes={sword1:'One-handed sword',sword2:'Two-handed sword'};
+const displayTypes={sword1:'One-handed sword',sword2:'Two-handed sword',axe:'One-handed axe',axe2:'Two-handed axe',mace:'One-handed mace',mace2:'Two-handed mace',polearm:'Polearm',fist:'Fist weapon',holdable:'Held in off hand',gun:'Gun'};
 const choices=types=>types.map(type=>[type,displayTypes[type]??label(type)]);
 const number={number:true};
 const percentStats={critChance:{min:0,max:1},critMultiplier:{min:0,max:100},movementSpeed:{min:0,max:10}};
@@ -245,7 +246,7 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
   }
   function configureType(item,type){
     item.type=type;
-    if(['sword1','sword2','axe','mace','dagger','staff','wand','bow','crossbow'].includes(type)){
+    if([...meleeWeapons,...rangedWeapons].includes(type)){
       item.minDamage??=35;item.maxDamage??=55;item.speed??=2;
     }else for(const key of ['minDamage','maxDamage','speed'])delete item[key];
   }
@@ -254,6 +255,7 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
     configureType(item,itemTypesForSlot(selectedSlot)[0]);
     profile.items.push(item);itemId=item.id;render();
   }
+  const wowheadImport=wowheadItemImporter(item=>{if(profile.items.length>=128)throw Error('Equipment library limit: 128');profile.items.push(item);itemId=item.id;render();});
   function rendersEquipment(){
     compare=element('div');
     const library=section('Equipment library',grid(
@@ -271,13 +273,14 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
         profile.items.push(item);itemId=item.id;render();
       }catch(error){notice.textContent=error.message;}
     };
-    library.append(uploaded,button('Import item',()=>uploaded.click()));
+    library.append(uploaded,button('Import item',()=>uploaded.click()),wowheadImport);
     const equipped=equippedItems(profile);
     const slots=section('Equipment slots',table(['Slot','Equipped item'],equipmentSlots.map(slot=>{
       const holder=element('div');
       const item=equipped[slot];
       const select=field(label(slot),item?.id??'',attempt(()=>{}),{choices:[['','Empty'],
-        ...profile.items.filter(entry=>entry.slot===slot&&!entry.disabled).map(entry=>[entry.id,entry.name])]});
+        ...profile.items.filter(entry=>(entry.allowedSlots??[entry.slot]).includes(slot)&&!entry.disabled).map(entry=>[entry.id,entry.name])]});
+      select.querySelector('select').setAttribute('aria-label',label(slot));
       select.querySelector('select').onchange=event=>{
         const value=event.target.value;
         attempt(()=>{
@@ -299,6 +302,7 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
       holder.append(select);return [label(slot),holder];
     })));
     const selector=field('Edit item',itemId??'',value=>{itemId=value;render();},{choices:[['','Select item'],...profile.items.map(item=>[item.id,item.name])]});
+    selector.querySelector('select').setAttribute('aria-label','Edit item');
     library.append(selector);
     const item=profile.items.find(entry=>entry.id===itemId);
     if(item){
@@ -312,14 +316,16 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
         field('Quality',item.quality,change(item,'quality'),{choices:qualities}),
         field('Item level',item.level,change(item,'level'),{...number,min:1,max:1000,step:1}),
         field('Required hero level',item.requiredLevel??1,change(item,'requiredLevel'),{...number,min:1,max:1000,step:1}),
-        field('Item slot',item.slot,value=>{unequipItem(item.id);item.slot=value;configureType(item,itemTypesForSlot(value)[0]);render();},{choices:equipmentSlots}),
-        field('Item type',item.type,value=>{configureType(item,value);render();},{choices:choices(itemTypesForSlot(item.slot))}),
+        field('Item slot',item.slot,value=>{unequipItem(item.id);item.slot=value;if(!item.allowedSlots)configureType(item,itemTypesForSlot(value)[0]);render();},{choices:item.allowedSlots??equipmentSlots}),
+        field('Item type',item.type,value=>{configureType(item,value);render();},{choices:choices(itemTypesForSlot(item.slot).filter(type=>(item.allowedSlots??[item.slot]).every(slot=>itemTypesForSlot(slot).includes(type))))}),
         field('Item icon',item.icon,value=>{item.icon=value;icon.hidden=false;icon.src=iconURL(value);},{choices:[
           ...new Map([['forge-steel','Sword'],['forge-light','Light'],['forge-frost','Frost'],['forge-ember','Fire'],
             ['forge-nature','Nature'],['forge-arcane','Arcane'],[item.icon,item.icon]])]}),
         field('Armor value',item.armor??0,change(item,'armor'),number),
         field('Disabled',item.disabled,value=>{item.disabled=value;if(value)unequipItem(item.id);render();},{check:true})
       ));
+      if(item.source)library.append(itemSourceDetails(item),button(t('Настроить эффекты предмета'),()=>{page='Buffs and Debuffs';render();}));
+      if(item.requiredClasses){const classes=section(t('Допустимые классы'));classes.append(grid(...combatClasses.map(key=>field(label(key),item.requiredClasses.includes(key),checked=>{item.requiredClasses=checked?[...item.requiredClasses,key]:item.requiredClasses.filter(value=>value!==key);if(!item.requiredClasses.length)delete item.requiredClasses;render();},{check:true}))));library.append(classes);}
       if(item.speed!==undefined)library.append(grid(
         field('Minimum weapon damage',item.minDamage,change(item,'minDamage'),number),
         field('Maximum weapon damage',item.maxDamage,change(item,'maxDamage'),number),
@@ -382,7 +388,7 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
   }
   function newOwner(){
     const kind=page==='Talents'?'talent':page==='Abilities'?'passive':profile.items.length?'item':passive.length?'passive':'talent';
-    return {kind,id:sources(kind)[0]?.id??''};
+    return {kind,id:kind==='item'?(itemId??sources(kind)[0]?.id??''):sources(kind)[0]?.id??''};
   }
   function conditionFields(holder,key='condition',depth=0){
     const c=holder[key];

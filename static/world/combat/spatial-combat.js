@@ -241,7 +241,7 @@ export function createSpatialCombat({displace,animationAvailable, animationFallb
           const release=kind==='melee'?windup:.4;
           let action=profile.attackAnimation??profile.animation??profile.castingAnimation;
           if (kind==='melee' && (!action||action==='sword')) {
-            action={sword2:'twoHand',staff:'twoHand',dagger:daggerClip}[ability.weaponType]??action;
+            action={sword2:'twoHand',staff:'twoHand',axe2:'twoHand',mace2:'twoHand',polearm:'twoHand',dagger:daggerClip}[ability.weaponType]??action;
           }
           if (state==='rangedAttack' && (!action||action==='bow') && ability.weaponType==='crossbow') action=crossbowClip;
           pose(state,now,release,action);

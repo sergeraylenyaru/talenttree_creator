@@ -18,12 +18,12 @@ export const secondaryStats = [
 export const attributes = [...primaryStats,...secondaryStats];
 export const equipmentSlots = ['head','shoulders','chest','wrists','hands','waist','legs','feet','neck','back',
   'ring1','ring2','trinket1','trinket2','mainHand','offHand','ranged'];
-export const qualities = ['common','uncommon','rare','epic','legendary'];
-export const meleeWeapons = ['sword1','sword2','axe','mace','dagger','staff','wand'];
-export const rangedWeapons = ['bow','crossbow','wand'];
+export const qualities = ['poor','common','uncommon','rare','epic','legendary'];
+export const meleeWeapons = ['sword1','sword2','axe','mace','dagger','staff','wand','axe2','mace2','polearm','fist'];
+export const rangedWeapons = ['bow','crossbow','wand','gun'];
 const armorTypes = ['cloth','leather','mail','plate'];
-export const itemTypes = [...armorTypes,'ring','necklace','trinket','cloak',...meleeWeapons,'bow','crossbow','shield'];
-export const twoHanded = ['sword2','staff'];
+export const itemTypes = [...armorTypes,'ring','necklace','trinket','cloak',...meleeWeapons,'bow','crossbow','gun','shield','holdable'];
+export const twoHanded = ['sword2','staff','axe2','mace2','polearm'];
 export const hasteSystems = ['swing','cast','channel','gcd','cooldown','rune','periodic'];
 export const talentModifiers = ['damage','healing','cooldown','cost','castTime','maxStacks','resourceGain','duration','period','procChance'];
 export const procEvents = ['castStarted','castCompleted','attackHit','projectileHit','attackMissed','projectileMissed',
@@ -55,7 +55,7 @@ function collection(value, limit, callback) {
 
 export function itemTypesForSlot(slot) {
   if(slot==='mainHand')return meleeWeapons;
-  if(slot==='offHand')return [...meleeWeapons.filter(type=>!twoHanded.includes(type)),'shield'];
+  if(slot==='offHand')return [...meleeWeapons.filter(type=>!twoHanded.includes(type)),'shield','holdable'];
   if(slot==='ranged')return rangedWeapons;
   if(slot==='neck')return ['necklace'];
   if(slot==='back')return ['cloak'];
@@ -66,13 +66,16 @@ export function itemTypesForSlot(slot) {
 
 export function itemEligibility(item, slot, profile, equipped={}) {
   if(!item||item.disabled)return 'Item disabled';
-  if(item.slot!==slot||!itemTypesForSlot(slot).includes(item.type))return 'Item does not fit this slot';
+  if(!(item.allowedSlots??[item.slot]).includes(slot)||!itemTypesForSlot(slot).includes(item.type))return 'Item does not fit this slot';
   if(profile.restrictions?.types?.length&&!profile.restrictions.types.includes(item.type))return 'Item type restricted for this class';
+  if(item.requiredClasses&&!item.requiredClasses.includes(profile.combatRules?.classId))return 'Item class requirement';
+  if(Object.entries(equipped).some(([other,current])=>other!==slot&&current?.id===item.id))return 'This item copy is already equipped in another slot';
+  if(item.uniqueGroup&&Object.entries(equipped).some(([other,current])=>other!==slot&&current?.uniqueGroup===item.uniqueGroup))return 'Unique-equipped item already equipped';
   if(item.requiredClass&&item.requiredClass!==profile.combatRules?.classId)return 'Item class requirement';
   if((item.requiredLevel??1)>(profile.level??1))return 'Character level too low';
   if(slot==='offHand') {
     if(twoHanded.includes(equipped.mainHand?.type))return 'A two-handed weapon occupies the off hand';
-    if(item.type!=='shield'&&!profile.restrictions?.dualWield)return 'Dual wield is disabled';
+    if(!['shield','holdable'].includes(item.type)&&!profile.restrictions?.dualWield)return 'Dual wield is disabled';
   }
   if(slot==='mainHand'&&twoHanded.includes(item.type)&&equipped.offHand)return 'Unequip the off hand first';
   return '';
@@ -90,11 +93,15 @@ function statMap(value, targets, min) {
 
 export function validateItem(item) {
   schema(item,['id','name','description','icon','level','quality','type','slot','armor','minDamage','maxDamage',
-    'speed','stats','requiredLevel','requiredClass','setId','disabled','roll'],'Invalid item fields');
+    'speed','stats','requiredLevel','requiredClass','setId','disabled','roll','allowedSlots','requiredClasses','uniqueGroup','source'],'Invalid item fields');
   if(!identifier(item.id)||!text(item.name,1,100)||!text(item.description??'',0,3000)||
     !identifier(item.icon)||!equipmentSlots.includes(item.slot)||!itemTypesForSlot(item.slot).includes(item.type)||
     !qualities.includes(item.quality)||!Number.isInteger(item.level)||!number(item.level,1,1000))fail('Check item identity, slot and quality');
   if(item.setId!==undefined&&!identifier(item.setId)||item.requiredClass!==undefined&&!['warrior','paladin','hunter','rogue','priest','shaman','mage','warlock','druid','deathknight'].includes(item.requiredClass))fail('Invalid item class or set');
+  if(item.allowedSlots!==undefined&&(!Array.isArray(item.allowedSlots)||!item.allowedSlots.length||item.allowedSlots.length>2||new Set(item.allowedSlots).size!==item.allowedSlots.length||!item.allowedSlots.includes(item.slot)||item.allowedSlots.some(slot=>!equipmentSlots.includes(slot)||!itemTypesForSlot(slot).includes(item.type))||item.allowedSlots.length===2&&![["mainHand","offHand"],["ring1","ring2"],["trinket1","trinket2"]].some(pair=>pair.every(slot=>item.allowedSlots.includes(slot)))))fail('Invalid allowed item slots');
+  if(item.requiredClasses!==undefined&&(!Array.isArray(item.requiredClasses)||!item.requiredClasses.length||item.requiredClasses.length>10||new Set(item.requiredClasses).size!==item.requiredClasses.length||item.requiredClasses.some(key=>!['warrior','paladin','hunter','rogue','priest','shaman','mage','warlock','druid','deathknight'].includes(key))||item.requiredClass&&!item.requiredClasses.includes(item.requiredClass)))fail('Invalid item class restrictions');
+  if(item.uniqueGroup!==undefined&&!identifier(item.uniqueGroup))fail('Invalid unique item group');
+  if(item.source!==undefined)validateItemSource(item.source);
   if(item.disabled!==undefined&&typeof item.disabled!=='boolean')fail('Invalid enabled state');
   if(item.requiredLevel!==undefined&&(!Number.isInteger(item.requiredLevel)||!number(item.requiredLevel,1,1000)))fail('Invalid item requirement');
   if(item.armor!==undefined&&!number(item.armor,0,1e8))fail('Invalid item armor');
@@ -296,4 +303,13 @@ export function validateCondition(condition,resources,talents,abilities,depth=0)
     previousEvent:()=>procEvents.includes(value)&&number(condition.window,.01,300)&&(!Object.hasOwn(condition,'abilityId')||abilities.has(condition.abilityId))
   };
   if(!Object.hasOwn(valid,type)||!valid[type]())fail('Invalid combat condition value');
+}
+
+export function validateItemSource(source){
+  schema(source,['provider','version','itemId','url','fetchedAt','responseSha256','inventorySlot','subclass','tooltipText','imported','unmodeled'],'Invalid item source');
+  if(source.provider!=='wowhead'||source.version!=='cataclysm'||!Number.isInteger(source.itemId)||!number(source.itemId,1,2147483647)||source.url!==`https://www.wowhead.com/cata/item=${source.itemId}`||
+    typeof source.fetchedAt!=='string'||source.fetchedAt.length>40||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|\+00:00)$/.test(source.fetchedAt)||!Number.isFinite(Date.parse(source.fetchedAt))||new Date(source.fetchedAt).getUTCFullYear()<1||new Date(source.fetchedAt).toISOString().slice(0,19)!==source.fetchedAt.slice(0,19)||
+    typeof source.responseSha256!=='string'||!(/^[a-f0-9]{64}$/).test(source.responseSha256)||!Number.isInteger(source.inventorySlot)||!number(source.inventorySlot,1,28)||!Number.isInteger(source.subclass)||!number(source.subclass,0,100)||
+    typeof source.tooltipText!=='string'||source.tooltipText.length>20000)fail('Invalid item source');
+  for(const key of ['imported','unmodeled'])if(!Array.isArray(source[key])||source[key].length>128||source[key].some(value=>typeof value!=='string'||!value||value.length>200))fail('Invalid item import details');
 }

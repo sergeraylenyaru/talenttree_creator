@@ -3,7 +3,7 @@
 import {rollAttackOutcome,rollCritical} from './calculation-engine.js';
 const clamp=value=>Math.max(0,Math.min(1,value));
 export const normalizedWeaponSpeed=weapon=>weapon?.type==='dagger'?1.7:
-  ['sword2','staff'].includes(weapon?.type)?3.3:['bow','crossbow'].includes(weapon?.type)?2.8:2.4;
+  ['sword2','staff','axe2','mace2','polearm'].includes(weapon?.type)?3.3:['bow','crossbow','gun'].includes(weapon?.type)?2.8:2.4;
 export function selectCombatWeapon(ability,sheet){
   const explicit=ability.weaponHand??ability.workshop?.weaponHand;
   const type=ability.workshop?.attackType;

@@ -123,5 +123,5 @@ export function weaponTiming(sheet, fallback) {
   const weapon=sheet.weapon;
   return {speed:weapon?.speed??fallback.swingSeconds,swingSeconds:(weapon?.speed??fallback.swingSeconds)/sheet.swingSpeed,
     minDamage:weapon?.minDamage??fallback.damage,maxDamage:weapon?.maxDamage??fallback.damage,
-    type:weapon?.type??'sword1',ranged:['bow','crossbow','wand'].includes(weapon?.type),offHand:undefined};
+    type:weapon?.type??'sword1',ranged:['bow','crossbow','wand','gun'].includes(weapon?.type),offHand:undefined};
 }
