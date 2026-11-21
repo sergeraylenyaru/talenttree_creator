@@ -44,6 +44,16 @@ UNSUPPORTED_REQUIREMENTS = {'reqskill','reqskillrank','reqspell','reqrep','reqre
 UNSUPPORTED_STATS = {'rgdatkpwr','manargn','resirtng','armorpenrtng','splhitrtng','splcritstrkrtng','splhastertng','mana','block'}
 KNOWN_NON_STATS = {'armor','dmgmin1','dmgmax1','dmgtype1','dmgmin2','dmgmax2','dmgtype2','speed','dps','mledps','rgddps','mlespeed','rgdspeed','mledmgmin','mledmgmax','rgddmgmin','rgddmgmax','reqlevel','reqclass','classes','slot','classs','subclass','itemset','socket1','socket2','socket3','socketbonus','durability','sellprice','buyprice','stack','unique','uniqueequipped','uniquecount','rand','randprop','randsuffix','randomProperty','randomSuffix'}
 
+# Observed json/jsonEquip transport metadata, never character statistics. These
+# exact keys are allowed individually; unknown numeric fields still fail closed.
+SERVICE_FIELDS = {
+    'displayid': (0,2147483647,True),  # appearance/model ID, not a stat or icon name
+    'dmgrange': (0,100000000,False),  # source damage-spread parameter; use dmgmin/max1
+    'dura': (0,100000000,True),       # maximum durability; no durability simulation
+    'sheathtype': (0,255,True),      # presentation-only sheath placement enum
+    'slotbak': (0,28,True),         # source slot bookkeeping; XML inventorySlot wins
+}
+
 class ImportError(ValueError):
     def __init__(self, code, message, status=400):
         super().__init__(message)
@@ -220,6 +230,21 @@ def parse_item_xml(raw,item_id,fetched_at=None):
     if not name or len(name)>100 or not re.fullmatch(r'[a-z0-9_-]{1,100}',icon) or not quality or level is None or not 1<=level<=1000:
         raise ImportError('source_format','Название, иконка, качество или уровень предмета не поддерживаются.',502)
     imported=['name','icon','quality','level','slot','type'];unmodeled=[]
+    for key,(lo,hi,integer) in SERVICE_FIELDS.items():
+        present=False
+        for source in (data,equip):
+            if key in source and source[key] is not None:
+                number(source[key],key,lo,hi,integer);present=True
+        if present:unmodeled.append('metadata:'+key)
+    # MaxCount is an ownership limit, not harmless display metadata. Libraries
+    # contain independent templates, not bag inventory. A limit of one must also
+    # prevent equipping two copies via the existing uniqueGroup mechanism.
+    maxcounts=[number(source['maxcount'],'maxcount',0,2147483647,True)
+               for source in (data,equip) if source.get('maxcount') is not None]
+    if len(set(maxcounts))>1:raise ImportError('source_format','Не согласован лимит экземпляров maxcount.',502)
+    maxcount=maxcounts[0] if maxcounts else 0
+    if maxcount:unmodeled.append('inventoryOwnership')
+
     result={'id':str(uuid4()),'name':name,'icon':icon,'quality':quality,'level':level,'slot':allowed[0],'allowedSlots':list(allowed),'type':kind,'stats':{}}
     reqlevel=xml_int('requiredLevel',default=equip.get('reqlevel',data.get('reqlevel',0)))
     if reqlevel and reqlevel>85 or 'expansion' in data and number(data['expansion'],'expansion')>3:
@@ -263,13 +288,14 @@ def parse_item_xml(raw,item_id,fetched_at=None):
     if unsupported:raise ImportError('unsupported_stats','Характеристики пока нельзя точно перенести: '+', '.join(sorted(unsupported))+'. Импорт отклонён.')
     tooltip=PlainTooltip();tooltip.feed(item.findtext('htmlTooltip') or '');tooltip_text=tooltip.text()
     if tooltip_text:unmodeled.append('tooltipEffects')
+    if (item.findtext('jsonUse') or '').strip():unmodeled.append('useEffects')
     if any(key.startswith('socket') and value for key,value in equip.items()):unmodeled.append('sockets')
     if equip.get('itemset') or data.get('itemset'):unmodeled.append('setBonus')
     if any(equip.get(key) or data.get(key) for key in ('rand','randprop','randsuffix','randomProperty','randomSuffix')):unmodeled.append('randomProperties')
-    unique=equip.get('uniqueequipped') in (True,1,'1') or any(re.fullmatch(r'(?:Unique(?:-Equipped)?|Уникальный(?: используемый)?)(?:\s*\(1\))?',line,re.I) for line in tooltip_text.splitlines())
+    unique=maxcount==1 or equip.get('uniqueequipped') in (True,1,'1') or any(re.fullmatch(r'(?:Unique(?:-Equipped)?|Уникальный(?: используемый)?)(?:\s*\(1\))?',line,re.I) for line in tooltip_text.splitlines())
     if unique:result['uniqueGroup']=f'wowhead-cata-{item_id}';imported.append('uniqueGroup')
     if any('Unique-Equipped:' in line for line in tooltip_text.splitlines()):raise ImportError('unsupported_requirement','Групповой лимит уникальных предметов пока не поддерживается.')
-    unknown=[key for key,value in equip.items() if key not in STATS and key not in KNOWN_NON_STATS and key not in UNSUPPORTED_REQUIREMENTS and value not in (0,None,'0','')]
+    unknown=[key for key,value in equip.items() if key not in STATS and key not in KNOWN_NON_STATS and key not in SERVICE_FIELDS and key!='maxcount' and key not in UNSUPPORTED_REQUIREMENTS and value not in (0,None,'0','')]
     required=[key for key in unknown if key.startswith('req')]
     if required:raise ImportError('unsupported_requirement','Неизвестные требования предмета: '+', '.join(required))
     unknown_stats=[key for key in unknown if type(equip[key]) in (int,float)]

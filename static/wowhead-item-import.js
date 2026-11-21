@@ -23,6 +23,21 @@ const errors={
  source_blocked:'Wowhead блокирует загрузку или ограничивает запросы.',source_timeout:'Wowhead не ответил вовремя.',source_format:'Формат ответа Wowhead изменился или не поддерживается.',source_too_large:'Ответ источника слишком велик.',source_unavailable:'Не удалось загрузить Wowhead. Проверьте сеть и повторите.'
 };
 const omissions={tooltipEffects:'Описание и эффекты',sockets:'Сокеты',setBonus:'Бонусы комплекта',randomProperties:'Случайные свойства',additionalDamage:'Дополнительный урон другой школы'};
+const metadataLabels={
+ 'metadata:displayid':['ID внешнего вида (не характеристика)','Appearance ID (not a statistic)'],
+ 'metadata:dmgrange':['Служебный разброс урона (используется готовый диапазон оружия)','Source damage spread (explicit weapon bounds are used)'],
+ 'metadata:dura':['Прочность (износ не моделируется)','Durability (wear is not simulated)'],
+ 'metadata:sheathtype':['Положение оружия в ножнах (не меняет экипировку)','Sheath placement (does not change equipment)'],
+ 'metadata:slotbak':['Служебный слот (используется inventorySlot XML)','Source slot bookkeeping (XML inventorySlot is used)']
+};
+addTranslations([...Object.values(metadataLabels),
+ ['Лимит предметов в сумках не моделируется; лимит 1 запрещает надевать две копии.','Bag ownership is not simulated; a limit of 1 prevents equipping two copies.'],
+ ['Эффекты jsonUse требуют ручной настройки; это не характеристики экипировки.','jsonUse effects require manual setup; these are not equipment statistics.']]);
+Object.assign(omissions,{
+ inventoryOwnership:'Лимит предметов в сумках не моделируется; лимит 1 запрещает надевать две копии.',
+ useEffects:'Эффекты jsonUse требуют ручной настройки; это не характеристики экипировки.'
+});
+
 
 export function importedItemCopy(item){validateItem(item);return {...structuredClone(item),id:crypto.randomUUID()};}
 export function itemSourceDetails(item){
@@ -30,7 +45,7 @@ export function itemSourceDetails(item){
  const root=element('details',undefined,'wowhead-source');root.append(element('summary',t('Источник предмета')));
  const link=element('a',source.url);link.href=source.url;link.target='_blank';link.rel='noopener noreferrer';
  root.append(element('p','Wowhead · Cataclysm (/cata) · ID '+source.itemId),link,element('p',t('Источник описывает импорт; ручные изменения предмета могут отличаться.')),element('p',t('Wowhead Cataclysm (/cata); соответствие оригинальному клиенту 4.3.4 отдельно не подтверждено.')),
-  element('p',t('Подтверждённые поля')+': '+source.imported.map(key=>label(key.replace(/^stats\./,''))).join(', ')),element('p',t('Не реализовано автоматически')+': '+source.unmodeled.map(key=>t(omissions[key]??key)).join(', ')),
+  element('p',t('Подтверждённые поля')+': '+source.imported.map(key=>label(key.replace(/^stats\./,''))).join(', ')),element('p',t('Не реализовано автоматически')+': '+source.unmodeled.map(key=>t(metadataLabels[key]?.[0]??omissions[key]??key)).join(', ')),
   element('p',t('Проки, use-эффекты, комплекты, сокеты, чары и случайные свойства требуют отдельной настройки.')));
  const tooltip=element('details'),plain=element('pre',source.tooltipText);plain.dataset.userContent='';tooltip.append(element('summary',t('Описание Wowhead (обычный текст)')),plain);root.append(tooltip);
  return root;
