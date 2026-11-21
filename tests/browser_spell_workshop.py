@@ -29,7 +29,7 @@ def exercise(page, context, base, shots):
     assert response.ok, response.text()
     pid = response.json()['id']
     errors, assets = [], set()
-    page.on('pageerror', lambda error: errors.append(str(error)))
+    page.on('pageerror', lambda error: errors.append(error.stack))
     page.on('response', lambda res: assets.add(res.url.split('/local-world-assets/')[-1])
             if '/local-world-assets/' in res.url and res.status == 200 else None)
     page.add_init_script("""localStorage.setItem('talentforge-language','en');
@@ -52,6 +52,7 @@ def exercise(page, context, base, shots):
     page.locator('[data-add]').click()
     effects = page.locator('[data-combat-row]')
     effects.nth(1).locator('[data-key=type]').select_option('healing')
+    effects.nth(1).get_by_text('Modifiers',exact=True).click()
     effects.nth(1).locator('[data-key=trigger]').select_option('onCast')
     effects.nth(1).locator('[data-key=baseAmount]').fill('32')
     effects.nth(1).locator('[data-periodic]').check()

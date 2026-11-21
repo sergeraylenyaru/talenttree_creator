@@ -131,16 +131,10 @@ export function workshopOptions(root, ability, character) {
     projectileSection.hidden=!byKey.projectileSize;
   }
   queueMicrotask(relevant);
-  root.closest('form')?.addEventListener('input', relevant, {signal: (() => {
-    const controller=new AbortController();
-    root.closest('dialog')?.addEventListener('close',()=>controller.abort(),{once:true});
-    return controller.signal;
-  })()});
-  root.closest('form')?.addEventListener('change', relevant, {signal: (() => {
-    const controller = new AbortController();
-    root.closest('dialog')?.addEventListener('close',()=>controller.abort(),{once:true});
-    return controller.signal;
-  })()});
+  const controller=new AbortController(),dialog=root.closest('dialog');
+  const cleanup=()=>{if(root.isConnected&&dialog?.open)return;controller.abort();dialog?.removeEventListener('close',cleanup);};
+  dialog?.addEventListener('close',cleanup);
+  for(const name of ['input','change'])root.closest('form')?.addEventListener(name,relevant,{signal:controller.signal});
   return () => {
     const rules = {};
     for (const [key,input] of controls) {

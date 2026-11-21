@@ -1,3 +1,7 @@
+import {heldTrainingSession,registerTrainingSession,forgetTrainingSession} from './session-registry.js';
+export {disposeTrainingSession,rekeyTrainingSession,trainingSessionSnapshot} from './session-registry.js';
+import {createPauseLeases,sessionCompatibility} from '../combat/session-updates.js';
+import {addTranslations,t} from '../i18n.js';
 import {createCombatClock} from '../combat/combat-clock.js';
 import {weaponTiming} from '../combat/character-stats.js';
 import {openCombatReview} from './combat-review.js';
@@ -18,10 +22,40 @@ function loadSettings() {
   }
 }
 
-export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) {
+addTranslations([
+ ['Тренировка сохранена на паузе','Training session retained on pause'],['Начать новую сессию','Start a new session'],['Продолжить прежнюю сессию','Continue previous session'],['Остаться в дереве','Stay in the tree'],
+ ['Смена класса или профиля требует новой сессии. Текущая сессия сохранена на паузе.','Changing the class or profile requires a new session. The current session remains paused.'],
+ ['Касты, выпущенные снаряды и ауры сохраняют прежние настройки. Изменения действуют на следующие применения.','Casts, launched projectiles and auras retain their settings. Changes apply to subsequent uses.']
+]);
+
+export function openTrainingGrounds(dialog,document,options={}){
+ const held=heldTrainingSession(dialog);
+ if(held){
+  const check=held.preview||options.preview?{ok:false,reason:'Предпросмотр — отдельная сессия.'}:held.key!==(options.sessionKey??options.layoutId??'local')?{ok:false,reason:'Открыт другой класс.'}:held.check(document);
+  if(check.ok){held.resume(document);return held;}
+  // This dialog is not an ability editor: it only protects the retained session.
+  const prompt=window.document.createElement('dialog');prompt.className='tg-session-choice';
+  const message=window.document.createElement('p');message.textContent=t('Смена класса или профиля требует новой сессии. Текущая сессия сохранена на паузе.');
+  const reason=window.document.createElement('p');reason.textContent=check.reason;
+  prompt.append(message,reason);
+  for(const [name,run] of [
+   ['Продолжить прежнюю сессию',()=>held.resume()],
+   ['Начать новую сессию',()=>{held.dispose();openTrainingGrounds(dialog,document,options);}],
+   ['Остаться в дереве',()=>{}]
+  ]){const button=window.document.createElement('button');button.type='button';button.textContent=t(name);button.onclick=()=>{prompt.close();run();};prompt.append(button);}
+  prompt.addEventListener('close',()=>prompt.remove(),{once:true});window.document.body.append(prompt);prompt.showModal();return held;
+ }
+ const session=createTrainingSession(dialog,document,options);registerTrainingSession(dialog,session);return session;
+}
+
+function createTrainingSession(dialog, document, options = {}) {
+  const {preview,layoutId}=options;
+  let disposed=false,retaining=false,treeRelease,api;
+  const sessionId=crypto.randomUUID(),lifecycle=new AbortController();
+  let fingerprint=JSON.stringify(document);
   let settings = loadSettings();
-  function compile() {
-    const build = compileCombatBuild(document, settings);
+  function compile(source=document) {
+    const build = compileCombatBuild(source, settings);
     if (layoutId) build.layoutId = layoutId;
     if (preview) {
       build.resources = build.resources.map(resource=>({...resource,current:resource.max}));
@@ -33,7 +67,7 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
   }
   let build = compile();
   const practice = practiceAbilities(build.activeAbilities, build.resources);
-  const arenaBuild = () => ({...build, activeAbilities: [...build.activeAbilities, ...practice]});
+  const arenaBuild = (current=build) => ({...current, activeAbilities: [...current.activeAbilities, ...practice]});
   const newRuntime=()=>{
     const current=createCombatRuntime(arenaBuild(),{...settings,seed:build.profile?.seed});
     current.attachTimeline('spatial',{next:()=>world?.nextCombatEvent()??Infinity,tick:()=>world?.advanceCombat(current.state),cancel:()=>world?.clearCombat(current.state)});
@@ -53,6 +87,33 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
   let runtime = newRuntime();
   let auto=createAutoAttack(), offhand, basic=practice[0], swingDelivery, generation=0;
   const report=(type,details)=>runtime.autoEvent(basic,type,details);
+
+  const leases=createPauseLeases({getPaused:()=>runtime.paused,setPaused:value=>runtime.setPaused(value),sync:()=>syncClock(),
+    onChange:()=>{rebaseClock();world?.setSuspended(runtime.paused);if(leases.active)stopLoop();else startLoop();}});
+  function stopLoop(){if(frame!==null)cancelAnimationFrame(frame);frame=null;}
+  function startLoop(){if(!disposed&&!leases.active&&dialog.open&&frame===null)frame=requestAnimationFrame(tick);}
+  function suspend(){
+    if(preview){dialog.close();return;}
+    world?.closeMenu();if(!treeRelease)treeRelease=leases.acquire();
+    retaining=true;dialog.close();
+  }
+  function reconcile(source){
+    const nextFingerprint=JSON.stringify(source);if(nextFingerprint===fingerprint)return {ok:true,changed:false};
+    const next=compile(source);const result=runtime.updateBuild(arenaBuild(next));if(!result.ok)return result;
+    document=structuredClone(source);fingerprint=nextFingerprint;build=next;
+    view.reconcile(build);world?.reconcile(build);
+    if(auto.status.active){
+      const values=runtime.sheet(),weapon=weaponTiming(values,{swingSeconds:world?.weaponCombat()?.swingSeconds??trainingWeapon.swingSeconds,damage:world?.weaponCombat()?.damage??trainingWeapon.damage});
+      basic=autoAbility(weapon);swingDelivery=world?.delivery(basic);
+      const extra=build.profile?.equipment?.offHand;
+      if(extra?.speed&&!weapon.ranged){
+        const ability=autoAbility(extra,true);
+        if(offhand){offhand.ability=ability;offhand.delivery=world?.delivery(ability);offhand.speed=extra.speed;}
+        else{const clock=createAutoAttack({...trainingWeapon,swingSeconds:extra.speed/values.swingSpeed});offhand={clock,ability,delivery:world?.delivery(ability),speed:extra.speed};clock.start((type,details)=>runtime.autoEvent(ability,type,details),runtime.state.combatTime+extra.speed/values.swingSpeed);}
+      }else{offhand?.clock.stop();offhand=undefined;}
+    }
+    view.update(runtime);world?.combatState(runtime.state);world?.updateHUD();return {ok:true,changed:true};
+  }
 
   function stopAuto(){
     auto.stop();offhand?.clock.stop();
@@ -135,7 +196,9 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
   }
 
   const view = renderTrainingGrounds(dialog, build, settings, {
+    returnToTree:suspend,
     cast(id, point) {
+      if(leases.active)return {ok:false,reason:"paused"};
       const ability = build.activeAbilities.find(item => item.id === id);
       if (ability?.presentation?.targeting === 'ground' && !point) {
         if (preview && world?.targetGround()) point = world.targetGround();
@@ -169,15 +232,19 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
       clock.setRate(value,performance.now(),runtime.state.combatTime);
     },
     pause() {
+      if(leases.active)return;
       syncClock();
       runtime.setPaused(!runtime.paused);
+      world?.setSuspended(runtime.paused);
       rebaseClock();
       view.update(runtime);
     },
     reset() {
+      if(leases.active)return;
       if (picking) { world.pickGround(null); picking = false; }
       stopAuto();
       runtime.reset();
+      world?.setSuspended(false);
       world?.clearCombat(runtime.state);
       rebaseClock();
       view.reset(runtime);
@@ -214,22 +281,30 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
   });
 
   function tick(now) {
-    if (!dialog.open) return;
+    frame=null;
+    if (!dialog.open||disposed||leases.active) return;
     syncClock();
     view.update(runtime);
+    world?.setSuspended(runtime.paused);
     world?.update(now);
     frame = requestAnimationFrame(tick);
   }
 
-  dialog.addEventListener('close', () => {
-    cancelAnimationFrame(frame);
-    world?.dispose();
-    dialog.replaceChildren();
-    dialog.onkeydown = null;
-  }, {once: true});
+  function dispose(){
+    if(disposed)return;disposed=true;lifecycle.abort();stopLoop();world?.dispose();
+    if(dialog.open)dialog.close();dialog.replaceChildren();dialog.onkeydown=null;dialog.classList.remove('tg-spell-preview');forgetTrainingSession(dialog,api);
+  }
+  dialog.addEventListener('close',()=>{if(retaining){retaining=false;return;}dispose();},{signal:lifecycle.signal});
+  dialog.addEventListener('cancel',event=>{if(!preview){event.preventDefault();suspend();}},{signal:lifecycle.signal});
+  dialog.querySelector('#tg-return').title=t('Касты, выпущенные снаряды и ауры сохраняют прежние настройки. Изменения действуют на следующие применения.');
   dialog.showModal();
   world = mountTrainingWorld(dialog, {
     preview,
+    editing:!preview&&options.editAbility?{
+      resolve:id=>!options.getDocument?.()?.abilities?.some(ability=>ability.id===id)?{allowed:false,message:'Базовая автоатака настраивается в экипировке.'}:!options.canEdit?.()||options.getSessionKey?.()!==api?.key?{allowed:false,message:'Редактирование этого класса недоступно.'}:{allowed:true},
+      pause:()=>leases.acquire(),
+      edit(id,done){options.editAbility(id,()=>{try{const result=reconcile(options.getDocument());if(!result.ok)dialog.querySelector('#tg-feedback').textContent=result.reason;}finally{done();view.update(runtime);world?.updateHUD();}});}
+    }:undefined,
     review:()=>view.review(),
     incoming:build.profile?.incoming?incoming:undefined,incomingCastTime:build.profile?.incoming?.castTime,
     movementScale: () => runtime.movementScale(),
@@ -240,6 +315,7 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
     startAuto,
     autoStatus: () => auto.status,
     toggleAuto() {
+      if(leases.active)return;
       if (auto.status.active) stopAuto();
       else {
         world.selectDummy();
@@ -295,12 +371,19 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
       world.pickGround(null);
       picking = false;
     }
-  }, {signal: (() => {
-    const controller = new AbortController();
-    dialog.addEventListener('close', () => controller.abort(), {once: true});
-    return controller.signal;
-  })()});
+  }, {signal:lifecycle.signal});
   rebaseClock();
   view.update(runtime);
-  frame = requestAnimationFrame(tick);
+  startLoop();
+  api={key:options.sessionKey??layoutId??'local',preview,dispose,
+    check:source=>sessionCompatibility(arenaBuild(),arenaBuild(compile(source))),
+    resume(source){
+      if(source){const result=reconcile(source);if(!result.ok)return result;}
+      if(!dialog.open)dialog.showModal();
+      if(treeRelease){const release=treeRelease;treeRelease=undefined;release();}
+      rebaseClock();world?.setSuspended(runtime.paused);view.update(runtime);world?.updateHUD();startLoop();return {ok:true};
+    },
+    inspect:()=>({sessionId,key:api.key,held:Boolean(treeRelease),leases:leases.active,runtime:runtime.inspectSession(),auto:auto.inspect(),offhand:offhand?.clock.inspect()})
+  };
+  return api;
 }

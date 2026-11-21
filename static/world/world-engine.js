@@ -43,7 +43,7 @@ export function createWorld(canvas, callbacks, config = world) {
   const lag = new Vector3();
   const mountPoint = new Vector3();
   let elapsed = 0;
-  let lastTime = null;
+  let lastTime = null,suspended=false;
   let queuedJump = false;
   let selected = false;
   let targetCollider,targetFacing=0;
@@ -216,7 +216,7 @@ export function createWorld(canvas, callbacks, config = world) {
     callbacks.selection(value, value ? targetUnit : null);
   }
 
-  bindOrbit(canvas, delta => { orbit = orbitInput(orbit, delta, config.camera); }, (x, y, right, marker) => {
+  const orbitControls=bindOrbit(canvas, delta => { orbit = orbitInput(orbit, delta, config.camera); }, (x, y, right, marker) => {
     const rect = canvas.getBoundingClientRect();
     ray.setFromCamera(new Vector2((x - rect.left) / rect.width * 2 - 1, 1 - (y - rect.top) / rect.height * 2), camera);
     if (groundPick && !right) {
@@ -247,13 +247,14 @@ export function createWorld(canvas, callbacks, config = world) {
     }
     if (!right || found) setSelection(found);
     if (right && found) callbacks.autoAttack?.();
-  }, signal);
+  }, signal,()=>!suspended);
   canvas.addEventListener('webglcontextlost', event => {
     event.preventDefault();
     callbacks.unavailable();
   }, {signal});
 
   const controller = {
+    setSuspended(value){suspended=Boolean(value);lastTime=null;if(suspended){readInput.clear?.();orbitControls?.clear();}},
     setQuality,
     pickGround(callback) {
       groundPick = callback;
@@ -343,7 +344,7 @@ export function createWorld(canvas, callbacks, config = world) {
       reactionTime = 0;
     },
     update(now) {
-      if (signal.aborted || document.hidden) return;
+      if (signal.aborted || document.hidden || suspended) return;
       const dt = lastTime === null ? 0 : Math.min(0.1, Math.max(0, (now - lastTime) / 1000));
       lastTime = now;
       const blend = 1 - Math.exp(-21 * dt);

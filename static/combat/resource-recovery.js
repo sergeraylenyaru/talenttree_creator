@@ -2,6 +2,7 @@
 export function createResourceRecovery(definitions) {
   const queues=new Map(),convertedReady=new Map();let rate=1;
   return {
+    updateDefinitions(next){definitions=next;},
     consume(costs,now,speed=1) {
       this.retime(now,speed);
       for(const cost of costs){

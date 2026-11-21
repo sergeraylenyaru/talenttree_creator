@@ -4,8 +4,9 @@ export {conditionMatches} from './conditions.js';
 
 export function createProcEngine(rules,random){
   const counters=new Map(), readyAt=new Map(), seen=new Set(),used=new Map();
-  const ordered=[...rules].sort((a,b)=>(b.priority??0)-(a.priority??0));
+  let ordered=[...rules].sort((a,b)=>(b.priority??0)-(a.priority??0));
   return {
+    updateRules(next){ordered=[...next].sort((a,b)=>(b.priority??0)-(a.priority??0));},
     dispatch(event,state,statuses,weapon,modifyChance,execute,context={}){
       // Payload events remain in the ledger but never start another proc generation.
       if((event.depth??0)>=4||seen.has(event.id)||event.resolvedHit===false)return;

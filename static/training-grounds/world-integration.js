@@ -131,7 +131,7 @@ export function mountTrainingWorld(dialog, actions) {
     else actions.cast(id);
     updateHUD();
     canvas?.focus({preventScroll:true});
-  },actions.preview);
+  },actions.preview,actions.editing);
   frame.append(hud.controls);
   const dummyCast=arena.querySelector('#tg-dummy-cast');const dummyCastParent=dummyCast.parentElement;
   frame.querySelector('.tg-unit-target .tg-unit-details').append(dummyCast);
@@ -141,7 +141,7 @@ export function mountTrainingWorld(dialog, actions) {
     ['meter',frame.querySelector('.tg-damage-meter'),'Аналитика']
   ],actions.build.layoutId??actions.build.name,actions.preview);
   const dummyVital = arena.querySelector('#tg-label-dummy').closest('.tg-vital');
-  let controller;
+  let controller,suspended=false;
   let canvas;
   let generation = 0;
   const assets = assetPanel(stage, () => controller);
@@ -238,6 +238,7 @@ export function mountTrainingWorld(dialog, actions) {
           status.textContent = '3D недоступна. Открыт боевой стенд.';
         }
       });
+      controller.setSuspended(suspended);
       actions.enter();
       controller.setQuality(quality.value);
       frame.append(castbar);frame.querySelector('.tg-unit-target .tg-unit-details').append(dummyCast);
@@ -293,6 +294,9 @@ export function mountTrainingWorld(dialog, actions) {
   }
 
   return {
+    reconcile(next){actions.build=next;hud.reconcile(next);},
+    setSuspended(value){if(suspended!==Boolean(value)){suspended=Boolean(value);controller?.setSuspended(suspended);}},
+    closeMenu:()=>hud.closeMenu(),
     heroPortrait:()=>heroPortrait,
     weaponBone:()=>controller?.assetReport().assets.weapon?.bone,
     playerHit:()=>controller?.playerHit(),
@@ -335,6 +339,6 @@ export function mountTrainingWorld(dialog, actions) {
         status.textContent = '3D недоступна. Открыт боевой стенд.';
       }
     },
-    dispose: switchToCombat
+    dispose(){hud.dispose();switchToCombat();}
   };
 }

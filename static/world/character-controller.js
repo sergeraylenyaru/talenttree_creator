@@ -60,7 +60,7 @@ export function bindMovement(scope, document, window, signal) {
   window.addEventListener('blur', clear, {signal});
   document.addEventListener('visibilitychange', clear, {signal});
   scope.addEventListener('focusout', clear, {signal});
-  return () => {
+  const read = () => {
     const input = {
       side: Number(pressed.has('KeyD')) - Number(pressed.has('KeyA')),
       forward: Number(pressed.has('KeyW')) - Number(pressed.has('KeyS')),
@@ -69,4 +69,6 @@ export function bindMovement(scope, document, window, signal) {
     jump = false;
     return input;
   };
+  read.clear=clear;
+  return read;
 }

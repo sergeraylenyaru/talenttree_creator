@@ -191,7 +191,7 @@ function replaceText(element, value) {
 export function renderTrainingGrounds(dialog, build, settings, actions) {
   const count = new Intl.NumberFormat(getLanguage(), {maximumFractionDigits: 2});
   const fmt = value => count.format(value);
-  const abilities = build.activeAbilities;
+  let abilities = build.activeAbilities;
   dialog.innerHTML = `
     <div class="tg-top">
       <div><button type="button" id="tg-return" autofocus>← Вернуться к дереву</button>
@@ -248,7 +248,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
     ${settingsMarkup(settings)}`;
 
   const $ = selector => dialog.querySelector(selector);
-  const buttons = [...dialog.querySelectorAll('.tg-ability')];
+  let buttons = [...dialog.querySelectorAll('.tg-ability')];
   $('#tg-speed').onchange=event=>actions.speed(Number(event.target.value));
   const castIcon = $('#tg-cast-icon');
   castIcon.onload = () => { castIcon.hidden = false; };
@@ -380,9 +380,8 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
     }
     if (previousStats !== state.statistics) {
       previousStats = state.statistics;
-      $('#tg-contribution').innerHTML = abilities.filter(a => Object.hasOwn(stats.damageByAbility, a.id))
-        .sort((a, b) => stats.damageByAbility[b.id] - stats.damageByAbility[a.id])
-        .map(a => `<li>${userText(a.name)} <strong>${fmt(stats.damageByAbility[a.id])}</strong></li>`).join('') || '<li>—</li>';
+      $('#tg-contribution').innerHTML = Object.keys(stats.damageByAbility).sort((a,b)=>stats.damageByAbility[b]-stats.damageByAbility[a])
+        .map(id=>`<li>${userText(stats.damageDetails[id]?.name??id)} <strong>${fmt(stats.damageByAbility[id])}</strong></li>`).join('') || '<li>—</li>';
     }
     showLog(state.combatLog);
   }
@@ -421,7 +420,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
       else if (!event.shiftKey) castAbility(abilities[digit - 1]?.id);
     }
   };
-  $('#tg-return').onclick = () => dialog.close();
+  $('#tg-return').onclick = actions.returnToTree??(()=>dialog.close());
   $('#tg-pause').onclick = actions.pause;
   $('#tg-reset').onclick = actions.reset;
   $('#tg-cancel').onclick = actions.cancel;
@@ -435,6 +434,9 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
 
   return {
     update, castAbility, review:actions.review,
+    reconcile(next){
+      build=next;abilities=next.activeAbilities;$('.tg-actions').innerHTML=abilities.map(abilityMarkup).join('');buttons=[...dialog.querySelectorAll('.tg-ability')];buttons.forEach((button,index)=>button.onclick=()=>castAbility(abilities[index].id));previousStats=undefined;
+    },
     reset(runtime) {
       $('#tg-feedback').replaceChildren();
       $('#tg-floats').replaceChildren();

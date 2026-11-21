@@ -1,3 +1,4 @@
+import {simplifyEffectRow} from './ability-editor-layout.js';
 import {controlTypes,dispelTypes} from './combat/advanced-effects.js';
 import {validateCombatEffects} from './combat/effect-validation.js';
 import {addTranslations, t} from './i18n.js';
@@ -81,6 +82,8 @@ export function combatEffectEditor(root, ability, resources = [], abilities = []
       for (const input of row.querySelectorAll('[data-key]')) {
         const key = input.dataset.key;
         if (key === 'type') continue;
+        const value=input.type==='checkbox'?String(input.checked):input.value;
+        if(value===input.dataset.initialValue&&input.dataset.initialPresent!=='true'){delete effect[key];continue;}
         if (input.value === '' && (['description','icon','direction','school','drGroup','dispelType','damageKind','category'].includes(key) || input.type === 'number' && !input.required)) delete effect[key];
         else effect[key] = input.type === 'number' ? input.valueAsNumber : input.type === 'checkbox' ? input.checked : input.value;
       }
@@ -168,7 +171,15 @@ export function combatEffectEditor(root, ability, resources = [], abilities = []
       <button type="button" data-duplicate ${effects.length>=32?'disabled':''}>Дублировать эффект</button>
       <button type="button" data-remove>Удалить эффект</button></div></fieldset>`).join('')}</div>
       <button type="button" data-add ${effects.length>=32?'disabled':''}>＋ Добавить эффект</button></section>`;
+    for(const [index,row] of [...root.querySelectorAll('[data-combat-row]')].entries()){
+      simplifyEffectRow(row);
+      for(const input of row.querySelectorAll('[data-key]')){
+        input.dataset.initialValue=input.type==='checkbox'?String(input.checked):input.value;
+        input.dataset.initialPresent=String(Object.hasOwn(effects[index],input.dataset.key));
+      }
+    }
   }
+
 
   root.onclick = event => {
     const button = event.target.closest('button');

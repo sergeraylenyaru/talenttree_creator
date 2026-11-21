@@ -82,3 +82,21 @@
   color:#f2d39f;
   padding:.3rem .5rem;
 }
+
+.ability-editor-section { margin:.55rem 0; padding:.65rem; border:1px solid #504636; border-radius:7px; }
+.ability-editor-section > h3 { margin:0 0 .45rem; color:#dfc492; font-size:.86rem; }
+.ability-editor-section > summary { cursor:pointer; color:#dfc492; }
+.ability-editor-dialog #abilityDescription { min-height:75px; }
+.ability-editor-dialog .ability-editor-layout { grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr); gap:1rem; }
+.ability-editor-dialog .ability-flags:empty { display:none; }
+.ability-live-summary { display:block; margin:.5rem 0 1rem; padding:.65rem .85rem; border-left:3px solid #d7ae65; background:#d7ae650e; color:#e8dbc4; font-size:.84rem; line-height:1.5; }
+.ability-session-notice { margin:0; padding:.5rem; background:#25494b; color:#d9f2ee; }
+.ability-editor-section label { font-size:.77rem; }
+.ability-editor-section [hidden],.ability-editor-dialog .ability-numbers > [hidden] { display:none; }
+.ability-weapon-settings small { display:block; margin-top:.4rem; color:#c3b49b; }
+.tg-ability-menu { position:absolute; z-index:60; min-width:150px; padding:5px; background:#1c202bf5; border:1px solid #b39058; box-shadow:0 4px 20px #000a; border-radius:5px; pointer-events:auto; }
+.tg-ability-menu button { display:block; width:100%; text-align:left; padding:.5rem .75rem; color:#f2debc; background:transparent; border:0; }
+.tg-ability-menu button:is(:hover,:focus-visible) { background:#b3905830; }
+.tg-session-choice { max-width:min(36rem,90vw); padding:1.4rem; background:#191d27; color:#e6d7be; border:1px solid #b39058; }
+.tg-session-choice button { margin:.3rem; }
+@media(max-width:700px){.ability-editor-dialog .ability-editor-layout{grid-template-columns:1fr;}}

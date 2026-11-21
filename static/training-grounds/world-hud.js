@@ -1,3 +1,4 @@
+import {mountAbilityContextMenu} from './ability-context-menu.js';
 import {auraPolarity} from '../combat/advanced-effects.js';
 import {addTranslations, t} from '../i18n.js';
 import {trainingWeapon} from '../combat/auto-attack.js';
@@ -49,7 +50,7 @@ function describe(ability) {
     t('Дальность')+' '+presentationRange(ability.range,ability.presentation)+' m'].filter(Boolean).join('\n');
 }
 
-export function mountWorldHUD(frame, build, practice, cast, preview) {
+export function mountWorldHUD(frame, build, practice, cast, preview,editing) {
   const root=document.createElement('div');
   root.className='tg-play-hud';
   root.innerHTML=`<div class="tg-unit tg-unit-player"><div class="tg-portrait"><img alt="" hidden><b aria-label="Уровень">1</b></div>
@@ -81,8 +82,8 @@ export function mountWorldHUD(frame, build, practice, cast, preview) {
   const byId=new Map(list.map(ability=>[ability.id,ability]));
   const storageKey='talentforge-action-slots-v2:'+JSON.stringify(build.layoutId ?? build.name);
   const legacyKey='talentforge-action-slots-v1:'+JSON.stringify([build.name,list.map(ability=>ability.id)]);
-  const known = new Set([...(build.knownAbilityIds ?? []), ...practice.map(ability=>ability.id)]);
-  let slots=list.slice(0,18).map(ability=>ability.id);
+  const known = new Set([...(build.knownAbilityIds ?? []), ...list.map(ability=>ability.id)]);
+  let slots=Array.from({length:18},(_,index)=>list[index]?.id??null);
   try {
     const exact = preview ? null : localStorage.getItem(storageKey) ?? localStorage.getItem(legacyKey);
     let saved = JSON.parse(exact);
@@ -206,6 +207,30 @@ export function mountWorldHUD(frame, build, practice, cast, preview) {
   const swing=controls.querySelector('.tg-swing');
   const swingLabel=swing.querySelector('span');
 
+  const context=editing&&mountAbilityContextMenu(controls,{
+    resolve:id=>!byId.has(id)?null:editing.resolve(id),pause:editing.pause,edit:editing.edit,
+    feedback:message=>{controls.querySelector('.tg-game-feedback').textContent=message;}
+  });
+  function reconcile(next){
+    context?.close();build=next;
+    for(const resource of build.resources){const entry=resourceRows.get(resource.id);if(entry)entry.name=resource.name;}
+    if(build.resources[0])bars[1].title=build.resources[0].name;
+    const previous=new Set(byId.keys());
+    const authored=build.activeAbilities;
+    const ready=authored.filter(ability=>ability.combatEffects.length||ability.presentation?.category==='movement');
+    const list=ready.length?[...authored,...practice.slice(0,1)]:[...practice,...authored];
+    byId.clear();for(const ability of list)byId.set(ability.id,ability);
+    const known=new Set([...(build.knownAbilityIds??[]),...list.map(ability=>ability.id)]);
+    slots=slots.map(id=>known.has(id)?id:null);
+    // New/unlocked abilities fill empty slots. Existing assignments never reorder.
+    for(const ability of ready)if(!previous.has(ability.id)&&!slots.includes(ability.id)){const index=slots.indexOf(null);if(index>=0)slots[index]=ability.id;}
+    palette.replaceChildren();
+    for(const ability of list){const button=document.createElement('button');button.type='button';button.draggable=true;button.dataset.dragAbility=ability.id;button.textContent=ability.name;button.title=describe(ability);button.ondragstart=event=>dragAbility(event,ability.id);palette.append(button);}
+    selects.forEach((select,index)=>{select.replaceChildren(new Option(t('Пустая ячейка'),''),...list.map(ability=>new Option(ability.name,ability.id)));select.value=byId.has(slots[index])?slots[index]:'';renderSlot(index);});
+    player.querySelector('strong').textContent=build.name;player.querySelector('.tg-portrait b').textContent=build.profile?.level??1;
+    if(!preview)try{localStorage.setItem(storageKey,JSON.stringify(slots));}catch{}
+  }
+
   const bars=[player.querySelector('.tg-unit-bar'),player.querySelector('.tg-unit-resource'),target.querySelector('.tg-unit-bar')];
   function fill(element,value,max) {
     const width=Math.max(0,Math.min(100,100*value/max))+'%';
@@ -258,7 +283,7 @@ export function mountWorldHUD(frame, build, practice, cast, preview) {
       activeStatuses.delete(key);
     }
   }
-  return {
+  return {reconcile,closeMenu:()=>context?.close(),dispose:()=>context?.dispose(),
     controls,
     select(value,unit) {
       target.hidden=!value;

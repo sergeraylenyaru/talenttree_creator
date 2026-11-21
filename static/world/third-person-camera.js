@@ -37,7 +37,7 @@ export function placeCamera(camera, target, orbit, previous, dt, obstacles, floo
   return {distance: zoom, clearance: actual, obstructed: fraction < 1};
 }
 
-export function bindOrbit(canvas, update, select, signal) {
+export function bindOrbit(canvas, update, select, signal, enabled=()=>true) {
   const surface = canvas.parentElement;
   const isArena = event => event.target === canvas || event.target.closest?.('.tg-world-target');
   const options = {signal};
@@ -56,7 +56,7 @@ export function bindOrbit(canvas, update, select, signal) {
   }
 
   surface.addEventListener('pointerdown', event => {
-    if (pointer || !isArena(event) || ![0, 2].includes(event.button)) return;
+    if (!enabled() || pointer || !isArena(event) || ![0, 2].includes(event.button)) return;
     canvas.focus({preventScroll: true});
     pointer = {id: event.pointerId, button: event.button, x: event.clientX, y: event.clientY,
       marker: event.target !== canvas, dragged: false, touch: event.pointerType === 'touch'};
@@ -67,6 +67,7 @@ export function bindOrbit(canvas, update, select, signal) {
     if (event.button === 2 || pointer.touch) surface.setPointerCapture(event.pointerId);
   }, options);
   surface.addEventListener('pointermove', event => {
+    if(!enabled()){release();return;}
     if (pointer?.id !== event.pointerId) return;
     if (!inside(event)) {
       release();
@@ -81,6 +82,7 @@ export function bindOrbit(canvas, update, select, signal) {
     if (pointer.button === 2 || pointer.touch) update({x, y});
   }, options);
   window.addEventListener('pointerup', event => {
+    if(!enabled()){release();return;}
     if (pointer?.id !== event.pointerId || pointer.button !== event.button) return;
     const {dragged, button, marker, touch} = pointer;
     release();
@@ -103,6 +105,8 @@ export function bindOrbit(canvas, update, select, signal) {
   }, options);
   canvas.addEventListener('wheel', event => {
     event.preventDefault();
+    if(!enabled())return;
     update({zoom: event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY});
   }, {signal, passive: false});
+  return {clear:release};
 }

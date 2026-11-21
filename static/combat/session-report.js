@@ -142,8 +142,10 @@ export function compareReports(left,right){
 
 export function seededRandom(seed){
   let value=seed>>>0;
-  return ()=>{
+  const random=()=>{
     value=(Math.imul(value,1664525)+1013904223)>>>0;
     return value/4294967296;
   };
+  random.getState=()=>value;
+  return random;
 }

@@ -1,3 +1,4 @@
+import {sessionCompatibility} from './session-updates.js';
 import {attackTable,resolveAttackTable,selectCombatWeapon,normalizedWeaponSpeed} from './attack-rules.js';
 import {auraPolarity} from './advanced-effects.js';
 import {createResourceRecovery,substituteRuneCosts} from './resource-recovery.js';
@@ -51,10 +52,10 @@ export function createCombatRuntime(build, options = {}) {
       event:{school:ability.combatEffects.find(effect=>effect.school)?.school},masteryPoints:current.combatRules?.mastery??0});
   }
 
-  function syncVitals(){
+  function syncVitals(force=false){
     const {maxHealth,resources}=sheet();
     const player=state.player;
-    if(maxHealth===player.maxHealth&&resources.every(resource=>resource.max===player.resources[resource.id]?.max))return;
+    if(!force&&maxHealth===player.maxHealth&&resources.every(resource=>resource.max===player.resources[resource.id]?.max))return;
     state={...state,player:{...player,maxHealth,health:Math.min(player.health,maxHealth),
       resources:Object.fromEntries(resources.map(resource=>[resource.id,{...resource,current:Math.min(resource.max,player.resources[resource.id]?.current??0)}]))}};
   }
@@ -743,6 +744,25 @@ export function createCombatRuntime(build, options = {}) {
     }
 
   return {
+    updateBuild(next){
+      const compatibility=sessionCompatibility(build,next);
+      if(!compatibility.ok)return compatibility;
+      // Existing casts, deliveries and statuses own their compiled records.
+      // Replace only future lookups; do not replay events or reset RNG/time.
+      build=structuredClone(next);
+      abilities.clear();for(const ability of build.activeAbilities)abilities.set(ability.id,ability);
+      procs.updateRules(build.profile?.procs??[]);
+      runeRecovery.updateDefinitions(build.profile?.resources??{});
+      sheetStatuses=undefined;sheetCache=undefined;
+      syncVitals(true);
+      return {ok:true};
+    },
+    inspectSession(){
+      return {state:JSON.parse(JSON.stringify(state,(key,value)=>key==='delivery'?undefined:value)),
+        statuses:statuses.map(status=>({ability:structuredClone(status.ability),effect:structuredClone(status.effect),stacks:status.stacks,expires:status.expires,nextTick:status.nextTick,remaining:status.remaining,instance:status.instance})),
+        charges:Object.fromEntries([...charges].map(([id,times])=>[id,[...times]])),runes:runeRecovery.details(),
+        pending:pending.size,seed,rng:generator.getState?.(),paused};
+    },
     attachTimeline(id,timeline){timelines.set(id,timeline);return ()=>timelines.delete(id);},
     get state() { return state; },
     get paused() { return paused; },
@@ -772,7 +792,7 @@ export function createCombatRuntime(build, options = {}) {
     runeDetails(){return runeRecovery.details();},
     chargeCount(id) {
       const pool = chargeState(abilities.get(id) ?? {});
-      return pool.limit ? pool.limit - pool.remaining.length : undefined;
+      return pool.limit ? Math.max(0,pool.limit - pool.remaining.length) : undefined;
     },
     availability,
     autoEvent(ability, type, details) { log([entry(type, ability, details)]); },

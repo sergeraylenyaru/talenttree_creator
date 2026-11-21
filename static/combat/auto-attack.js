@@ -22,6 +22,7 @@ export function createAutoAttack(weapon = trainingWeapon) {
   }
 
   return {
+    inspect(){return {status:{...status},due,winding,suspended,remainingOnPause,hasSwung,swingSeconds};},
     get status() { return status; },
     stop,
     start(report,now) {

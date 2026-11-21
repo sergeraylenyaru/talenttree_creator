@@ -8,7 +8,8 @@ import {workshopOptions, workshopTemplates, rememberTemplate} from './spell-work
 import {validateWorkshop} from './combat/workshop-rules.js';
 import {presentationEditor} from './ability-presentation-editor.js';
 import {validatePresentation} from './combat/presentation.js';
-import {openTrainingGrounds} from './training-grounds/training-grounds.js';
+import {simplifyAbilityEditor} from './ability-editor-layout.js';
+import {openTrainingGrounds,disposeTrainingSession,rekeyTrainingSession} from './training-grounds/training-grounds.js';
 import {registerTrainingTranslations} from './training-grounds/training-grounds-ui.js';
 import {combatEffectEditor} from './combat-effect-editor.js';
 import {presetClassName,applyPresetLocale} from './preset-locales.js';
@@ -54,13 +55,27 @@ addTranslations([
  ['Канал с тиками','Channel with ticks'],['Нет исполняемых боевых эффектов','No executable combat effects']
 ]);
 $('#openTrainingGrounds').onclick=()=>{
- try{closeMenus();$('#tooltip').hidden=true;openTrainingGrounds($('#trainingGrounds'),doc,{layoutId:projectId?'project:'+projectId:undefined});}
- catch(error){toast(t(error.message));}
+ try{
+  closeMenus();$('#tooltip').hidden=true;
+  openTrainingGrounds($('#trainingGrounds'),doc,{
+   layoutId:projectId?'project:'+projectId:undefined,sessionKey:trainingKey(),
+   getSessionKey:trainingKey,getDocument:()=>doc,
+   canEdit:()=>Boolean(user&&mode==='edit'&&!activeShare&&!favoriteTreeId),
+   editAbility:(id,done)=>{
+    const ability=doc.abilities.find(item=>item.id===id);if(!ability){done();return;}
+    try{editAbility(ability,done,done,null,null,{training:true});}
+    catch(error){if($('#modal').open)$('#modal').close();throw error;}
+   }
+  });
+ }catch(error){toast(t(error.message));}
 };
 const confirm=message=>window.confirm(t(message));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let aboutContent=null,aboutRequest=0;
 let doc=blank(), projectId=null, user=null, mode='play', modalSave=null, modalDelete=null, dirty=false,modalCancel=null,abilityView='icons',favoriteTreeId=null,savedDraftSignature=null;
+let trainingDraftId=crypto.randomUUID();
+function trainingKey(){return (user?.login??'guest')+':'+(activeShare?'share:'+activeShare:favoriteTreeId?'favorite:'+favoriteTreeId:projectId?'project:'+projectId:'draft:'+trainingDraftId);}
+function assignProjectId(id){const previous=trainingKey();projectId=id;rekeyTrainingSession($('#trainingGrounds'),previous,trainingKey());}
 doc.name=t('Новый класс');doc.branches.forEach((b,i)=>b.name=t('Ветка')+' '+(i+1));
 try { const draft=JSON.parse(localStorage.getItem('talentforge-draft')); if(draft){doc=normalize(draft,{allowLegacy:true});dirty=localStorage.getItem('talentforge-draft-dirty')==='1';} } catch {}
 function toast(message) { notify(message); $('#toast').textContent=message;$('#toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').hidden=true,4200); }
@@ -72,13 +87,13 @@ async function saveWorkingDraft(){
  const current=doc,previousId=projectId,owner=user?.login,document=withoutBuild(normalize(structuredClone(doc)));
  const result=await api('/projects',{id:previousId,document,sourceShare:activeShare});
  if(doc!==current||projectId!==previousId||user?.login!==owner)return {...result,current:false,clean:false};
- projectId=result.id;savedDraftSignature=draftSignature(document,result.id);setDirty(true);persistBrowserBuild();try{persistDraft();}catch{}
+ assignProjectId(result.id);savedDraftSignature=draftSignature(document,result.id);setDirty(true);persistBrowserBuild();try{persistDraft();}catch{}
  return {...result,current:true,clean:!dirty};
 }
 function persistDraft(){localStorage.removeItem('talentforge-draft-source');localStorage.setItem('talentforge-draft',JSON.stringify(doc));if(projectId&&user)localStorage.setItem('talentforge-draft-source',JSON.stringify({projectId,ownerLogin:user.login}));}
 async function restoreDraftProject(){
  const restored=doc,login=user?.login;if(!login||projectId)return;
- try{const source=JSON.parse(localStorage.getItem('talentforge-draft-source'));if(source?.ownerLogin!==login||!source.projectId)return;const saved=await api('/projects/'+encodeURIComponent(source.projectId));if(doc===restored&&user?.login===login&&!activeShare&&!projectId){projectId=source.projectId;savedDraftSignature=draftSignature(normalize(saved.document,{allowLegacy:true}),projectId);setDirty(true);}}catch{}
+ try{const source=JSON.parse(localStorage.getItem('talentforge-draft-source'));if(source?.ownerLogin!==login||!source.projectId)return;const saved=await api('/projects/'+encodeURIComponent(source.projectId));if(doc===restored&&user?.login===login&&!activeShare&&!projectId){assignProjectId(source.projectId);savedDraftSignature=draftSignature(normalize(saved.document,{allowLegacy:true}),projectId);setDirty(true);}}catch{}
 }
 function changed(structural=true) { synchronizeAbilityTalents(doc);persistBrowserBuild();remember();if(structural)setDirty(true);$('#saveState').textContent=dirty?'Есть несохранённые изменения':projectId?'Сохранено в аккаунте':'Локальный черновик';try{persistDraft();}catch{toast('Браузер не сохранил черновик. Экспортируй класс в JSON.');} }
 async function api(path, data, method) {
@@ -275,7 +290,7 @@ function selectedTemplateClass(){
  return templateClassForPreset(preset);
 }
 
-function editAbility(existing,onSaved=null,onCancel=null,draft=null,savePlacement=null){
+function editAbility(existing,onSaved=null,onCancel=null,draft=null,savePlacement=null,context={}){
  const a=draft||existing||{id:crypto.randomUUID(),name:'',description:'',icon:'forge-arcane',workshop:{version:1},resourceUnit:'percent',resource:'',cast:'',cooldown:'',range:'',talentId:'',requirements:'',learningMode:'base'};
  if(mode==='play'){modal(a.name,`<p class="tooltip-description">${esc(a.description)}</p><div class="spell-stats">${abilityStatsMarkup(a)}</div>`,null);readOnlyFavorite('ability',a);return;}
  const learning=a.learningMode||((a.talentId||doc.branches.some(b=>b.talents.some(t=>t.grantedAbilityId===a.id)))?'talent':'base');
@@ -339,7 +354,7 @@ function editAbility(existing,onSaved=null,onCancel=null,draft=null,savePlacemen
   else doc=appendAbilityInstance(doc,updated).document;
   changed();render();$('#modal').close();if(reopen&&onSaved)setTimeout(()=>onSaved(updated),0);
  }
- modal('Мастерская заклинаний',body,save,existing?()=>{if(confirm('Удалить способность и её размещения в деревьях?')){doc=removeAbility(doc,a.id);changed();render();$('#modal').close();}}:null);
+ modal('Мастерская заклинаний',body,save,existing?()=>{if(confirm('Удалить способность и её размещения в деревьях?')){doc=removeAbility(doc,a.id);changed();render();$('#modal').close();if(onSaved)setTimeout(()=>onSaved(null),0);}}:null);
  $('#modal').classList.add('ability-editor-dialog');
  const updateChannel=()=>{const passive=$('#abilityKind').value==='passive';$('#abilityChanneled').disabled=passive;
  $('#abilityApplication').hidden=passive;$('#abilityCastControl').hidden=passive;$('#passiveApplication').hidden=!passive;$('#spellPresentationDetails').hidden=passive;
@@ -367,6 +382,7 @@ function editAbility(existing,onSaved=null,onCancel=null,draft=null,savePlacemen
   duration.dispatchEvent(new Event('input',{bubbles:true}));
   updateChannel();
  };
+ duration.addEventListener('input',()=>castMode.value=originalMode());
  for(const input of [duration,tick,$('#cast'),$('#abilityChanneled')])input.addEventListener('change',()=>castMode.value=originalMode());
  readCosts=resourceCostEditor($('#abilityResourceCosts'),a,character(),!existing);const constrainBranch=()=>{for(const option of $('#abilityBranch').options)option.disabled=$('#abilityBranchOnly').checked&&['','auto'].includes(option.value);if($('#abilityBranchOnly').checked&&!doc.branches.some(b=>b.id===$('#abilityBranch').value))$('#abilityBranch').value=doc.branches[0].id;};$('#abilityBranchOnly').onchange=constrainBranch;constrainBranch();$('#abilityLearning').onchange=()=>{$('#talentLinkField').hidden=$('#abilityLearning').value!=='talent';};bindPicker();favoriteButton('ability',()=>doc.abilities.find(x=>x.id===a.id));modalCancel=onCancel;
  const attempt=run=>()=>{try{$('#formError').textContent='';run();}catch(error){$('#formError').textContent=t(error.message);}};
@@ -378,10 +394,11 @@ function editAbility(existing,onSaved=null,onCancel=null,draft=null,savePlacemen
   const staged={...a,...preset,...identity,id:a.id,learningMode:$('#abilityLearning').value,talentId:$('#talentLink').value,
    branchId:$('#abilityBranch').value,branchOnly:$('#abilityBranchOnly').checked,channeled:false};
   $('#modal').close();
-  editAbility(existing,onSaved,onCancel,staged,savePlacement);
+  editAbility(existing,onSaved,onCancel,staged,savePlacement,context);
  });
  $('#rememberSpellTemplate').onclick=attempt(()=>{rememberTemplate(readDraft(),user?.login,doc);toast(t('Настройки сохранены как шаблон'));});
  $('#previewSpell').onclick=attempt(()=>{
+  if(context.training)return;
   const edited=readDraft();
   if(!edited.combatEffects?.length&&edited.presentation?.category!=='movement')throw Error('Нет исполняемых боевых эффектов');
   const isolated=structuredClone(doc);
@@ -399,7 +416,8 @@ function editAbility(existing,onSaved=null,onCancel=null,draft=null,savePlacemen
   }
   openTrainingGrounds($('#trainingGrounds'),isolated,{preview:edited.id});
  });
- $('#saveTestSpell').onclick=attempt(()=>{save(false);$('#openTrainingGrounds').click();});
+ $('#saveTestSpell').onclick=attempt(()=>{if(context.training){save(true);return;}save(false);$('#openTrainingGrounds').click();});
+ simplifyAbilityEditor($('#modalBody'),readDraft,{training:context.training});
 
 }
 $('#trees').addEventListener('change',e=>{if(e.target.matches('.tree-header input')){doc.branches.find(b=>b.id===e.target.closest('.tree').dataset.branch).name=e.target.value;changed();render();}});
@@ -640,7 +658,7 @@ async function askToLeave(){
   $('#discardDraft').onclick=()=>finish(true);$('#stayDraft').onclick=()=>finish(false);const closeToDrafts=()=>{if(saving)return;finish(false,false);if($('#library').hidden||$('#library').dataset.scope!=='projects'||$('#library').dataset.archived==='true')openLibrary('projects');};$('#closeDraft').onclick=closeToDrafts;dialog.oncancel=e=>{e.preventDefault();closeToDrafts();};
  });
 }
-$('#new').onclick=async()=>{if(!await askToLeave())return;showWorkspace();doc=blank();doc.name=t('Новый класс');doc.branches.forEach((b,i)=>b.name=t('Ветка')+' '+(i+1));projectId=null;activeShare=null;favoriteTreeId=null;activePublication=null;mode='edit';changed();render();};
+$('#new').onclick=async()=>{if(!await askToLeave())return;showWorkspace();trainingDraftId=crypto.randomUUID();doc=blank();doc.name=t('Новый класс');doc.branches.forEach((b,i)=>b.name=t('Ветка')+' '+(i+1));projectId=null;activeShare=null;favoriteTreeId=null;activePublication=null;mode='edit';changed();render();};
 $('#preset').onclick=async()=>{
  try{
   const {classes}=await api('/presets');
@@ -648,7 +666,7 @@ $('#preset').onclick=async()=>{
   modal('Стандартные деревья',`<div id="versionFilters" class="version-filters">${[['Forever','Forever'],['2.4.3','TBC'],['3.3.5a','WotLK'],['4.3.4','Cataclysm']].map(([v,n])=>`<button type="button" data-version="${v}">${n}</button>`).join('')}</div><input type="hidden" id="presetClass"><div id="classCards" class="class-cards"></div><p class="muted">Стандартный набор будет скопирован на языке интерфейса. Forever — снимок 1.60.1.69876, возможны отличия от текущего Wowhead.${getLanguage()==='ru'?' Русские тексты: игровые данные и перевод проекта.':''}</p>`,async()=>{
    if(!selected)throw Error('Выбери класс');if(!await askToLeave())return;
    const response=await fetch(`presets/${selected}.json`,{cache:'no-store'});if(!response.ok)throw Error('Не удалось загрузить класс');const original=await response.json(),language=getLanguage();let locale=null;if(language==='ru'){const translated=await fetch(`preset-locales/ru/${selected}.json`,{cache:'no-store'});if(!translated.ok)throw Error('Не удалось загрузить русский набор талантов');locale=await translated.json();}const localized=applyPresetLocale(original,selected,language,locale);
-   doc=normalize(localized.abilities.length?localized:installStarterLibrary(localized,templateClassForPreset(selected),language));showWorkspace();projectId=null;activeShare=null;favoriteTreeId=null;allocationSent=false;$('#shareStats').hidden=true;mode=user?'edit':'play';changed();render();$('#modal').close();toast(doc.source?.notice||'Класс загружен');
+   trainingDraftId=crypto.randomUUID();doc=normalize(localized.abilities.length?localized:installStarterLibrary(localized,templateClassForPreset(selected),language));showWorkspace();projectId=null;activeShare=null;favoriteTreeId=null;allocationSent=false;$('#shareStats').hidden=true;mode=user?'edit':'play';changed();render();$('#modal').close();toast(doc.source?.notice||'Класс загружен');
   });
   function drawClasses(){
    for(const b of document.querySelectorAll('[data-version]')){b.classList.toggle('selected',b.dataset.version===version);b.setAttribute('aria-pressed',String(b.dataset.version===version));}
@@ -662,7 +680,7 @@ $('#preset').onclick=async()=>{
 };
 $('#export').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(withoutBuild(doc),null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`${doc.name.replace(/[^\p{L}\p{N}_-]/gu,'_')}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 $('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{
- try{const file=e.target.files[0];if(!file)return;if(file.size>2_000_000)throw Error('Файл больше 2 МБ');const incoming=normalize(JSON.parse(await file.text()));if(!await askToLeave())return;doc=incoming;projectId=null;activeShare=null;favoriteTreeId=null;changed();render();toast('Класс импортирован');}catch(err){toast(err.message);}finally{e.target.value='';}
+ try{const file=e.target.files[0];if(!file)return;if(file.size>2_000_000)throw Error('Файл больше 2 МБ');const incoming=normalize(JSON.parse(await file.text()));if(!await askToLeave())return;trainingDraftId=crypto.randomUUID();doc=incoming;projectId=null;activeShare=null;favoriteTreeId=null;changed();render();toast('Класс импортирован');}catch(err){toast(err.message);}finally{e.target.value='';}
 };
 function avatarMarkup(icon,name){return `<span class="user-avatar" aria-label="Аватар ${esc(name)}">${classEmblem(typeof icon==='object'?icon:defaultClassIcon(icon||'inv_misc_questionmark'))}</span>`;}
 $('#profileAvatar').onclick=()=>{if(!user){auth();return;}editClassIcon(null,0,'avatar');};
@@ -687,7 +705,7 @@ $('#profileSettings').onclick=()=>{
 };
 $('#chooseAvatar').onclick=()=>{closeMenus();$('#profileAvatar').click();};
 $('#auth').onclick=()=>auth();
-$('#logout').onclick=async()=>{try{await api('/logout',{});const privateView=activeShare&&(activePublication?.visibility==='private'||activePublication?.archived);if(privateView){try{if(localStorage.getItem('talentforge-draft')===JSON.stringify(doc))localStorage.removeItem('talentforge-draft');}catch{}doc=blank();activeShare=null;favoriteTreeId=null;activePublication=null;setDirty(false);history.replaceState(null,'',location.pathname);showWorkspace();}user=null;projectId=null;mode='play';resetHistory();renderUser();render();toast(privateView?'Выход выполнен. Просмотр закрытой публикации завершён.':'Выход выполнен. Локальный черновик остаётся в этом браузере.');}catch(err){toast(err.message);}};
+$('#logout').onclick=async()=>{try{await api('/logout',{});disposeTrainingSession($('#trainingGrounds'));const privateView=activeShare&&(activePublication?.visibility==='private'||activePublication?.archived);if(privateView){try{if(localStorage.getItem('talentforge-draft')===JSON.stringify(doc))localStorage.removeItem('talentforge-draft');}catch{}doc=blank();activeShare=null;favoriteTreeId=null;activePublication=null;setDirty(false);history.replaceState(null,'',location.pathname);showWorkspace();}user=null;projectId=null;mode='play';resetHistory();renderUser();render();toast(privateView?'Выход выполнен. Просмотр закрытой публикации завершён.':'Выход выполнен. Локальный черновик остаётся в этом браузере.');}catch(err){toast(err.message);}};
 $('#save').onclick=async()=>{
  if(!user){auth();return;}const button=$('#save');button.disabled=true;button.setAttribute('aria-busy','true');
  try{const result=await saveWorkingDraft();if(!result.current)return;refreshShareStats();$('#saveState').textContent=result.clean?'Сохранено в аккаунте':'Есть несохранённые изменения';toast(result.clean?'Класс сохранён в аккаунте. Очки калькулятора — только в этом браузере.':'Последние изменения ещё не сохранены. Сохрани дерево ещё раз.');}catch(err){toast(err.message);}finally{button.disabled=false;button.setAttribute('aria-busy','false');}
@@ -705,7 +723,7 @@ $('#share').onclick=()=>{
 $('#projects').onclick=()=>openLibrary('projects');
 async function loadWorkingProject(pid,copy=false){
  if(!await askToLeave())return;
- const result=await api('/projects/'+encodeURIComponent(pid));doc=restoreBrowserBuild(normalize(result.document,{allowLegacy:true}),'project:'+pid);activeShare=null;favoriteTreeId=null;activePublication=null;allocationSent=false;projectId=copy?null:pid;mode='edit';if(copy){const existing=(await api('/projects')).projects,key=(name,subtitle)=>((name||'')+' '+(subtitle||'')).normalize('NFKC').toLowerCase().replace(/\s+/g,' ').trim(),used=new Set(existing.map(p=>key(p.name,p.subtitle))),base=doc.name;let n=1;do{const suffix=' '+t('— копия')+(n>1?' ('+n+')':'');doc.name=base.slice(0,100-suffix.length)+suffix;n++;}while(used.has(key(doc.name,doc.subtitle)));}showWorkspace();if(copy)changed();else{setDirty(false);try{persistDraft();}catch{}$('#saveState').textContent='Сохранено в аккаунте';}resetHistory();render();history.replaceState(null,'',location.pathname);if($('#modal').open)$('#modal').close();
+ const result=await api('/projects/'+encodeURIComponent(pid));doc=restoreBrowserBuild(normalize(result.document,{allowLegacy:true}),'project:'+pid);activeShare=null;favoriteTreeId=null;activePublication=null;allocationSent=false;projectId=copy?null:pid;if(copy)trainingDraftId=crypto.randomUUID();mode='edit';if(copy){const existing=(await api('/projects')).projects,key=(name,subtitle)=>((name||'')+' '+(subtitle||'')).normalize('NFKC').toLowerCase().replace(/\s+/g,' ').trim(),used=new Set(existing.map(p=>key(p.name,p.subtitle))),base=doc.name;let n=1;do{const suffix=' '+t('— копия')+(n>1?' ('+n+')':'');doc.name=base.slice(0,100-suffix.length)+suffix;n++;}while(used.has(key(doc.name,doc.subtitle)));}showWorkspace();if(copy)changed();else{setDirty(false);try{persistDraft();}catch{}$('#saveState').textContent='Сохранено в аккаунте';}resetHistory();render();history.replaceState(null,'',location.pathname);if($('#modal').open)$('#modal').close();
 }
 let libraryRequest=0;
 async function confirmArchive(name){

@@ -135,23 +135,18 @@ export function presentationEditor(container, ability) {
   }
   addAnimations(animationFields.filter(key=>key!=='impactAnimation'),'hero');
   addAnimations(['impactAnimation'],'target');
-  container.addEventListener('change',showFallback);
+  for(const control of controls.values())control.addEventListener('change',showFallback);
   preset.onchange = () => {
     const defaults = presentationPresets[preset.value];
     for (const [key, control] of controls) control.value = defaults?.[key] ?? '';
     updateRelevance();
   };
-  container.addEventListener('change',updateRelevance);
+  for(const control of controls.values())control.addEventListener('change',updateRelevance);
   updateRelevance();
   return () => {
     const result = Object.fromEntries([...controls].filter(([, control]) => control.value !== '').map(([key, control]) =>
       [key, control.type === 'number' ? control.valueAsNumber : control.value]));
-    if (result.delivery==='melee'||['self','area','targetArea','ground'].includes(result.targeting)) {
-      if (result.projectile) result.projectile='none';
-      for(const key of ['projectileSpeed','projectileOrigin','projectilePreset','trajectory','arcHeight'])delete result[key];
-    }
-    if(result.projectile!=='straight'){delete result.trajectory;delete result.arcHeight;}
-    if(result.trajectory!=='arc')delete result.arcHeight;
+    // Visibility is editorial only. Runtime delivery rules ignore dormant parameters.
     return result;
   };
 }
