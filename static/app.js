@@ -1,7 +1,7 @@
 import {copyAbility,copyAbilityIntoDocument,appendAbilityInstance,replaceAbilityInstance,abilityTemplateSnapshot} from './combat/ability-instance.js';
 import {classSpellTemplates,classTemplateLabels,installStarterLibrary,templateClassForPreset} from './combat/class-spell-templates.js';
 import {combatSchools} from './combat/effect-validation.js';
-import {abilityReadiness} from './combat/ability-readiness.js';
+import {abilityReadiness,talentReadiness} from './combat/ability-readiness.js';
 import {characterLab} from './character-lab.js';
 import {removeRpgReferences} from './combat/rpg-profile.js';
 import {workshopOptions, workshopTemplates, rememberTemplate} from './spell-workshop.js';
@@ -795,6 +795,7 @@ function showTooltip(target,x,y){
  if(!t&&!a&&!resource)return;
  if(resource){tip.innerHTML=`<strong data-user-content>${esc(resource.name)}</strong><p class="resource-description" data-user-content>${esc(resource.description||'')}</p>`;}else if(t){const rank=mode==='edit'?1:(doc.build[t.id]||0),parent=doc.branches.flatMap(b=>b.talents).find(p=>p.id===t.requires),b=doc.branches.find(b=>b.talents.includes(t));tip.innerHTML=`<strong data-user-content>${esc(t.name)}</strong><div>Талант · Ранг ${rank}/${t.maxRank}</div>${t.grantedAbilityId?`<div class="spell-stats">${abilityStatsMarkup(doc.abilities.find(a=>a.id===t.grantedAbilityId)||{})}</div>`:''}<p class="effect">${esc(t.descriptions[Math.max(0,rank-1)])}</p>${mode==='play'&&rank>0&&rank<t.maxRank?`<div>Следующий ранг:</div><p class="effect">${esc(t.descriptions[rank])}</p>`:''}<p class="requirements">${t.row?`Требуется ${t.row*doc.rowCost} очк. в ветке ${esc(b.name)}<br>`:''}${parent?'Требуется: '+esc(parent.name)+' ('+parent.maxRank+'/'+parent.maxRank+')':''}</p>`;
  }else tip.innerHTML=`<strong data-user-content>${esc(a.name)}</strong><div class="muted">${a.kind==='passive'?'Пассивная способность':'Активная способность'}</div><div class="spell-stats">${abilityStatsMarkup(a)}</div><p class="effect">${esc(a.description)}</p>`;
+ if(t){const readiness=talentReadiness(doc,t);tip.innerHTML+=`<p class="spell-readiness" data-readiness="${readiness.state}">${esc(readiness.message)}</p>`;}
  if(t&&mode==='play')tip.innerHTML+='<small class="muted">Alt + клик — просмотр и избранное таланта</small>';
  tip.hidden=false;const box=tip.getBoundingClientRect();tip.style.left=Math.max(8,Math.min(x+16,innerWidth-box.width-8))+'px';tip.style.top=Math.max(8,Math.min(y+16,innerHeight-box.height-8))+'px';
 }

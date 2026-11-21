@@ -1,3 +1,4 @@
+import {visitConditions} from './conditions.js';
 // Provenance is descriptive metadata. Combat never reads a mutable source template.
 const identity=()=>crypto.randomUUID();
 const lists=['bonuses','procs'];
@@ -23,6 +24,7 @@ function bundle(document,source,id,detachOwners){
       rules[key].set(rule.id,rule);
       if(rule.spell)references.push(rule.spell);
       if(rule.sourceAbilityId)references.push(rule.sourceAbilityId);
+      visitConditions(rule.condition,condition=>{if(condition.abilityId)references.push(condition.abilityId);if(['playerStatus','dummyStatus','auraStacks'].includes(condition.type)&&library.has(condition.value))references.push(condition.value);});
     }
     for(const reference of references){
       if(records.has(reference))continue;
@@ -44,7 +46,7 @@ function bundle(document,source,id,detachOwners){
     else if(detachOwners)rule.owner={kind:'ability',id:remap.get(rule.spell)??id};
     if(remap.has(rule.spell))rule.spell=remap.get(rule.spell);
     if(remap.has(rule.sourceAbilityId))rule.sourceAbilityId=remap.get(rule.sourceAbilityId);
-    if(['playerStatus','dummyStatus'].includes(rule.condition?.type)&&remap.has(rule.condition.value))rule.condition.value=remap.get(rule.condition.value);
+    visitConditions(rule.condition,condition=>{if(['playerStatus','dummyStatus','auraStacks'].includes(condition.type)&&remap.has(condition.value))condition.value=remap.get(condition.value);if(remap.has(condition.abilityId))condition.abilityId=remap.get(condition.abilityId);});
     return rule;
   })]));
   if(copies.length)root.templateAbilities=copies.map(ability=>({...ability,instanceOwnerId:id}));

@@ -5,7 +5,7 @@ export function createCombatState(build, settings) {
       resources: Object.fromEntries(build.resources.map(resource => [resource.id, {...resource}]))
     },
     dummy: {...settings.dummy, health: settings.dummy.maxHealth},
-    cooldowns: {},
+    cooldowns: {},cooldownGroups:{},
     globalCooldownUntil: 0,
     activeCast: null,
     classStates:{...build.profile?.states},combatTime: 0,

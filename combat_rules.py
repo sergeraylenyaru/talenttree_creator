@@ -1,7 +1,7 @@
 """Backward-compatible validation of declarative combat control effects."""
 CONTROL_TYPES = ('stun','root','slow','fear','silence','disarm','interrupt','knockback','immunity')
 DISPEL_TYPES = ('magic','curse','poison','disease')
-ADVANCED_TYPES = ('control','dispel','cooldown','state')
+ADVANCED_TYPES = ('control','dispel','cooldown','state','rune')
 
 
 def aura_metadata(effect):
@@ -15,7 +15,10 @@ def validate_advanced_effect(effect):
     def number(key, minimum, maximum):
         return type(effect.get(key)) in (int, float) and minimum <= effect[key] <= maximum
     kind = effect['type']
-    if kind == 'state':
+    if kind == 'rune':
+        fields={'fromResource','toResource','count'}
+        valid=(all(isinstance(effect.get(key),str) and 1<=len(effect[key])<=100 for key in ('fromResource','toResource')) and effect['fromResource']!=effect['toResource'] and type(effect.get('count')) is int and 1<=effect['count']<=6)
+    elif kind == 'state':
         fields = {'key','value'}
         valid = (effect.get('key') in ('form','stance','aspect','seal','mode')
                  and isinstance(effect.get('value'), str) and 1 <= len(effect['value']) <= 60)
@@ -34,9 +37,10 @@ def validate_advanced_effect(effect):
         valid = (effect.get('target') in ('player','dummy') and effect.get('dispelType') in DISPEL_TYPES
                  and type(effect.get('count')) is int and 1 <= effect['count'] <= 32)
     else:
-        fields = {'abilityId','seconds','reset','charges'}
+        fields = {'abilityId','seconds','reset','charges','includeGroup'}
         valid = (isinstance(effect.get('abilityId'), str) and 1 <= len(effect['abilityId']) <= 200
                  and number('seconds',0,3600) and type(effect.get('reset')) is bool
+                 and ('includeGroup' not in effect or type(effect['includeGroup']) is bool)
                  and ('charges' not in effect or type(effect['charges']) is int and 0 <= effect['charges'] <= 10))
     if not valid or set(effect) - fields - {'id','type','trigger'}:
         raise ValueError('Проверь боевые эффекты')

@@ -1,3 +1,4 @@
+import {targetSide} from '../../combat/attack-rules.js';
 import {animationClips, isLocalClip, presentationRange} from '../../combat/presentation.js';
 import {isHostileEffect} from '../../combat/workshop-rules.js';
 import {cameraFraction} from '../collision-system.js';
@@ -187,6 +188,7 @@ export function createSpatialCombat({displace,animationAvailable, animationFallb
       };
       let launch;
       return {
+        combatContext(){const victim=locked?.read();return victim?{position:targetSide(player(),victim),distance:distanceToTarget(origin(),victim),geometry:true}:{};},
         displace:(target,amount)=>displace?.(target,amount),
         utility, validate, ground, projectile: profile.kind === 'projectile',
         placeZone() { return visuals.zone?.(groundPoint,profile); },
@@ -288,6 +290,10 @@ export function createSpatialCombat({displace,animationAvailable, animationFallb
           flights.add(attack);
         }
       };
+    },
+    nextEvent(){
+      return Math.min(phase?.at??Infinity,...[...flights].map(attack=>attack.profile.kind==='melee'?attack.start+config.windup:
+        Math.min(attack.last+1/120,attack.start+(attack.profile.projectileLifetime??Infinity))));
     },
     update(now) {
       if(phase&&now>=phase.at){const cue=phase;phase=undefined;cue.play();}

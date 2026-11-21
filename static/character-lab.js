@@ -1,3 +1,4 @@
+import {talentReadiness} from './combat/ability-readiness.js';
 import {rollItemStats} from './combat/item-roll.js';
 import {saveBuildSnapshot,restoreBuildSnapshot,detachLegacyBuilds} from './combat/build-snapshots.js';
 import {configureCataclysmClass} from './combat/class-resources.js';
@@ -135,7 +136,7 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
       ...(profile.combatRules?[field('Combat class',profile.combatRules.classId,change(profile.combatRules,'classId'),{choices:combatClasses}),
         field('Target level',profile.combatRules.targetLevel,change(profile.combatRules,'targetLevel'),{...number,min:1,max:1000,step:1}),
         field('Attack position',profile.combatRules.position??'front',change(profile.combatRules,'position'),{choices:['front','behind']}),
-        element('p','Rating constants use level 85. Other levels require an explicit simulation scale.'),
+        element('p','Cataclysm: base stats and ratings remain approximations without client build 15595 tables. Other levels require an explicit simulation scale. Arena front/behind uses geometry; this setting applies to headless tests.'),
         field('Rating simulation scale',profile.combatRules.ratingScale??1,change(profile.combatRules,'ratingScale'),{...number,min:.000001,max:1000})
       ]:[]),
       field('Level',profile.level??1,change(profile,'level'),{...number,min:1,max:1000,step:1}),
@@ -161,6 +162,7 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
     for(const resource of resources){
       const rules=profile.resources[resource.id]??={};
       resourcePanel.append(grid(
+        field(resource.name+' · Resource kind',rules.kind??'',change(rules,'kind'),{choices:[['','Legacy detection'],'mana','energy','rage','focus','combo','rune','custom']}),
         field(resource.name+' · Rune pair',rules.rune??false,change(rules,'rune'),{check:true}),
         field(resource.name+' · Rune recovery seconds',rules.recharge??10,change(rules,'recharge'),{...number,min:.25,max:120})
       ));
@@ -193,6 +195,7 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
       button('Open Training Grounds',open(training))));
     if(incoming)result.append(section('Manual dummy strike',grid(
       field('Damage school',incoming.school,change(incoming,'school'),{choices:combatSchools}),
+      field('Манекен: подготовка заклинания, сек. / Dummy cast seconds',incoming.castTime??'',change(incoming,'castTime'),{...number,min:.25,max:30}),
       field('Scenario interval, seconds',incoming.interval??2,change(incoming,'interval'),{...number,min:.25,max:120}),
       field('Raw damage',incoming.amount,change(incoming,'amount'),{...number,min:1}),
       field('Can critically strike',incoming.canCrit??false,change(incoming,'canCrit'),{check:true}),
@@ -381,6 +384,37 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
     const kind=page==='Talents'?'talent':page==='Abilities'?'passive':profile.items.length?'item':passive.length?'passive':'talent';
     return {kind,id:sources(kind)[0]?.id??''};
   }
+  function conditionFields(holder,key='condition',depth=0){
+    const c=holder[key];
+    const root=section('Условие / Condition');
+    const options=conditions.filter(type=>depth<2||!['all','any','not'].includes(type));
+    root.append(field('Condition type',c?.type??'',value=>{
+      if(!value)delete holder[key];
+      else if(['all','any'].includes(value))holder[key]={type:value,conditions:[{type:'playerBelow',value:50}]};
+      else if(value==='not')holder[key]={type:value,condition:{type:'playerBelow',value:50}};
+      else holder[key]={type:value,value:value==='critical'?true:['playerBelow','dummyBelow','resourceAbove','resourceBelow'].includes(value)?35:value==='weapon'?'sword1':value==='school'?'fire':value==='previousEvent'?'damage':value==='talentRank'?talents[0]?.id??'':value==='state'?'battle':'',
+        ...['resourceAbove','resourceBelow'].includes(value)?{resource:resources[0]?.id??''}:{},
+        ...value==='state'?{key:'stance'}:{},...value==='auraStacks'?{target:'player',stacks:1}:{},...value==='talentRank'?{rank:1}:{},...value==='previousEvent'?{window:5}:{}};
+      render();
+    },{choices:[['','Без условия / Any'],...options]}));
+    if(!c)return root;
+    if(['all','any'].includes(c.type)){
+      c.conditions.forEach((child,index)=>root.append(conditionFields(c.conditions,index,depth+1),button('Remove condition',()=>{c.conditions.splice(index,1);render();})));
+      if(c.conditions.length<8)root.append(button('Add condition',()=>{c.conditions.push({type:'playerBelow',value:50});render();}));
+    }else if(c.type==='not')root.append(conditionFields(c,'condition',depth+1));
+    else{
+      if(['playerBelow','dummyBelow','resourceAbove','resourceBelow'].includes(c.type))root.append(field('Threshold',c.value,change(c,'value'),{...number,max:['resourceAbove','resourceBelow'].includes(c.type)?1e8:100}));
+      if(['resourceAbove','resourceBelow'].includes(c.type))root.append(field('Condition resource',c.resource,change(c,'resource'),{choices:resources.map(resource=>[resource.id,resource.name])}));
+      if(['playerStatus','dummyStatus','auraStacks'].includes(c.type))root.append(field('Aura ID or name',c.value,change(c,'value')));
+      if(c.type==='auraStacks')root.append(field('Aura target',c.target,change(c,'target'),{choices:['player','dummy']}),field('Minimum stacks',c.stacks,change(c,'stacks'),{...number,min:1,max:10,step:1}));
+      if(c.type==='state')root.append(field('State key',c.key,change(c,'key'),{choices:['form','stance','aspect','seal','mode']}),field('State value',c.value,change(c,'value')));
+      if(c.type==='talentRank')root.append(field('Talent',c.value,change(c,'value'),{choices:talents.map(t=>[t.id,t.name])}),field('Talent rank',c.rank,change(c,'rank'),{...number,min:1,max:100,step:1}));
+      if(c.type==='previousEvent')root.append(field('Previous event',c.value,change(c,'value'),{choices:procEvents}),field('Within seconds',c.window,change(c,'window'),{...number,min:.01,max:300}),field('Previous ability',c.abilityId??'',change(c,'abilityId'),{choices:[['','Any'],...abilities.map(a=>[a.id,a.name])]}));
+      if(['school','weapon'].includes(c.type))root.append(field('Condition value',c.value,change(c,'value'),{choices:c.type==='school'?combatSchools:itemTypes}));
+    }
+    return root;
+  }
+
   function rendersRules(){
     const root=element('div');
     const type=page==='Talents'?'talent':page==='Abilities'?'passive':null;
@@ -389,29 +423,18 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
       element('p','Attribute bonuses are added as written. Ability modifiers are percent changes. A passive ability can also contain permanent player stat effects.'));
     for(const rule of profile.bonuses.filter(matches)){
       bonuses.append(section('Bonus',ownerFields(rule),grid(
-        field('Statistic or modifier',rule.stat,value=>{rule.stat=value;if(!talentModifiers.includes(value))delete rule.spell;render();},
+        field('Statistic or modifier',rule.stat,value=>{rule.stat=value;if(!talentModifiers.includes(value)){delete rule.spell;delete rule.condition;delete rule.masteryScale;}render();},
           {choices:[...attributes,...talentModifiers]}),
         field('Amount',rule.amount,change(rule,'amount'),{...number,min:-100,max:10000}),
         ...(talentModifiers.includes(rule.stat)?[field('Affects',rule.spell??'',change(rule,'spell'),
           {choices:[['','All abilities'],...abilities.map(ability=>[ability.id,ability.name])]})]:[])
-      ),button('Remove bonus',()=>{profile.bonuses=profile.bonuses.filter(entry=>entry!==rule);render();})));
+      ),...(talentModifiers.includes(rule.stat)?[field('Процент за очко искусности / % per mastery point',rule.masteryScale??'',change(rule,'masteryScale'),{...number,max:100}),conditionFields(rule)]:[]),button('Remove bonus',()=>{profile.bonuses=profile.bonuses.filter(entry=>entry!==rule);render();})));
     }
     bonuses.append(button('Add bonus',()=>{profile.bonuses.push({id:id(),owner:newOwner(),stat:'attackPower',amount:10});render();}));
     const procs=section('Combat triggers',element('p','Choose an existing effect as payload. Harmful payloads require a confirmed hostile hit.'));
     const spells=abilities.filter(ability=>ability.combatEffects?.length);
     for(const proc of profile.procs.filter(matches)){
       const spell=spells.find(ability=>ability.id===proc.spell);
-      const condition=proc.condition;
-      const statusIds=abilities.flatMap(ability=>(ability.combatEffects??[]).filter(effect=>effect.duration).map(effect=>[effect.id,(effect.name??ability.name)+' · '+effect.id]));
-      let conditionField;
-      if(condition){
-        if(['playerBelow','dummyBelow','resourceAbove'].includes(condition.type))conditionField=field('Threshold',condition.value,change(condition,'value'),
-          {...number,max:condition.type==='resourceAbove'?1e8:100});
-        else if(condition.type!=='critical'){
-          const options=condition.type==='school'?combatSchools:condition.type==='weapon'?choices(itemTypes):statusIds;
-          conditionField=field('Condition value',condition.value,change(condition,'value'),{choices:[['','Choose value'],...options]});
-        }
-      }
       procs.append(section(proc.name,ownerFields(proc),grid(
         field('Proc name',proc.name,change(proc,'name')),
         field('Event',proc.event,change(proc,'event'),{choices:procEvents}),
@@ -422,6 +445,7 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
         field('Source ability',proc.sourceAbilityId??'',change(proc,'sourceAbilityId'),{choices:[['','Any ability'],...abilities.map(item=>[item.id,item.name])]}),
         field('School filter',proc.school??'',change(proc,'school'),{choices:[['','Any school'],...combatSchools]}),
         field('Attack filter',proc.attackType??'',change(proc,'attackType'),{choices:[['','Any attack'],'auto','direct','periodic']}),
+        field('PPM (autoattack only)',proc.ppm??'',change(proc,'ppm'),{...number,min:.01,max:60}),
         field('Chance, 0–1',proc.chance,change(proc,'chance'),{...number,max:1}),
         field('Internal cooldown, sec.',proc.cooldown,change(proc,'cooldown'),{...number,max:3600}),
         field('Every qualifying event',proc.every??1,change(proc,'every'),{...number,min:1,max:100,step:1}),
@@ -430,21 +454,12 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
         },{choices:[['','Choose ability'],...spells.map(ability=>[ability.id,ability.name])]}),
         field('Payload effect',proc.effect,change(proc,'effect'),{
           choices:(spell?.combatEffects??[]).map(effect=>[effect.id,(effect.name??label(effect.type))+' · '+effect.id])}),
-        field('Condition',condition?.type??'',value=>{
-          if(!value)delete proc.condition;
-          else proc.condition={type:value,value:value==='critical'?true:['playerBelow','dummyBelow','resourceAbove'].includes(value)?35:'',
-            ...value==='resourceAbove'?{resource:resources[0]?.id??''}:{}};
-          render();
-        },{choices:[['','Any'],...conditions]}),
-        ...conditionField?[conditionField]:[],
-        ...condition?.type==='resourceAbove'?[field('Condition resource',condition.resource,change(condition,'resource'),
-          {choices:resources.map(resource=>[resource.id,resource.name])})]:[],
         field('Spend resource',proc.cost?.resourceId??'',value=>{
           if(value)proc.cost={resourceId:value,amount:0,unit:'points'};else delete proc.cost;render();
         },{choices:[['','Free'],...resources.map(resource=>[resource.id,resource.name])]}),
         ...proc.cost?[field('Cost amount',proc.cost.amount,change(proc.cost,'amount'),number),
           field('Cost unit',proc.cost.unit,change(proc.cost,'unit'),{choices:['points','percent','count']})]:[]
-      ),button('Remove trigger',()=>{profile.procs=profile.procs.filter(entry=>entry!==proc);render();})));
+      ),conditionFields(proc),button('Remove trigger',()=>{profile.procs=profile.procs.filter(entry=>entry!==proc);render();})));
     }
     procs.append(button('Add trigger',attempt(()=>{
       if(!spells.length)throw Error('Create an ability with a combat effect first.');
@@ -456,8 +471,8 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
       abilities.flatMap(ability=>(ability.combatEffects??[]).filter(effect=>effect.duration).map(effect=>[
         ability.name,effect.name??label(effect.type),effect.target??(effect.type==='damage'?'Dummy':'Player'),effect.duration,effect.stacks??1
       ]))),button('Edit effects in the Spell Workshop',open(library))));
-    if(page==='Talents')root.append(section('Selected talent ranks',table(['Talent','Rank'],talents.map(talent=>[
-      talent.name,(draft.build[talent.id]??0)+' / '+talent.maxRank
+    if(page==='Talents')root.append(section('Selected talent ranks',table(['Talent','Rank','Combat status'],talents.map(talent=>[
+      talent.name,(draft.build[talent.id]??0)+' / '+talent.maxRank,talentReadiness(draft,talent).message
     ]))));
     root.append(bonuses,procs);
     return root;

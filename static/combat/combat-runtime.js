@@ -1,6 +1,7 @@
+import {attackTable,resolveAttackTable,selectCombatWeapon,normalizedWeaponSpeed} from './attack-rules.js';
 import {auraPolarity} from './advanced-effects.js';
-import {createResourceRecovery} from './resource-recovery.js';
-import {abilityBonuses, deriveCharacterStats} from './character-stats.js';
+import {createResourceRecovery,substituteRuneCosts} from './resource-recovery.js';
+import {abilityBonuses,abilityBonusDetails, deriveCharacterStats} from './character-stats.js';
 import {createProcEngine} from './proc-engine.js';
 import {createSessionReport,seededRandom} from './session-report.js';
 import {addStatus, modifier, nextStatusBoundary} from './active-effects.js';
@@ -22,8 +23,8 @@ export function createCombatRuntime(build, options = {}) {
   const incomingInterval=scenario?(build.profile.incoming.interval??2):Infinity;
   let nextIncoming=incomingInterval;
   let procPath=[],procBudget=64;
-  let eventId = 0;
-  const pending = new Set();
+  let eventId = 0,attackSequence=0;
+  const pending = new Set(),timelines=new Map();
   const emptyEffects = [];
   let statuses = emptyEffects;
   const charges = new Map();
@@ -41,6 +42,13 @@ export function createCombatRuntime(build, options = {}) {
       sheetStatuses=statuses;
     }
     return sheetCache;
+  }
+
+  function bonus(id,key){
+    const ability=abilities.get(id)??build.passiveAbilities?.find(ability=>ability.id===id)??{combatEffects:[]};
+    const current=sheet();
+    return abilityBonuses(build.profile,id,key,state.classStates,{state,statuses,weapon:selectCombatWeapon(ability,current).weapon,
+      event:{school:ability.combatEffects.find(effect=>effect.school)?.school},masteryPoints:current.combatRules?.mastery??0});
   }
 
   function syncVitals(){
@@ -131,7 +139,7 @@ export function createCombatRuntime(build, options = {}) {
         state={...state,player:payment.player};
         entries.push(entry('resourceSpent',rule.ability,{...cost,resourceName:resource.name}));
       }
-      entries.push(entry('procTriggered',rule.ability,{procId:rule.id,procName:rule.name,triggerId:trigger.id}));
+      entries.push(entry('procTriggered',rule.ability,{procId:rule.id,procName:rule.name,triggerId:trigger.id,chance:rule.resolvedChance,ppm:rule.ppm}));
       applyResults(results,rule.ability,entries);
       log(entries);
       return true;
@@ -163,13 +171,14 @@ export function createCombatRuntime(build, options = {}) {
 
   function costsFor(ability) {
     const free=Boolean(freeAura(ability));
-    return ability.resourceCosts.map(cost=>{
+    const costs=ability.resourceCosts.map(cost=>{
       const resource=state.player.resources[cost.resourceId];
       const max=cost.resourceId==='health'?state.player.maxHealth:resource?.max??0;
       const base=cost.unit==='percent'&&max?max*cost.amount/100:cost.amount;
       const amount=cost.resourceId===ability.workshop?.finisherResource?Math.max(base,resource?.current??0):base;
-      return {...cost,amount:free?0:amount*Math.max(0,1+abilityBonuses(build.profile,ability.id,'cost',state.classStates))};
+      return {...cost,amount:free?0:amount*Math.max(0,1+bonus(ability.id,'cost'))};
     });
+    return substituteRuneCosts(costs,state.player.resources,build.profile?.resources??{},ability.workshop?.runeSubstitute);
   }
 
   function withResourceScale(ability,costs) {
@@ -190,13 +199,17 @@ export function createCombatRuntime(build, options = {}) {
     }
     const timing=sheet();
     const gcd = gcdDuration(ability);
-    const startGcd=build.profile?.combatRules?.version==='cataclysm-4.3.4'&&ability.cast>0;
-    const cooldown=Math.max(0,ability.cooldown*(1+abilityBonuses(build.profile,ability.id,'cooldown',state.classStates))/timing.cooldownSpeed);
+    const startGcd=build.profile?.combatRules?.version==='cataclysm-4.3.4'&&(ability.cast>0||ability.channelDuration>0);
+    const cooldown=Math.max(0,ability.cooldown*(1+bonus(ability.id,'cooldown'))/timing.cooldownSpeed);
+    const group=ability.workshop?.cooldownGroup;
+    const groupDuration=group?(ability.workshop.groupCooldown??cooldown*timing.cooldownSpeed)/timing.cooldownSpeed:0;
+    if(groupDuration>0)cooldownEvents.push({time:state.combatTime+groupDuration,ability,group});
     if(cooldown&&build.profile)cooldownEvents.push({time:state.combatTime+cooldown,ability});
     state = {
       ...state, player: payment.player, activeCast: keepCast ? state.activeCast : null,
       globalCooldownUntil: Math.max(state.globalCooldownUntil, state.combatTime + (startGcd?0:gcd)),
       cooldowns: {...state.cooldowns, [ability.id]: state.combatTime + cooldown},
+      cooldownGroups:group?{...state.cooldownGroups,[group]:Math.max(Object.hasOwn(state.cooldownGroups,group)?state.cooldownGroups[group]:0,state.combatTime+groupDuration)}:state.cooldownGroups,
       statistics: {...state.statistics, casts: state.statistics.casts + 1}
     };
     return {gcd,cooldown};
@@ -216,7 +229,7 @@ export function createCombatRuntime(build, options = {}) {
     report.add(events);
     if(events.some(event=>['castStarted','autoHit','damage','incomingDamage'].includes(event.type)))lastCombatAt=state.combatTime;
     for(const event of events)procs.dispatch(event,state,statuses,event.weaponType?{type:event.weaponType}:sheet().weapon,
-      proc=>abilityBonuses(build.profile,proc.spell,'procChance',state.classStates),executeProc);
+      proc=>bonus(proc.spell,'procChance'),executeProc,{talents:build.profile?.learnedTalents});
   }
 
   function availability(id) {
@@ -241,6 +254,9 @@ export function createCombatRuntime(build, options = {}) {
     const gcd = ability.workshop?.noGcd ? 0 : Math.max(0, state.globalCooldownUntil - state.combatTime);
     const pool = chargeState(ability);
     if (pool.limit && pool.remaining.length >= pool.limit) return {reason: 'cooldown', remaining: pool.remaining[0] - state.combatTime};
+    const group=ability.workshop?.cooldownGroup;
+    const groupRemaining=group&&Object.hasOwn(state.cooldownGroups,group)?Math.max(0,state.cooldownGroups[group]-state.combatTime):0;
+    if(groupRemaining>Math.max(cooldown,gcd))return {reason:'cooldownGroup',remaining:groupRemaining,group};
     if (cooldown || gcd) return {reason: cooldown >= gcd ? 'cooldown' : 'gcd', remaining: Math.max(cooldown, gcd)};
     if (!ability.combatEffects.length && ability.presentation?.category!=='movement') return {reason:'noEffects'};
     if (!state.dummy.health && ability.combatEffects.some(isHostileEffect) && !['area','ground'].includes(ability.presentation?.targeting)) {
@@ -309,7 +325,7 @@ export function createCombatRuntime(build, options = {}) {
         const entries = [entry(type, ability, {reason})];
         if (impact) {
           try {
-            const results = calculate(delayed, ability);
+            const results = calculate(delayed, ability,1,false,undefined,delivery?.combatContext?.());
             applyResults(results, ability, entries, startedAt, delivery);
             if (results.some(result => result.isCritical)) delivery.critical?.();
           } catch (error) {
@@ -323,11 +339,13 @@ export function createCombatRuntime(build, options = {}) {
     return {ok: true};
   }
 
-  function calculate(effects, ability, stacked = 1, pulse = false, snapshot) {
+  function calculate(effects, ability, stacked = 1, pulse = false, snapshot, geometry) {
     const stat = key => modifier(statuses, 'player', key);
     const values = snapshot??sheet();
-    const ranged=ability.presentation?.delivery==='ranged';
-    const weapon=ranged?values.weapons.ranged:values.weapons.melee;
+    const legacyRanged=ability.presentation?.delivery==='ranged';
+    const selection=values.combatRules?selectCombatWeapon(ability,values):{hand:legacyRanged?'ranged':'mainHand',weapon:legacyRanged?values.weapons.ranged:values.weapons.melee};
+    const {weapon,hand}=selection;
+    const ranged=values.combatRules?hand==='ranged'||ability.workshop?.attackType==='ranged':legacyRanged;
     const weaponType=ability.weaponType??weapon?.type;
     const rules=ability.workshop??{};
     const levelScale=Math.max(0,(build.profile?.level??1)-(rules.baseLevel??1))*(rules.levelScale??0)/100;
@@ -335,33 +353,42 @@ export function createCombatRuntime(build, options = {}) {
     const source = {
       ...values.source,
       healingPower:values.healingPower,
-      damageMultiplier:values.source.damageMultiplier*rank*Math.max(0,1+abilityBonuses(build.profile,ability.id,'damage',state.classStates)),
-      healingMultiplier:values.source.healingMultiplier*rank*Math.max(0,1+abilityBonuses(build.profile,ability.id,'healing',state.classStates))
+      damageMultiplier:values.source.damageMultiplier*rank,
+      healingMultiplier:values.source.healingMultiplier*rank
     };
     const targetModifier = key => Math.max(0, 1 + modifier(statuses, 'dummy', key));
+    const hasHostile=effects.some(isHostileEffect);
+    const shared=values.combatRules&&!pulse&&!ability.isReflection&&hasHostile?{
+      ...resolveAttackTable(attackTable({ability,rules:values.combatRules,crit:effects.some(effect=>effect.type==='damage'&&effect.canCrit)?source.critChance:0,hand,
+        dualWield:Boolean(values.weapons.offHand?.speed),position:geometry?.position,
+        targetControlled:statuses.some(status=>status.target==='dummy'&&['stun','fear'].includes(status.effect.controlType))}),random),id:++attackSequence}:undefined;
+    const immuneSchool=ability.combatEffects.find(effect=>effect.type==='damage')?.school??ability.workshop?.attackSchool??ability.combatEffects.find(effect=>effect.school)?.school;
+    const immune=hasHostile&&statuses.some(status=>status.target==='dummy'&&status.effect.controlType==='immunity'&&!status.effect.school);
+    const rejection=immune?'immune':shared&&['miss','dodge','parry'].includes(shared.outcome)?shared.outcome:undefined;
+    const attackDetails=shared?{attackId:shared.id,attackType:shared.table.type,hand,position:shared.table.position,attackTable:shared.table,attackRoll:shared.roll}:{};
+    const usesWeapon=effects.some(effect=>effect.type==='damage'&&effect.weaponCoefficient);
+    const baseWeapon=weapon?values.combatRules&&usesWeapon?weapon.minDamage+(weapon.maxDamage-weapon.minDamage)*(weapon.minDamage===weapon.maxDamage?0:random()):(weapon.minDamage+weapon.maxDamage)/2:0;
+    const weaponDamage=values.combatRules&&weapon?baseWeapon+source.attackPower/14*(ability.workshop?.normalizedWeapon?normalizedWeaponSpeed(weapon):weapon.speed):baseWeapon;
+    const rejectedAttack=shared??{id:++attackSequence};
+    const bonusContext={state,statuses,weapon,event:{school:immuneSchool},masteryPoints:values.combatRules?.mastery??0};
     return effects.map(effect => {
-      if (['resource','status','shield','control','dispel','cooldown','state'].includes(effect.type) || effect.duration && !pulse) return {effect};
+      const school=effect.school??immuneSchool;
+      const schoolImmune=isHostileEffect(effect)&&statuses.some(status=>status.target==='dummy'&&status.effect.controlType==='immunity'&&status.effect.school===school);
+      if((rejection||schoolImmune)&&(isHostileEffect(effect)||effect.trigger==='onHit'))return {rejected:schoolImmune?'immune':rejection,attack:rejectedAttack,attackDetails,school};
+      if (['resource','status','shield','control','dispel','cooldown','state','rune'].includes(effect.type) || effect.duration && !pulse) return {effect};
       const matches=effect.type==='damage'?values.damageModifiers.filter(({effect:bonus})=>
         (!bonus.school||bonus.school===effect.school)&&(!bonus.consumeOnHit||!pulse)):[];
+      const modifiers=abilityBonusDetails(build.profile,ability.id,effect.type==='healing'?'healing':'damage',state.classStates,{...bonusContext,event:{school:effect.school}});
+      const abilityModifier=Math.max(0,1+modifiers.reduce((sum,rule)=>sum+rule.amount/100,0));
       const damageModifier=Math.max(0,1+matches.reduce((sum,bonus)=>sum+bonus.effect.amount*bonus.stacks/100,0));
-      const immune=effect.type==='damage'&&statuses.some(status=>status.target==='dummy'&&status.effect.controlType==='immunity'&&(!status.effect.school||status.effect.school===effect.school));
       const rules=values.combatRules;
       const physical=effect.school==='physical';
-      const gap=rules?Math.max(0,rules.targetLevel-rules.level):0;
-      const melee=physical&&!ranged;
-      const chances=rules&&effect.type==='damage'&&!pulse&&!ability.isReflection?{
-        miss:Math.max(0,(physical ? .05+gap*.01 : .04+gap*.043333333)-(physical?rules.hit:rules.spellHit)),
-        dodge:melee?Math.max(0,.05+gap*.005-rules.expertise):0,
-        parry:melee&&rules.position==='front'?Math.max(0,.05+gap*.03-rules.expertise):0,
-        block:physical&&rules.position==='front'?.05:0,
-        glancing:ability.isAuto&&melee?Math.min(.24,gap*.08):0
-      }:undefined;
-      const outcome=immune?'immune':chances?rollAttackOutcome(chances,random()):'hit';
-      const avoided=['miss','dodge','parry','immune'].includes(outcome);
+      const outcome=effect.type==='damage'?(shared?.outcome??'hit'):'hit';
+      const avoided=false;
       const result = calculateCombatEffect(effect, {
-        source:{...source,damageMultiplier:source.damageMultiplier*damageModifier,
+        source:{...source,damageMultiplier:source.damageMultiplier*damageModifier*abilityModifier,healingMultiplier:source.healingMultiplier*abilityModifier,
           flatDamage:effect.school==='physical'?(ranged?values.rangedPower:values.meleePower):values.spellDamage,
-          weaponDamage:weapon?(weapon.minDamage+weapon.maxDamage)/2:0
+          weaponDamage:values.combatRules?weaponDamage*(hand==='offHand'&&!ability.isAuto?.5:1):weapon?(weapon.minDamage+weapon.maxDamage)/2:0
         },
         target: effect.type === 'damage' ? {
           armor: state.dummy.armor * targetModifier('armor')*(1-(rules?.armorPenetration??0)),
@@ -369,20 +396,29 @@ export function createCombatRuntime(build, options = {}) {
           damageTakenMultiplier: state.dummy.damageTakenMultiplier * targetModifier('damageTaken') * targetModifier(effect.school==='physical'?'physicalTaken':'magicalTaken')
         } : {healingTakenMultiplier: settings.healingTakenMultiplier * Math.max(0, 1 + stat('healingTaken'))},
         ...(rules?{rules:{armorConstant:rules.armorConstant,resistanceConstant:rules.resistanceConstant}}:{}),
-        outcome: {isCritical: !avoided&&!['glancing','block'].includes(outcome)&&effect.canCrit && rollCritical(source.critChance, random()),
+        outcome: {isCritical:effect.canCrit&&(effect.type==='damage'&&shared?shared.isCritical:rollCritical(source.critChance,random())),
           ...(effect.minAmount !== undefined || effect.maxAmount !== undefined ? {amountRoll:random()} : {})}
       });
-      const finalAmount = avoided?0:Math.min(effect.cap===undefined?Infinity:Math.floor(effect.cap),Math.round(result.finalAmount*stacked*(outcome==='block'?.7:outcome==='glancing'?.75:1)));
+      const outcomeMultiplier=outcome==='block'?.7:outcome==='glancing'?(shared?.table.glancingMultiplier??.75):1;
+      const unrounded=(rules?result.unroundedAmount:result.finalAmount)*stacked;
+      const beforeCap=Math.round(unrounded*outcomeMultiplier);
+      const finalAmount=avoided?0:Math.min(effect.cap===undefined?Infinity:Math.floor(effect.cap),beforeCap);
       if (!Number.isSafeInteger(finalAmount)) throw new RangeError('Stacked result exceeds safe integer precision');
-      return {...result, outcome, blocked:outcome==='block'?result.finalAmount*stacked-finalAmount:0, finalAmount, periodic:pulse, stacks:stacked, weaponType,
-        consumed:matches.filter(bonus=>bonus.effect.consumeOnHit).map(bonus=>bonus.instance)};
+      return {...result, ...attackDetails,outcome, blocked:outcome==='block'?(rules?Math.round(unrounded)-beforeCap:result.finalAmount*stacked-finalAmount):0,...(rules&&effect.cap!==undefined?{capped:Math.max(0,beforeCap-finalAmount)}:{}), finalAmount, periodic:pulse, stacks:stacked, weaponType,
+        modifiers,calculation:values.combatRules?{version:'cataclysm-4.3.4',attackPower:source.attackPower,spellPower:source.spellPower,weaponDamage,weaponSpeed:weapon?.speed,normalized:Boolean(ability.workshop?.normalizedWeapon),armorConstant:values.combatRules.armorConstant,resistanceApproximation:true}:undefined,consumed:matches.filter(bonus=>bonus.effect.consumeOnHit).map(bonus=>bonus.instance)};
     });
   }
 
   function applyResults(results, ability, events, startedAt, delivery, originStatus) {
+    const resourceHits=new Set();
     for (const result of results) {
+      if(result.rejected){
+        if(!result.attack.reported){events.push(entry(result.rejected,ability,{target:'dummy',school:result.school,amount:0,...result.attackDetails}));result.attack.reported=true;}
+        continue;
+      }
       if (result.effect) {
         const effect = result.effect;
+        if(effect.type==='rune'){const amount=runeRecovery.convert(effect.fromResource,effect.toResource,effect.count);events.push(entry('runesConverted',ability,{amount,fromResource:effect.fromResource,toResource:effect.toResource}));continue;}
         if(effect.type==='control'&&effect.controlType==='knockback'){
           delivery?.displace?.(effect.target,effect.amount??3);
           events.push(entry('knockback',ability,{target:effect.target,amount:effect.amount??3}));
@@ -406,10 +442,13 @@ export function createCombatRuntime(build, options = {}) {
           const id=effect.abilityId==='self'?ability.id:effect.abilityId;
           state={...state,cooldowns:{...state.cooldowns,[id]:effect.reset?state.combatTime:
             Math.max(state.combatTime,(state.cooldowns[id]??0)-effect.seconds)}};
+          const group=effect.includeGroup&&abilities.get(id)?.workshop?.cooldownGroup;
+          if(group)state={...state,cooldownGroups:{...state.cooldownGroups,[group]:effect.reset?state.combatTime:Math.max(state.combatTime,(state.cooldownGroups[group]??0)-effect.seconds)}};
           const pool=charges.get(id)??[];
           charges.set(id,effect.reset?[]:pool.slice(effect.charges??0).map(at=>Math.max(state.combatTime,at-effect.seconds)));
-          for(let index=cooldownEvents.length-1;index>=0;index--)if(cooldownEvents[index].ability.id===id)cooldownEvents.splice(index,1);
+          for(let index=cooldownEvents.length-1;index>=0;index--)if(cooldownEvents[index].ability.id===id&&!cooldownEvents[index].group||group&&cooldownEvents[index].group===group)cooldownEvents.splice(index,1);
           if(state.cooldowns[id]>state.combatTime)cooldownEvents.push({time:state.cooldowns[id],ability:abilities.get(id)??ability});
+          if(group&&state.cooldownGroups[group]>state.combatTime)cooldownEvents.push({time:state.cooldownGroups[group],ability:abilities.get(id)??ability,group});
           for(const at of charges.get(id))if(at>state.combatTime)cooldownEvents.push({time:at,ability:abilities.get(id)??ability,charge:true});
           events.push(entry('cooldownChanged',ability,{affectedAbilityId:id,amount:effect.seconds,reset:effect.reset}));
           continue;
@@ -417,14 +456,14 @@ export function createCombatRuntime(build, options = {}) {
         if (effect.type === 'resource') {
           const resource = state.player.resources[effect.resourceId];
           const amount=effect.amount*(effect.unit==='percent'?(resource?.max??0)/100:1);
-          const delta=effect.direction==='drain'?-amount:amount*Math.max(0,1+abilityBonuses(build.profile,ability.id,'resourceGain',state.classStates));
+          const delta=effect.direction==='drain'?-amount:amount*Math.max(0,1+bonus(ability.id,'resourceGain'));
           adjustResource(effect.resourceId,delta,ability,events);
           continue;
         }
         const hostile = isHostileEffect(effect);
         if (hostile && !state.dummy.health && !delivery?.ground) continue;
         const strength = sheet();
-        let duration=Math.max(.25,Math.min(300,effect.duration*(1+abilityBonuses(build.profile,ability.id,'duration',state.classStates))));
+        let duration=Math.max(.25,Math.min(300,effect.duration*(1+bonus(ability.id,'duration'))));
         let drFactor=1;
         if(effect.type==='control'&&effect.drGroup){
           const key=(effect.target??'dummy')+':'+effect.drGroup;
@@ -436,10 +475,11 @@ export function createCombatRuntime(build, options = {}) {
           if(!duration){events.push(entry('controlImmune',ability,{target:effect.target,drGroup:effect.drGroup}));continue;}
         }
         const periodicHaste=build.profile?.hasteUses?.includes('periodic')?Math.max(.1,1+strength.haste):1;
-        const interval=effect.interval?Math.max(.25,Math.min(duration,effect.interval*Math.max(.05,1+abilityBonuses(build.profile,ability.id,'period',state.classStates))/periodicHaste)):undefined;
+        const interval=effect.interval?Math.max(.25,Math.min(duration,effect.interval*Math.max(.05,1+bonus(ability.id,'period'))/periodicHaste)):undefined;
         if(interval&&periodicHaste!==1)duration=Math.min(300,Math.max(1,Math.floor(duration/interval+.5))*interval);
-        const maxStacks=Math.max(1,Math.min(10,(effect.stacks??1)+Math.round(abilityBonuses(build.profile,ability.id,'maxStacks',state.classStates)*100)));
+        const maxStacks=Math.max(1,Math.min(10,(effect.stacks??1)+Math.round(bonus(ability.id,'maxStacks')*100)));
         const timed={...effect,duration,...(maxStacks>1?{stacks:maxStacks}:{}),...interval!==undefined?{interval}:{}};
+        if(effect.category)removeStatuses(status=>status.target===(effect.target??(effect.type==='damage'?'dummy':'player'))&&status.effect.category===effect.category&&!(status.ability.id===ability.id&&status.effect.id===effect.id),events);
         const before=statuses;
         const previous=effect.refresh==='independent'?undefined:statuses.find(status=>status.ability.id===ability.id&&status.effect.id===effect.id);
         statuses = addStatus(statuses, ability, timed, state.combatTime, delivery,{
@@ -455,6 +495,9 @@ export function createCombatRuntime(build, options = {}) {
         }
         if(effect.type==='control'&&effect.target==='player'&&['stun','fear','silence','interrupt'].includes(effect.controlType)&&
           (effect.controlType!=='interrupt'||!effect.school||state.activeCast?.ability.combatEffects.some(entry=>entry.school===effect.school)))cancelCast(true,events);
+        if(state.dummyCast&&effect.target==='dummy'&&effect.type==='control'&&(['stun','fear'].includes(effect.controlType)||['silence','interrupt'].includes(effect.controlType)&&state.dummyCast.school!=='physical'&&(!effect.school||effect.school===state.dummyCast.school))){
+          events.push(entry('dummyCastInterrupted',ability,{target:'dummy',school:state.dummyCast.school,amount:duration}));state={...state,dummyCast:null};
+        }
         syncVitals();
         if(applied.stacks>(previous?.stacks??0)&&previous)events.push(entry('statusStacked',ability,statusData(applied)));
         events.push(entry('statusApplied',ability,{...statusData(applied),amount:duration}));
@@ -476,7 +519,7 @@ export function createCombatRuntime(build, options = {}) {
         continue;
       }
       events.push(entry(result.type, ability, {
-        damageKind:result.damageKind,capped:result.capped??0,outcome:result.outcome,blocked:result.blocked??0,amount, effective, overhealing, overkill, school: result.school, icon: ability.icon, effectId: result.effectId, isCritical: result.isCritical,
+        calculation:result.calculation,modifiers:result.modifiers,auto:Boolean(ability.isAuto),weaponSpeed:ability.autoWeapon?.speed??(result.hand==='offHand'?sheet().weapons.offHand:result.hand==='ranged'?sheet().weapons.ranged:sheet().weapons.melee)?.speed,weaponType:ability.weaponType,attackId:result.attackId,attackType:result.attackType,hand:result.hand,position:result.position,attackTable:result.attackTable,attackRoll:result.attackRoll,damageKind:result.damageKind,capped:result.capped??0,outcome:result.outcome,blocked:result.blocked??0,amount, effective, overhealing, overkill, school: result.school, icon: ability.icon, effectId: result.effectId, isCritical: result.isCritical,
         original:result.baseAmount*result.stacks, bonus:(result.modifiedAmount-result.baseAmount)*result.stacks,
         raw:result.rawAmount*result.stacks, modified:result.modifiedAmount*result.stacks, critical:(result.criticalAmount-result.modifiedAmount)*result.stacks,
         mitigated:result.mitigation.preventedAmount*result.stacks, absorbed:absorbedAmount, periodic:result.periodic, auto:Boolean(ability.isAuto),
@@ -484,13 +527,14 @@ export function createCombatRuntime(build, options = {}) {
         ...(originStatus?statusData(originStatus):{})
       }));
       if(result.type==='damage'&&amount>0)removeStatuses(status=>status.target==='dummy'&&status.effect.breakOnDamage,events);
-      if (wasAlive && !state.dummy.health) events.push(entry('targetDefeated', ability));
+      if (wasAlive && !state.dummy.health){events.push(entry('targetDefeated', ability));state={...state,dummyCast:null};pending.clear();}
       if(result.consumed.length)removeStatuses(status=>result.consumed.includes(status.instance),events);
       if (effective) delivery?.sound?.(ability.workshop?.healSound);
       if (!state.dummy.health) removeStatuses(status=>status.target==='dummy',events);
-      if(result.type==='damage'&&!result.periodic&&!procDepth){
+      if(result.type==='damage'&&!result.periodic&&!procDepth&&(!result.attackId||!resourceHits.has(result.attackId))){
+        resourceHits.add(result.attackId);
         for(const resource of sheet().resources){
-          adjustResource(resource.id,(resource.onHit??0)+(result.isCritical?resource.onCrit??0:0),ability,events);
+          adjustResource(resource.id,(resource.onHit??0)+(results.some(candidate=>candidate.attackId===result.attackId&&candidate.isCritical)?resource.onCrit??0:0),ability,events);
         }
       }
       if (overhealing) events.push(entry('overhealing', ability, {amount: overhealing, isCritical: result.isCritical}));
@@ -513,6 +557,19 @@ export function createCombatRuntime(build, options = {}) {
     }
     removeStatuses(status=>status.expires<=now,events);
     if (events.length) log(events);
+  }
+
+  function beginChannel(cast) {
+    const policy=cast.ability.workshop?.channelPayment??(build.profile?.combatRules?.version==='cataclysm-4.3.4'?'start':'firstTick');
+    if(!cast.tickInterval||cast.paid||policy!=='start')return;
+    const costs=costsFor(cast.ability),ability=withResourceScale(cast.ability,costs);
+    const payment=spendResources(state.player,costs);
+    if(payment.failedCost){cancelCast(true);log([entry('insufficient',ability,payment.failedCost)]);return;}
+    const events=[];
+    const {gcd,cooldown}=pay(ability,payment,costs,events,true);
+    state={...state,activeCast:{...cast,ability,costs,paid:true}};
+    if(cooldown||gcd)events.push(entry('cooldownStarted',ability,{amount:cooldown,globalCooldown:gcd}));
+    if(events.length)log(events);
   }
 
   function channelTick(cast) {
@@ -539,7 +596,7 @@ export function createCombatRuntime(build, options = {}) {
       events.push(entry('channelTick',ability));
       delivery?.sound?.(ability.workshop.tickSound);
       const nextTick = cast.nextTick + cast.tickInterval;
-      state = {...state, activeCast: {...cast, ability, costs, paid: true, nextTick}};
+      if(state.activeCast?.ability.id===ability.id)state = {...state, activeCast: {...cast, ability, costs, paid: true, nextTick}};
     } catch (error) {
       cancelCast(true,events);
       events.push(entry('calculationFailed', ability, {message: error.message}));
@@ -562,6 +619,17 @@ export function createCombatRuntime(build, options = {}) {
     state = {...state, activeCast: null,queuedAbilityId:undefined};
     if(events)events.push(entry('castCancelled',ability));else log([entry('castCancelled', ability)]);
     return true;
+  }
+
+  function startIncoming(){
+    const hit=build.profile?.incoming;
+    if(!hit?.castTime)return incomingStrike();
+    if(paused||!state.player.health||!state.dummy.health||state.dummyCast)return false;
+    const block=statuses.find(status=>status.target==='dummy'&&status.effect.type==='control'&&
+      (['stun','fear'].includes(status.effect.controlType)||['silence','interrupt'].includes(status.effect.controlType)&&hit.school!=='physical'&&(!status.effect.school||status.effect.school===hit.school)));
+    if(block){log([entry('dummyCastRejected',{id:'',name:'Training dummy'},{target:'dummy',reason:block.effect.controlType,school:hit.school})]);return false;}
+    state={...state,dummyCast:{start:state.combatTime,end:state.combatTime+hit.castTime,school:hit.school}};
+    log([entry('dummyCastStarted',{id:'',name:'Training dummy'},{target:'dummy',amount:hit.castTime,school:hit.school})]);return true;
   }
 
   function incomingStrike() {
@@ -614,7 +682,7 @@ export function createCombatRuntime(build, options = {}) {
         events.push(entry('reflected',source,{target:'dummy',amount:reflection.baseAmount,school:hit.school}));
       }
       if(amount>0)removeStatuses(status=>status.target==='player'&&status.effect.breakOnDamage,events);
-      if(!state.player.health)cancelCast(true,events);
+      if(!state.player.health){cancelCast(true,events);pending.clear();state={...state,dummyCast:null};}
       log(events);
       return true;
     }
@@ -632,7 +700,7 @@ export function createCombatRuntime(build, options = {}) {
       const status = availability(id);
       if (status.reason) {
         if(allowQueue&&build.profile?.combatRules?.version==='cataclysm-4.3.4'&&
-            ['casting','gcd','cooldown'].includes(status.reason)&&status.remaining>0&&status.remaining<=.4){
+            ['casting','gcd','cooldown','cooldownGroup'].includes(status.reason)&&status.remaining>0&&status.remaining<=.4){
           queued={id,bindDelivery,at:state.combatTime+status.remaining};
           state={...state,queuedAbilityId:id};
           log([entry('castQueued',abilities.get(id),{readyAt:queued.at})]);
@@ -650,7 +718,7 @@ export function createCombatRuntime(build, options = {}) {
       }
       status.delivery = delivery;
       status.startedAt = state.combatTime;
-      if(build.profile?.combatRules?.version==='cataclysm-4.3.4'&&ability.cast&&!ability.workshop?.noGcd){
+      if(build.profile?.combatRules?.version==='cataclysm-4.3.4'&&(ability.cast||ability.channelDuration)&&!ability.workshop?.noGcd){
         const gcd=gcdDuration(ability);
         state={...state,globalCooldownUntil:Math.max(state.globalCooldownUntil,state.combatTime+gcd)};
       }
@@ -660,7 +728,7 @@ export function createCombatRuntime(build, options = {}) {
       const channel = (ability.channelDuration ?? ability.presentation?.channelDuration ?? 0)/timing.channelSpeed;
       const tickInterval=ability.workshop?.tickInterval/timing.channelSpeed;
       if (!ability.cast && !channel) return finish(status);
-      const castDuration=ability.cast/timing.castSpeed*Math.max(0,1+abilityBonuses(build.profile,ability.id,'castTime',state.classStates));
+      const castDuration=ability.cast/timing.castSpeed*Math.max(0,1+bonus(ability.id,'castTime'));
       if(!castDuration&&!channel)return finish(status);
       const castEnd = state.combatTime + castDuration;
       state = {...state, activeCast: {...status, start: state.combatTime, castEnd,
@@ -670,11 +738,12 @@ export function createCombatRuntime(build, options = {}) {
         delivery?.sound?.(ability.workshop?.castSound);
         delivery?.prepare?.(castDuration, state.combatTime);
       }
-      else delivery?.channel?.(channel, state.combatTime);
+      else {beginChannel(state.activeCast);if(state.activeCast)delivery?.channel?.(channel, state.combatTime);}
       return {ok: true};
     }
 
   return {
+    attachTimeline(id,timeline){timelines.set(id,timeline);return ()=>timelines.delete(id);},
     get state() { return state; },
     get paused() { return paused; },
     get statuses() { return statuses; },
@@ -694,10 +763,13 @@ export function createCombatRuntime(build, options = {}) {
         ...Object.fromEntries(stats.resources.map(resource=>['max '+resource.name,resource.max]))};
       return report.snapshot(state.combatTime,{name:build.name,talents:build.talentBuild??{},specialization:build.primaryBranch,stats:flatStats,
         equipment:build.profile?.equipment??{}}, {dummy:settings.dummy,globalCooldown:settings.globalCooldown,
-        healingTakenMultiplier:settings.healingTakenMultiplier,incoming:build.profile?.incoming},seed);
+        healingTakenMultiplier:settings.healingTakenMultiplier,incoming:build.profile?.incoming,combatRules:build.profile?.combatRules??{version:'talentforge-v1'},
+        ruleEvidence:build.profile?.combatRules?.version==='cataclysm-4.3.4'?{clientBuild:15595,clientTablesAvailable:false,primaryApproximation:true,resistanceApproximation:true,
+          references:{firelands:'b250899d4fdf68603e4d8a4d05b4b522d8319eb0',simulationcraft:'30ad19213524d298fce2e11b34461de7d231046e'}}:undefined},seed);
     },
-    incoming:incomingStrike,
+    incoming:startIncoming,
     runeState() {return runeRecovery.snapshot();},
+    runeDetails(){return runeRecovery.details();},
     chargeCount(id) {
       const pool = chargeState(abilities.get(id) ?? {});
       return pool.limit ? pool.limit - pool.remaining.length : undefined;
@@ -708,7 +780,7 @@ export function createCombatRuntime(build, options = {}) {
       if (paused || !state.dummy.health || !state.player.health) return;
       const events = [entry('autoHit', ability, {weaponType:ability.weaponType,auto:true})];
       try {
-        const results = calculate(ability.combatEffects, ability);
+        const results = calculate(ability.combatEffects, ability,1,false,undefined,delivery?.combatContext?.());
         applyResults(results, ability, events, startedAt);
         if (results.some(result => result.isCritical)) delivery.critical?.();
         events[0].resolvedHit=results.some(result=>result.type==='damage'&&result.finalAmount>0);
@@ -721,26 +793,33 @@ export function createCombatRuntime(build, options = {}) {
     advance(deltaSeconds) {
       if (!Number.isFinite(deltaSeconds) || deltaSeconds < 0) throw new RangeError('Invalid combat time delta');
       if (paused) return;
-      const end = state.combatTime + deltaSeconds;
+      const end = Math.round((state.combatTime + deltaSeconds)*1e9)/1e9;
       if(nextRegen<=state.combatTime)nextRegen=Math.floor(state.combatTime)+1;
       for (;;) {
         let cast = state.activeCast;
         const stats=sheet();
+        runeRecovery.retime(state.combatTime,build.profile?.hasteUses?.includes('rune')?Math.max(.1,1+stats.haste):1);
         const regen=stats.healthRegen||stats.resourceRegen||stats.resources.some(resource=>resource.regen||resource.outOfCombatRegen||resource.decay)?nextRegen:Infinity;
         const ready=cooldownEvents.reduce((time,entry)=>Math.min(time,entry.time),Infinity);
-        const boundary = Math.min(nextIncoming,runeRecovery.next(),regen,ready,queued?.at??Infinity,nextStatusBoundary(statuses), cast?.end ?? Infinity,
+        const scheduled=[...timelines.values()].map(timeline=>({timeline,at:Math.max(state.combatTime,timeline.next(state.combatTime))}));
+        const external=Math.min(Infinity,...scheduled.map(item=>item.at));
+        const boundary = Math.min(state.dummyCast?.end??Infinity,external,nextIncoming,runeRecovery.next(),regen,ready,queued?.at??Infinity,nextStatusBoundary(statuses), cast?.end ?? Infinity,
           cast?.nextTick ?? Infinity, cast && !cast.channeling && cast.castEnd < cast.end ? cast.castEnd : Infinity);
         if (boundary > end) break;
         state = {...state, combatTime: boundary};
         if (nextStatusBoundary(statuses) <= boundary) tickStatuses();
         if(nextIncoming<=boundary){
           nextIncoming+=incomingInterval;
-          incomingStrike();
+          startIncoming();
+        }
+        if(state.dummyCast?.end<=boundary){
+          const school=state.dummyCast.school;state={...state,dummyCast:null};
+          log([entry('dummyCastCompleted',{id:'',name:'Training dummy'},{target:'player',school})]);incomingStrike();
         }
         cast=state.activeCast;
         if(runeRecovery.next()<=boundary){
           const events=[];
-          runeRecovery.tick(boundary,id=>adjustResource(id,1,system,events));
+          runeRecovery.tick(boundary,id=>{const resource=state.player.resources[id];if(!resource||resource.current>=resource.max)return false;adjustResource(id,1,system,events);return true;});
           if(events.length)log(events);
         }
         if (regen<=boundary) {nextRegen=boundary+1;tickResources();}
@@ -750,18 +829,21 @@ export function createCombatRuntime(build, options = {}) {
             const item=cooldownEvents[index];
             if(item.time>boundary)continue;
             cooldownEvents.splice(index,1);
-            events.push(entry('cooldownCompleted',item.ability,{charge:item.charge??false}));
+            events.push(entry(item.group?'cooldownGroupCompleted':'cooldownCompleted',item.ability,{charge:item.charge??false,...(item.group?{group:item.group}:{})}));
           }
           if(events.length)log(events);
         }
         if(nextRegen<=state.combatTime)nextRegen=Math.floor(state.combatTime)+1;
         if (!cast) {
+          for(const item of scheduled)if(item.at<=boundary)item.timeline.tick(boundary);
           releaseQueued(boundary);
           continue;
         }
         if (!cast.channeling && cast.castEnd < cast.end && boundary === cast.castEnd) {
           state = {...state, activeCast: {...cast, channeling: true}};
-          if (end < cast.end) cast.delivery?.channel?.(cast.end - boundary, boundary);
+          beginChannel(state.activeCast);
+          if (state.activeCast) cast.delivery?.channel?.(cast.end - boundary, boundary);
+          for(const item of scheduled)if(item.at<=boundary)item.timeline.tick(boundary);
           continue;
         }
         if (cast.ability.workshop?.tickInterval) {
@@ -771,6 +853,7 @@ export function createCombatRuntime(build, options = {}) {
             log([entry('castCompleted', cast.ability)]);
           }
         } else if (boundary >= cast.end) finish(cast);
+        for(const item of scheduled)if(item.at<=boundary)item.timeline.tick(boundary);
         releaseQueued(boundary);
       }
       if (end !== state.combatTime) state = {...state, combatTime: end};
@@ -784,7 +867,7 @@ export function createCombatRuntime(build, options = {}) {
       const events=[];
       removeStatuses(status=>status.target==='dummy',events);
       if(events.length)log(events);
-      state = {...state, dummy: {...state.dummy, health: state.dummy.maxHealth}};
+      state = {...state,dummyCast:null, dummy: {...state.dummy, health: state.dummy.maxHealth}};
       log([entry('targetRestored', {id: '', name: ''})]);
     },
     cancelSpatial() {
@@ -801,13 +884,14 @@ export function createCombatRuntime(build, options = {}) {
       queued=undefined;
       nextIncoming=incomingInterval;
       pending.clear();
+      for(const timeline of timelines.values())timeline.cancel?.();
       for (const status of statuses) status.removeVisual?.();
       statuses = emptyEffects;
       charges.clear();
       diminishing.clear();
       runeRecovery.reset();lastCombatAt=-Infinity;
       cooldownEvents.length=0;
-      nextRegen=1;statusId=0;
+      nextRegen=1;statusId=0;attackSequence=0;sheetStatuses=undefined;sheetCache=undefined;
       report.reset();procs.reset();
       if(seed!==null)generator=seededRandom(seed);
       state = createCombatState(build, settings);

@@ -1,3 +1,4 @@
+import {visitConditions} from './combat/conditions.js';
 const aliases={Health:'Здоровье',Mana:'Мана',Energy:'Энергия',Rage:'Ярость'};
 const sameName=(a,b)=>(aliases[a]||a)===(aliases[b]||b);
 export function classResources(character){
@@ -51,11 +52,13 @@ export function adaptResourceCosts(ability,character){
  const resourceId=id=>mapping.get(id)??resolve(id)?.id??id;
  for(const record of records){
    for(const effect of record.combatEffects??[])if(effect.type==='resource')effect.resourceId=resourceId(effect.resourceId);
+   for(const effect of record.combatEffects??[])if(effect.type==='rune')for(const key of ['fromResource','toResource'])effect[key]=resourceId(effect[key]);
+   if(record.workshop?.runeSubstitute)record.workshop.runeSubstitute=resourceId(record.workshop.runeSubstitute);
    if(record.workshop?.finisherResource)record.workshop.finisherResource=resourceId(record.workshop.finisherResource);
  }
- for(const rule of copy.templateRules?.procs??[]){
+ for(const rule of [...(copy.templateRules?.procs??[]),...(copy.templateRules?.bonuses??[])]){
    if(rule.cost)rule.cost.resourceId=resourceId(rule.cost.resourceId);
-   if(rule.condition?.type==='resourceAbove')rule.condition.resource=resourceId(rule.condition.resource);
+   visitConditions(rule.condition,condition=>{if(['resourceAbove','resourceBelow'].includes(condition.type))condition.resource=resourceId(condition.resource);});
  }
  return copy;
 }

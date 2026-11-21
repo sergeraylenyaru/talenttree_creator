@@ -34,7 +34,22 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
   let build = compile();
   const practice = practiceAbilities(build.activeAbilities, build.resources);
   const arenaBuild = () => ({...build, activeAbilities: [...build.activeAbilities, ...practice]});
-  const newRuntime=()=>createCombatRuntime(arenaBuild(),{...settings,seed:build.profile?.seed});
+  const newRuntime=()=>{
+    const current=createCombatRuntime(arenaBuild(),{...settings,seed:build.profile?.seed});
+    current.attachTimeline('spatial',{next:()=>world?.nextCombatEvent()??Infinity,tick:()=>world?.advanceCombat(current.state),cancel:()=>world?.clearCombat(current.state)});
+    const policy=()=>current.state.activeCast?.ability.workshop?.swingPolicy??(build.profile?.combatRules?.version==='cataclysm-4.3.4'?'pause':'continue');
+    const interval=()=>weaponTiming(current.sheet(),{swingSeconds:world?.weaponCombat()?.swingSeconds??trainingWeapon.swingSeconds,damage:0}).swingSeconds;
+    current.attachTimeline('main-hand',{
+      next:now=>{auto.suspend(now,Boolean(current.state.activeCast)&&policy()!=='continue',policy()==='reset');return auto.nextAt(now,interval());},
+      tick:now=>auto.update(now,swingDelivery,report,(delivery,start)=>swing(basic,delivery,start),interval()),cancel:()=>auto.stop()
+    });
+    current.attachTimeline('off-hand',{
+      next:now=>{if(!offhand)return Infinity;offhand.clock.suspend(now,Boolean(current.state.activeCast)&&policy()!=='continue',policy()==='reset');return offhand.clock.nextAt(now,offhand.speed/current.sheet().swingSpeed);},
+      tick:now=>offhand?.clock.update(now,offhand.delivery,(type,details)=>current.autoEvent(offhand.ability,type,details),
+        (delivery,start)=>swing(offhand.ability,delivery,start),offhand.speed/current.sheet().swingSpeed),cancel:()=>offhand?.clock.stop()
+    });
+    return current;
+  };
   let runtime = newRuntime();
   let auto=createAutoAttack(), offhand, basic=practice[0], swingDelivery, generation=0;
   const report=(type,details)=>runtime.autoEvent(basic,type,details);
@@ -46,9 +61,9 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
 
   function autoAbility(weapon,off=false){
     const ranged=weapon.ranged&&!off;
-    return {...practice[0],...(off?{id:practice[0].id+'_off',name:practice[0].name+' · Off hand'}:{}),isAuto:true,weaponType:weapon.type,
+    return {...practice[0],weaponHand:off?'offHand':ranged?'ranged':'mainHand',autoWeapon:weapon,...(off?{id:practice[0].id+'_off',name:practice[0].name+' · Off hand'}:{}),isAuto:true,weaponType:weapon.type,
       ...(ranged?{range:24,presentation:{delivery:'ranged',projectile:'straight',attackAnimation:'bow',impact:'melee'}}:{}),
-      combatEffects:practice[0].combatEffects.map(effect=>({...effect,baseAmount:weapon.minDamage,
+      combatEffects:practice[0].combatEffects.map(effect=>build.profile?.combatRules?.version==='cataclysm-4.3.4'?{...effect,baseAmount:0,weaponCoefficient:1,...(off?{multiplier:.5}:{})}:({...effect,baseAmount:weapon.minDamage,
         ...(weapon.maxDamage>weapon.minDamage?{minAmount:weapon.minDamage,maxAmount:weapon.maxDamage}:{}),
         ...(off?{multiplier:.5}:{})}))};
   }
@@ -68,8 +83,8 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
       return {ability,delivery:world?.delivery(ability),
         clock:createAutoAttack({...trainingWeapon,swingSeconds:extra.speed/values.swingSpeed}),speed:extra.speed};
     })():undefined;
-    auto.start(report);
-    offhand?.clock.start((type,details)=>runtime.autoEvent(offhand.ability,type,details));
+    auto.start(report,runtime.state.combatTime);
+    offhand?.clock.start((type,details)=>runtime.autoEvent(offhand.ability,type,details),runtime.state.combatTime);
     syncClock();
     view.update(runtime);
   }
@@ -216,7 +231,7 @@ export function openTrainingGrounds(dialog, document, {preview, layoutId} = {}) 
   world = mountTrainingWorld(dialog, {
     preview,
     review:()=>view.review(),
-    incoming:build.profile?.incoming?incoming:undefined,
+    incoming:build.profile?.incoming?incoming:undefined,incomingCastTime:build.profile?.incoming?.castTime,
     movementScale: () => runtime.movementScale(),
     move: () => runtime.moved(),
     enter() { runtime.cancel(); },

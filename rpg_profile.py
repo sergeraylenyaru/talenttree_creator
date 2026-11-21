@@ -24,7 +24,7 @@ MODIFIERS = ('damage', 'healing', 'cooldown', 'cost', 'castTime', 'maxStacks', '
 PROC_EVENTS = (
     'castStarted', 'castCompleted', 'attackHit', 'projectileHit', 'attackMissed', 'projectileMissed',
     'damage', 'healing', 'critical', 'periodicDamage', 'periodicHealing', 'statusApplied', 'statusExpired',
-    'absorbed', 'resourceGained', 'resourceSpent', 'autoHit', 'cooldownCompleted',
+    'absorbed', 'resourceGained', 'resourceSpent', 'autoHit', 'cooldownGroupCompleted', 'cooldownCompleted',
     'incomingDamage','criticalHeal','criticalDamage','statusStacked','channelTick','targetDefeated','dodge','parry','block','dispelled'
 )
 
@@ -136,6 +136,15 @@ def validate_build(document, build, talents):
 
 
 def validate_rpg(document, resources):
+    raw_profile=document.get('rpg')
+    definitions=raw_profile.get('resources',{}) if isinstance(raw_profile,dict) else {}
+    if not isinstance(definitions,dict):definitions={}
+    def is_rune(rid):return isinstance(definitions.get(rid),dict) and definitions[rid].get('rune') is True
+    for ability in document['abilities']:
+        for effect in ability.get('combatEffects',[]):
+            if effect['type']=='rune' and any(rid not in resources or not is_rune(rid) for rid in (effect['fromResource'],effect['toResource'])):raise ValueError('Rune conversion requires two configured rune resources')
+        substitute=ability.get('workshop',{}).get('runeSubstitute')
+        if substitute and (substitute not in resources or not is_rune(substitute)):raise ValueError('Rune substitute is not configured')
     if 'rpg' not in document:
         return
     profile = document['rpg']
@@ -227,8 +236,8 @@ def validate_rpg(document, resources):
     rules = profile.get('resources', {})
     record(rules, resources, 'Unknown class resource')
     for resource in rules.values():
-        record(resource, ('regen', 'outOfCombatRegen', 'decay', 'onHit', 'onCrit','rune','recharge'), 'Invalid resource rule')
-        if any((type(value) is not bool if key == 'rune' else not bounded(value, .25 if key == 'recharge' else 0, 120 if key == 'recharge' else 1e6))
+        record(resource, ('regen', 'outOfCombatRegen', 'decay', 'onHit', 'onCrit','rune','recharge','kind'), 'Invalid resource rule')
+        if any((type(value) is not bool if key == 'rune' else value not in ('mana','energy','rage','focus','combo','rune','custom') if key == 'kind' else not bounded(value, .25 if key == 'recharge' else 0, 120 if key == 'recharge' else 1e6))
                for key, value in resource.items()):
             raise ValueError('Invalid resource amount')
 
@@ -253,9 +262,37 @@ def validate_rpg(document, resources):
         if not valid or 'rank' in owner and (kind != 'talent' or not integer(owner['rank'], 1, talents[owner_id]['maxRank'])):
             raise ValueError('Invalid passive source reference')
 
+    def validate_condition(condition, depth=0):
+        if depth>2:raise ValueError('Condition nesting is limited to three levels')
+        record(condition,('type','value','resource','conditions','condition','target','stacks','key','rank','window','abilityId'),'Invalid combat condition')
+        kind,value=condition.get('type'),condition.get('value')
+        if kind in ('all','any'):
+            children=condition.get('conditions')
+            if set(condition)-{'type','conditions'} or not isinstance(children,list) or not 1<=len(children)<=8:raise ValueError('Invalid condition group')
+            for child in children:validate_condition(child,depth+1)
+            return
+        if kind=='not':
+            if set(condition)-{'type','condition'}:raise ValueError('Invalid condition negation')
+            validate_condition(condition.get('condition'),depth+1)
+            return
+        valid=(kind in ('playerBelow','dummyBelow') and bounded(value,0,100)
+            or kind=='critical' and value is True
+            or kind in ('playerStatus','dummyStatus') and text(value,1,100)
+            or kind in ('resourceAbove','resourceBelow') and isinstance(condition.get('resource'),str) and condition['resource'] in resources and bounded(value,0,1e8)
+            or kind=='school' and value in SCHOOLS
+            or kind=='weapon' and value in TYPES
+            or kind=='auraStacks' and condition.get('target') in ('player','dummy') and text(value,1,100) and integer(condition.get('stacks'),1,10)
+            or kind=='state' and condition.get('key') in ('form','stance','aspect','seal','mode') and text(value,1,60)
+            or kind=='talentRank' and isinstance(value,str) and value in talents and integer(condition.get('rank'),1,talents[value]['maxRank'])
+            or kind=='previousEvent' and value in PROC_EVENTS and bounded(condition.get('window'),.01,300) and ('abilityId' not in condition or isinstance(condition['abilityId'],str) and condition['abilityId'] in abilities))
+        if not valid:raise ValueError('Invalid combat condition value')
+
     for bonus in collection(profile.get('bonuses', []), 64):
-        record(bonus, ('id', 'owner', 'spell', 'stat', 'amount','state'), 'Invalid passive or talent bonus')
+        record(bonus, ('id', 'owner', 'spell', 'stat', 'amount','state','condition','masteryScale'), 'Invalid passive or talent bonus')
         validate_owner(bonus.get('owner'))
+        if 'condition' in bonus:validate_condition(bonus['condition'])
+        if ('condition' in bonus or 'masteryScale' in bonus) and bonus.get('stat') not in MODIFIERS:raise ValueError('Conditions and mastery scaling require an ability modifier')
+        if 'masteryScale' in bonus and not bounded(bonus['masteryScale'],0,100):raise ValueError('Invalid mastery scale')
         if 'state' in bonus:validate_state_condition(bonus['state'])
         if (bonus.get('stat') not in ATTRIBUTES + MODIFIERS or not bounded(bonus.get('amount'), -100, 10000)
                 or 'spell' in bonus and (not isinstance(bonus['spell'], str) or bonus['spell'] not in abilities
@@ -264,7 +301,9 @@ def validate_rpg(document, resources):
     for proc in collection(profile.get('procs', []), 48):
         if 'state' in proc:validate_state_condition(proc['state'])
         record(proc, ('id', 'owner', 'name', 'event', 'chance', 'cooldown', 'every', 'condition',
-                     'spell', 'effect', 'cost','chain','priority','charges','sourceAbilityId','school','attackType','consecutive','state'), 'Invalid proc fields')
+                     'spell', 'effect', 'cost','chain','priority','charges','sourceAbilityId','school','attackType','consecutive','state','ppm'), 'Invalid proc fields')
+        if 'ppm' in proc and (not bounded(proc['ppm'],.01,60) or proc.get('attackType') != 'auto'):
+            raise ValueError('PPM requires the autoattack filter')
         if ('consecutive' in proc and type(proc['consecutive']) is not bool
                 or 'chain' in proc and type(proc['chain']) is not bool
                 or 'priority' in proc and not integer(proc['priority'],0,1000)
@@ -280,21 +319,7 @@ def validate_rpg(document, resources):
                 or not integer(proc.get('every', 1), 1, 100) or not spell
                 or not any(effect['id'] == proc.get('effect') for effect in spell.get('combatEffects', []))):
             raise ValueError('Invalid proc trigger or effect reference')
-        if 'condition' in proc:
-            condition = proc['condition']
-            record(condition, ('type', 'value', 'resource'), 'Invalid proc condition')
-            kind, value = condition.get('type'), condition.get('value')
-            valid = (
-                kind in ('playerBelow', 'dummyBelow') and bounded(value, 0, 100)
-                or kind == 'critical' and value is True
-                or kind in ('playerStatus', 'dummyStatus') and text(value, 1, 100)
-                or kind == 'resourceAbove' and isinstance(condition.get('resource'), str)
-                and condition['resource'] in resources and bounded(value, 0, 1e8)
-                or kind == 'school' and value in SCHOOLS
-                or kind == 'weapon' and value in TYPES
-            )
-            if not valid:
-                raise ValueError('Invalid proc condition value')
+        if 'condition' in proc:validate_condition(proc['condition'])
         if 'cost' in proc:
             cost = proc['cost']
             record(cost, ('resourceId', 'amount', 'unit'), 'Invalid proc cost')
@@ -319,7 +344,8 @@ def validate_rpg(document, resources):
         validate_gear(build.get('equipped'))
     if 'incoming' in profile:
         hit = profile['incoming']
-        record(hit, ('school', 'amount','canCrit','critChance','critMultiplier','interval'), 'Invalid incoming damage test')
+        record(hit, ('school', 'amount','canCrit','critChance','critMultiplier','interval','castTime'), 'Invalid incoming damage test')
+        if 'castTime' in hit and not bounded(hit['castTime'],.25,30):raise ValueError('Invalid dummy cast time')
         if 'interval' in hit and not bounded(hit['interval'],.25,120):
             raise ValueError('Invalid incoming interval')
         if ('canCrit' in hit and type(hit['canCrit']) is not bool

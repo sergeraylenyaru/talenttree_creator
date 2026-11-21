@@ -34,20 +34,20 @@ export function combatRuleValues(profile, stats, states = {}) {
   const [primary,factor] = rules.classId==='druid'&&states.form==='bear'?['strength',2]:primaryPower[rules.classId];
   return {
     classId:rules.classId,level,targetLevel:rules.targetLevel??level+3,position:rules.position??'front',
-    approximateRatings:level!==85 && rules.ratingScale===undefined,
+    approximatePrimary:true,approximateResistance:true,approximateRatings:level!==85 && rules.ratingScale===undefined,
     attackPower:['warrior','paladin','hunter','rogue','shaman','druid','deathknight'].includes(rules.classId)?(stats[primary]??0)*factor:0,
     spellPower:Math.max(0,(stats.intellect??0)-10),
-    health:Math.max(0,(stats.stamina??0)-20)*10+Math.min(20,stats.stamina??0),
+    health:Math.max(0,Math.floor(stats.stamina??0)-20)*(level===85?14:10)+Math.min(20,stats.stamina??0),
     mana:Math.max(0,(stats.intellect??0)-20)*15+Math.min(20,stats.intellect??0),
     hit:Math.min(1,(percent('hitRating')+(stats.hitChance??0))/100),
     spellHit:Math.min(1,(percent('spellHitRating')+(stats.spellHitChance??0))/100),
     expertise:Math.max(0,percent('expertiseRating')+(stats.expertise??0))*.0025,
-    crit:percent('critRating')/100,haste:percent('hasteRating')/100,mastery:percent('masteryRating'),
+    crit:percent('critRating')/100,haste:percent('hasteRating')/100,mastery:(level>=80?8:0)+percent('masteryRating'),
     dodge:Math.min(1,(percent('dodgeRating')+(stats.dodgeChance??0))/100),
     parry:Math.min(1,(percent('parryRating')+(stats.parryChance??0))/100),
     block:Math.min(1,(percent('blockRating')+(stats.blockChance??0))/100),
     spellPenetration:stats.spellPenetration??0,armorPenetration:Math.min(1,(stats.armorPenetration??0)/100),
-    armorConstant:Math.max(400,level>=81?2167.5*level-158167.5:400+85*level),
+    armorConstant:Math.max(400,level>=81?2167.5*level-158167.5:level>=60?467.5*level-22167.5:400+85*level),
     resistanceConstant:Math.max(5,level*5)
   };
 }

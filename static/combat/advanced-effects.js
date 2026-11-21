@@ -1,13 +1,16 @@
 export const controlTypes = ['stun','root','slow','fear','silence','disarm','interrupt','knockback','immunity'];
 export const dispelTypes = ['magic','curse','poison','disease'];
-export const advancedTypes = ['control','dispel','cooldown','state'];
+export const advancedTypes = ['control','dispel','cooldown','state','rune'];
 
 export function validateAdvancedEffect(effect) {
   const common=['id','type','trigger'];
   const bounded=(value,min,max)=>Number.isFinite(value)&&value>=min&&value<=max;
   const fail=()=>{throw Error('Проверь боевые эффекты');};
   let fields;
-  if(effect.type==='state'){
+  if(effect.type==='rune'){
+    fields=['fromResource','toResource','count'];
+    if(['fromResource','toResource'].some(key=>typeof effect[key]!=='string'||!effect[key]||effect[key].length>100)||effect.fromResource===effect.toResource||!Number.isInteger(effect.count)||!bounded(effect.count,1,6))fail();
+  }else if(effect.type==='state'){
     fields=['key','value'];
     if(!['form','stance','aspect','seal','mode'].includes(effect.key)||
       typeof effect.value!=='string'||!effect.value||effect.value.length>60)fail();
@@ -24,7 +27,8 @@ export function validateAdvancedEffect(effect) {
     if(!['player','dummy'].includes(effect.target)||!dispelTypes.includes(effect.dispelType)||
        !Number.isInteger(effect.count)||!bounded(effect.count,1,32))fail();
   }else if(effect.type==='cooldown'){
-    fields=['abilityId','seconds','reset','charges'];
+    fields=['abilityId','seconds','reset','charges','includeGroup'];
+    if(effect.includeGroup!==undefined&&typeof effect.includeGroup!=='boolean')fail();
     if(typeof effect.abilityId!=='string'||!effect.abilityId||effect.abilityId.length>200||
        !bounded(effect.seconds,0,3600)||typeof effect.reset!=='boolean'||
        effect.charges!==undefined&&(!Number.isInteger(effect.charges)||!bounded(effect.charges,0,10)))fail();

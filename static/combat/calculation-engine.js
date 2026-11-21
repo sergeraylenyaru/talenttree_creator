@@ -136,7 +136,7 @@ export function rollAttackOutcome(attack, randomValue) {
   number(randomValue,'attack roll',0,1);
   if(randomValue===1)throw new RangeError('Attack roll must be less than one');
   let edge=0;
-  for(const outcome of ['miss','dodge','parry','glancing','block']){
+  for(const outcome of ['miss','dodge','parry','glancing','block','critical']){
     const chance=number(attack[outcome]??0,outcome,0,1);
     edge+=chance;
     if(randomValue<Math.min(1,edge))return outcome;

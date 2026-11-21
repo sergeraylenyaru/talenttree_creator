@@ -214,7 +214,7 @@ def validate_combat_effects(ability):
         return
     effects = ability['combatEffects']
     common = {'id', 'type', 'trigger'}
-    timing = {'duration', 'interval', 'stacks', 'refresh', 'snapshot'}
+    timing = {'duration', 'interval', 'stacks', 'refresh', 'snapshot', 'tickPolicy'}
     bonuses = {'flatBonus', 'multiplier', 'critMultiplier', 'attackCoefficient', 'spellCoefficient'}
     def invalid():
         raise ValueError('Проверь боевые эффекты')
@@ -256,6 +256,8 @@ def validate_combat_effects(ability):
             for key in bonuses & effect.keys():
                 if not bounded(effect[key], 0, 1e9 if key == 'flatBonus' else 1000):
                     invalid()
+            if 'tickPolicy' in effect and ('interval' not in effect or effect['tickPolicy'] not in ('preserve','restart')):
+                invalid()
             if ('weaponCoefficient' in effect and not bounded(effect['weaponCoefficient'],0,1000)
                     or 'snapshot' in effect and (type(effect['snapshot']) is not bool or 'interval' not in effect)):
                 invalid()
@@ -308,20 +310,22 @@ def validate_combat_effects(ability):
         if 'refresh' in effect and effect['refresh'] not in ('refresh','refreshOnly','keep','replace','extend','independent'):
             invalid()
         if effect.get('duration'):
-            fields.update(('dispelType','removable','breakOnDamage'))
+            fields.update(('dispelType','removable','breakOnDamage','category'))
+        if 'category' in effect and (not effect.get('duration') or not isinstance(effect['category'],str) or not 1 <= len(effect['category'].strip()) or len(effect['category']) > 60):
+            invalid()
         if set(effect) - common - fields:
             invalid()
 
 
 WORKSHOP_LIMITS = {
-    'finisherScale':(0,100), 'requiredLevel':(1,1000), 'baseLevel':(1,1000), 'levelScale':(0,100),
+    'groupCooldown':(0,3600),'finisherScale':(0,100), 'requiredLevel':(1,1000), 'baseLevel':(1,1000), 'levelScale':(0,100),
     'rank': (1, 100), 'rankScale': (0, 100), 'talentRank': (1, 100), 'minRange': (0, 100), 'charges': (1, 10),
     'recharge': (.25, 3600), 'gcdDuration': (0, 3), 'tickInterval': (.25, 120), 'radius': (.25, 30),
     'projectileLifetime': (.25, 30), 'collisionRadius': (.02, 1), 'projectileSize': (.02, 2),
     'homingStrength': (.1, 30), 'effectScale': (.1, 4), 'effectDuration': (.05, 5),
     'effectSpeed': (.1, 5), 'effectIntensity': (.1, 2), 'opacity': (0, 1), 'playback': (.25, 3), 'blend': (0, 1), 'volume': (0, 1), 'variation': (0, .5),
 }
-WORKSHOP_FLAGS = {'disabled', 'hidden', 'noGcd', 'interruptMovement', 'uninterruptible', 'facing', 'loopAnimation','consumeFreeAura'}
+WORKSHOP_FLAGS = {'disabled', 'hidden', 'noGcd', 'interruptMovement', 'uninterruptible', 'facing', 'loopAnimation','consumeFreeAura','normalizedWeapon'}
 WORKSHOP_SOUNDS = {event + 'Sound' for event in ('activation', 'cast', 'launch', 'impact', 'critical', 'tick', 'buff', 'debuff', 'heal')}
 
 
@@ -348,17 +352,31 @@ def validate_workshop(ability):
             continue
         if key == 'color' and isinstance(value, str) and re.fullmatch(r'#[a-fA-F0-9]{6}', value):
             continue
+        if key == 'cooldownGroup' and isinstance(value,str) and 1 <= len(value.strip()) <= 60:
+            continue
+        if key == 'channelPayment' and value in ('start','firstTick'):
+            continue
+        if key == 'swingPolicy' and value in ('continue','pause','reset'):
+            continue
+        if key == 'attackType' and value in ('melee','ranged','spell'):
+            continue
+        if key == 'weaponHand' and value in ('mainHand','offHand','ranged'):
+            continue
+        if key == 'attackSchool' and value in ('physical','fire','frost','arcane','nature','shadow','holy'):
+            continue
         if key == 'requiredClass' and value in ('warrior','paladin','hunter','rogue','priest','shaman','mage','warlock','druid','deathknight'):
             continue
         if key == 'requiredStateKey' and value in ('form','stance','aspect','seal','mode'):
             continue
-        if key in ('freeWithAura','finisherResource') and isinstance(value,str) and 1 <= len(value) <= 200:
+        if key in ('freeWithAura','finisherResource','runeSubstitute') and isinstance(value,str) and 1 <= len(value) <= 200:
             continue
         if key == 'requiredStateValue' and isinstance(value,str) and 1 <= len(value) <= 60:
             continue
         if key == 'tier' and isinstance(value, str) and len(value) <= 40:
             continue
         raise ValueError('Проверь настройку способности: ' + key)
+    if 'groupCooldown' in rules and not rules.get('cooldownGroup'):
+        raise ValueError('Укажи группу перезарядки')
     presentation = ability.get('presentation', {})
     effects = ability.get('combatEffects', [])
     projectile = presentation.get('projectile') in ('straight', 'homing')
@@ -590,25 +608,43 @@ def prepare_favorite_ability(source):
                 rule['owner']['id']=item['id']
             for field in ('spell','sourceAbilityId'):
                 if rule.get(field)==original:rule[field]=item['id']
-            condition=rule.get('condition')
-            if isinstance(condition,dict) and condition.get('type') in ('playerStatus','dummyStatus') and condition.get('value')==original:
-                condition['value']=item['id']
+            def remap_condition(condition,depth=0):
+                if condition is None:return
+                if depth>2 or not isinstance(condition,dict):raise ValueError('Invalid combat condition')
+                if condition.get('type') in ('playerStatus','dummyStatus','auraStacks') and condition.get('value')==original:condition['value']=item['id']
+                if condition.get('abilityId')==original:condition['abilityId']=item['id']
+                for child in condition.get('conditions',[]):remap_condition(child,depth+1)
+                if 'condition' in condition:remap_condition(condition['condition'],depth+1)
+            remap_condition(rule.get('condition'))
     refs={}
+    def add_resource(rid,name=None):
+        if not isinstance(rid,str) or not 1<=len(rid)<=100:raise ValueError('Invalid template resource')
+        refs[rid]=name if isinstance(name,str) and name else rid
     for record in records:
+        if record.get('workshop',{}).get('runeSubstitute'):add_resource(record['workshop']['runeSubstitute'])
         for cost in record.get('resourceCosts',[]):
-            if isinstance(cost,dict) and isinstance(cost.get('resourceId'),str):refs[cost['resourceId']]=cost.get('resourceName') or cost['resourceId']
+            if isinstance(cost,dict):add_resource(cost.get('resourceId'),cost.get('resourceName'))
         for effect in record.get('combatEffects',[]):
-            if isinstance(effect,dict) and effect.get('type')=='resource':refs[effect.get('resourceId')]=effect.get('resourceId')
+            if isinstance(effect,dict) and effect.get('type')=='resource':add_resource(effect.get('resourceId'))
+            if isinstance(effect,dict) and effect.get('type')=='rune':
+                for key in ('fromResource','toResource'):add_resource(effect.get(key))
     for rule in rules.get('procs',[]):
         cost=rule.get('cost')
-        if isinstance(cost,dict):refs[cost.get('resourceId')]=cost.get('resourceId')
+        if isinstance(cost,dict):add_resource(cost.get('resourceId'))
+    def condition_resources(condition):
+        if not condition:return
+        if condition.get('type') in ('resourceAbove','resourceBelow'):add_resource(condition.get('resource'))
+        for child in condition.get('conditions',[]):condition_resources(child)
+        if 'condition' in condition:condition_resources(condition['condition'])
+    for entries in rules.values():
+        for rule in entries:condition_resources(rule.get('condition'))
     refs.pop('health',None)
     if any(not isinstance(key,str) for key in refs):raise ValueError('Invalid template resource')
     check={'version':1,'name':'Favorite template','budget':71,'rowCost':5,'build':{},
       'branches':[{'id':'favorite','name':'Favorite','rows':1,'talents':[]}],
       'character':{'hp':100,'race':'Human','gender':'Male','armory':'','resources':[
         {'id':rid,'name':name,'max':100,'current':100,'unit':'points','display':'bar','shape':'circle','color':'#397de1'} for rid,name in refs.items()]},
-      'abilities':records,'rpg':{'version':1,**rules}}
+      'abilities':records,'rpg':{'version':1,**rules,'resources':{rid:{'rune':True} for rid in refs if any(record.get('workshop',{}).get('runeSubstitute') or any(effect.get('type')=='rune' for effect in record.get('combatEffects',[])) for record in records)}}}
     validate(check)
     return item
 

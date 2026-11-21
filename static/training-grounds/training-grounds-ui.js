@@ -27,9 +27,12 @@ const metrics = {
   criticalHits: ['Критические эффекты', 'Critical effects'], criticalPercent: ['Доля критов', 'Critical rate']
 };
 
+addTranslations([['Подготовка манекена','Dummy cast'],['Тип атаки','Attack type'],['Рука оружия','Weapon hand'],['Положение','Position'],['Бросок попадания','Attack roll'],['Таблица атаки','Attack table'],['Модификаторы','Modifiers'],['Шанс прока','Proc chance']]);
 const eventLabels = {
+  cooldownGroupCompleted:['Общая группа перезарядки готова','Shared cooldown group ready'],
   classStateChanged:['Смена состояния класса','Class state changed'],
   dispelled:['Эффекты сняты','Effects dispelled'],cooldownChanged:['Перезарядка изменена','Cooldown changed'],
+  dummyCastStarted:['Манекен начинает заклинание','Dummy cast started'],dummyCastCompleted:['Заклинание манекена завершено','Dummy cast completed'],dummyCastInterrupted:['Заклинание манекена прервано','Dummy cast interrupted'],dummyCastRejected:['Заклинание манекена запрещено контролем','Dummy cast blocked'],
   controlImmune:['Невосприимчивость к контролю','Control immunity'],immune:['Невосприимчивость','Immune'],
   statusStacked:['Стак ауры','Aura stack'],
   castQueued:['Способность в очереди','Ability queued'],castPushback:['Задержка применения','Cast pushback'],
@@ -52,6 +55,7 @@ const eventLabels = {
   statusExpired:['Эффект завершён','Status expired'], cooldownCompleted:['Перезарядка завершена','Cooldown completed'],
   procTriggered:['Сработал триггер','Proc triggered'], resourceLost:['Потерян ресурс','Resource lost'],
   healthRegen:['Восстановлено здоровье','Health regenerated'],
+  runesConverted:['Преобразованы восстанавливающиеся руны','Recovering runes converted'],
   resourceGained: ['Получен ресурс', 'Resource gained'],
   statusApplied: ['Наложен эффект', 'Status applied'],
   autoStarted: ['Автоатака началась', 'Autoattack started'],
@@ -62,6 +66,7 @@ const eventLabels = {
 };
 
 const statusLabels = {
+  cooldownGroup:['Общая группа перезарядки','Shared cooldown group'],
   levelRequired:['Недостаточный уровень','Level requirement'],classRequired:['Требуется другой класс','Class requirement'],
   stateRequired:['Требуется другая форма или стойка','Form or stance requirement'],invalidRuneCost:['Укажи целое число рун','Rune costs must be whole numbers'],
   interrupt:['Школа заклинаний заблокирована','Spell school locked'],stun:['Оглушение','Stunned'],fear:['Страх','Feared'],silence:['Немота','Silenced'],disarm:['Обезоруживание','Disarmed'],
@@ -213,7 +218,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
             </div>
             <div>${bar('Манекен', 'dummy', '#bd5157')}</div>
           </div>
-          <p id="tg-queued" hidden></p><div id="tg-cast" hidden><div class="tg-cast-heading"><span class="tg-cast-art" aria-hidden="true">✦<img id="tg-cast-icon" alt="" hidden></span><strong id="tg-cast-name" data-user-content></strong><span id="tg-cast-phase"></span><time id="tg-cast-remaining"></time></div>
+          <div id="tg-dummy-cast" hidden><label>Подготовка манекена <span></span><progress max="1" aria-label="Dummy cast progress"></progress></label></div><p id="tg-queued" hidden></p><div id="tg-cast" hidden><div class="tg-cast-heading"><span class="tg-cast-art" aria-hidden="true">✦<img id="tg-cast-icon" alt="" hidden></span><strong id="tg-cast-name" data-user-content></strong><span id="tg-cast-phase"></span><time id="tg-cast-remaining"></time></div>
             <progress id="tg-progress" aria-labelledby="tg-cast-name"></progress>
             <button type="button" id="tg-cancel">Отменить применение</button></div>
         </section>
@@ -294,7 +299,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
           ['Бонус',event.bonus],['Бонус критического удара',event.critical],['Предотвращено',event.mitigated],['Поглощено',event.absorbed],
           ['Блок',event.blocked],['Ограничено пределом',event.capped],['Итог',event.amount],['Фактическое лечение',event.effective],
           ['Избыточное лечение',event.overhealing],['Ресурс',event.resourceName],['Исход',event.outcome],['Причина',event.reason],
-          ['Категория снятия',event.dispelType],['Множитель DR',event.drFactor]
+          ['Тип атаки',event.attackType],['Рука оружия',event.hand],['Положение',event.position],['Бросок попадания',event.attackRoll],['Таблица атаки',event.attackTable?JSON.stringify(event.attackTable):undefined],['Модификаторы',event.modifiers?.length?JSON.stringify(event.modifiers):undefined],['Шанс прока',event.chance],['PPM',event.ppm],['Категория снятия',event.dispelType],['Множитель DR',event.drFactor]
         ].filter(([,value])=>value!==undefined).map(([name,value])=>`<dt>${name}</dt><dd>${userText(String(value))}</dd>`).join('')}</dl></details></li>`;
     }).join('');
     for (const event of events) {
@@ -331,6 +336,8 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
     $('#tg-queued').hidden=!state.queuedAbilityId;
     $('#tg-queued').textContent=state.queuedAbilityId?t('Способность в очереди')+' · '+(abilities.find(ability=>ability.id===state.queuedAbilityId)?.name??''):'';
     const {player, dummy, activeCast} = state;
+    const dummyCast=$('#tg-dummy-cast');dummyCast.hidden=!state.dummyCast;
+    if(state.dummyCast){dummyCast.querySelector('span').textContent=state.dummyCast.school+' · '+Math.max(0,state.dummyCast.end-state.combatTime).toFixed(1)+' s';dummyCast.querySelector('progress').value=(state.combatTime-state.dummyCast.start)/(state.dummyCast.end-state.dummyCast.start);}
     replaceText($('#tg-pause'), t(runtime.paused ? 'Продолжить бой' : 'Пауза'));
     replaceText($('#tg-time'), state.combatTime.toFixed(1) + ' s');
     setVital(0, player.health, player.maxHealth);

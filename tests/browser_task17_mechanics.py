@@ -1,6 +1,7 @@
 """Actual GLB combat verification for queue, pushback, runes, finishers, auras and HUD layout."""
 import json
 import os
+import re
 from pathlib import Path
 import sys
 from playwright.sync_api import expect,sync_playwright
@@ -131,7 +132,7 @@ def run(page,context,url,shots):
     expect(events('procTriggered')).to_have_count(2)
     cast('crit-buff');cast('critical');page.clock.run_for(100);cast('critical');page.clock.run_for(100)
     expect(events('procTriggered')).to_have_count(3)
-    expect(events('damage').filter(has_text='critical')).to_have_count(2)
+    expect(events('damage').filter(has=page.locator('span[data-user-content]',has_text=re.compile('^critical$')))).to_have_count(2)
     assert mana()=='85 / 100',mana()
     page.screenshot(path=shots/'04-procs-haste-critical.png',animations='disabled')
     before=snap()['dummy'];cast('knock');page.clock.run_for(100)

@@ -3,7 +3,7 @@ import {advancedTypes,validateAdvancedEffect,validateAuraMetadata} from './advan
 const common = ['id', 'type', 'trigger'];
 const amounts = ['baseAmount', 'scalingStat', 'coefficient', 'canCrit'];
 const bonuses = ['flatBonus', 'multiplier', 'critMultiplier', 'attackCoefficient', 'spellCoefficient'];
-const timing = ['duration', 'interval', 'stacks', 'refresh', 'snapshot'];
+const timing = ['duration', 'interval', 'stacks', 'refresh', 'snapshot','tickPolicy'];
 export const combatSchools = ['physical', 'fire', 'frost', 'arcane', 'nature', 'shadow', 'holy'];
 export const statusStats = ['attackPower', 'spellPower', 'critChance', 'movementSpeed', 'armor', 'damageTaken', 'healingTaken','haste','healthRegen','resourceRegen','maxHealth','maxResource','physicalTaken','magicalTaken','healingPower','healingDone','damageDone','reflectDamage','criticalReduction'];
 
@@ -34,6 +34,7 @@ export function validateCombatEffects(ability) {
       for (const key of bonuses) if (Object.hasOwn(e, key) && !bounded(e[key], 0, key === 'flatBonus' ? 1e9 : 1000)) invalid();
       if(e.damageKind!==undefined&&(e.damageKind!=='bleed'||e.school!=='physical')||e.cap!==undefined&&!bounded(e.cap,0,1e9))invalid();
       if (e.weaponCoefficient!==undefined&&!bounded(e.weaponCoefficient,0,1000))invalid();
+      if(e.tickPolicy!==undefined&&(!e.interval||!['preserve','restart'].includes(e.tickPolicy)))invalid();
       if (e.snapshot!==undefined&&(typeof e.snapshot!=='boolean'||!e.interval))invalid();
       if (Object.hasOwn(e, 'duration') !== Object.hasOwn(e, 'interval') ||
           Object.hasOwn(e, 'interval') && !bounded(e.interval, .25, e.duration)) invalid();
@@ -65,6 +66,7 @@ export function validateCombatEffects(ability) {
     if (Object.hasOwn(e, 'duration') && !bounded(e.duration, .25, 300)) invalid();
     if (Object.hasOwn(e, 'stacks') && (!Number.isInteger(e.stacks) || !bounded(e.stacks, 1, 10))) invalid();
     if (Object.hasOwn(e, 'refresh') && !['refresh','refreshOnly','keep','replace','extend','independent'].includes(e.refresh)) invalid();
-    if (Object.keys(e).some(k => !common.includes(k) && !fields.includes(k) && !(e.duration&&['dispelType','removable','breakOnDamage'].includes(k)))) invalid();
+    if(e.category!==undefined&&(!e.duration||typeof e.category!=='string'||!e.category.trim()||e.category.length>60))invalid();
+    if (Object.keys(e).some(k => !common.includes(k) && !fields.includes(k) && !(e.duration&&['dispelType','removable','breakOnDamage','category'].includes(k)))) invalid();
   }
 }

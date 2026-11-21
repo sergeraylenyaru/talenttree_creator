@@ -21,3 +21,12 @@ export function abilityReadiness(document, ability) {
   if (Object.hasOwn(unsupportedPresetSpells,ability.id)) return {state:'unsupported',message:unsupportedPresetSpells[ability.id]};
   return {state:'noEffects',message:'Нет исполняемых боевых эффектов'};
 }
+
+// Descriptive talent text is never interpreted as executable combat behavior.
+export function talentReadiness(document,talent){
+  const linked=talent.grantedAbilityId&&document.abilities.find(ability=>ability.id===talent.grantedAbilityId);
+  const owned=[...(document.rpg?.bonuses??[]),...(document.rpg?.procs??[])].filter(rule=>rule.owner.kind==='talent'&&rule.owner.id===talent.id);
+  if(linked){const ready=abilityReadiness(document,linked);return {...ready,message:'Способность: '+ready.message};}
+  if(owned.length)return {state:'ready',message:'Исполняемых правил: '+owned.length+'. Точность описания требует отдельной проверки.'};
+  return {state:'noEffects',message:'Только описание: боевое поведение не настроено. Добавьте модификатор или триггер таланта.'};
+}

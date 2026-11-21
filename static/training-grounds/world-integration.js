@@ -26,7 +26,7 @@ addTranslations([
   ['Свободно', 'Clear'], ['До манекена', 'Dummy distance']
 ]);
 
-addTranslations([['Замена анимации','Animation fallback']]);
+addTranslations([['Замена анимации','Animation fallback'],['Начать заклинание манекена','Start dummy cast']]);
 
 const qualityKey = 'talentforge-world-quality';
 
@@ -62,7 +62,7 @@ export function mountTrainingWorld(dialog, actions) {
   }
   if(actions.incoming){
     const strike=document.createElement('button');
-    strike.type='button';strike.className='tg-test-incoming';strike.textContent='Test dummy strike';
+    strike.type='button';strike.className='tg-test-incoming';strike.textContent=actions.incomingCastTime?t('Начать заклинание манекена'):'Test dummy strike';
     strike.onclick=actions.incoming;toolbar.append(strike);
   }
   let heroPortrait;
@@ -133,6 +133,8 @@ export function mountTrainingWorld(dialog, actions) {
     canvas?.focus({preventScroll:true});
   },actions.preview);
   frame.append(hud.controls);
+  const dummyCast=arena.querySelector('#tg-dummy-cast');const dummyCastParent=dummyCast.parentElement;
+  frame.querySelector('.tg-unit-target .tg-unit-details').append(dummyCast);
   const layout=mountHudLayout(frame,toolbar,[
     ['hero',frame.querySelector('.tg-unit-player'),'Герой'],['target',frame.querySelector('.tg-unit-target'),'Цель'],
     ['actions',hud.controls,'Панель способностей'],['cast',castbar,'Применение'],
@@ -157,7 +159,7 @@ export function mountTrainingWorld(dialog, actions) {
     canvas?.remove();
     canvas = undefined;
     combatText.clear();
-    castParent.append(castbar);
+    castParent.append(castbar);dummyCastParent.append(dummyCast);
     hud.select(false);
     dummyVital.classList.remove('tg-target-selected');
     arena.classList.remove('tg-show-world');
@@ -238,7 +240,7 @@ export function mountTrainingWorld(dialog, actions) {
       });
       actions.enter();
       controller.setQuality(quality.value);
-      frame.append(castbar);
+      frame.append(castbar);frame.querySelector('.tg-unit-target .tg-unit-details').append(dummyCast);
       arena.classList.add('tg-show-world');
       log.hidden=false;
       meterButton.hidden=false;
@@ -275,9 +277,9 @@ export function mountTrainingWorld(dialog, actions) {
   };
   if (actions.preview || matchMedia('(pointer: fine) and (min-width: 760px)').matches) enter();
 
-  function updateCombat(state) {
+  function updateCombat(state,advance=false) {
     if (!controller) return;
-    controller.combatState(state.combatTime, state.dummy.health);
+    controller.combatState(state.combatTime, state.dummy.health,advance);
     const label = actions.state().dummy.health ? t('Манекен') : t('Манекен повержен');
     if (marker.textContent !== label) marker.textContent = label;
   }
@@ -307,6 +309,8 @@ export function mountTrainingWorld(dialog, actions) {
       return true;
     },
     combatState: updateCombat,
+    nextCombatEvent:()=>controller?.nextCombatEvent()??Infinity,
+    advanceCombat:state=>updateCombat(state,true),
     combatText(event) {
       if (!controller) return false;
       combatText.show(event);

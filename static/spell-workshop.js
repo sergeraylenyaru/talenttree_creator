@@ -5,7 +5,13 @@ import {workshopFlags, workshopNumbers, soundNames} from './combat/workshop-rule
 import {presentationOptions, presentationPresets} from './combat/presentation.js';
 
 const words = {
+  cooldownGroup:['Общая группа перезарядки','Shared cooldown group'],groupCooldown:['Перезарядка группы, сек.','Group cooldown, sec.'],
+  channelPayment:['Оплата канала','Channel payment'],
+  swingPolicy:['Автоатака во время применения','Autoattack during cast'],
+  attackType:['Таблица атаки','Attack table'],weaponHand:['Рука оружия для расчёта','Weapon hand for calculation'],
+  normalizedWeapon:['Нормализованный урон оружия','Normalized weapon damage'],attackSchool:['Школа проверки попадания','Hit-check school'],
   freeWithAura:['Бесплатно при ауре (имя или ID)','Free with aura (name or ID)'],consumeFreeAura:['Расходовать ауру бесплатного применения','Consume free-cast aura'],
+  runeSubstitute:['Заменяющие руны (ID)','Substitute rune resource'],
   finisherResource:['Ресурс финишера (ID)','Finisher resource (ID)'],finisherScale:['Множитель за дополнительное очко','Multiplier per extra point'],
   requiredLevel:['Требуемый уровень','Required level'],requiredClass:['Требуемый класс','Required class'],
   requiredStateKey:['Требуемое состояние','Required state'],requiredStateValue:['Значение состояния','State value'],
@@ -31,6 +37,9 @@ const words = {
   volume:['Громкость','Volume'], variation:['Разброс высоты звука','Pitch variation']
 };
 const values = {
+  start:['В начале канала','At channel start'],firstTick:['При первом тике','At first tick'],melee:['Ближняя атака','Melee attack'],
+  continue:['Продолжать','Continue'],pause:['Приостановить таймер','Pause swing timer'],reset:['Сбросить таймер','Reset swing timer'],
+  physical:['Физическая','Physical'],spell:['Заклинание','Spell'],ranged:['Дальняя атака','Ranged attack'],mainHand:['Основная рука','Main hand'],offHand:['Дополнительная рука','Off hand'],
   aim:['В выбранную цель','Toward selected target'], forward:['Перед героем','Along facing'], circle:['Круг','Circle'], cone:['Конус перед героем','Forward cone'], strike:['Удар','Strike'], spark:['Искра','Spark'],
   chime:['Перезвон','Chime'], none:['Нет','None'], melee:['Ближний бой','Melee'], fire:['Огонь','Fire'], frost:['Лёд','Frost'],
   arcane:['Тайная магия','Arcane'], holy:['Свет','Holy'], nature:['Природа','Nature'], shadow:['Тьма','Shadow'],
@@ -38,8 +47,8 @@ const values = {
 };
 const groups = [
   ['Доступность и ранг','Availability and rank',['rank','tier','talentRank','rankScale','requiredLevel','requiredClass','requiredStateKey','requiredStateValue','baseLevel','levelScale','disabled','hidden']],
-  ['Механика применения','Cast rules',['minRange','facing','interruptMovement','uninterruptible','tickInterval','radius','areaShape','freeWithAura','consumeFreeAura','finisherResource','finisherScale']],
-  ['Заряды и глобальная перезарядка','Charges and global cooldown',['charges','recharge','noGcd','gcdDuration']],
+  ['Механика применения','Cast rules',['channelPayment','swingPolicy','attackType','attackSchool','weaponHand','normalizedWeapon','minRange','facing','interruptMovement','uninterruptible','tickInterval','radius','areaShape','freeWithAura','consumeFreeAura','finisherResource','finisherScale','runeSubstitute']],
+  ['Заряды и глобальная перезарядка','Charges and global cooldown',['charges','recharge','noGcd','gcdDuration','cooldownGroup','groupCooldown']],
   ['Параметры снаряда','Projectile parameters',['projectileLifetime','collisionRadius','projectileSize','homingStrength','flightDirection']],
   ['Анимация и эффекты','Animation and effects',['casterEffect','weaponEffect','projectileEffect','color','effectScale','effectDuration','effectSpeed','effectIntensity','opacity','playback','blend','loopAnimation']],
   ['Звук','Sound',['activationSound','castSound','launchSound','impactSound','criticalSound','tickSound','buffSound','debuffSound','healSound','volume','variation']]
@@ -76,8 +85,8 @@ export function workshopOptions(root, ability, character) {
     panel.className = 'workshop-settings-grid';
     for (const key of keys) {
       const label = document.createElement('label');
-      const resources=key==='finisherResource'?classResources(character).filter(resource=>resource.id!=='health'):undefined;
-      const options = resources?resources.map(resource=>resource.id):key.endsWith('Sound') ? soundNames : key.endsWith('Effect') ? presentationOptions.impact : key==='areaShape' ? ['circle','cone'] : key==='flightDirection' ? ['aim','forward'] : undefined;
+      const resources=['finisherResource','runeSubstitute'].includes(key)?classResources(character).filter(resource=>resource.id!=='health'):undefined;
+      const options = resources?resources.map(resource=>resource.id):key==='channelPayment'?['start','firstTick']:key==='swingPolicy'?['continue','pause','reset']:key==='attackType'?['melee','ranged','spell']:key==='attackSchool'?['physical','fire','frost','arcane','nature','shadow','holy']:key==='weaponHand'?['mainHand','offHand','ranged']:key.endsWith('Sound') ? soundNames : key.endsWith('Effect') ? presentationOptions.impact : key==='areaShape' ? ['circle','cone'] : key==='flightDirection' ? ['aim','forward'] : undefined;
       const input = document.createElement(options ? 'select' : 'input');
       input.dataset.workshop = key;
       if (options) input.append(new Option(t('Автоматически'), ''), ...options.map(value => new Option(resources?.find(resource=>resource.id===value)?.name??t(values[value]?.[0]??value), value)));

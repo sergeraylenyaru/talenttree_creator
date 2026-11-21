@@ -46,7 +46,7 @@ export function createWorld(canvas, callbacks, config = world) {
   let lastTime = null;
   let queuedJump = false;
   let selected = false;
-  let targetCollider;
+  let targetCollider,targetFacing=0;
   let groundPick;
   let groundMeshes = [fallback];
   const normalMatrix = new Matrix3();
@@ -112,7 +112,7 @@ export function createWorld(canvas, callbacks, config = world) {
         interactionBounds.getCenter(aimPoint);
       } else aimPoint.set(x, y + combatConfig.aimHeight, z);
       return {
-        position: {x: aimPoint.x, y: aimPoint.y, z: aimPoint.z}, bounds,
+        position: {x: aimPoint.x, y: aimPoint.y, z: aimPoint.z}, facing:targetFacing-dummy.rotation.y,bounds,
         radius: config.dummy.radius ?? 0.72, alive: (callbacks.targetAlive?.() ?? alive) && !signal.aborted
       };
     }
@@ -282,10 +282,11 @@ export function createWorld(canvas, callbacks, config = world) {
       autoReady = value;
       if (!value && pose?.auto) controller.clearPose();
     },
-    combatState(time, health) {
+    nextCombatEvent:()=>combat.nextEvent(),
+    combatState(time, health,advance=true) {
       alive = health > 0;
       combatTime = time;
-      combat.update(time);
+      if(advance)combat.update(time);
       dummy.scale.y = (callbacks.targetAlive?.() ?? alive) ? 1 : 0.72;
     },
     playerHit() {
@@ -437,7 +438,7 @@ export function createWorld(canvas, callbacks, config = world) {
       return {attacks: combat.snapshot(), player: {...player}, orbit: {...orbit}, selected, model: modelKind,
         visualMinY, lastAnimationFallback, targetClip: dummyAnimation?.activeClip, assets: Object.keys(diagnostics), activeClip: animation.activeClip, cameraForward: {x: direction.x, z: direction.z},
         camera: {...cameraState, position: camera.position.toArray(), avatarVisible: visualPivot.visible},
-        dummy: dummy.position.toArray(),
+        dummy: dummy.position.toArray(),dummyFacing:targetFacing-dummy.rotation.y,
         weaponPosition: weapon?.mount.getWorldPosition(mountPoint).toArray(),
         weaponGripError: weapon && weapon.mount.parent.worldToLocal(mountPoint).distanceTo(weapon.mount.position),
         geometries: renderer.info.memory.geometries, draws: renderer.info.render.calls};
@@ -524,6 +525,9 @@ export function createWorld(canvas, callbacks, config = world) {
       diagnostics.weapon = {...info, bone: weapon.bone};
     },
     target(asset, settings, info) {
+      // Actual Training-dummy.glb faces +X (face visible from +X), not +Z.
+      // Positive visual Y rotation turns +X toward -Z. Fallback dummy faces +Z.
+      targetFacing=Math.PI/2-MathUtils.degToRad(settings.rotation??0);
       dummyVisual.visible = false;
       dummy.add(asset.visual);
       dummyAnimation = animateCharacter(asset);

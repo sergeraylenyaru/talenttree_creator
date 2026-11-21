@@ -12,7 +12,7 @@ export function addStatus(statuses, ability, effect, now, delivery, details = {}
     removeVisual: target === 'zone' ? delivery.placeZone?.() : undefined, stacks,
     expires: previous && effect.refresh === 'keep' ? previous.expires : previous && effect.refresh==='extend'
       ? Math.min(now+300,previous.expires+effect.duration) : now + effect.duration,
-    nextTick: effect.interval ? (!replace && previous ? previous.nextTick : now + effect.interval) : Infinity
+    nextTick: effect.interval ? (!replace && effect.tickPolicy!=='restart' && previous ? previous.nextTick : now + effect.interval) : Infinity
   };
   return [...statuses.filter(entry => entry !== previous && entry !== overflow), status];
 }

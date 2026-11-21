@@ -1,5 +1,5 @@
 export const workshopNumbers = {
-  finisherScale:[0,100,1], requiredLevel:[1,1000,1], baseLevel:[1,1000,1], levelScale:[0,100,0],
+  groupCooldown:[0,3600,0],finisherScale:[0,100,1], requiredLevel:[1,1000,1], baseLevel:[1,1000,1], levelScale:[0,100,0],
   rank: [1, 100, 1], rankScale: [0, 100, 0], talentRank: [1, 100, 1], minRange: [0, 100, 0],
   charges: [1, 10, 1], recharge: [0.25, 3600, 10], gcdDuration: [0, 3, ''],
   tickInterval: [0.25, 120, ''], radius: [0.25, 30, 5],
@@ -9,7 +9,7 @@ export const workshopNumbers = {
   playback: [.25, 3, 1], blend: [0, 1, .16], volume: [0, 1, .65],
   variation: [0, .5, 0]
 };
-export const workshopFlags = ['disabled', 'hidden', 'noGcd', 'interruptMovement', 'uninterruptible', 'facing', 'loopAnimation','consumeFreeAura'];
+export const workshopFlags = ['disabled', 'hidden', 'noGcd', 'interruptMovement', 'uninterruptible', 'facing', 'loopAnimation','consumeFreeAura','normalizedWeapon'];
 export const soundNames = ['strike', 'spark', 'chime'];
 
 export function validateWorkshop(ability) {
@@ -30,13 +30,20 @@ export function validateWorkshop(ability) {
     if (key === 'flightDirection' && ['aim','forward'].includes(value)) continue;
     if (key === 'areaShape' && ['circle','cone'].includes(value)) continue;
     if (key === 'color' && typeof value === 'string' && /^#[a-f0-9]{6}$/i.test(value)) continue;
+    if(key==='cooldownGroup'&&typeof value==='string'&&value.trim().length>0&&value.length<=60)continue;
+    if(key==='channelPayment'&&['start','firstTick'].includes(value))continue;
+    if(key==='swingPolicy'&&['continue','pause','reset'].includes(value))continue;
+    if(key==='attackType'&&['melee','ranged','spell'].includes(value))continue;
+    if(key==='weaponHand'&&['mainHand','offHand','ranged'].includes(value))continue;
+    if(key==='attackSchool'&&['physical','fire','frost','arcane','nature','shadow','holy'].includes(value))continue;
     if(key==='requiredClass'&&['warrior','paladin','hunter','rogue','priest','shaman','mage','warlock','druid','deathknight'].includes(value))continue;
     if(key==='requiredStateKey'&&['form','stance','aspect','seal','mode'].includes(value))continue;
-    if(['freeWithAura','finisherResource'].includes(key)&&typeof value==='string'&&value.length>0&&value.length<=200)continue;
+    if(['freeWithAura','finisherResource','runeSubstitute'].includes(key)&&typeof value==='string'&&value.length>0&&value.length<=200)continue;
     if(key==='requiredStateValue'&&typeof value==='string'&&value.length>0&&value.length<=60)continue;
     if (key === 'tier' && typeof value === 'string' && value.length <= 40) continue;
     fail('Проверь настройку способности: ' + key);
   }
+  if(rules.groupCooldown!==undefined&&!rules.cooldownGroup)fail('Укажи группу перезарядки');
   const p = ability.presentation ?? {};
   const effects = ability.combatEffects ?? [];
   const channel = p.channelDuration ?? 0;

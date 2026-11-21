@@ -1,3 +1,4 @@
+import {conditionMatches} from './conditions.js';
 import {progressionValues} from './progression.js';
 import {combatRuleValues} from './rulesets.js';
 import {abilityUnlocked} from '../engine.js';
@@ -18,14 +19,23 @@ export function compileProfile(document, passiveAbilities) {
     :owner.kind==='passive'?selected.has(owner.id):Object.values(equipment).some(item=>item.id===owner.id);
   const passiveStats=passiveAbilities.flatMap(ability=>ability.combatEffects.filter(effect=>
     effect.type==='status'&&effect.target==='player'&&!effect.consumeOnHit));
-  return {...profile,equipment,sets,passiveStats,bonuses:(profile?.bonuses??[]).filter(rule=>active(rule.owner)),
+  return {...profile,learnedTalents:{...document.build},equipment,sets,passiveStats,bonuses:(profile?.bonuses??[]).filter(rule=>active(rule.owner)),
     procs:(profile?.procs??[]).filter(proc=>active(proc.owner)).map(proc=>({
       ...proc, ability:document.abilities.find(ability=>ability.id===proc.spell)
     }))};
 }
 
-export function abilityBonuses(profile,id,key,states=profile?.states??{}){
-  return (profile?.bonuses??[]).reduce((sum,rule)=>sum+(stateMatches(rule,states)&&rule.stat===key&&(!rule.spell||rule.spell===id)?rule.amount/100:0),0);
+export function abilityBonusDetails(profile,id,key,states=profile?.states??{},context){
+  return (profile?.bonuses??[]).flatMap(rule=>{
+    if(!stateMatches(rule,states)||rule.stat!==key||rule.spell&&rule.spell!==id)return [];
+    if(rule.condition&&(!context||!conditionMatches(rule.condition,context.event,context.state,context.statuses,context.weapon,{talents:profile.learnedTalents})))return [];
+    const masteryPoints=context?.masteryPoints??0;
+    return [{id:rule.id,owner:rule.owner,stat:key,base:rule.amount,masteryScale:rule.masteryScale??0,masteryPoints,
+      amount:rule.amount+(rule.masteryScale??0)*masteryPoints}];
+  });
+}
+export function abilityBonuses(profile,id,key,states,context){
+  return abilityBonusDetails(profile,id,key,states,context).reduce((sum,rule)=>sum+rule.amount/100,0);
 }
 
 const nonnegative=value=>Math.max(0,value);
@@ -96,11 +106,11 @@ export function deriveCharacterStats(build,statuses=[],classStates=build.profile
     movementSpeed:Math.max(.1,(stats.movementSpeed??1)*(1+percent('movementSpeed'))),
     castSpeed:speed('cast'),channelSpeed:speed('channel'),gcdSpeed:speed('gcd'),
     cooldownSpeed:speed('cooldown')*(1+cooldownRecovery),swingSpeed:speed('swing'),weapon:swing,
-    weapons:{melee:equipment.mainHand,ranged:equipment.ranged},
+    weapons:{melee:equipment.mainHand,ranged:equipment.ranged,offHand:equipment.offHand},
     damageModifiers:[...statuses.filter(status=>status.target==='player'&&status.effect.stat==='damageDone'),
       ...(profile?.passiveStats??[]).filter(effect=>effect.stat==='damageDone').map(effect=>({effect,stacks:1}))],
     resources:(build.baseResources??build.resources).map(resource=>{
-      const max=Math.max(1,Math.round((resource.max+(stats['resource:'+resource.id]??0)+(combatRules&&/mana/i.test(resource.id)?combatRules.mana:0))*(1+percent('maxResource'))));
+      const max=Math.max(1,Math.round((resource.max+(stats['resource:'+resource.id]??0)+(combatRules&&(profile?.resources?.[resource.id]?.kind?profile.resources[resource.id].kind==='mana':/mana/i.test(resource.id))?combatRules.mana:0))*(1+percent('maxResource'))));
       return {...resource,max,current:Math.min(max,resource.current),...profile?.resources?.[resource.id]};
     }),
     mitigation:{physical:calculateMitigation('physical',{armor},combatRules?{armorConstant:combatRules.armorConstant}:undefined).reduction,
@@ -111,7 +121,7 @@ export function deriveCharacterStats(build,statuses=[],classStates=build.profile
 
 export function weaponTiming(sheet, fallback) {
   const weapon=sheet.weapon;
-  return {swingSeconds:(weapon?.speed??fallback.swingSeconds)/sheet.swingSpeed,
+  return {speed:weapon?.speed??fallback.swingSeconds,swingSeconds:(weapon?.speed??fallback.swingSeconds)/sheet.swingSpeed,
     minDamage:weapon?.minDamage??fallback.damage,maxDamage:weapon?.maxDamage??fallback.damage,
     type:weapon?.type??'sword1',ranged:['bow','crossbow','wand'].includes(weapon?.type),offHand:undefined};
 }

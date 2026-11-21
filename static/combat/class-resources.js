@@ -231,7 +231,7 @@ export function configureCataclysmClass(document,classId) {
     if(!match){match=resource;existing.push(match);}
     const tail=resource.id.split(':').at(-1);
     const recovery=tail.endsWith('Runes')?{rune:true,recharge:10}:defaults[classId]?.[tail]??{};
-    next.rpg.resources[match.id]={...recovery,...next.rpg.resources[match.id]};
+    next.rpg.resources[match.id]={kind:tail.endsWith('Runes')?'rune':['mana','energy','rage','focus'].includes(tail)?tail:'custom',...recovery,...next.rpg.resources[match.id]};
   }
   next.rpg.hasteUses=[...new Set([...(next.rpg.hasteUses??[]),'swing','cast','channel','gcd',...(classId==='deathknight'?['rune']:[])])];
   return next;

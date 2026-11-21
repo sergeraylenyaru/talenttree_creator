@@ -95,7 +95,7 @@ export function createSessionReport(){
         const bucket=buckets.get(time)??{time,damage:0,healing:0};
         series.push({...bucket,dps:bucket.damage,hps:bucket.healing});
       }
-      return {
+      return structuredClone({
         version:1, series, droppedSeriesBuckets:discardedBuckets, duration, seed, conditions:settings, build,
         metrics:{...totals,incomingMitigated,defensiveAbsorbed,dps:rate(totals.damage),hps:rate(totals.effective),incoming,direct,periodic,auto,critical,
           peakDps,peakHps,
@@ -107,7 +107,7 @@ export function createSessionReport(){
           dps:rate(row.damage),average:row.hits?row.damage/row.hits:0,averageHealing:row.healingHits?row.healing/row.healingHits:0})),
         effects:[...effects.values()].map(present),procs:[...procs.values()].map(row=>({...row,frequency:rate(row.count)})),
         droppedTimelineEvents:discarded,timeline:timeline.slice()
-      };
+      });
     },
     reset(){timeline=[];discarded=0;totals=entry();abilities=new Map();schools={};effects=new Map();procs=new Map();direct=periodic=auto=critical=incoming=incomingMitigated=defensiveAbsorbed=peakDps=peakHps=0;buckets=new Map();discardedBuckets=0;}
   };

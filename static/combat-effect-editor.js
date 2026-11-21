@@ -3,6 +3,7 @@ import {validateCombatEffects} from './combat/effect-validation.js';
 import {addTranslations, t} from './i18n.js';
 
 addTranslations([
+  ['Таймер при обновлении','Periodic refresh timer'],['Сохранить ближайший тик','Preserve next tick'],['Начать интервал заново','Restart tick interval'],
   ['Щит поглощения','Absorption shield'],['Сила лечения','Healing power'],['Запас поглощения','Absorption capacity'],
   ['Доля входящего урона, 0–1','Incoming damage share, 0–1'],['Приоритет щита','Shield priority'],
   ['Зафиксировать характеристики на момент применения','Snapshot stats on application'],['Коэффициент урона оружия','Weapon damage coefficient'],
@@ -26,7 +27,7 @@ addTranslations([
 ]);
 
 addTranslations([
- ['Смена состояния','Change class state'],['Состояние','State'],['Форма','Form'],['Стойка','Stance'],['Дух охотника','Hunter aspect'],['Печать','Seal'],['Боевой режим','Combat mode'],['Значение состояния','State value'],
+ ['Преобразование рун','Rune conversion'],['Исходные руны','Original runes'],['Восстановить как руны','Recover as runes'],['Число рун','Rune count'],['Смена состояния','Change class state'],['Состояние','State'],['Форма','Form'],['Стойка','Stance'],['Дух охотника','Hunter aspect'],['Печать','Seal'],['Боевой режим','Combat mode'],['Значение состояния','State value'],
  ['Контроль','Crowd control'],['Снятие эффекта','Dispel'],['Изменение перезарядки','Cooldown change'],
  ['Вид контроля','Control type'],['Группа DR','DR group'],['Категория снятия','Dispel category'],
  ['Число снимаемых эффектов','Effects to remove'],['Способность для изменения','Affected ability'],
@@ -35,11 +36,11 @@ addTranslations([
  ['Оглушение','Stun'],['Обездвиживание','Root'],['Замедление','Slow'],['Страх','Fear'],['Немота','Silence'],
  ['Обезоруживание','Disarm'],['Прерывание','Interrupt'],['Отбрасывание','Knockback'],['Неуязвимость','Immunity'],
  ['Магия','Magic'],['Проклятие','Curse'],['Яд','Poison'],['Болезнь','Disease'],['Без категории','No category'],
- ['Без DR','No DR'],['Тип физического урона','Physical damage type'],['Обычный','Normal'],['Кровотечение','Bleed'],['Предел итогового урона','Final damage cap'],['На себя','Self']
+ ['Включить общую группу перезарядки','Include shared cooldown group'],['Без DR','No DR'],['Тип физического урона','Physical damage type'],['Обычный','Normal'],['Кровотечение','Bleed'],['Предел итогового урона','Final damage cap'],['На себя','Self']
 ]);
 const controlNames=['Оглушение','Обездвиживание','Замедление','Страх','Немота','Обезоруживание','Прерывание','Отбрасывание','Неуязвимость'];
 const dispelNames=['Магия','Проклятие','Яд','Болезнь'];
-const types = [['state','Смена состояния'],['control','Контроль'],['dispel','Снятие эффекта'],['cooldown','Изменение перезарядки'],['shield','Щит поглощения'], ['damage','Урон'], ['healing','Лечение'], ['status','Эффект состояния'], ['resource','Восстановление ресурса']];
+const types = [['rune','Преобразование рун'],['state','Смена состояния'],['control','Контроль'],['dispel','Снятие эффекта'],['cooldown','Изменение перезарядки'],['shield','Щит поглощения'], ['damage','Урон'], ['healing','Лечение'], ['status','Эффект состояния'], ['resource','Восстановление ресурса']];
 const triggers = [['onCast','При применении'], ['onHit','При попадании']];
 const schools = [['physical','Физический'],['fire','Огонь'],['frost','Лёд'],['arcane','Тайная магия'],['nature','Природа'],['shadow','Тьма'],['holy','Свет']];
 const scaling = [['none','Без масштабирования'],['healingPower','Сила лечения'],['spellPower','Сила заклинаний'],['attackPower','Сила атаки']];
@@ -59,6 +60,7 @@ const number = (key,label,value,min,max,optional=false) =>
 
 function newEffect(type, id, trigger, resourceId) {
   const base = {id, type, trigger};
+  if(type==='rune')return {...base,fromResource:resourceId,toResource:'',count:1};
   if(type==='state')return {...base,key:'form',value:'cat'};
   if(type==='control')return {...base,target:'dummy',name:t('Оглушение'),controlType:'stun',duration:4,drGroup:'stun'};
   if(type==='dispel')return {...base,target:'player',dispelType:'magic',count:1};
@@ -79,7 +81,7 @@ export function combatEffectEditor(root, ability, resources = [], abilities = []
       for (const input of row.querySelectorAll('[data-key]')) {
         const key = input.dataset.key;
         if (key === 'type') continue;
-        if (input.value === '' && (['description','icon','direction','school','drGroup','dispelType','damageKind'].includes(key) || input.type === 'number' && !input.required)) delete effect[key];
+        if (input.value === '' && (['description','icon','direction','school','drGroup','dispelType','damageKind','category'].includes(key) || input.type === 'number' && !input.required)) delete effect[key];
         else effect[key] = input.type === 'number' ? input.valueAsNumber : input.type === 'checkbox' ? input.checked : input.value;
       }
     }
@@ -88,7 +90,8 @@ export function combatEffectEditor(root, ability, resources = [], abilities = []
   function timing(e) {
     return number('duration','Длительность, сек.',e.duration,.25,300) +
       (['status','shield'].includes(e.type)?'':number('interval','Интервал тика, сек.',e.interval,.25,300)) +
-      number('stacks','Стеки',e.stacks ?? 1,1,10) + select('refresh','Обновление',refresh,e.refresh ?? 'refresh');
+      number('stacks','Стеки',e.stacks ?? 1,1,10) + select('refresh','Обновление',refresh,e.refresh ?? 'refresh')+
+      (e.interval?select('tickPolicy','Таймер при обновлении',[['preserve','Сохранить ближайший тик'],['restart','Начать интервал заново']],e.tickPolicy??'preserve'):'');
   }
 
   function statusIdentity(e){
@@ -97,11 +100,12 @@ export function combatEffectEditor(root, ability, resources = [], abilities = []
       select('icon','Иконка',[['','Иконка способности'], ...['steel','ember','frost','light','nature','arcane'].map(name=>['forge-'+name,name])],e.icon);
   }
   function auraFields(e) {
-    return select('dispelType','Категория снятия',[['','Без категории'],...dispelTypes.map((key,index)=>[key,dispelNames[index]])],e.dispelType)+
+    return '<label>Исключающая категория / Exclusive category<input data-key="category" maxlength="60" value="'+html(e.category)+'"></label>'+select('dispelType','Категория снятия',[['','Без категории'],...dispelTypes.map((key,index)=>[key,dispelNames[index]])],e.dispelType)+
       '<label><input data-key="removable" type="checkbox" '+(e.removable!==false?'checked':'')+'>Можно снять</label>'+
       '<label><input data-key="breakOnDamage" type="checkbox" '+(e.breakOnDamage?'checked':'')+'>Снять при получении урона</label>';
   }
   function fields(e) {
+    if(e.type==='rune')return select('fromResource','Исходные руны',availableResources.map(resource=>[resource.id,resource.name]),e.fromResource)+select('toResource','Восстановить как руны',availableResources.map(resource=>[resource.id,resource.name]),e.toResource)+number('count','Число рун',e.count,1,6);
     if(e.type==='state')return select('key','Состояние',[['form','Форма'],['stance','Стойка'],['aspect','Дух охотника'],['seal','Печать'],['mode','Боевой режим']],e.key)+
       '<label>Значение состояния<input data-key="value" required maxlength="60" value="'+html(e.value)+'"></label>';
 
@@ -118,6 +122,7 @@ export function combatEffectEditor(root, ability, resources = [], abilities = []
       number('count','Число снимаемых эффектов',e.count,1,32);
     if(e.type==='cooldown')return select('abilityId','Способность для изменения',[['self','На себя'],...abilities.map(item=>[item.id,item.name])],e.abilityId)+
       number('seconds','Сократить на, сек.',e.seconds,0,3600)+
+      '<label><input data-key="includeGroup" type="checkbox" '+(e.includeGroup?'checked':'')+'>Включить общую группу перезарядки</label>'+
       '<label><input data-key="reset" type="checkbox" '+(e.reset?'checked':'')+'>Сбросить перезарядку</label>';
 
     if(e.type==='shield')return select('target','Выбор цели',[['player','На игрока'],['dummy','На манекен']],e.target??'player')+
@@ -200,7 +205,7 @@ export function combatEffectEditor(root, ability, resources = [], abilities = []
     if (effect.type==='status'&&effect.stat!=='damageDone') {delete effect.school;delete effect.consumeOnHit;}
     if (input.hasAttribute('data-periodic')) {
       if (input.checked) Object.assign(effect,{duration:6,interval:2});
-      else for (const key of ['duration','interval','stacks','refresh','snapshot','dispelType','removable','breakOnDamage']) delete effect[key];
+      else for (const key of ['duration','interval','stacks','refresh','snapshot','tickPolicy','category','dispelType','removable','breakOnDamage']) delete effect[key];
     }
     render();
   };

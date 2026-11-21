@@ -46,7 +46,7 @@ test('class formulas combine talents and gear, and Haste applies to selected sys
   assert.equal(sheet.maxHealth,1050);
   assert.equal(sheet.resources.find(resource=>resource.id==='mana').max,120);
   assert.equal(sheet.castSpeed,1);
-  assert.deepEqual(weaponTiming(sheet,{swingSeconds:3,damage:400}),{swingSeconds:1.6,minDamage:100,maxDamage:140,
+  assert.deepEqual(weaponTiming(sheet,{swingSeconds:3,damage:400}),{speed:2,swingSeconds:1.6,minDamage:100,maxDamage:140,
     type:'sword1',ranged:false,offHand:undefined});
   delete doc.rpg.equipped.mainHand;
   assert.equal(runtime(doc).sheet().source.attackPower,50);
