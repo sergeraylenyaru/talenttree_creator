@@ -1,3 +1,4 @@
+import {mountHudLayout} from './hud-layout.js';
 import {mountFloatingCombatText} from './floating-combat-text.js';
 import {mountDamageMeter} from './damage-meter.js';
 import {mountWorldHUD} from './world-hud.js';
@@ -132,6 +133,11 @@ export function mountTrainingWorld(dialog, actions) {
     canvas?.focus({preventScroll:true});
   },actions.preview);
   frame.append(hud.controls);
+  const layout=mountHudLayout(frame,toolbar,[
+    ['hero',frame.querySelector('.tg-unit-player'),'Герой'],['target',frame.querySelector('.tg-unit-target'),'Цель'],
+    ['actions',hud.controls,'Панель способностей'],['cast',castbar,'Применение'],
+    ['meter',frame.querySelector('.tg-damage-meter'),'Аналитика']
+  ],actions.build.layoutId??actions.build.name,actions.preview);
   const dummyVital = arena.querySelector('#tg-label-dummy').closest('.tg-vital');
   let controller;
   let canvas;
@@ -142,6 +148,7 @@ export function mountTrainingWorld(dialog, actions) {
   catch { quality.value = 'low'; }
 
   function switchToCombat() {
+    layout.suspend();
     generation++;
     assets.clear();
     if (controller) actions.leave();
@@ -316,6 +323,7 @@ export function mountTrainingWorld(dialog, actions) {
       if (!controller) return;
       try {
         controller.update(now);
+        layout.apply();
         if (controller) updateDebug(now);
       }
       catch {

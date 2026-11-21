@@ -7,7 +7,14 @@ export function statRows(sheet){
     ...Object.entries(sheet.primary).map(([key,value])=>[label(key),value]),
     ['Attack power',sheet.source.attackPower],['Spell power',sheet.source.spellPower],['Healing power',sheet.healingPower],
     ['Critical chance',format(sheet.source.critChance*100)+'%'],['Critical damage',format(sheet.source.critMultiplier*100)+'%'],
-    ['Haste',format(sheet.haste*100)+'%'],['Mastery',format(sheet.mastery*100)+'%'],['Versatility',format(sheet.versatility*100)+'%'],
+    ['Haste',format(sheet.haste*100)+'%'],
+    ...(sheet.combatRules?[
+      ['Melee hit',format(sheet.combatRules.hit*100)+'%'],['Spell hit',format(sheet.combatRules.spellHit*100)+'%'],
+      ['Expertise avoidance reduction',format(sheet.combatRules.expertise*100)+'%'],
+      ['Dodge',format(sheet.combatRules.dodge*100)+'%'],['Parry',format(sheet.combatRules.parry*100)+'%'],['Block',format(sheet.combatRules.block*100)+'%'],
+      ['Mastery points (configure specialization effect)',sheet.combatRules.mastery],
+      ['Rating conversion',sheet.combatRules.approximateRatings?'Simulation scale':'Level 85 constants']
+    ]:[['Mastery',format(sheet.mastery*100)+'%'],['Versatility',format(sheet.versatility*100)+'%']]),
     ['Maximum health',sheet.maxHealth],['Health regeneration per second',sheet.healthRegen],
     ['Movement speed',format(sheet.movementSpeed*100)+'%'],['Armor and physical resistance',sheet.armor],
     ...Object.entries(sheet.resistance).map(([school,value])=>[label(school)+' resistance',value]),
@@ -20,16 +27,43 @@ export function statRows(sheet){
     ...sheet.resources.map(resource=>[resource.name+' maximum',resource.max])
   ];
 }
+function rateChart(report){
+  const canvas=document.createElement('canvas');
+  canvas.width=840;canvas.height=230;
+  canvas.style.cssText='max-width:100%;height:auto';
+  canvas.setAttribute('role','img');
+  canvas.setAttribute('aria-label','Damage and healing per second');
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#101720';ctx.fillRect(0,0,840,230);
+  ctx.font='13px sans-serif';ctx.fillStyle='#e1e8ef';
+  ctx.fillText('DPS / HPS',18,20);
+  const values=report.series??[];
+  const end=Math.max(1,report.duration);
+  const max=Math.max(1,...values.flatMap(value=>[value.dps,value.hps]));
+  ctx.fillText(String(Math.round(max)),12,45);
+  ctx.fillText('0',22,205);ctx.fillText(Math.round(end)+' s',785,220);
+  for(const [key,color] of [['dps','#ffc95a'],['hps','#75ef99']]){
+    ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(45,200);
+    for(const value of values)ctx.lineTo(45+value.time/end*770,200-value[key]/max*155);
+    ctx.stroke();
+    ctx.fillStyle=color;ctx.fillText(key.toUpperCase(),key==='dps'?650:720,20);
+  }
+  return canvas;
+}
+
 function metrics(report){
   const m=report.metrics;
   return table(['Metric','Result'],[
     ['Elapsed',format(report.duration)+' s'],['Total damage',m.damage],['DPS',m.dps],['Highest hit',m.highest],['Average hit',m.average],
+    ['Peak DPS, one-second buckets',m.peakDps??0],['Peak HPS, one-second buckets',m.peakHps??0],
+    ['Miss percentage',m.missPercentage??0],['Dodges',m.dodges??0],['Parries',m.parries??0],
+    ['Blocks',m.blocks??0],['Blocked damage',m.blocked??0],['Glancing blows',m.glancing??0],
     ['Hits',m.hits],['Misses',m.misses],['Critical hits',m.crits],
     ['Observed critical rate',m.criticalChance===null?'—':format(m.criticalChance*100)+'%'],
     ['Autoattack damage',m.auto],['Direct damage',m.direct],['Periodic damage',m.periodic],['Critical damage',m.critical],
     ['Total healing',m.healing],['Effective healing',m.effective],['Overhealing',m.overhealing],['HPS',m.hps],
     ['Resource spent',m.spent],['Resource generated',m.gained],['Damage per resource spent',m.efficiency],
-    ['Incoming damage',m.incoming],['Absorbed by shields',m.absorbed]
+    ['Incoming damage',m.incoming],['Incoming damage mitigated',m.incomingMitigated??0],['Player absorption',m.defensiveAbsorbed??0],['Target damage mitigated',m.mitigated],['Absorbed by shields',m.absorbed]
   ]);
 }
 export function readMeasurements(key){
@@ -96,6 +130,7 @@ export function openCombatReview({runtime,portrait,weaponBone,key,incoming,onInc
     body.replaceChildren(tabs(page,value=>{page=value;render();},pages));
     switch(page){
       case 'Summary':
+        body.append(section('Damage and healing over time',rateChart(report)));
         body.append(grid(section('Session metrics',metrics(report)),
           section('Damage by school',table(['School','Damage'],Object.entries(report.schools).map(([school,value])=>[label(school),value])))));
         break;

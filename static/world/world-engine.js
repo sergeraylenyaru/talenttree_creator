@@ -7,7 +7,7 @@ import {createSpatialCombat, facingTarget, spatialDefaults} from './combat/spati
 import {createCombatVisuals} from './combat/combat-visuals.js';
 import {ArrowHelper, Box3, Group, Matrix3, MathUtils, PerspectiveCamera, Raycaster, Vector2, Vector3, WebGLRenderer} from 'three';
 import {animateCharacter} from './animation-controller.js';
-import {cameraFraction} from './collision-system.js';
+import {cameraFraction,moveOnGround} from './collision-system.js';
 import {bindMovement, createCharacter, stepCharacter} from './character-controller.js';
 import {disposeObjects, renderedModelBounds} from './model-loader.js';
 import {bindOrbit, orbitInput, placeCamera} from './third-person-camera.js';
@@ -46,6 +46,7 @@ export function createWorld(canvas, callbacks, config = world) {
   let lastTime = null;
   let queuedJump = false;
   let selected = false;
+  let targetCollider;
   let groundPick;
   let groundMeshes = [fallback];
   const normalMatrix = new Matrix3();
@@ -122,6 +123,26 @@ export function createWorld(canvas, callbacks, config = world) {
   }
 
   const combat = createSpatialCombat({
+    displace(unit,amount){
+      const victim=unit==='player'?player:dummy.position;
+      const from=unit==='player'?dummy.position:player;
+      const dx=victim.x-from.x,dz=victim.z-from.z;
+      const length=Math.hypot(dx,dz)||1;
+      const offset={x:dx/length*amount,y:0,z:dz/length*amount};
+      const walls=unit==='player'?obstacles:obstacles.filter(box=>box!==targetCollider);
+      const start={x:victim.x,y:victim.y+1,z:victim.z};
+      const fraction=Math.min(cameraFraction(start,offset,walls,config.playerRadius),
+        motionConfig.collision?.fraction(start,offset,config.playerRadius)??1);
+      const moved=moveOnGround(victim,offset.x*fraction,offset.z*fraction,walls,motionConfig);
+      if(unit==='dummy'&&targetCollider){
+        const x=moved.x-victim.x,z=moved.z-victim.z;
+        for(const key of ['minX','maxX'])targetCollider[key]+=x;
+        for(const key of ['minZ','maxZ'])targetCollider[key]+=z;
+      }
+      Object.assign(victim,moved);
+      const floor=motionConfig.collision?.floorAt(victim.x,victim.z,victim.y+.3,2)??motionConfig.ground?.y;
+      if(Number.isFinite(floor))victim.y=floor;
+    },
     player: () => player,
     animationAvailable: name => model.clips.some(clip=>clip.name===name),
     animationFallback: reportAnimationFallback,
@@ -332,6 +353,11 @@ export function createWorld(canvas, callbacks, config = world) {
       elapsed += dt;
       const input = readInput();
       const movement = callbacks.movementScale?.() ?? 1;
+      if(movement===0){
+        Object.assign(input,{forward:0,side:0,jump:false});
+        Object.assign(player,{vx:0,vz:0,motionSpeed:0});
+        queuedJump=false;
+      }
       motionConfig.movement = movement === 1 ? config.movement : {...config.movement, walk: config.movement.walk * movement, run: config.movement.run * movement};
       queuedJump ||= input.jump;
       if (input.forward || input.side || queuedJump) callbacks.move?.();
@@ -440,6 +466,7 @@ export function createWorld(canvas, callbacks, config = world) {
     avatar.position.set(player.x, player.y, player.z);
     Object.assign(target, {x: player.x, y: player.y + 1.38, z: player.z});
     sightObstacles.splice(0, sightObstacles.length, ...walls);
+    targetCollider=spawn.collider;
     obstacles.splice(0, obstacles.length, ...walls, spawn.collider);
   }
 

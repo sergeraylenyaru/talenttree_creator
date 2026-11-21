@@ -1,4 +1,6 @@
+from combat_rules import ADVANCED_TYPES, validate_advanced_effect, aura_metadata
 import struct
+import copy
 """TalentForge HTTP server. Python 3.12+, SQLite; Pillow for admin icon uploads."""
 import accounts
 import site_content
@@ -231,10 +233,17 @@ def validate_combat_effects(ability):
         if effect.get('trigger') not in ('onCast', 'onHit'):
             invalid()
         kind = effect.get('type')
+        if kind in ADVANCED_TYPES:
+            validate_advanced_effect(effect)
+            continue
+        aura_metadata(effect)
         if kind in ('damage', 'healing'):
             fields = {'baseAmount', 'scalingStat', 'coefficient', 'canCrit'} | timing | bonuses
             if kind == 'damage':
-                fields.update(('school', 'minAmount', 'maxAmount','weaponCoefficient'))
+                fields.update(('school', 'minAmount', 'maxAmount','weaponCoefficient','damageKind','cap'))
+                if ('damageKind' in effect and (effect['damageKind'] != 'bleed' or effect.get('school') != 'physical')
+                        or 'cap' in effect and not bounded(effect['cap'],0,1e9)):
+                    invalid()
                 lo = effect.get('minAmount', effect.get('baseAmount'))
                 hi = effect.get('maxAmount', effect.get('baseAmount'))
                 if (effect.get('school') not in ('physical', 'fire', 'frost', 'arcane', 'nature', 'shadow', 'holy')
@@ -260,7 +269,7 @@ def validate_combat_effects(ability):
             target = effect.get('target')
             stats = ('armor','damageTaken','physicalTaken','magicalTaken') if target == 'dummy' else (
                 'attackPower','spellPower','healingPower','critChance','haste','movementSpeed','healingTaken',
-                'armor','damageTaken','healthRegen','resourceRegen','maxHealth','maxResource','healingDone','damageDone')
+                'armor','damageTaken','healthRegen','resourceRegen','maxHealth','maxResource','healingDone','damageDone','reflectDamage','criticalReduction')
             if ('school' in effect and (effect.get('stat') != 'damageDone'
                     or effect['school'] not in ('physical', 'fire', 'frost', 'arcane', 'nature', 'shadow', 'holy'))
                     or 'consumeOnHit' in effect and (effect.get('stat') != 'damageDone' or type(effect['consumeOnHit']) is not bool)):
@@ -273,7 +282,10 @@ def validate_combat_effects(ability):
                     or len(effect['name']) > 100):
                 invalid()
         elif kind == 'shield':
-            fields = {'name','description','icon','amount','fraction','coefficient','priority','duration','stacks','refresh'}
+            if (effect.get('target','player') not in ('player','dummy')
+                    or 'school' in effect and effect['school'] not in ('physical','fire','frost','arcane','nature','shadow','holy')):
+                invalid()
+            fields = {'target','school','name','description','icon','amount','fraction','coefficient','priority','duration','stacks','refresh'}
             if (not isinstance(effect.get('name'),str) or not effect['name'].strip() or len(effect['name'])>100
                     or not bounded(effect.get('amount'),0,1e9) or not bounded(effect.get('fraction'),.01,1)
                     or not bounded(effect.get('coefficient'),0,1000) or type(effect.get('priority')) is not int
@@ -295,18 +307,21 @@ def validate_combat_effects(ability):
             invalid()
         if 'refresh' in effect and effect['refresh'] not in ('refresh','refreshOnly','keep','replace','extend','independent'):
             invalid()
+        if effect.get('duration'):
+            fields.update(('dispelType','removable','breakOnDamage'))
         if set(effect) - common - fields:
             invalid()
 
 
 WORKSHOP_LIMITS = {
+    'finisherScale':(0,100), 'requiredLevel':(1,1000), 'baseLevel':(1,1000), 'levelScale':(0,100),
     'rank': (1, 100), 'rankScale': (0, 100), 'talentRank': (1, 100), 'minRange': (0, 100), 'charges': (1, 10),
     'recharge': (.25, 3600), 'gcdDuration': (0, 3), 'tickInterval': (.25, 120), 'radius': (.25, 30),
     'projectileLifetime': (.25, 30), 'collisionRadius': (.02, 1), 'projectileSize': (.02, 2),
     'homingStrength': (.1, 30), 'effectScale': (.1, 4), 'effectDuration': (.05, 5),
     'effectSpeed': (.1, 5), 'effectIntensity': (.1, 2), 'opacity': (0, 1), 'playback': (.25, 3), 'blend': (0, 1), 'volume': (0, 1), 'variation': (0, .5),
 }
-WORKSHOP_FLAGS = {'disabled', 'hidden', 'noGcd', 'interruptMovement', 'uninterruptible', 'facing', 'loopAnimation'}
+WORKSHOP_FLAGS = {'disabled', 'hidden', 'noGcd', 'interruptMovement', 'uninterruptible', 'facing', 'loopAnimation','consumeFreeAura'}
 WORKSHOP_SOUNDS = {event + 'Sound' for event in ('activation', 'cast', 'launch', 'impact', 'critical', 'tick', 'buff', 'debuff', 'heal')}
 
 
@@ -332,6 +347,14 @@ def validate_workshop(ability):
         if key == 'areaShape' and value in ('circle', 'cone'):
             continue
         if key == 'color' and isinstance(value, str) and re.fullmatch(r'#[a-fA-F0-9]{6}', value):
+            continue
+        if key == 'requiredClass' and value in ('warrior','paladin','hunter','rogue','priest','shaman','mage','warlock','druid','deathknight'):
+            continue
+        if key == 'requiredStateKey' and value in ('form','stance','aspect','seal','mode'):
+            continue
+        if key in ('freeWithAura','finisherResource') and isinstance(value,str) and 1 <= len(value) <= 200:
+            continue
+        if key == 'requiredStateValue' and isinstance(value,str) and 1 <= len(value) <= 60:
             continue
         if key == 'tier' and isinstance(value, str) and len(value) <= 40:
             continue
@@ -432,6 +455,8 @@ def validate(document):
                 raise ValueError('Ранги: от 1 до 100')
             if not isinstance(talent.get('descriptions'), list) or len(talent['descriptions']) != talent['maxRank'] or any(not isinstance(d, str) for d in talent['descriptions']):
                 raise ValueError('Нужно описание каждого ранга')
+            if 'requiredLevel' in talent and (type(talent['requiredLevel']) is not int or not 1 <= talent['requiredLevel'] <= 1000):
+                raise ValueError('Неверный требуемый уровень таланта')
             if 'rankTemplate' in talent and render_rank_template(talent['rankTemplate'], talent['maxRank']) != talent['descriptions']:
                 raise ValueError('Описания рангов не совпадают с общим текстом')
         by_id = {t['id']: t for t in branch.get('talents', [])}
@@ -454,12 +479,24 @@ def validate(document):
     if document.get('version') != 1 or not isinstance(abilities, list) or any(not isinstance(a, dict) or any(not isinstance(a.get(k), str) for k in ('id', 'name', 'description', 'icon')) for a in abilities):
         raise ValueError('Неверный формат класса или способностей')
     for ability in abilities:
+        current=ability
+        owner_chain={ability['id']}
+        while 'instanceOwnerId' in current:
+            owner=current['instanceOwnerId']
+            if not isinstance(owner,str) or owner in owner_chain or owner not in ability_by_id:
+                raise ValueError('Invalid ability instance owner')
+            owner_chain.add(owner)
+            current=ability_by_id[owner]
         if 'templateSource' in ability:
             source = ability['templateSource']
             if (not isinstance(source, dict) or set(source) != {'id', 'name'}
                     or any(not isinstance(source[key], str) or not 1 <= len(source[key]) <= 200 for key in ('id', 'name'))):
                 raise ValueError('Проверь источник шаблона способности')
         validate_combat_effects(ability)
+        for effect in ability.get('combatEffects', []):
+            if (effect['type'] == 'cooldown' and effect['abilityId'] != 'self'
+                    and not any(entry['id'] == effect['abilityId'] for entry in abilities)):
+                raise ValueError('Способность для изменения перезарядки не найдена')
         validate_workshop(ability)
         validate_presentation(ability)
         if 'channeled' in ability and type(ability['channeled']) is not bool:raise ValueError('Проверь настройку поддерживаемого заклинания')
@@ -505,6 +542,8 @@ def validate(document):
         if not isinstance(rid,str) or not 1<=len(rid)<=100 or rid in resource_ids:raise ValueError('Неверный ресурс')
         resource_ids.add(rid)
     for ability in abilities:
+        if ability.get('workshop',{}).get('finisherResource') not in (None,*resource_ids):
+            raise ValueError('Выбери ресурс финишера')
         if any(effect['type'] == 'resource' and effect['resourceId'] not in resource_ids
                for effect in ability.get('combatEffects', [])):
             raise ValueError('Выбери ресурс класса для восстановления')
@@ -519,7 +558,59 @@ def validate(document):
             value=ability.get(field)
             if type(value) not in (int,float) or not math.isfinite(value) or not 0<=value<=1000000000:raise ValueError('Параметры способности должны быть неотрицательными числами')
     validate_rpg(document,resource_ids)
+    for saved in document.get('rpg',{}).get('builds',[]):
+        if 'combatSnapshot' in saved:
+            validate(saved['combatSnapshot'])
     return publications.without_build(document)
+
+def prepare_favorite_ability(source):
+    """Detach a template bundle, remap its root and validate every owned rule."""
+    item=copy.deepcopy(source)
+    original=item.get('id')
+    item['id']=secrets.token_hex(12)
+    item.update(talentId='',branchId='',branchOnly=False,learningMode='base')
+    dependencies=item.get('templateAbilities',[])
+    if (not isinstance(dependencies,list) or len(dependencies)>128
+            or any(not isinstance(entry,dict) or 'templateAbilities' in entry or 'templateRules' in entry for entry in dependencies)):
+        raise ValueError('Invalid template dependency bundle')
+    rules=item.get('templateRules',{})
+    if not isinstance(rules,dict) or set(rules)-{'bonuses','procs'}:
+        raise ValueError('Invalid template rules')
+    records=[item,*dependencies]
+    for record in records:
+        if record.get('instanceOwnerId')==original:record['instanceOwnerId']=item['id']
+        for effect in record.get('combatEffects',[]):
+            if effect.get('type')=='cooldown' and effect.get('abilityId')==original:
+                effect['abilityId']=item['id']
+    for entries in rules.values():
+        if not isinstance(entries,list):raise ValueError('Invalid template rules')
+        for rule in entries:
+            if not isinstance(rule,dict):raise ValueError('Invalid template rule')
+            if isinstance(rule.get('owner'),dict) and rule['owner'].get('id')==original:
+                rule['owner']['id']=item['id']
+            for field in ('spell','sourceAbilityId'):
+                if rule.get(field)==original:rule[field]=item['id']
+            condition=rule.get('condition')
+            if isinstance(condition,dict) and condition.get('type') in ('playerStatus','dummyStatus') and condition.get('value')==original:
+                condition['value']=item['id']
+    refs={}
+    for record in records:
+        for cost in record.get('resourceCosts',[]):
+            if isinstance(cost,dict) and isinstance(cost.get('resourceId'),str):refs[cost['resourceId']]=cost.get('resourceName') or cost['resourceId']
+        for effect in record.get('combatEffects',[]):
+            if isinstance(effect,dict) and effect.get('type')=='resource':refs[effect.get('resourceId')]=effect.get('resourceId')
+    for rule in rules.get('procs',[]):
+        cost=rule.get('cost')
+        if isinstance(cost,dict):refs[cost.get('resourceId')]=cost.get('resourceId')
+    refs.pop('health',None)
+    if any(not isinstance(key,str) for key in refs):raise ValueError('Invalid template resource')
+    check={'version':1,'name':'Favorite template','budget':71,'rowCost':5,'build':{},
+      'branches':[{'id':'favorite','name':'Favorite','rows':1,'talents':[]}],
+      'character':{'hp':100,'race':'Human','gender':'Male','armory':'','resources':[
+        {'id':rid,'name':name,'max':100,'current':100,'unit':'points','display':'bar','shape':'circle','color':'#397de1'} for rid,name in refs.items()]},
+      'abilities':records,'rpg':{'version':1,**rules}}
+    validate(check)
+    return item
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -836,15 +927,8 @@ class Handler(SimpleHTTPRequestHandler):
                         item.pop('grantedAbilityId', None)
                         check['branches'][0]['talents'] = [item]
                     else:
-                        item['talentId'] = ''
-                        item['branchId'] = ''
-                        item['branchOnly'] = False
-                        item['learningMode'] = 'base'
-                        if isinstance(item.get('resourceCosts'),list):
-                            refs={cost['resourceId']:cost for cost in item['resourceCosts'] if isinstance(cost,dict) and isinstance(cost.get('resourceId'),str) and cost['resourceId']!='health'}
-                            check['character']={'hp':100,'race':'Человек','gender':'Мужской','armory':'','resources':[{'id':rid,'name':cost.get('resourceName') or rid,'max':100,'current':100,'unit':'points','display':'bar','shape':'circle','color':'#397de1'} for rid,cost in refs.items()]}
-                        check['abilities'] = [item]
-                    validate(check)
+                        item=prepare_favorite_ability(data['item'])
+                    if kind=='talent':validate(check)
                     fid = secrets.token_hex(12)
                     db.execute('INSERT INTO favorites VALUES(?,?,?,?,?)', (fid, user[0], kind, json.dumps(item), int(time.time())))
                     db.commit()

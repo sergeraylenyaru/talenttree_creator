@@ -34,6 +34,48 @@ class RpgProfileValidation(unittest.TestCase):
             with self.assertRaises(ValueError):
                 server.validate(bad)
 
+    def test_extended_combat_profile_round_trip(self):
+        self.doc['rpg']['trainingMode'] = 'survival'
+        self.doc['rpg']['states'] = {'form':'cat'}
+        self.doc['rpg']['bonuses']=[{'id':'form-bonus','owner':{'kind':'ability','id':'flame'},'state':{'key':'form','value':'cat'},'stat':'armor','amount':100}]
+        self.doc['rpg']['incoming'] = {'school':'physical','amount':100,'interval':2,
+                                        'canCrit':True,'critChance':.2,'critMultiplier':2}
+        self.doc['rpg']['progression']={'baseLevel':1,'healthPerLevel':10,'attributesPerLevel':{'intellect':2},'resourcePerLevel':{'mana':2}}
+        self.doc['rpg']['resources'] = {'mana':{'rune':True,'recharge':10}}
+        self.assertEqual(server.validate(copy.deepcopy(self.doc))['rpg'], self.doc['rpg'])
+        for field, value in [('trainingMode','arena'),('states',{'form':5})]:
+            invalid = copy.deepcopy(self.doc)
+            invalid['rpg'][field] = value
+            with self.assertRaises(ValueError):
+                server.validate(invalid)
+
+    def test_detached_build_snapshot_is_validated_and_rejects_nested_builds(self):
+        build=self.doc['rpg']['builds'][0]
+        snapshot=copy.deepcopy(self.doc)
+        snapshot['rpg']['builds']=[]
+        snapshot['build']=copy.deepcopy(build['talents'])
+        build['combatSnapshot']=snapshot
+        saved=server.validate(copy.deepcopy(self.doc))
+        self.assertEqual(saved['rpg']['builds'][0]['combatSnapshot']['abilities'],snapshot['abilities'])
+        self.assertEqual(saved['rpg']['builds'][0]['combatSnapshot']['build'],snapshot['build'])
+        # Changing the active ability does not update the historical snapshot.
+        self.doc['abilities'][0]['combatEffects'][0]['baseAmount']=999
+        self.assertNotEqual(snapshot['abilities'][0]['combatEffects'][0]['baseAmount'],999)
+        invalid=copy.deepcopy(self.doc)
+        invalid['rpg']['builds'][0]['combatSnapshot']['rpg']['builds']=[{'id':'nested'}]
+        with self.assertRaises(ValueError):server.validate(invalid)
+        invalid=copy.deepcopy(self.doc)
+        invalid['rpg']['builds'][0]['combatSnapshot']['abilities'][0]['combatEffects'][0]['baseAmount']=-1
+        with self.assertRaises(ValueError):server.validate(invalid)
+
+    def test_equipment_sets_and_class_requirements(self):
+        self.doc['rpg']['combatRules']={'version':'cataclysm-4.3.4','classId':'mage','targetLevel':60}
+        self.item.update(setId='arcanist',requiredClass='mage',roll={'seed':13,'spread':.2,'baseStats':{'critChance':.15}})
+        self.doc['rpg']['setBonuses']=[{'id':'two-piece','name':'Two pieces','setId':'arcanist','pieces':2,'stats':{'spellPower':20}}]
+        self.assertEqual(server.validate(copy.deepcopy(self.doc))['rpg']['setBonuses'][0]['pieces'],2)
+        self.item['requiredClass']='warrior'
+        with self.assertRaises(ValueError):server.validate(copy.deepcopy(self.doc))
+
     def test_primary_budget_only_limits_base_attributes(self):
         self.doc['rpg']['primaryBudget'] = 30
         self.item['stats']['stamina'] = 100
@@ -93,3 +135,18 @@ class RpgProfileValidation(unittest.TestCase):
         effect['direction'] = 'restore_everything'
         with self.assertRaises(ValueError):
             server.validate(self.doc)
+
+class FavoriteAbilityBundles(unittest.TestCase):
+    def test_favorite_remaps_root_and_checks_detached_proc_payload(self):
+        source=document()['abilities'][0]
+        source.update(id='source',learningMode='base',talentId='',branchId='',branchOnly=False)
+        source['templateAbilities']=[{'id':'payload','name':'Payload','description':'Payload','icon':'forge-ember',
+          'kind':'passive','learningMode':'base','cast':0,'cooldown':0,'range':0,'resourceCosts':[],
+          'combatEffects':[{'id':'hit','type':'damage','trigger':'onHit','school':'fire','baseAmount':25,'coefficient':0,'scalingStat':'none','canCrit':False}]}]
+        source['templateRules']={'bonuses':[],'procs':[{'id':'extra','name':'Extra','owner':{'kind':'ability','id':'source'},'event':'damage','chance':1,'cooldown':0,'spell':'payload','effect':'hit'}]}
+        favorite=server.prepare_favorite_ability(source)
+        self.assertNotEqual(favorite['id'],'source')
+        self.assertEqual(favorite['templateRules']['procs'][0]['owner']['id'],favorite['id'])
+        self.assertEqual(source['templateRules']['procs'][0]['owner']['id'],'source')
+        broken=copy.deepcopy(source);broken['templateRules']['procs'][0]['spell']='missing'
+        with self.assertRaises(ValueError):server.prepare_favorite_ability(broken)

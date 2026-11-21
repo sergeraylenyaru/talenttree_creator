@@ -28,6 +28,13 @@ const metrics = {
 };
 
 const eventLabels = {
+  classStateChanged:['Смена состояния класса','Class state changed'],
+  dispelled:['Эффекты сняты','Effects dispelled'],cooldownChanged:['Перезарядка изменена','Cooldown changed'],
+  controlImmune:['Невосприимчивость к контролю','Control immunity'],immune:['Невосприимчивость','Immune'],
+  statusStacked:['Стак ауры','Aura stack'],
+  castQueued:['Способность в очереди','Ability queued'],castPushback:['Задержка применения','Cast pushback'],
+  knockback:['Отбрасывание','Knockback'],block:['Блок','Block'],reflected:['Отражено','Reflected'],
+  miss:['Промах','Miss'],dodge:['Уклонение','Dodge'],parry:['Парирование','Parry'],
   castStarted: ['Начало применения', 'Cast started'], castCompleted: ['Применение завершено', 'Cast completed'],
   castCancelled: ['Применение отменено', 'Cast cancelled'], resourceSpent: ['Потрачен ресурс', 'Resource spent'],
   damage: ['Урон', 'Damage'], healing: ['Лечение игрока', 'Player healing'],
@@ -55,6 +62,9 @@ const eventLabels = {
 };
 
 const statusLabels = {
+  levelRequired:['Недостаточный уровень','Level requirement'],classRequired:['Требуется другой класс','Class requirement'],
+  stateRequired:['Требуется другая форма или стойка','Form or stance requirement'],invalidRuneCost:['Укажи целое число рун','Rune costs must be whole numbers'],
+  interrupt:['Школа заклинаний заблокирована','Spell school locked'],stun:['Оглушение','Stunned'],fear:['Страх','Feared'],silence:['Немота','Silenced'],disarm:['Обезоруживание','Disarmed'],
   noEffects: ['Нет исполняемых боевых эффектов', 'No executable combat effects'],
   paused: ['Бой на паузе', 'Combat paused'], casting: ['Идёт применение', 'Casting'],
   cooldown: ['Перезарядка', 'Cooldown'], gcd: ['Общая перезарядка', 'Global cooldown'],
@@ -203,7 +213,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
             </div>
             <div>${bar('Манекен', 'dummy', '#bd5157')}</div>
           </div>
-          <div id="tg-cast" hidden><div class="tg-cast-heading"><span class="tg-cast-art" aria-hidden="true">✦<img id="tg-cast-icon" alt="" hidden></span><strong id="tg-cast-name" data-user-content></strong><span id="tg-cast-phase"></span><time id="tg-cast-remaining"></time></div>
+          <p id="tg-queued" hidden></p><div id="tg-cast" hidden><div class="tg-cast-heading"><span class="tg-cast-art" aria-hidden="true">✦<img id="tg-cast-icon" alt="" hidden></span><strong id="tg-cast-name" data-user-content></strong><span id="tg-cast-phase"></span><time id="tg-cast-remaining"></time></div>
             <progress id="tg-progress" aria-labelledby="tg-cast-name"></progress>
             <button type="button" id="tg-cancel">Отменить применение</button></div>
         </section>
@@ -223,6 +233,9 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
         </section>
         <section class="tg-panel"><div class="tg-log-head"><h3>Журнал боя</h3>
           <button type="button" id="tg-clear">Очистить журнал</button></div>
+          <label>Фильтр журнала<select id="tg-log-filter"><option value="">Все события</option>
+          <option value="damage">Урон</option><option value="healing">Лечение</option><option value="aura">Ауры</option><option value="buff">Баффы</option><option value="debuff">Дебаффы</option>
+          <option value="resource">Ресурсы</option><option value="proc">Проки</option><option value="defense">Защита</option><option value="error">Ошибки применения</option></select></label>
           <p class="muted" id="tg-empty-log">Боевых событий пока нет.</p><ol id="tg-log" tabindex="0" aria-label="Журнал боя"></ol>
         </section>
       </aside>
@@ -243,6 +256,8 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
   let previousStats;
   let lastEvent = 0;
 
+  $('#tg-log-filter').onchange=()=>{const events=previousLog??[];previousLog=null;showLog(events);};
+
   function setVital(index, current, max, unit = '') {
     const {meter, fill, text} = meters[index];
     if (meter.max !== max) meter.max = max;
@@ -258,7 +273,14 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
     $('#tg-empty-log').hidden = events.length > 0;
     const list = $('#tg-log');
     list.hidden = !events.length;
-    list.innerHTML = events.slice(-80).reverse().map(event => {
+    const filter=$('#tg-log-filter').value;
+    const match=event=>!filter||filter==='damage'&&event.type==='damage'||filter==='healing'&&event.type==='healing'||
+      filter==='buff'&&event.auraKind==='buff'||filter==='debuff'&&event.auraKind==='debuff'||
+      filter==='aura'&&['statusApplied','statusExpired','statusStacked','dispelled'].includes(event.type)||
+      filter==='resource'&&event.type.startsWith('resource')||filter==='proc'&&event.type==='procTriggered'||
+      filter==='defense'&&['incomingDamage','absorbed','immune','block','dodge','parry','reflected'].includes(event.type)||
+      filter==='error'&&['castRejected','insufficient','calculationFailed','projectileMissed','attackMissed'].includes(event.type);
+    list.innerHTML = events.filter(match).slice(-80).reverse().map(event => {
       const detail = event.reason && statusLabels[event.reason] ? ' · ' + statusLabels[event.reason][0]
         : event.type === 'cooldownStarted'
         ? ` · ${fmt(event.amount)} сек. / GCD ${fmt(event.globalCooldown)} сек.`
@@ -266,7 +288,14 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
       return `<li data-event="${event.type}" class="${event.isCritical ? 'tg-critical' : ''}">
         <time>${event.time.toFixed(1)}</time> <strong>${(eventLabels[event.type]?.[0] ?? event.type)}</strong>
         ${userText(event.abilityName)}${detail}${event.resourceName || event.statusName || event.procName ? ' ' + userText(event.resourceName ?? event.statusName ?? event.procName) : ''}
-        ${event.isCritical ? '<b>Крит</b>' : ''}</li>`;
+        ${event.isCritical ? '<b>Крит</b>' : ''}
+        <details class="tg-event-details"><summary>Подробности</summary><dl>${[
+          ['Источник',event.source],['Цель',event.target],['Школа',event.school],['Базовое значение',event.original],
+          ['Бонус',event.bonus],['Бонус критического удара',event.critical],['Предотвращено',event.mitigated],['Поглощено',event.absorbed],
+          ['Блок',event.blocked],['Ограничено пределом',event.capped],['Итог',event.amount],['Фактическое лечение',event.effective],
+          ['Избыточное лечение',event.overhealing],['Ресурс',event.resourceName],['Исход',event.outcome],['Причина',event.reason],
+          ['Категория снятия',event.dispelType],['Множитель DR',event.drFactor]
+        ].filter(([,value])=>value!==undefined).map(([name,value])=>`<dt>${name}</dt><dd>${userText(String(value))}</dd>`).join('')}</dl></details></li>`;
     }).join('');
     for (const event of events) {
       if (event.id <= lastEvent) continue;
@@ -277,7 +306,7 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
         replaceText($('#tg-feedback'), t((statusLabels[event.reason] ?? eventLabels[event.type])[0]));
       }
       const healing = event.type === 'healing';
-      if (event.type==='incomingDamage'&&event.amount) actions.combatText?.(event);
+      if (['incomingDamage','absorbed'].includes(event.type)&&event.amount) actions.combatText?.(event);
       if (!healing && event.type !== 'damage') continue;
       const amount = healing ? event.effective : event.amount;
       if (!amount) continue;
@@ -299,6 +328,8 @@ export function renderTrainingGrounds(dialog, build, settings, actions) {
 
   function update(runtime) {
     const {state} = runtime;
+    $('#tg-queued').hidden=!state.queuedAbilityId;
+    $('#tg-queued').textContent=state.queuedAbilityId?t('Способность в очереди')+' · '+(abilities.find(ability=>ability.id===state.queuedAbilityId)?.name??''):'';
     const {player, dummy, activeCast} = state;
     replaceText($('#tg-pause'), t(runtime.paused ? 'Продолжить бой' : 'Пауза'));
     replaceText($('#tg-time'), state.combatTime.toFixed(1) + ' s');

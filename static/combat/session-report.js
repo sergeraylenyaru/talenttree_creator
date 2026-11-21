@@ -1,18 +1,23 @@
 const maximumTimeline=5000;
 const entry=()=>({damage:0,healing:0,effective:0,overhealing:0,hits:0,misses:0,crits:0,
-  healingHits:0,healingCrits:0,highest:0,casts:0,spent:0,gained:0,cooldowns:0,mitigated:0,absorbed:0});
+  healingHits:0,healingCrits:0,dodges:0,parries:0,blocks:0,glancing:0,blocked:0,highest:0,casts:0,spent:0,gained:0,cooldowns:0,mitigated:0,absorbed:0});
 
 export function createSessionReport(){
   let timeline=[], discarded=0, totals=entry(), abilities=new Map(), schools={}, effects=new Map(), procs=new Map();
-  let direct=0,periodic=0,auto=0,critical=0, incoming=0;
+  let direct=0,periodic=0,auto=0,critical=0,incoming=0,incomingMitigated=0,defensiveAbsorbed=0,peakDps=0,peakHps=0;
+  let buckets=new Map(),discardedBuckets=0;
   function metric(row,event){
     switch(event.type){
       case 'damage':
-        row.damage+=event.amount;row.hits++;row.crits+=Number(Boolean(event.isCritical));
+        row.damage+=event.amount;row.hits++;row.blocked+=event.blocked??0;row.blocks+=Number(event.outcome==='block');row.glancing+=Number(event.outcome==='glancing');row.crits+=Number(Boolean(event.isCritical));
         row.highest=Math.max(row.highest,event.amount);row.mitigated+=event.mitigated??0;break;
       case 'healing':
         row.healing+=event.amount;row.effective+=event.effective;row.overhealing+=event.overhealing;
         row.healingHits++;row.healingCrits+=Number(Boolean(event.isCritical));break;
+      case 'dodge': row.dodges++;row.misses++;break;
+      case 'parry': row.parries++;row.misses++;break;
+      case 'miss': row.misses++;break;
+      case 'block': row.blocks++;row.blocked+=event.amount;break;
       case 'projectileMissed':
       case 'attackMissed': row.misses++;break;
       case 'castCompleted': row.casts++;break;
@@ -56,7 +61,14 @@ export function createSessionReport(){
           if(event.auto)auto+=event.amount;
           if(event.isCritical)critical+=event.amount;
         }
-        if(event.type==='incomingDamage')incoming+=event.amount;
+        if(event.type==='incomingDamage'){incoming+=event.amount;incomingMitigated+=event.mitigated??0;}
+        if(event.type==='absorbed'&&event.target==='player')defensiveAbsorbed+=event.amount;
+        if(['damage','healing'].includes(event.type)){
+          const time=Math.floor(event.time),bucket=buckets.get(time)??{time,damage:0,healing:0};
+          if(event.type==='damage')bucket.damage+=event.amount;else bucket.healing+=event.effective??0;
+          buckets.set(time,bucket);peakDps=Math.max(peakDps,bucket.damage);peakHps=Math.max(peakHps,bucket.healing);
+          if(buckets.size>3600){buckets.delete(buckets.keys().next().value);discardedBuckets++;}
+        }
         if(event.type==='procTriggered'){
           const row=procs.get(event.procId)??{id:event.procId,name:event.procName,count:0};
           row.count++;procs.set(event.procId,row);
@@ -77,9 +89,17 @@ export function createSessionReport(){
         const uptime=row.uptime+(since===undefined?0:Math.max(0,until-since));
         return {...row,uptime,uptimePercent:duration?uptime/duration*100:0,averageDuration:instances?individualTime/instances:0};
       };
+      const series=[];
+      const start=Math.max(0,Math.floor(duration)-3599);
+      for(let time=start;time<=Math.floor(duration);time++){
+        const bucket=buckets.get(time)??{time,damage:0,healing:0};
+        series.push({...bucket,dps:bucket.damage,hps:bucket.healing});
+      }
       return {
-        version:1, duration, seed, conditions:settings, build,
-        metrics:{...totals,dps:rate(totals.damage),hps:rate(totals.effective),incoming,direct,periodic,auto,critical,
+        version:1, series, droppedSeriesBuckets:discardedBuckets, duration, seed, conditions:settings, build,
+        metrics:{...totals,incomingMitigated,defensiveAbsorbed,dps:rate(totals.damage),hps:rate(totals.effective),incoming,direct,periodic,auto,critical,
+          peakDps,peakHps,
+          missPercentage:totals.hits+totals.misses?totals.misses/(totals.hits+totals.misses)*100:0,
           average:totals.hits?totals.damage/totals.hits:0,criticalChance:totals.hits?totals.crits/totals.hits:null,
           efficiency:totals.spent?totals.damage/totals.spent:null},
         schools:{...schools},
@@ -89,12 +109,12 @@ export function createSessionReport(){
         droppedTimelineEvents:discarded,timeline:timeline.slice()
       };
     },
-    reset(){timeline=[];discarded=0;totals=entry();abilities=new Map();schools={};effects=new Map();procs=new Map();direct=periodic=auto=critical=incoming=0;}
+    reset(){timeline=[];discarded=0;totals=entry();abilities=new Map();schools={};effects=new Map();procs=new Map();direct=periodic=auto=critical=incoming=incomingMitigated=defensiveAbsorbed=peakDps=peakHps=0;buckets=new Map();discardedBuckets=0;}
   };
 }
 
 export function reportCsv(report){
-  const headers=['id','time','type','abilityId','abilityName','school','amount','effective','overhealing','absorbed','mitigated','statusName','procName','resourceName'];
+  const headers=['id','time','type','source','target','outcome','blocked','abilityId','abilityName','school','amount','effective','overhealing','absorbed','mitigated','statusName','procName','resourceName','resourceId','original','raw','bonus','modified','critical','isCritical','capped','overkill','periodic','auto','effectId','statusKey','auraKind','stacks','expires','controlType','dispelType','drFactor','affectedAbilityId','reason'];
   const escape=value=>{
     let cell=String(value??'');
     if(typeof value==='string'&&/^[\s]*[=+@-]/.test(cell))cell="'"+cell;

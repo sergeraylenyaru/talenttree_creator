@@ -1,4 +1,5 @@
 export const workshopNumbers = {
+  finisherScale:[0,100,1], requiredLevel:[1,1000,1], baseLevel:[1,1000,1], levelScale:[0,100,0],
   rank: [1, 100, 1], rankScale: [0, 100, 0], talentRank: [1, 100, 1], minRange: [0, 100, 0],
   charges: [1, 10, 1], recharge: [0.25, 3600, 10], gcdDuration: [0, 3, ''],
   tickInterval: [0.25, 120, ''], radius: [0.25, 30, 5],
@@ -8,7 +9,7 @@ export const workshopNumbers = {
   playback: [.25, 3, 1], blend: [0, 1, .16], volume: [0, 1, .65],
   variation: [0, .5, 0]
 };
-export const workshopFlags = ['disabled', 'hidden', 'noGcd', 'interruptMovement', 'uninterruptible', 'facing', 'loopAnimation'];
+export const workshopFlags = ['disabled', 'hidden', 'noGcd', 'interruptMovement', 'uninterruptible', 'facing', 'loopAnimation','consumeFreeAura'];
 export const soundNames = ['strike', 'spark', 'chime'];
 
 export function validateWorkshop(ability) {
@@ -29,6 +30,10 @@ export function validateWorkshop(ability) {
     if (key === 'flightDirection' && ['aim','forward'].includes(value)) continue;
     if (key === 'areaShape' && ['circle','cone'].includes(value)) continue;
     if (key === 'color' && typeof value === 'string' && /^#[a-f0-9]{6}$/i.test(value)) continue;
+    if(key==='requiredClass'&&['warrior','paladin','hunter','rogue','priest','shaman','mage','warlock','druid','deathknight'].includes(value))continue;
+    if(key==='requiredStateKey'&&['form','stance','aspect','seal','mode'].includes(value))continue;
+    if(['freeWithAura','finisherResource'].includes(key)&&typeof value==='string'&&value.length>0&&value.length<=200)continue;
+    if(key==='requiredStateValue'&&typeof value==='string'&&value.length>0&&value.length<=60)continue;
     if (key === 'tier' && typeof value === 'string' && value.length <= 40) continue;
     fail('Проверь настройку способности: ' + key);
   }
@@ -51,5 +56,5 @@ export function validateWorkshop(ability) {
 }
 
 export function isHostileEffect(effect) {
-  return effect.type === 'damage' || effect.type === 'status' && effect.target === 'dummy';
+  return effect.type === 'damage' || ['status','control'].includes(effect.type) && effect.target === 'dummy';
 }

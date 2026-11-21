@@ -23,7 +23,7 @@ export function validateCombatRules(profile) {
       rules.position!==undefined && !['front','behind'].includes(rules.position)) throw Error('Проверь профиль боевых правил');
 }
 
-export function combatRuleValues(profile, stats) {
+export function combatRuleValues(profile, stats, states = {}) {
   const rules = profile?.combatRules;
   if (rules?.version !== 'cataclysm-4.3.4') return undefined;
   const level = profile.level ?? 85;
@@ -31,7 +31,7 @@ export function combatRuleValues(profile, stats) {
   // configurable simulation scale, avoiding invented official progression tables.
   const scale = rules.ratingScale ?? 1;
   const percent = key => Math.max(0,stats[key]??0) / at85[key] / scale;
-  const [primary,factor] = primaryPower[rules.classId];
+  const [primary,factor] = rules.classId==='druid'&&states.form==='bear'?['strength',2]:primaryPower[rules.classId];
   return {
     classId:rules.classId,level,targetLevel:rules.targetLevel??level+3,position:rules.position??'front',
     approximateRatings:level!==85 && rules.ratingScale===undefined,

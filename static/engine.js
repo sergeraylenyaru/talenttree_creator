@@ -1,3 +1,4 @@
+import {detachLegacyBuilds} from './combat/build-snapshots.js';
 import {validateTemplateSource} from './combat/ability-instance.js';
 import {validateRpg,removeRpgReferences,level60Primary,level60PrimaryBudget} from './combat/rpg-profile.js';
 import {validateWorkshop} from './combat/workshop-rules.js';
@@ -30,6 +31,7 @@ export function validBuild(doc, build) {
       const rank=build[t.id]||0;
       if(!Number.isInteger(rank)||rank<0||rank>t.maxRank) return false;
       if(!rank) continue;
+      if((t.requiredLevel??1)>(doc.rpg?.level??1))return false;
       const earlier=b.talents.filter(x=>x.row<t.row).reduce((n,x)=>n+(build[x.id]||0),0);
       if(earlier<t.row*doc.rowCost) return false;
       if(t.requires && (!talents.has(t.requires)||(build[t.requires]||0)!==talents.get(t.requires).maxRank)) return false;
@@ -52,7 +54,18 @@ export function normalize(doc,{allowLegacy=false}={}) {
   for(const key of ['budget','rowCost']) if(!Number.isInteger(doc[key])||doc[key]<0||doc[key]>100000) throw Error('Неверные правила очков');
   if(!Array.isArray(doc.abilities)||doc.abilities.some(a=>!a||typeof a.id!=='string'||!a.id||typeof a.name!=='string'||typeof a.description!=='string')) throw Error('Неверный список способностей');
   if(new Set(doc.abilities.map(a=>a.id)).size!==doc.abilities.length)throw Error('Повторяющийся идентификатор способности');
-  for(const ability of doc.abilities)validateTemplateSource(ability);
+  for(const ability of doc.abilities){
+    validateTemplateSource(ability);
+    const seen=new Set([ability.id]);let current=ability;
+    while(current.instanceOwnerId!==undefined){
+      if(typeof current.instanceOwnerId!=='string'||seen.has(current.instanceOwnerId))throw Error('Invalid ability instance owner');
+      current=doc.abilities.find(entry=>entry.id===current.instanceOwnerId);
+      if(!current)throw Error('Missing ability instance owner');
+      seen.add(current.id);
+    }
+    for(const effect of ability.combatEffects??[])if(effect.type==='cooldown'&&effect.abilityId!=='self'&&
+      !doc.abilities.some(entry=>entry.id===effect.abilityId))throw Error('Способность для изменения перезарядки не найдена');
+  }
   synchronizeAbilityTalents(doc);
   const ids=new Set(),branchIds=new Set();
   for(const b of doc.branches) {
@@ -63,6 +76,7 @@ export function normalize(doc,{allowLegacy=false}={}) {
     for(const t of b.talents) {
       const pos=`${t.row}:${t.col}`;
       if(typeof t.id!=='string'||ids.has(t.id)||positions.has(pos)||!Number.isInteger(t.row)||t.row<0||t.row>=b.rows||!Number.isInteger(t.col)||t.col<0||t.col>3||typeof t.name!=='string'||!Number.isInteger(t.maxRank)||t.maxRank<1||t.maxRank>100||!Array.isArray(t.descriptions)||t.descriptions.length!==t.maxRank||t.descriptions.some(d=>typeof d!=='string')) throw Error('Неверный формат таланта');
+      if(t.requiredLevel!==undefined&&(!Number.isInteger(t.requiredLevel)||t.requiredLevel<1||t.requiredLevel>1000))throw Error('Неверный требуемый уровень таланта');
       if(t.rankTemplate){const rendered=renderRankTemplate(t.rankTemplate,t.maxRank);if(JSON.stringify(rendered)!==JSON.stringify(t.descriptions))throw Error('Описание рангов не совпадает с общим текстом');}
       if(t.grantedAbilityId!==undefined&&(typeof t.grantedAbilityId!=='string'||t.grantedAbilityId&&!allowLegacy&&
         !doc.abilities.some(a=>a.id===t.grantedAbilityId)))throw Error('Способность таланта не найдена');
@@ -79,7 +93,9 @@ export function normalize(doc,{allowLegacy=false}={}) {
   }
   if(!allowLegacy)for(const b of doc.branches)if([...dependencyRoutes(b).values()].some(path=>!path))throw Error('Стрелки зависимостей пересекаются или нет свободного пути. Убери или измени зависимость.');
   for(const a of doc.abilities)if(a.requirements!==undefined&&(typeof a.requirements==='string'?a.requirements.length>1000:(!Array.isArray(a.requirements)||a.requirements.length>40||a.requirements.some(v=>typeof v!=='string'||!v.trim()||v.length>100)||new Set(a.requirements).size!==a.requirements.length)))throw Error('Проверь требования способности');
-  for(const a of doc.abilities){applyPresetSpell(a,doc.character);validateCombatEffects(a);validatePresentation(a);validateWorkshop(a);
+  for(const a of doc.abilities){
+    if(a.workshop?.finisherResource&&!classResources(doc.character).some(r=>r.id===a.workshop.finisherResource))throw Error('Выбери ресурс финишера');
+    applyPresetSpell(a,doc.character);validateCombatEffects(a);validatePresentation(a);validateWorkshop(a);
     if (a.combatEffects?.some(effect=>effect.type==='resource' && !classResources(doc.character).some(r=>r.id===effect.resourceId))) {
       throw Error('Выбери ресурс класса для восстановления');
     }}
@@ -105,7 +121,12 @@ export function normalize(doc,{allowLegacy=false}={}) {
   doc.build=doc.build&&typeof doc.build==='object'&&!Array.isArray(doc.build)?doc.build:{};
   if(!validBuild(doc,doc.build)) doc.build={};
   validateRpg(doc,classResources(doc.character));
-  if(doc.rpg?.builds?.some(item=>!validBuild(doc,item.talents)))throw Error('Saved build violates talent dependencies');
+  for(const saved of doc.rpg?.builds??[]){
+    const context=saved.combatSnapshot??doc;
+    if(!validBuild(context,saved.talents))throw Error('Saved build violates talent dependencies');
+    if(saved.combatSnapshot)normalize(saved.combatSnapshot,{allowLegacy});
+  }
+  detachLegacyBuilds(doc);
   return doc;
 }
 
@@ -197,8 +218,19 @@ export function synchronizeAbilityTalents(doc){
  }
  return doc;
 }
-export function abilityUnlocked(doc,ability){if(ability.workshop?.disabled||ability.workshop?.hidden)return false;const rank=ability.workshop?.talentRank??1;if(usesPrimaryBranch(doc)&&ability.branchOnly&&doc.primaryBranchId!==ability.branchId)return false;if(ability.learningMode==='specialization')return !usesPrimaryBranch(doc)||!!doc.primaryBranchId&&doc.primaryBranchId===ability.branchId;if(ability.learningMode==='base')return true;const ids=new Set(doc.branches.flatMap(b=>b.talents).filter(t=>ability.id&&t.grantedAbilityId===ability.id).map(t=>t.id));if(ability.talentId)ids.add(ability.talentId);return (!ids.size&&ability.learningMode!=='talent')||[...ids].some(id=>(doc.build[id]||0)>=rank);}
-export function removeAbility(document,id){const next=structuredClone(document),removed=new Set();removeRpgReferences(next.rpg,'passive',id);next.abilities=next.abilities.filter(a=>a.id!==id);for(const b of next.branches){for(const t of b.talents)if(t.grantedAbilityId===id)removed.add(t.id);b.talents=b.talents.filter(t=>!removed.has(t.id));}for(const b of next.branches)for(const t of b.talents)if(removed.has(t.requires))t.requires='';for(const a of next.abilities)if(removed.has(a.talentId))a.talentId='';for(const tid of removed)removeRpgReferences(next.rpg,'talent',tid);next.build={};return next;}
+export function abilityUnlocked(doc,ability,seen=new Set()){if(seen.has(ability.id))return false;seen.add(ability.id);if(ability.instanceOwnerId){const owner=doc.abilities.find(entry=>entry.id===ability.instanceOwnerId);if(!owner||!abilityUnlocked(doc,owner,seen))return false;}if(ability.workshop?.disabled||ability.workshop?.hidden)return false;const rank=ability.workshop?.talentRank??1;if(usesPrimaryBranch(doc)&&ability.branchOnly&&doc.primaryBranchId!==ability.branchId)return false;if(ability.learningMode==='specialization')return !usesPrimaryBranch(doc)||!!doc.primaryBranchId&&doc.primaryBranchId===ability.branchId;if(ability.learningMode==='base')return true;const ids=new Set(doc.branches.flatMap(b=>b.talents).filter(t=>ability.id&&t.grantedAbilityId===ability.id).map(t=>t.id));if(ability.talentId)ids.add(ability.talentId);return (!ids.size&&ability.learningMode!=='talent')||[...ids].some(id=>(doc.build[id]||0)>=rank);}
+export function removeAbility(document,id){
+ const next=structuredClone(document),removed=new Set(),abilities=new Set([id]);
+ for(let previous=-1;previous!==abilities.size;){previous=abilities.size;for(const ability of next.abilities)if(abilities.has(ability.instanceOwnerId))abilities.add(ability.id);}
+ if(next.abilities.some(ability=>!abilities.has(ability.id)&&ability.combatEffects?.some(effect=>effect.type==='cooldown'&&abilities.has(effect.abilityId))))throw Error('Remove cooldown references before deleting this ability');
+ for(const key of abilities)removeRpgReferences(next.rpg,'passive',key);
+ next.abilities=next.abilities.filter(ability=>!abilities.has(ability.id));
+ for(const branch of next.branches){for(const talent of branch.talents)if(abilities.has(talent.grantedAbilityId))removed.add(talent.id);branch.talents=branch.talents.filter(talent=>!removed.has(talent.id));}
+ for(const branch of next.branches)for(const talent of branch.talents)if(removed.has(talent.requires))talent.requires='';
+ for(const ability of next.abilities)if(removed.has(ability.talentId))ability.talentId='';
+ for(const tid of removed)removeRpgReferences(next.rpg,'talent',tid);
+ next.build={};return next;
+}
 
 export function branchIcon(branch){return branch.icon||branch.talents[0]?.icon||'inv_misc_questionmark';}
 export function abilityBranchIds(doc,ability){

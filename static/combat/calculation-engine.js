@@ -113,17 +113,17 @@ function calculate(effect, context, expectedType) {
   const modifiedAmount = number(number(number(rawAmount*multipliers.source, 'source modified amount')*multipliers.school, 'school modified amount')*multipliers.target, 'modifiedAmount');
   const criticalAmount = number(modifiedAmount*multipliers.critical, 'criticalAmount');
   multipliers.total = number(number(number(multipliers.source*multipliers.school, 'combined source multiplier')*multipliers.target, 'combined target multiplier')*multipliers.critical, 'total multiplier');
-  const reduction = damage ? mitigation(effect.school, target, rules) :
+  const reduction = damage ? mitigation(effect.school,effect.damageKind==='bleed'?{...target,armor:0}:target,rules) :
     {kind:'none', defense:0, constant:null, uncappedReduction:0, reduction:0, multiplier:1};
   const unroundedAmount = number(criticalAmount*reduction.multiplier, 'unroundedAmount');
-  const finalAmount = Math.round(unroundedAmount);
+  const finalAmount = Math.min(effect.cap===undefined?Infinity:Math.floor(effect.cap),Math.round(unroundedAmount));
   if (!Number.isSafeInteger(finalAmount)) throw new RangeError('finalAmount exceeds safe integer precision');
   return {
-    effectId:effect.id, type:effect.type, ...(damage ? {school:effect.school} : {}),
+    effectId:effect.id, type:effect.type,...(effect.damageKind?{damageKind:effect.damageKind}:{}), ...(damage ? {school:effect.school} : {}),
     baseAmount:effect.baseAmount, scalingAmount, rawAmount, multipliers,
     modifiedAmount, isCritical, criticalAmount,
     mitigation:{...reduction, preventedAmount:criticalAmount-unroundedAmount},
-    unroundedAmount, finalAmount
+    unroundedAmount, finalAmount,...(effect.cap!==undefined?{capped:Math.max(0,Math.round(unroundedAmount)-finalAmount)}:{})
   };
 }
 

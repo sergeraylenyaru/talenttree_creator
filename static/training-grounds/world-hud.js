@@ -1,3 +1,4 @@
+import {auraPolarity} from '../combat/advanced-effects.js';
 import {addTranslations, t} from '../i18n.js';
 import {trainingWeapon} from '../combat/auto-attack.js';
 import {iconURL} from '../icons.js';
@@ -53,12 +54,24 @@ export function mountWorldHUD(frame, build, practice, cast, preview) {
   root.className='tg-play-hud';
   root.innerHTML=`<div class="tg-unit tg-unit-player"><div class="tg-portrait"><img alt="" hidden><b aria-label="Уровень">1</b></div>
     <div class="tg-unit-details"><strong data-user-content></strong><div class="tg-unit-bar"><i></i><span></span></div>
-    <div class="tg-unit-bar tg-unit-resource"><i></i><span></span></div><div class="tg-buffs"></div></div></div>
+    <div class="tg-unit-bar tg-unit-resource"><i></i><span></span></div><div class="tg-buffs" aria-label="Player buffs"></div><div class="tg-debuffs" aria-label="Player debuffs"></div><small class="tg-absorb"></small></div></div>
     <div class="tg-unit tg-unit-target" hidden><div class="tg-portrait"><img alt="" hidden><b aria-label="Уровень">1</b></div>
-    <div class="tg-unit-details"><strong>Манекен</strong><div class="tg-unit-bar"><i></i><span></span></div><small></small><div class="tg-debuffs"></div></div></div>`;
+    <div class="tg-unit-details"><strong>Манекен</strong><div class="tg-unit-bar"><i></i><span></span></div><small></small><div class="tg-buffs" aria-label="Target buffs"></div><div class="tg-debuffs" aria-label="Target debuffs"></div><small class="tg-absorb"></small></div></div>`;
   frame.append(root);
   const player=root.querySelector('.tg-unit-player');
   const target=root.querySelector('.tg-unit-target');
+  const extraResources=document.createElement('div');
+  extraResources.className='tg-secondary-resources';
+  const resourceRows=new Map();
+  for(const [index,resource] of build.resources.entries()){
+    if(index===0&&!build.profile?.resources?.[resource.id]?.rune)continue;
+    const row=document.createElement('small');
+    row.dataset.resourceId=resource.id;
+    extraResources.append(row);
+    resourceRows.set(resource.id,{row,name:resource.name});
+  }
+  player.querySelector('.tg-unit-details').append(extraResources);
+
   player.querySelector('strong').textContent=build.name;
   player.querySelector('.tg-portrait b').textContent=build.profile?.level??1;
   const authored=[...build.activeAbilities];
@@ -205,7 +218,8 @@ export function mountWorldHUD(frame, build, practice, cast, preview) {
   const feedbackLabel=controls.querySelector('.tg-game-feedback');
   let event;
   const activeStatuses = new Map();
-  const rails = {player:player.querySelector('.tg-buffs'),dummy:target.querySelector('.tg-debuffs'),zone:player.querySelector('.tg-buffs')};
+  const rails={player:{buff:player.querySelector('.tg-buffs'),debuff:player.querySelector('.tg-debuffs')},
+    dummy:{buff:target.querySelector('.tg-buffs'),debuff:target.querySelector('.tg-debuffs')}};
   function renderStatuses(runtime) {
     const present = new Set();
     for (const status of runtime.statuses) {
@@ -224,14 +238,18 @@ export function mountWorldHUD(frame, build, practice, cast, preview) {
         else icon.hidden=true;
         icon.onerror=()=>{icon.hidden=true;};
         badge.append(icon,document.createElement('small'));
-        rails[target].append(badge);
+        badge.dataset.aura=auraPolarity(effect);
+        rails[target==='zone'?'dummy':target][badge.dataset.aura].append(badge);
         activeStatuses.set(key,badge);
       }
       const time=Math.max(0,Math.ceil(expires-runtime.state.combatTime));
+      badge.classList.toggle('tg-aura-expiring',time<=3);
       const label=(stacks>1?stacks+'× ':'')+time+' s'+(status.remaining==null?'':(' · '+status.remaining));
       if(badge.lastChild.textContent!==label) {
         badge.lastChild.textContent=label;
-        badge.title=(effect.name??ability.name)+' · '+label+(effect.description?' · '+effect.description:'');
+        badge.title=(effect.name??ability.name)+' · '+label+(effect.description?' · '+effect.description:'')+
+          (effect.dispelType?' · '+effect.dispelType:'')+(effect.controlType?' · '+effect.controlType:'')+
+          (effect.drGroup?' · DR '+effect.drGroup:'')+(effect.removable===false?' · '+t('Нельзя снять'):'');
         badge.setAttribute('aria-label',badge.title);
       }
     }
@@ -256,6 +274,13 @@ export function mountWorldHUD(frame, build, practice, cast, preview) {
       img.hidden=false;
     },
     update(runtime,feedback,auto = {active:false}) {
+      const recovery=runtime.runeState?.()??{};
+      for(const [id,{row,name}] of resourceRows){
+        const resource=runtime.state.player.resources[id];
+        const pending=(recovery[id]??[]).map(at=>Math.max(0,at-runtime.state.combatTime).toFixed(1)+'s');
+        const value=name+' · '+Math.round(resource?.current??0)+' / '+(resource?.max??0)+(pending.length?' · '+pending.join(' · '):'');
+        if(row.textContent!==value)row.textContent=value;
+      }
       strike.setAttribute('aria-pressed', String(auto.active));
       const strikeLabel=t(auto.active?'Остановить автоатаку':'Автоатака');
       if(strike.textContent!==strikeLabel) strike.textContent=strikeLabel;
@@ -270,11 +295,24 @@ export function mountWorldHUD(frame, build, practice, cast, preview) {
       }
       const {state}=runtime;
       renderStatuses(runtime);
+      for(const [key,node] of [['player',player],['dummy',target]]) {
+        const amount=runtime.statuses.filter(status=>status.target===key&&status.effect.type==='shield')
+          .reduce((sum,status)=>sum+(status.remaining??0),0);
+        const text=amount?t('Поглощение')+' · '+Math.round(amount):'';
+        if(node.querySelector('.tg-absorb').textContent!==text)node.querySelector('.tg-absorb').textContent=text;
+      }
       fill(bars[0],state.player.health,state.player.maxHealth);
-      const resource=build.resources[0] && state.player.resources[build.resources[0].id];
+      const form=state.classStates?.form;
+      const primaryName=form==='cat'?'energy':form==='bear'?'rage':null;
+      const primary=primaryName?build.resources.find(resource=>resource.id.toLowerCase().endsWith(primaryName))??build.resources[0]:build.resources[0];
+      const resource=primary && state.player.resources[primary.id];
+      if(primary)bars[1].title=primary.name;
       bars[1].hidden=!resource;
       if(resource) fill(bars[1],resource.current,resource.max);
       fill(bars[2],state.dummy.health,state.dummy.maxHealth);
+      const classState=Object.entries(state.classStates??{}).map(([key,value])=>key+' · '+value).join(' | ');
+      player.dataset.classState=classState;
+      player.querySelector('strong').title=classState;
       const stateLabel=state.dummy.health?'':t('Манекен повержен');
       if(targetStatus.textContent!==stateLabel) targetStatus.textContent=stateLabel;
       buttons.forEach((button,i)=>{

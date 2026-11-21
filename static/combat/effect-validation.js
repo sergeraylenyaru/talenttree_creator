@@ -1,10 +1,11 @@
+import {advancedTypes,validateAdvancedEffect,validateAuraMetadata} from './advanced-effects.js';
 // Optional declarative combat schema; limits must match server.py.
 const common = ['id', 'type', 'trigger'];
 const amounts = ['baseAmount', 'scalingStat', 'coefficient', 'canCrit'];
 const bonuses = ['flatBonus', 'multiplier', 'critMultiplier', 'attackCoefficient', 'spellCoefficient'];
 const timing = ['duration', 'interval', 'stacks', 'refresh', 'snapshot'];
 export const combatSchools = ['physical', 'fire', 'frost', 'arcane', 'nature', 'shadow', 'holy'];
-export const statusStats = ['attackPower', 'spellPower', 'critChance', 'movementSpeed', 'armor', 'damageTaken', 'healingTaken','haste','healthRegen','resourceRegen','maxHealth','maxResource','physicalTaken','magicalTaken','healingPower','healingDone','damageDone'];
+export const statusStats = ['attackPower', 'spellPower', 'critChance', 'movementSpeed', 'armor', 'damageTaken', 'healingTaken','haste','healthRegen','resourceRegen','maxHealth','maxResource','physicalTaken','magicalTaken','healingPower','healingDone','damageDone','reflectDamage','criticalReduction'];
 
 export function validateCombatEffects(ability) {
   if (!Object.hasOwn(ability, 'combatEffects')) return;
@@ -18,9 +19,11 @@ export function validateCombatEffects(ability) {
     if (typeof e.id !== 'string' || !/^[A-Za-z0-9_-]{1,100}$/.test(e.id) || ids.has(e.id)) invalid();
     ids.add(e.id);
     if (!['onCast', 'onHit'].includes(e.trigger)) invalid();
+    if(advancedTypes.includes(e.type)){validateAdvancedEffect(e);continue;}
+    validateAuraMetadata(e);
     let fields;
     if (['damage', 'healing'].includes(e.type)) {
-      fields = [...amounts, ...bonuses, ...timing, ...(e.type === 'damage' ? ['school','minAmount','maxAmount','weaponCoefficient'] : [])];
+      fields = [...amounts, ...bonuses, ...timing, ...(e.type === 'damage' ? ['school','minAmount','maxAmount','weaponCoefficient','damageKind','cap'] : [])];
       if (e.type === 'damage') {
         const minimum = Object.hasOwn(e,'minAmount') ? e.minAmount : e.baseAmount;
         const maximum = Object.hasOwn(e,'maxAmount') ? e.maxAmount : e.baseAmount;
@@ -29,6 +32,7 @@ export function validateCombatEffects(ability) {
       if (!['none', 'spellPower', 'attackPower','healingPower'].includes(e.scalingStat) || !bounded(e.baseAmount, 0, 1e9) ||
           !bounded(e.coefficient, 0, 1000) || typeof e.canCrit !== 'boolean') invalid();
       for (const key of bonuses) if (Object.hasOwn(e, key) && !bounded(e[key], 0, key === 'flatBonus' ? 1e9 : 1000)) invalid();
+      if(e.damageKind!==undefined&&(e.damageKind!=='bleed'||e.school!=='physical')||e.cap!==undefined&&!bounded(e.cap,0,1e9))invalid();
       if (e.weaponCoefficient!==undefined&&!bounded(e.weaponCoefficient,0,1000))invalid();
       if (e.snapshot!==undefined&&(typeof e.snapshot!=='boolean'||!e.interval))invalid();
       if (Object.hasOwn(e, 'duration') !== Object.hasOwn(e, 'interval') ||
@@ -45,7 +49,8 @@ export function validateCombatEffects(ability) {
       if (e.target === 'dummy' && !['armor','damageTaken','physicalTaken','magicalTaken'].includes(e.stat)) invalid();
       if (e.target === 'player' && ['physicalTaken','magicalTaken'].includes(e.stat)) invalid();
     } else if (e.type === 'shield') {
-      fields=['name','description','icon','amount','fraction','coefficient','priority','duration','stacks','refresh'];
+      fields=['target','school','name','description','icon','amount','fraction','coefficient','priority','duration','stacks','refresh'];
+      if(e.target!==undefined&&!['player','dummy'].includes(e.target)||e.school!==undefined&&!combatSchools.includes(e.school))invalid();
       if(typeof e.name!=='string'||!e.name.trim()||e.name.length>100||
         e.description!==undefined&&(typeof e.description!=='string'||e.description.length>3000)||
         e.icon!==undefined&&(typeof e.icon!=='string'||!/^[A-Za-z0-9_-]{1,100}$/.test(e.icon))||
@@ -60,6 +65,6 @@ export function validateCombatEffects(ability) {
     if (Object.hasOwn(e, 'duration') && !bounded(e.duration, .25, 300)) invalid();
     if (Object.hasOwn(e, 'stacks') && (!Number.isInteger(e.stacks) || !bounded(e.stacks, 1, 10))) invalid();
     if (Object.hasOwn(e, 'refresh') && !['refresh','refreshOnly','keep','replace','extend','independent'].includes(e.refresh)) invalid();
-    if (Object.keys(e).some(k => !common.includes(k) && !fields.includes(k))) invalid();
+    if (Object.keys(e).some(k => !common.includes(k) && !fields.includes(k) && !(e.duration&&['dispelType','removable','breakOnDamage'].includes(k)))) invalid();
   }
 }

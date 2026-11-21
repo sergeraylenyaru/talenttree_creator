@@ -38,7 +38,24 @@ export function reconcileResourceCosts(abilities,previous,next){
  });
 }
 export function adaptResourceCosts(ability,character){
- if(!ability.resourceCosts)return ability;
- const available=classResources(character);
- return {...ability,resourceCosts:ability.resourceCosts.map(c=>{const resource=available.find(r=>c.resourceId==='health'?r.id==='health':r.id!=='health'&&(sameName(r.name,c.resourceName)||!c.resourceName&&r.id===c.resourceId));return {...c,resourceId:resource?.id||'',resourceName:resource?.name||c.resourceName};})};
+ const copy=structuredClone(ability),available=classResources(character),mapping=new Map([['health','health']]);
+ const records=[copy,...(copy.templateAbilities??[])];
+ const canonical=value=>({mana:'мана',energy:'энергия',rage:'ярость',health:'здоровье',focus:'фокус',runicpower:'сила рун',runic:'сила рун'})[String(value).toLowerCase().split(':').at(-1)]??String(value).toLowerCase();
+ const resolve=(id,name)=>available.find(resource=>id==='health'?resource.id==='health':resource.id!=='health'&&
+   (name?canonical(resource.name)===canonical(name):resource.id===id||canonical(resource.name)===canonical(id)));
+ for(const record of records)if(record.resourceCosts)record.resourceCosts=record.resourceCosts.map(cost=>{
+   const resource=resolve(cost.resourceId,cost.resourceName);
+   mapping.set(cost.resourceId,resource?.id??'');
+   return {...cost,resourceId:resource?.id??'',resourceName:resource?.name??cost.resourceName};
+ });
+ const resourceId=id=>mapping.get(id)??resolve(id)?.id??id;
+ for(const record of records){
+   for(const effect of record.combatEffects??[])if(effect.type==='resource')effect.resourceId=resourceId(effect.resourceId);
+   if(record.workshop?.finisherResource)record.workshop.finisherResource=resourceId(record.workshop.finisherResource);
+ }
+ for(const rule of copy.templateRules?.procs??[]){
+   if(rule.cost)rule.cost.resourceId=resourceId(rule.cost.resourceId);
+   if(rule.condition?.type==='resourceAbove')rule.condition.resource=resourceId(rule.condition.resource);
+ }
+ return copy;
 }

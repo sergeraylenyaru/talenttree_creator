@@ -1,3 +1,6 @@
+import {rollItemStats} from './combat/item-roll.js';
+import {saveBuildSnapshot,restoreBuildSnapshot,detachLegacyBuilds} from './combat/build-snapshots.js';
+import {configureCataclysmClass} from './combat/class-resources.js';
 import {combatClasses,rulesets} from './combat/rulesets.js';
 import {iconURL} from './icons.js';
 import {classResources} from './resource-costs.js';
@@ -33,11 +36,11 @@ const number={number:true};
 const percentStats={critChance:{min:0,max:1},critMultiplier:{min:0,max:100},movementSpeed:{min:0,max:10}};
 
 export function characterLab(source,{key,save,library,resourcesEditor,training}){
-  const draft=structuredClone(source);
+  const draft=detachLegacyBuilds(structuredClone(source));
   const profile=draft.rpg??={version:1};
   profile.attributes??={};profile.items??=[];profile.equipped??={};profile.formulas??=[];
   profile.resources??={};profile.bonuses??=[];profile.procs??=[];profile.builds??=[];
-  profile.restrictions??={};profile.hasteUses??=[];
+  profile.restrictions??={};profile.hasteUses??=[];profile.setBonuses??=[];
   const resources=classResources(draft.character).filter(resource=>resource.id!=='health');
   const talents=draft.branches.flatMap(branch=>branch.talents);
   const passive=draft.abilities.filter(ability=>ability.kind==='passive');
@@ -116,9 +119,17 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
     const incoming=profile.incoming;
     compare=element('div');
     const actions=grid(
+      field('Training mode',profile.trainingMode??'normal',value=>{
+        profile.trainingMode=value;
+        if(value!=='normal')profile.testDuration??=60;
+        if(value==='rotation')profile.seed??=13;
+        if(['survival','hps'].includes(value))profile.incoming??={school:'physical',amount:200,interval:2};
+        render();
+      },{
+        choices:[['normal','Normal Training'],['dps','DPS Test'],['hps','HPS Test'],['survival','Survival Test'],['rotation','Rotation Test'],['resource','Resource Test'],['ability','Ability Test']]}),
       field('Combat rules',profile.combatRules?.version??'talentforge-v1',value=>{
         if(value==='talentforge-v1')delete profile.combatRules;
-        else profile.combatRules={version:value,classId:'mage',targetLevel:(profile.level??85)+3};
+        else{profile.level??=85;profile.combatRules={version:value,classId:'mage',targetLevel:profile.level+3};}
         render();
       },{choices:rulesets}),
       ...(profile.combatRules?[field('Combat class',profile.combatRules.classId,change(profile.combatRules,'classId'),{choices:combatClasses}),
@@ -149,18 +160,46 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
     const resourcePanel=section('Resource behavior',button('Open class resource editor',open(resourcesEditor)));
     for(const resource of resources){
       const rules=profile.resources[resource.id]??={};
+      resourcePanel.append(grid(
+        field(resource.name+' · Rune pair',rules.rune??false,change(rules,'rune'),{check:true}),
+        field(resource.name+' · Rune recovery seconds',rules.recharge??10,change(rules,'recharge'),{...number,min:.25,max:120})
+      ));
       resourcePanel.append(section(resource.name,grid(...[
-        ['regen','Regeneration / sec'],['decay','Decay / sec'],['onHit','Generated on hit'],['onCrit','Extra on critical hit']
+        ['regen','In-combat regeneration / sec'],['outOfCombatRegen','Out-of-combat regeneration / sec'],['decay','Decay / sec'],['onHit','Generated on hit'],['onCrit','Extra on critical hit']
       ].map(([property,title])=>field(title,rules[property]??0,change(rules,property),{...number,max:1e6})))));
     }
     resourcePanel.append(compare);
+    const progression=section('Author-defined level progression',element('p','These growth values belong to this custom class and are not official Blizzard tables.'),
+      field('Enable level progression',Boolean(profile.progression),enabled=>{
+        if(enabled)profile.progression={baseLevel:profile.level??1,healthPerLevel:0,attributesPerLevel:{},resourcePerLevel:{}};
+        else delete profile.progression;render();
+      },{check:true}));
+    if(profile.progression){
+      const growth=profile.progression;growth.attributesPerLevel??={};growth.resourcePerLevel??={};
+      progression.append(grid(field('Progression base level',growth.baseLevel,change(growth,'baseLevel'),{...number,min:1,max:1000,step:1}),
+        field('Health per level',growth.healthPerLevel??0,change(growth,'healthPerLevel'),{...number,max:1e5}),
+        ...primaryStats.map(stat=>field(label(stat)+' per level',growth.attributesPerLevel[stat]??0,change(growth.attributesPerLevel,stat),{...number,max:1e5})),
+        ...resources.map(resource=>field(resource.name+' per level',growth.resourcePerLevel[resource.id]??0,change(growth.resourcePerLevel,resource.id),{...number,max:1e5}))));
+    }
     const result=element('div');
-    result.append(section('Training character',actions,gear,button('Open Training Grounds',open(training))));
+    result.append(section('Training character',actions,gear,
+      ...(profile.combatRules?[button('Apply class resource defaults',()=>{
+        const configured=configureCataclysmClass(draft,profile.combatRules.classId);
+        Object.assign(draft.character,configured.character);
+        Object.assign(profile,configured.rpg);
+        resources.splice(0,resources.length,...classResources(draft.character).filter(resource=>resource.id!=='health'));
+        render();
+      }),element('p','Resource defaults are provisional Talent Forge tuning. Existing resources and costs are preserved.')]:[]),
+      button('Open Training Grounds',open(training))));
     if(incoming)result.append(section('Manual dummy strike',grid(
       field('Damage school',incoming.school,change(incoming,'school'),{choices:combatSchools}),
-      field('Raw damage',incoming.amount,change(incoming,'amount'),{...number,min:1})
+      field('Scenario interval, seconds',incoming.interval??2,change(incoming,'interval'),{...number,min:.25,max:120}),
+      field('Raw damage',incoming.amount,change(incoming,'amount'),{...number,min:1}),
+      field('Can critically strike',incoming.canCrit??false,change(incoming,'canCrit'),{check:true}),
+      field('Incoming critical chance',incoming.critChance??0,change(incoming,'critChance'),{...number,max:1}),
+      field('Incoming critical multiplier',incoming.critMultiplier??2,change(incoming,'critMultiplier'),{...number,min:1,max:10})
     )));
-    result.append(mechanics,resourcePanel);
+    result.append(mechanics,resourcePanel,progression);
     return result;
   }
 
@@ -197,7 +236,7 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
   }
 
   function unequipItem(id){
-    for(const map of [profile.equipped,...profile.builds.map(build=>build.equipped)]){
+    for(const map of [profile.equipped,...profile.builds.filter(build=>!build.combatSnapshot).map(build=>build.equipped)]){
       for(const [slot,value] of Object.entries(map))if(value===id)delete map[slot];
     }
   }
@@ -264,6 +303,8 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
       const icon=element('img');icon.alt='';icon.className='rpg-item-icon';icon.src=iconURL(item.icon);
       icon.onerror=()=>icon.hidden=true;
       library.append(icon,grid(
+        field('Set identifier',item.setId??'',change(item,'setId')),
+        field('Required class',item.requiredClass??'',change(item,'requiredClass'),{choices:[['','Any class'],...combatClasses]}),
         field('Item name',item.name,change(item,'name'),{key:'item-name'}),
         field('Quality',item.quality,change(item,'quality'),{choices:qualities}),
         field('Item level',item.level,change(item,'level'),{...number,min:1,max:1000,step:1}),
@@ -283,8 +324,13 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
       ));
       library.append(field('Description',item.description,change(item,'description'),{multiline:true}));
       const bonuses=element('details');bonuses.append(element('summary','Item stat bonuses'));
-      bonuses.append(grid(...attributes.map(stat=>field(label(stat),item.stats[stat]??'',change(item.stats,stat),
+      bonuses.append(grid(...attributes.map(stat=>field(label(stat),item.stats[stat]??'',value=>{delete item.roll;change(item.stats,stat)(value);},
         {...number,min:stat==='critChance'?-1:-1e8,max:stat==='critChance'?1:1e8,key:'item-stat-'+stat}))));
+      let rollSeed=item.roll?.seed??13;
+      library.append(section('Authored random statistics',element('p','Roll existing stat bonuses within ±20%. This is simulator tuning, not an official random-affix table.'),
+        field('Item roll seed',rollSeed,value=>rollSeed=value,{...number,max:4294967295,step:1}),
+        button('Roll item statistics',attempt(()=>{Object.assign(item,rollItemStats(item,rollSeed));render();})),
+        ...(item.roll?[button('Restore unrolled statistics',()=>{item.stats=structuredClone(item.roll.baseStats);delete item.roll;render();})]:[])));
       library.append(bonuses,grid(
         button('Equip selected item',attempt(()=>{
           validateItem(item);
@@ -306,16 +352,29 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
         })
       ),section('Stat comparison',compare));
     }
-    return grid(slots,library);
+    const sets=section('Equipment set bonuses',button('Create set bonus',()=>{
+      profile.setBonuses.push({id:id(),name:'Set bonus',setId:'training-set',pieces:2,stats:{attackPower:20}});render();
+    }));
+    for(const bonus of profile.setBonuses){
+      sets.append(section(bonus.name,grid(
+        field('Set name',bonus.name,change(bonus,'name')),
+        field('Set identifier',bonus.setId,change(bonus,'setId')),
+        field('Required pieces',bonus.pieces,change(bonus,'pieces'),{...number,min:1,max:17,step:1}),
+        ...secondaryStats.map(key=>field(label(key),bonus.stats[key]??0,change(bonus.stats,key),{...number,min:key==='critChance'?-1:-1e8,max:key==='critChance'?1:1e8}))
+      ),button('Remove set bonus',()=>{removeRpgReferences(profile,'set',bonus.id);profile.setBonuses=profile.setBonuses.filter(entry=>entry!==bonus);render();})));
+    }
+    const result=element('div');result.append(grid(slots,library),sets);return result;
   }
 
   function sources(kind){
-    return kind==='talent'?talents:kind==='passive'?passive:kind==='ability'?abilities:profile.items;
+    return kind==='talent'?talents:kind==='passive'?passive:kind==='ability'?abilities:kind==='set'?profile.setBonuses:profile.items;
   }
   function ownerFields(rule){
     return grid(field('Source type',rule.owner.kind,value=>{rule.owner={kind:value,id:sources(value)[0]?.id??''};render();},
-      {choices:['talent','passive','ability','item']}),
+      {choices:['talent','passive','ability','item','set']}),
       field('Source',rule.owner.id,change(rule.owner,'id'),{choices:[['','Choose source'],...sources(rule.owner.kind).map(item=>[item.id,item.name])]}),
+      field('Only in class state',rule.state?.key??'',value=>{if(value)rule.state={key:value,value:rule.state?.value??'battle'};else delete rule.state;render();},{choices:[['','Any state'],...['form','stance','aspect','seal','mode']]}),
+      ...(rule.state?[field('Required state value',rule.state.value,change(rule.state,'value'))]:[]),
       ...(rule.owner.kind==='talent'?[field('Minimum talent rank',rule.owner.rank??1,change(rule.owner,'rank'),{...number,min:1,max:100,step:1})]:[]));
   }
   function newOwner(){
@@ -356,6 +415,13 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
       procs.append(section(proc.name,ownerFields(proc),grid(
         field('Proc name',proc.name,change(proc,'name')),
         field('Event',proc.event,change(proc,'event'),{choices:procEvents}),
+        field('Priority',proc.priority??0,change(proc,'priority'),{...number,min:0,max:1000,step:1}),
+        field('Maximum triggers',proc.charges??'',change(proc,'charges'),{...number,min:1,max:1000,step:1}),
+        field('Consecutive critical events',proc.consecutive??false,change(proc,'consecutive'),{check:true}),
+        field('Allow proc chain',proc.chain??false,change(proc,'chain'),{check:true}),
+        field('Source ability',proc.sourceAbilityId??'',change(proc,'sourceAbilityId'),{choices:[['','Any ability'],...abilities.map(item=>[item.id,item.name])]}),
+        field('School filter',proc.school??'',change(proc,'school'),{choices:[['','Any school'],...combatSchools]}),
+        field('Attack filter',proc.attackType??'',change(proc,'attackType'),{choices:[['','Any attack'],'auto','direct','periodic']}),
         field('Chance, 0–1',proc.chance,change(proc,'chance'),{...number,max:1}),
         field('Internal cooldown, sec.',proc.cooldown,change(proc,'cooldown'),{...number,max:3600}),
         field('Every qualifying event',proc.every??1,change(proc,'every'),{...number,min:1,max:100,step:1}),
@@ -398,20 +464,28 @@ export function characterLab(source,{key,save,library,resourcesEditor,training})
   }
 
   function rendersAnalytics(){
-    const builds=section('Saved builds');
+    const builds=section('Saved builds',element('p','Each saved build keeps independent abilities, rules, equipment and talent tree. Loading restores that snapshot.'));
     let name='';
     builds.append(grid(field('Build name','',value=>name=value),
       button('Save current build',attempt(()=>{
         if(!name.trim())throw Error('Enter a build name');
         if(profile.builds.length>=24)throw Error('Remove a build before saving another');
-        profile.builds.push({id:id(),name:name.trim(),talents:{...draft.build},equipped:{...profile.equipped},
-          primaryBranchId:draft.primaryBranchId??''});render();
+        profile.builds.push(saveBuildSnapshot(draft,name.trim()));render();
       }))));
     for(const snapshot of profile.builds)builds.append(grid(element('strong',snapshot.name),
       button('Load build',attempt(()=>{
-        if(!validBuild(draft,snapshot.talents))throw Error('This build no longer satisfies the talent tree.');
-        draft.build={...snapshot.talents};profile.equipped={...snapshot.equipped};
-        if(snapshot.primaryBranchId!==undefined)draft.primaryBranchId=snapshot.primaryBranchId;
+        const restored=restoreBuildSnapshot(draft,snapshot);
+        if(!validBuild(restored,restored.build))throw Error('This build no longer satisfies its saved talent tree.');
+        const savedAbilities=restored.abilities,savedProfile=restored.rpg;
+        for(const property of Object.keys(draft))delete draft[property];
+        Object.assign(draft,restored);
+        abilities.splice(0,abilities.length,...savedAbilities);
+        for(const property of Object.keys(profile))delete profile[property];
+        Object.assign(profile,savedProfile);
+        draft.rpg=profile;draft.abilities=abilities;
+        resources.splice(0,resources.length,...classResources(draft.character).filter(resource=>resource.id!=='health'));
+        talents.splice(0,talents.length,...draft.branches.flatMap(branch=>branch.talents));
+        passive.splice(0,passive.length,...abilities.filter(ability=>ability.kind==='passive'));
         render();
       })),button('Remove saved build',()=>{profile.builds=profile.builds.filter(item=>item!==snapshot);render();})));
     return section('Build testing',builds,section('Saved measurements',comparisonPanel(key)));

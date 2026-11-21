@@ -57,6 +57,21 @@ class WorkshopValidation(unittest.TestCase):
         with self.assertRaises(ValueError):
             server.validate(self.doc)
 
+    def test_control_dispel_and_cooldown_effects_round_trip(self):
+        ability = self.doc['abilities'][0]
+        ability['combatEffects'] = [
+            {'id':'stun','type':'control','trigger':'onHit','target':'dummy','name':'Stun',
+             'controlType':'stun','duration':4,'drGroup':'stun','dispelType':'magic','removable':True},
+            {'id':'cleanse','type':'dispel','trigger':'onCast','target':'player','dispelType':'magic','count':1},
+            {'id':'reset','type':'cooldown','trigger':'onCast','abilityId':'self','seconds':0,'reset':True}
+        ]
+        self.assertEqual(server.validate(copy.deepcopy(self.doc))['abilities'][0], ability)
+        for key, value in [('controlType', 'unknown'), ('duration', -1), ('drGroup', {}), ('removable', 1)]:
+            invalid = copy.deepcopy(self.doc)
+            invalid['abilities'][0]['combatEffects'][0][key] = value
+            with self.assertRaises(ValueError):
+                server.validate(invalid)
+
     def test_linked_ids_remain_distinct_with_matching_metadata(self):
         original = self.doc['abilities'][0]
         copy_ability = copy.deepcopy(original)

@@ -100,6 +100,21 @@ def exercise(page,context,url,shots):
         lab.get_by_role('button',name='Save current build').click()
     page.locator('#submitModal').click()
     save(page)
+    # An edit to the active document must not mutate either saved build.
+    page.locator(f'[data-talent="{node_id}"]').click()
+    page.locator('#editLinkedAbility').click()
+    page.locator('[data-key=baseAmount]').fill('600')
+    page.locator('#submitModal').click();save(page)
+    modified=saved(context,url,pids[0])
+    assert next(a for a in modified['abilities'] if a['id']==instance_id)['combatEffects'][0]['baseAmount']==600
+    for build in modified['rpg']['builds']:
+        assert next(a for a in build['combatSnapshot']['abilities'] if a['id']==instance_id)['combatEffects'][0]['baseAmount']==500
+    page.locator('#characterLab').click()
+    lab=page.locator('.rpg-lab');lab.get_by_role('button',name='Combat Analytics',exact=True).click()
+    lab.get_by_role('button',name='Load build',exact=True).first.click()
+    page.locator('#submitModal').click();save(page)
+    restored=saved(context,url,pids[0])
+    assert [a['combatEffects'][0]['baseAmount'] for a in restored['abilities']]==[150,500,700]
     page.screenshot(path=shots/'mage-a.png')
     open_project(page,url,pids[1])
     other=saved(context,url,pids[1])

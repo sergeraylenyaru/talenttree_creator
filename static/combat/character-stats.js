@@ -1,32 +1,35 @@
+import {progressionValues} from './progression.js';
 import {combatRuleValues} from './rulesets.js';
 import {abilityUnlocked} from '../engine.js';
 import {calculateMitigation} from './calculation-engine.js';
 import {combatSchools} from './effect-validation.js';
-import {equippedItems, primaryStats} from './rpg-profile.js';
+import {equippedItems, primaryStats,stateMatches} from './rpg-profile.js';
 import {modifier} from './active-effects.js';
 
 export function compileProfile(document, passiveAbilities) {
   const profile=document.rpg;
   if(!profile&&!passiveAbilities.some(ability=>ability.combatEffects.some(effect=>effect.type==='status')))return undefined;
   const equipment=equippedItems(profile);
+  const sets=(profile?.setBonuses??[]).filter(bonus=>Object.values(equipment).filter(item=>item.setId===bonus.setId).length>=bonus.pieces);
   const selected=new Set(passiveAbilities.map(ability=>ability.id));
   const active=owner=>owner.kind==='talent'?(document.build[owner.id]??0)>=(owner.rank??1)
     :owner.kind==='ability'?document.abilities.some(ability=>ability.id===owner.id&&abilityUnlocked(document,ability))
+    :owner.kind==='set'?sets.some(bonus=>bonus.id===owner.id)
     :owner.kind==='passive'?selected.has(owner.id):Object.values(equipment).some(item=>item.id===owner.id);
   const passiveStats=passiveAbilities.flatMap(ability=>ability.combatEffects.filter(effect=>
     effect.type==='status'&&effect.target==='player'&&!effect.consumeOnHit));
-  return {...profile,equipment,passiveStats,bonuses:(profile?.bonuses??[]).filter(rule=>active(rule.owner)),
+  return {...profile,equipment,sets,passiveStats,bonuses:(profile?.bonuses??[]).filter(rule=>active(rule.owner)),
     procs:(profile?.procs??[]).filter(proc=>active(proc.owner)).map(proc=>({
       ...proc, ability:document.abilities.find(ability=>ability.id===proc.spell)
     }))};
 }
 
-export function abilityBonuses(profile,id,key){
-  return (profile?.bonuses??[]).reduce((sum,rule)=>sum+(rule.stat===key&&(!rule.spell||rule.spell===id)?rule.amount/100:0),0);
+export function abilityBonuses(profile,id,key,states=profile?.states??{}){
+  return (profile?.bonuses??[]).reduce((sum,rule)=>sum+(stateMatches(rule,states)&&rule.stat===key&&(!rule.spell||rule.spell===id)?rule.amount/100:0),0);
 }
 
 const nonnegative=value=>Math.max(0,value);
-export function deriveCharacterStats(build,statuses=[]){
+export function deriveCharacterStats(build,statuses=[],classStates=build.profile?.states??{}){
   const {profile}=build;
   const stats={...build.stats};
   const contributions=[];
@@ -36,18 +39,24 @@ export function deriveCharacterStats(build,statuses=[]){
   }
   for(const key of primaryStats)stats[key]=0;
   for(const [key,value] of Object.entries(profile?.attributes??{}))stats[key]=value;
+  const growth=progressionValues(profile);
+  for(const [key,value] of Object.entries(growth.attributes))add('Level progression',key,value);
+  add('Level progression','maxHealth',growth.health);
+  for(const [key,value] of Object.entries(growth.resources))add('Level progression','resource:'+key,value);
   const equipment=profile?.equipment??{};
   for(const item of Object.values(equipment)){
     add(item.name,'armor',item.armor??0);
     for(const [key,value] of Object.entries(item.stats??{}))add(item.name,key,value);
   }
+  for(const bonus of profile?.sets??[])for(const [key,value] of Object.entries(bonus.stats??{}))add(bonus.name,key,value);
   for(const rule of profile?.bonuses??[]){
-    if(!rule.spell&&(primaryStats.includes(rule.stat)||!['damage','healing','cooldown','resourceGain','duration','period','procChance'].includes(rule.stat))) {
+    if(!stateMatches(rule,classStates))continue;
+    if(!rule.spell&&(primaryStats.includes(rule.stat)||!['damage','healing','cooldown','cost','castTime','maxStacks','resourceGain','duration','period','procChance'].includes(rule.stat))) {
       add(rule.owner.id,rule.stat,rule.amount);
     }
   }
   for(const rule of profile?.formulas??[])add(rule.from+' × '+rule.factor,rule.to,nonnegative(stats[rule.from]??0)*rule.factor);
-  const combatRules=combatRuleValues(profile,stats);
+  const combatRules=combatRuleValues(profile,stats,classStates);
   if(combatRules){
     add('Cataclysm primary attributes','attackPower',combatRules.attackPower);
     add('Cataclysm primary attributes','spellPower',combatRules.spellPower);
@@ -94,8 +103,8 @@ export function deriveCharacterStats(build,statuses=[]){
       const max=Math.max(1,Math.round((resource.max+(stats['resource:'+resource.id]??0)+(combatRules&&/mana/i.test(resource.id)?combatRules.mana:0))*(1+percent('maxResource'))));
       return {...resource,max,current:Math.min(max,resource.current),...profile?.resources?.[resource.id]};
     }),
-    mitigation:{physical:calculateMitigation('physical',{armor}).reduction,
-      ...Object.fromEntries(Object.keys(resistance).map(school=>[school,calculateMitigation(school,{resistances:resistance}).reduction]))},
+    mitigation:{physical:calculateMitigation('physical',{armor},combatRules?{armorConstant:combatRules.armorConstant}:undefined).reduction,
+      ...Object.fromEntries(Object.keys(resistance).map(school=>[school,calculateMitigation(school,{resistances:resistance},combatRules?{resistanceConstant:combatRules.resistanceConstant}:undefined).reduction]))},
     contributions
   };
 }

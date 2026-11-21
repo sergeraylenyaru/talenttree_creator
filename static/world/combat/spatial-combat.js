@@ -85,7 +85,7 @@ export function sweptTargetImpact(origin, delta, target, padding) {
 }
 
 
-export function createSpatialCombat({animationAvailable, animationFallback, projectileOrigin, autoAnimate, player, target,
+export function createSpatialCombat({displace,animationAvailable, animationFallback, projectileOrigin, autoAnimate, player, target,
   areaTarget, obstacles, occlusion, animate, face, visuals, move, stopAnimation, config = spatialDefaults}) {
   const flights = new Set();
   let phase;
@@ -187,6 +187,7 @@ export function createSpatialCombat({animationAvailable, animationFallback, proj
       };
       let launch;
       return {
+        displace:(target,amount)=>displace?.(target,amount),
         utility, validate, ground, projectile: profile.kind === 'projectile',
         placeZone() { return visuals.zone?.(groundPoint,profile); },
         sound(id) { visuals.sound?.(id, profile); },

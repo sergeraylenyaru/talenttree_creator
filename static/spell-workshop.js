@@ -1,9 +1,15 @@
+import {classResources} from './resource-costs.js';
 import {abilityTemplateSnapshot} from './combat/ability-instance.js';
 import {addTranslations, t} from './i18n.js';
 import {workshopFlags, workshopNumbers, soundNames} from './combat/workshop-rules.js';
 import {presentationOptions, presentationPresets} from './combat/presentation.js';
 
 const words = {
+  freeWithAura:['Бесплатно при ауре (имя или ID)','Free with aura (name or ID)'],consumeFreeAura:['Расходовать ауру бесплатного применения','Consume free-cast aura'],
+  finisherResource:['Ресурс финишера (ID)','Finisher resource (ID)'],finisherScale:['Множитель за дополнительное очко','Multiplier per extra point'],
+  requiredLevel:['Требуемый уровень','Required level'],requiredClass:['Требуемый класс','Required class'],
+  requiredStateKey:['Требуемое состояние','Required state'],requiredStateValue:['Значение состояния','State value'],
+  baseLevel:['Базовый уровень эффекта','Effect base level'],levelScale:['Прирост эффекта за уровень, %','Effect increase per level, %'],
   rank:['Ранг способности','Ability rank'], tier:['Редкость','Rarity'], rankScale:['Прирост эффекта за ранг, %','Effect increase per rank, %'], talentRank:['Требуемый ранг таланта','Required talent rank'],
   disabled:['Способность отключена','Ability disabled'], hidden:['Скрыть из боя','Hide from combat'],
   minRange:['Минимальная дальность','Minimum range'], radius:['Радиус области','Area radius'], areaShape:['Форма области','Area shape'],
@@ -31,8 +37,8 @@ const values = {
   healing:['Лечение','Healing'], defense:['Защита','Defense']
 };
 const groups = [
-  ['Доступность и ранг','Availability and rank',['rank','tier','talentRank','rankScale','disabled','hidden']],
-  ['Механика применения','Cast rules',['minRange','facing','interruptMovement','uninterruptible','tickInterval','radius','areaShape']],
+  ['Доступность и ранг','Availability and rank',['rank','tier','talentRank','rankScale','requiredLevel','requiredClass','requiredStateKey','requiredStateValue','baseLevel','levelScale','disabled','hidden']],
+  ['Механика применения','Cast rules',['minRange','facing','interruptMovement','uninterruptible','tickInterval','radius','areaShape','freeWithAura','consumeFreeAura','finisherResource','finisherScale']],
   ['Заряды и глобальная перезарядка','Charges and global cooldown',['charges','recharge','noGcd','gcdDuration']],
   ['Параметры снаряда','Projectile parameters',['projectileLifetime','collisionRadius','projectileSize','homingStrength','flightDirection']],
   ['Анимация и эффекты','Animation and effects',['casterEffect','weaponEffect','projectileEffect','color','effectScale','effectDuration','effectSpeed','effectIntensity','opacity','playback','blend','loopAnimation']],
@@ -55,7 +61,7 @@ addTranslations([...Object.values(words), ...Object.values(values), ...groups.ma
   ['Настройки сохранены как шаблон','Settings saved as a template'], ['Выбери точку на земле','Choose a point on the ground']
 ]);
 
-export function workshopOptions(root, ability) {
+export function workshopOptions(root, ability, character) {
   const controls = new Map();
   const advanced = document.createElement('details');
   const heading = document.createElement('summary');
@@ -70,10 +76,11 @@ export function workshopOptions(root, ability) {
     panel.className = 'workshop-settings-grid';
     for (const key of keys) {
       const label = document.createElement('label');
-      const options = key.endsWith('Sound') ? soundNames : key.endsWith('Effect') ? presentationOptions.impact : key==='areaShape' ? ['circle','cone'] : key==='flightDirection' ? ['aim','forward'] : undefined;
+      const resources=key==='finisherResource'?classResources(character).filter(resource=>resource.id!=='health'):undefined;
+      const options = resources?resources.map(resource=>resource.id):key.endsWith('Sound') ? soundNames : key.endsWith('Effect') ? presentationOptions.impact : key==='areaShape' ? ['circle','cone'] : key==='flightDirection' ? ['aim','forward'] : undefined;
       const input = document.createElement(options ? 'select' : 'input');
       input.dataset.workshop = key;
-      if (options) input.append(new Option(t('Автоматически'), ''), ...options.map(value => new Option(t(values[value][0]), value)));
+      if (options) input.append(new Option(t('Автоматически'), ''), ...options.map(value => new Option(resources?.find(resource=>resource.id===value)?.name??t(values[value]?.[0]??value), value)));
       else if (workshopFlags.includes(key)) input.type = 'checkbox';
       else if (workshopNumbers[key]) {
         const [min,max,defaultValue] = workshopNumbers[key];

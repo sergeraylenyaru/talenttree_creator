@@ -24,11 +24,11 @@ export const rangedWeapons = ['bow','crossbow','wand'];
 const armorTypes = ['cloth','leather','mail','plate'];
 export const itemTypes = [...armorTypes,'ring','necklace','trinket','cloak',...meleeWeapons,'bow','crossbow','shield'];
 export const twoHanded = ['sword2','staff'];
-export const hasteSystems = ['swing','cast','channel','gcd','cooldown'];
-export const talentModifiers = ['damage','healing','cooldown','resourceGain','duration','period','procChance'];
+export const hasteSystems = ['swing','cast','channel','gcd','cooldown','rune','periodic'];
+export const talentModifiers = ['damage','healing','cooldown','cost','castTime','maxStacks','resourceGain','duration','period','procChance'];
 export const procEvents = ['castStarted','castCompleted','attackHit','projectileHit','attackMissed','projectileMissed',
   'damage','healing','critical','periodicDamage','periodicHealing','statusApplied','statusExpired','absorbed',
-  'resourceGained','resourceSpent','autoHit','cooldownCompleted'];
+  'resourceGained','resourceSpent','autoHit','cooldownCompleted','incomingDamage','criticalHeal','criticalDamage','statusStacked','channelTick','targetDefeated','dodge','parry','block','dispelled'];
 export const conditions = ['playerBelow','dummyBelow','critical','playerStatus','dummyStatus','resourceAbove','school','weapon'];
 
 const own = (object,key) => Object.hasOwn(object,key);
@@ -68,6 +68,7 @@ export function itemEligibility(item, slot, profile, equipped={}) {
   if(!item||item.disabled)return 'Item disabled';
   if(item.slot!==slot||!itemTypesForSlot(slot).includes(item.type))return 'Item does not fit this slot';
   if(profile.restrictions?.types?.length&&!profile.restrictions.types.includes(item.type))return 'Item type restricted for this class';
+  if(item.requiredClass&&item.requiredClass!==profile.combatRules?.classId)return 'Item class requirement';
   if((item.requiredLevel??1)>(profile.level??1))return 'Character level too low';
   if(slot==='offHand') {
     if(twoHanded.includes(equipped.mainHand?.type))return 'A two-handed weapon occupies the off hand';
@@ -89,14 +90,20 @@ function statMap(value, targets, min) {
 
 export function validateItem(item) {
   schema(item,['id','name','description','icon','level','quality','type','slot','armor','minDamage','maxDamage',
-    'speed','stats','requiredLevel','disabled'],'Invalid item fields');
+    'speed','stats','requiredLevel','requiredClass','setId','disabled','roll'],'Invalid item fields');
   if(!identifier(item.id)||!text(item.name,1,100)||!text(item.description??'',0,3000)||
     !identifier(item.icon)||!equipmentSlots.includes(item.slot)||!itemTypesForSlot(item.slot).includes(item.type)||
     !qualities.includes(item.quality)||!Number.isInteger(item.level)||!number(item.level,1,1000))fail('Check item identity, slot and quality');
+  if(item.setId!==undefined&&!identifier(item.setId)||item.requiredClass!==undefined&&!['warrior','paladin','hunter','rogue','priest','shaman','mage','warlock','druid','deathknight'].includes(item.requiredClass))fail('Invalid item class or set');
   if(item.disabled!==undefined&&typeof item.disabled!=='boolean')fail('Invalid enabled state');
   if(item.requiredLevel!==undefined&&(!Number.isInteger(item.requiredLevel)||!number(item.requiredLevel,1,1000)))fail('Invalid item requirement');
   if(item.armor!==undefined&&!number(item.armor,0,1e8))fail('Invalid item armor');
   if(item.stats!==undefined)statMap(item.stats,attributes,-1e8);
+  if(item.roll!==undefined){
+    schema(item.roll,['seed','spread','baseStats'],'Invalid item roll');
+    if(!Number.isInteger(item.roll.seed)||!number(item.roll.seed,0,4294967295)||!number(item.roll.spread,0,1))fail('Invalid item roll');
+    statMap(item.roll.baseStats,attributes,-1e8);
+  }
   const weapon=[...meleeWeapons,...rangedWeapons].includes(item.type);
   if(weapon ? !number(item.minDamage,0,1e8)||!number(item.maxDamage,item.minDamage,1e8)||!number(item.speed,.4,30)
     : ['minDamage','maxDamage','speed'].some(key=>own(item,key)))fail('Check weapon damage and speed');
@@ -110,8 +117,13 @@ export function validateRpg(document, resources) {
   const resourceIds=resources.filter(resource=>resource.id!=='health').map(resource=>resource.id);
   const targets=[...secondaryStats,...resourceIds.map(id=>'resource:'+id)];
   schema(profile,['version','level','primaryBudget','attributes','formulas','items','equipped','restrictions','hasteUses','autoSlot',
-    'resources','bonuses','procs','builds','incoming','seed','testDuration','combatRules'],'Invalid RPG profile fields');
+    'resources','bonuses','procs','builds','incoming','seed','testDuration','combatRules','states','trainingMode','setBonuses','progression'],'Invalid RPG profile fields');
   validateCombatRules(profile);
+  if(profile.trainingMode!==undefined&&!['normal','dps','hps','survival','rotation','resource','ability'].includes(profile.trainingMode))fail('Invalid training mode');
+  if(profile.states!==undefined){
+    schema(profile.states,['form','stance','aspect','seal','mode'],'Invalid class state');
+    if(Object.values(profile.states).some(value=>typeof value!=='string'||!value||value.length>60))fail('Invalid class state');
+  }
   if(profile.version!==1)fail('Unsupported RPG profile version');
   if(profile.seed!==undefined&&(!Number.isInteger(profile.seed)||!number(profile.seed,0,4294967295)))fail('Invalid test seed');
   if(profile.testDuration!==undefined&&!number(profile.testDuration,1,3600))fail('Invalid measurement duration');
@@ -122,11 +134,26 @@ export function validateRpg(document, resources) {
     if(primaryStats.some(key=>!Number.isInteger(profile.attributes?.[key]??0)))fail('Распредели характеристики целыми очками');
     if(primaryPointsUsed(profile.attributes)>profile.primaryBudget)fail('Превышен бюджет базовых характеристик');
   }
+  if(profile.progression!==undefined){
+    const growth=profile.progression;
+    schema(growth,['baseLevel','healthPerLevel','attributesPerLevel','resourcePerLevel'],'Invalid level progression');
+    if(!Number.isInteger(growth.baseLevel)||!number(growth.baseLevel,1,1000)||growth.healthPerLevel!==undefined&&!number(growth.healthPerLevel,0,1e5))fail('Invalid progression level or health');
+    statMap(growth.attributesPerLevel??{},primaryStats,0);
+    if(Object.values(growth.attributesPerLevel??{}).some(value=>value>1e5))fail('Invalid attribute progression');
+    schema(growth.resourcePerLevel??{},resourceIds,'Invalid progression resource');
+    if(Object.values(growth.resourcePerLevel??{}).some(value=>!number(value,0,1e5)))fail('Invalid resource progression');
+  }
   collection(profile.formulas,64,rule=>{
     schema(rule,['from','to','factor'],'Invalid formula');
     if(!primaryStats.includes(rule.from)||!targets.includes(rule.to)||!number(rule.factor,-10000,10000))fail('Invalid scaling formula');
   });
   collection(profile.items,128,validateItem);
+  collection(profile.setBonuses,32,bonus=>{
+    schema(bonus,['id','name','setId','pieces','stats'],'Invalid set bonus');
+    if(!identifier(bonus.id)||!identifier(bonus.setId)||!text(bonus.name,1,100)||
+      !Number.isInteger(bonus.pieces)||!number(bonus.pieces,1,17))fail('Invalid set bonus');
+    statMap(bonus.stats??{},attributes,-1e8);
+  });
   if(profile.restrictions!==undefined){
     schema(profile.restrictions,['types','dualWield'],'Invalid item restrictions');
     const {types,dualWield}=profile.restrictions;
@@ -150,22 +177,30 @@ export function validateRpg(document, resources) {
   if(profile.resources!==undefined){
     schema(profile.resources,resourceIds,'Unknown class resource');
     for(const rule of Object.values(profile.resources)){
-      schema(rule,['regen','decay','onHit','onCrit'],'Invalid resource rule');
-      if(Object.values(rule).some(value=>!number(value,0,1e6)))fail('Invalid resource amount');
+      schema(rule,['regen','outOfCombatRegen','decay','onHit','onCrit','rune','recharge'],'Invalid resource rule');
+      if(Object.entries(rule).some(([key,value])=>key==='rune'?typeof value!=='boolean':!number(value,key==='recharge'?.25:0,key==='recharge'?120:1e6)))fail('Invalid resource amount');
     }
   }
   collection(profile.bonuses,64,rule=>{
-    schema(rule,['id','owner','spell','stat','amount'],'Invalid passive or talent bonus');
+    schema(rule,['id','owner','spell','stat','amount','state'],'Invalid passive or talent bonus');
     if(!identifier(rule.id))fail('Invalid bonus identifier');
-    validateOwner(rule.owner,talents,abilities,profile.items);
+    validateStateCondition(rule.state);
+    validateOwner(rule.owner,talents,abilities,profile.items,profile.setBonuses);
     if(!attributes.includes(rule.stat)&&!talentModifiers.includes(rule.stat)||!number(rule.amount,-100,10000)||
       rule.spell!==undefined&&!abilities.has(rule.spell))fail('Invalid bonus statistic or ability');
     if(rule.spell&&attributes.includes(rule.stat))fail('Ability-specific bonuses must select an ability modifier');
   });
   collection(profile.procs,48,proc=>{
-    schema(proc,['id','owner','name','event','chance','cooldown','every','condition','spell','effect','cost'],'Invalid proc fields');
+    schema(proc,['id','owner','name','event','chance','cooldown','every','condition','spell','effect','cost','chain','priority','charges','sourceAbilityId','school','attackType','consecutive','state'],'Invalid proc fields');
     if(!identifier(proc.id))fail('Invalid trigger identifier');
-    validateOwner(proc.owner,talents,abilities,profile.items);
+    validateStateCondition(proc.state);
+    if(proc.consecutive!==undefined&&typeof proc.consecutive!=='boolean'||proc.chain!==undefined&&typeof proc.chain!=='boolean'||
+      proc.priority!==undefined&&(!Number.isInteger(proc.priority)||!number(proc.priority,0,1000))||
+      proc.charges!==undefined&&(!Number.isInteger(proc.charges)||!number(proc.charges,1,1000))||
+      proc.sourceAbilityId!==undefined&&!abilities.has(proc.sourceAbilityId)||
+      proc.school!==undefined&&!combatSchools.includes(proc.school)||
+      proc.attackType!==undefined&&!['auto','direct','periodic'].includes(proc.attackType))fail('Invalid proc limits');
+    validateOwner(proc.owner,talents,abilities,profile.items,profile.setBonuses);
     if(!text(proc.name,1,100)||!procEvents.includes(proc.event)||!number(proc.chance,0,1)||!number(proc.cooldown,0,3600)||
       !Number.isInteger(proc.every??1)||!number(proc.every??1,1,100)||
       !abilities.get(proc.spell)?.combatEffects?.some(effect=>effect.id===proc.effect))fail('Invalid proc trigger or effect reference');
@@ -187,8 +222,14 @@ export function validateRpg(document, resources) {
     }
   });
   collection(profile.builds,24,build=>{
-    schema(build,['id','name','talents','equipped','primaryBranchId'],'Invalid saved build');
+    schema(build,['id','name','talents','equipped','primaryBranchId','combatSnapshot'],'Invalid saved build');
     if(!identifier(build.id)||!text(build.name,1,100))fail('Invalid build name');
+    if(build.combatSnapshot!==undefined){
+      const saved=build.combatSnapshot;
+      if(!record(saved)||saved.version!==1||!record(saved.rpg)||!Array.isArray(saved.rpg.builds)||saved.rpg.builds.length||
+        JSON.stringify(saved.build??{})!==JSON.stringify(build.talents)||JSON.stringify(saved.rpg.equipped??{})!==JSON.stringify(build.equipped))fail('Invalid detached build snapshot');
+      return;
+    }
     if(build.primaryBranchId!==undefined&&build.primaryBranchId!==''&&!document.branches.some(branch=>branch.id===build.primaryBranchId))fail('Invalid saved specialization');
     schema(build.talents,[...talents.keys()],'Invalid saved talents');
     for(const [id,rank] of Object.entries(build.talents)){
@@ -197,15 +238,19 @@ export function validateRpg(document, resources) {
     validateEquipment(build.equipped);
   });
   if(profile.incoming!==undefined){
-    schema(profile.incoming,['school','amount'],'Invalid incoming damage test');
+    schema(profile.incoming,['school','amount','canCrit','critChance','critMultiplier','interval'],'Invalid incoming damage test');
+    if(profile.incoming.interval!==undefined&&!number(profile.incoming.interval,.25,120))fail('Invalid incoming interval');
+    if(profile.incoming.canCrit!==undefined&&typeof profile.incoming.canCrit!=='boolean'||
+      profile.incoming.critChance!==undefined&&!number(profile.incoming.critChance,0,1)||
+      profile.incoming.critMultiplier!==undefined&&!number(profile.incoming.critMultiplier,1,10))fail('Invalid incoming critical settings');
     if(!combatSchools.includes(profile.incoming.school)||!number(profile.incoming.amount,1,1e8))fail('Invalid incoming damage test');
   }
 }
 
-function validateOwner(owner,talents,abilities,items=[]){
+function validateOwner(owner,talents,abilities,items=[],sets=[]){
   schema(owner,['kind','id','rank'],'Invalid passive source');
-  const source=owner.kind==='talent'?talents.get(owner.id):['passive','ability'].includes(owner.kind)?abilities.get(owner.id):items.find(item=>item.id===owner.id);
-  if(!source||!['talent','passive','ability','item'].includes(owner.kind)||
+  const source=owner.kind==='talent'?talents.get(owner.id):['passive','ability'].includes(owner.kind)?abilities.get(owner.id):owner.kind==='set'?sets.find(set=>set.id===owner.id):items.find(item=>item.id===owner.id);
+  if(!source||!['talent','passive','ability','item','set'].includes(owner.kind)||
     owner.kind==='passive'&&source.kind!=='passive'||
     owner.rank!==undefined&&(owner.kind!=='talent'||!Number.isInteger(owner.rank)||!number(owner.rank,1,source.maxRank)))fail('Invalid passive source reference');
 }
@@ -213,9 +258,16 @@ function validateOwner(owner,talents,abilities,items=[]){
 export function removeRpgReferences(profile, kind, id){
   if(!profile)return;
   for(const list of ['bonuses','procs'])if(profile[list])profile[list]=profile[list].filter(rule=>
-    !(rule.owner.kind===kind&&rule.owner.id===id)&&!(kind==='passive'&&(rule.spell===id||rule.owner.kind==='ability'&&rule.owner.id===id)));
-  if(kind==='talent')for(const build of profile.builds??[])delete build.talents[id];
-  if(kind==='item')for(const equipped of [profile.equipped,...(profile.builds??[]).map(build=>build.equipped)]) {
+    !(rule.owner.kind===kind&&rule.owner.id===id)&&!(kind==='passive'&&(rule.spell===id||rule.sourceAbilityId===id||rule.owner.kind==='ability'&&rule.owner.id===id)));
+  if(kind==='talent')for(const build of profile.builds??[])if(!build.combatSnapshot)delete build.talents[id];
+  if(kind==='item')for(const equipped of [profile.equipped,...(profile.builds??[]).filter(build=>!build.combatSnapshot).map(build=>build.equipped)]) {
     for(const [slot,value] of Object.entries(equipped??{}))if(value===id)delete equipped[slot];
   }
 }
+
+function validateStateCondition(state) {
+  if(state===undefined)return;
+  schema(state,['key','value'],'Invalid class state condition');
+  if(!['form','stance','aspect','seal','mode'].includes(state.key)||!text(state.value,1,60))fail('Invalid class state condition');
+}
+export const stateMatches=(rule,states={})=>!rule.state||states[rule.state.key]===rule.state.value;

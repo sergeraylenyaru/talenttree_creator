@@ -88,7 +88,7 @@ def exercise(page, context, url, shots):
     marker = arena.locator('.tg-world-target')
     marker.click()
     page.keyboard.press('2')
-    expect(arena.locator('.tg-buffs')).to_contain_text('6')
+    expect(arena.locator('.tg-unit-player .tg-buffs')).to_contain_text('6')
     arena.locator('.tg-test-incoming').click()
     expect(arena.locator('[data-event=absorbed]')).to_have_count(2)
     page.clock.run_for(1600)

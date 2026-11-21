@@ -8,7 +8,7 @@ export function createCombatState(build, settings) {
     cooldowns: {},
     globalCooldownUntil: 0,
     activeCast: null,
-    combatTime: 0,
+    classStates:{...build.profile?.states},combatTime: 0,
     statistics: {
       firstDamageAt: null, damageWindowStart: null, lastDamageAt: null, totalDamage: 0, totalHealing: 0, effectiveHealing: 0,
       overhealing: 0, criticalHits: 0, effects: 0, casts: 0, damageByAbility: {}, damageDetails: {}
